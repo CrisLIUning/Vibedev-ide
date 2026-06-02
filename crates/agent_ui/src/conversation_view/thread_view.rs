@@ -6846,6 +6846,17 @@ impl ThreadView {
             match &tool_call.status {
                 ToolCallStatus::WaitingForConfirmation { options, .. } => v_flex()
                     .w_full()
+                    // Long approval plans used to grow this container unbounded,
+                    // pushing the permission buttons below the viewport — the user
+                    // could neither approve nor collapse, only Stop. Cap the content
+                    // to a scrollable region and keep the buttons outside it so they
+                    // stay reachable. Mirrors render_plan_entries / edited_files_list.
+                    .child(
+                        v_flex()
+                            .id(("waiting-confirmation-content", entry_ix))
+                            .w_full()
+                            .max_h_64()
+                            .overflow_y_scroll()
                     .children(
                         tool_call
                             .content
@@ -6933,6 +6944,7 @@ impl ThreadView {
                                 }),
                         )
                     })
+                    )
                     .child(self.render_permission_buttons(
                         self.thread.read(cx).session_id().clone(),
                         self.is_first_tool_call(active_session_id, &tool_call.id, cx),
