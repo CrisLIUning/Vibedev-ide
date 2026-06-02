@@ -448,6 +448,22 @@ async fn insert_resolved_pasted_context_items(
     drop(added_worktrees);
 }
 
+/// Classification result for a slash command typed at the start of a message.
+/// Used by `MessageEditor::classify_slash_command` (pure, no side-effects).
+#[derive(Debug)]
+enum SlashCommandClassification {
+    /// The text does not start with a slash command at position 0.
+    NotSlashCommand,
+    /// The command name matches a known command or skill.
+    Recognized,
+    /// The command name is unrecognized; `suggestion` holds the closest match
+    /// if one exists within the Levenshtein distance budget.
+    Unrecognized {
+        typed: String,
+        suggestion: Option<String>,
+    },
+}
+
 impl MessageEditor {
     pub fn new(
         workspace: WeakEntity<Workspace>,
@@ -832,6 +848,89 @@ impl MessageEditor {
             .chain(commands.iter().map(|command| format!("/{}", command.name)))
             .collect::<Vec<_>>()
             .join(", ")
+    }
+
+    /// Pure classifier: determines whether `text` begins with a recognised slash
+    /// command, an unrecognised one (with an optional closest-match suggestion),
+    /// or is not a slash command at all.  Does not return an error; callers
+    /// decide what to do with an `Unrecognized` result.
+    fn classify_slash_command(
+        text: &str,
+        available_commands: &[acp::AvailableCommand],
+        available_skills: &[AvailableSkill],
+    ) -> SlashCommandClassification {
+        let Some(parsed_command) = SlashCommandCompletion::try_parse(text, 0) else {
+            return SlashCommandClassification::NotSlashCommand;
+        };
+        if parsed_command.source_range.start != 0 {
+            return SlashCommandClassification::NotSlashCommand;
+        }
+        let Some(command_name) = parsed_command.command else {
+            return SlashCommandClassification::NotSlashCommand;
+        };
+        // Reuse the EXACT direct_match / scope_match logic from validate_slash_commands.
+        let direct_match = available_commands
+            .iter()
+            .any(|available_command| available_command.name == command_name)
+            || available_skills
+                .iter()
+                .any(|skill| skill.name.as_ref() == command_name);
+        let scope_match = !direct_match
+            && command_name.rsplit_once(':').is_some_and(|(scope, bare)| {
+                !bare.is_empty()
+                    && available_skills.iter().any(|skill| {
+                        skill.name.as_ref() == bare && skill.source.as_ref() == scope
+                    })
+            });
+        if direct_match || scope_match {
+            return SlashCommandClassification::Recognized;
+        }
+        let suggestion =
+            Self::suggest_closest_command(&command_name, available_commands, available_skills);
+        SlashCommandClassification::Unrecognized {
+            typed: command_name.to_string(),
+            suggestion,
+        }
+    }
+
+    /// Returns the name of the closest known command or skill to `typed`,
+    /// if within the Levenshtein distance budget (≤2, scaled by length).
+    fn suggest_closest_command(
+        typed: &str,
+        available_commands: &[acp::AvailableCommand],
+        available_skills: &[AvailableSkill],
+    ) -> Option<String> {
+        let typed_lower = typed.to_lowercase();
+        let max_distance = 2usize.min(1 + typed.chars().count() / 3);
+        let names = available_commands
+            .iter()
+            .map(|c| c.name.to_string())
+            .chain(available_skills.iter().map(|s| s.name.to_string()));
+        let mut best: Option<(usize, String)> = None;
+        for name in names {
+            let d = Self::levenshtein(&typed_lower, &name.to_lowercase());
+            if d <= max_distance && best.as_ref().map_or(true, |(bd, _)| d < *bd) {
+                best = Some((d, name));
+            }
+        }
+        best.map(|(_, name)| name)
+    }
+
+    /// Standard iterative Levenshtein distance between two strings.
+    fn levenshtein(a: &str, b: &str) -> usize {
+        let a: Vec<char> = a.chars().collect();
+        let b: Vec<char> = b.chars().collect();
+        let mut prev: Vec<usize> = (0..=b.len()).collect();
+        let mut curr = vec![0usize; b.len() + 1];
+        for (i, &ca) in a.iter().enumerate() {
+            curr[0] = i + 1;
+            for (j, &cb) in b.iter().enumerate() {
+                let cost = if ca == cb { 0 } else { 1 };
+                curr[j + 1] = (prev[j + 1] + 1).min(curr[j] + 1).min(prev[j] + cost);
+            }
+            std::mem::swap(&mut prev, &mut curr);
+        }
+        prev[b.len()]
     }
 
     pub fn contents(
@@ -2239,7 +2338,8 @@ mod tests {
         conversation_view::tests::init_test,
         mention_set::insert_crease_for_mention,
         message_editor::{
-            Mention, MessageEditor, MessageEditorEvent, SessionCapabilities, parse_mention_links,
+            Mention, MessageEditor, MessageEditorEvent, SessionCapabilities,
+            SlashCommandClassification, parse_mention_links,
         },
     };
 
@@ -2453,6 +2553,70 @@ mod tests {
         } else {
             panic!("Expected Fetch URI");
         }
+    }
+
+    #[test]
+    fn test_classify_recognized_command_and_skill() {
+        let commands = vec![acp::AvailableCommand::new("review", "review code")];
+        let skills = vec![
+            AvailableSkill {
+                name: "deploy".into(),
+                description: "deploy app".into(),
+                source: "".into(),
+                skill_file_path: std::path::PathBuf::from("/tmp/deploy/SKILL.md"),
+            },
+        ];
+        assert!(matches!(
+            MessageEditor::classify_slash_command("/review", &commands, &skills),
+            SlashCommandClassification::Recognized
+        ));
+        assert!(matches!(
+            MessageEditor::classify_slash_command("/deploy", &commands, &skills),
+            SlashCommandClassification::Recognized
+        ));
+        assert!(matches!(
+            MessageEditor::classify_slash_command("/:deploy", &commands, &skills),
+            SlashCommandClassification::Recognized
+        ));
+    }
+
+    #[test]
+    fn test_classify_unknown_returns_suggestion() {
+        let commands = vec![
+            acp::AvailableCommand::new("review", ""),
+            acp::AvailableCommand::new("commit", ""),
+        ];
+        let skills: Vec<AvailableSkill> = vec![];
+        match MessageEditor::classify_slash_command("/revieww", &commands, &skills) {
+            SlashCommandClassification::Unrecognized { typed, suggestion } => {
+                assert_eq!(typed, "revieww");
+                assert_eq!(suggestion.as_deref(), Some("review"));
+            }
+            other => panic!("expected Unrecognized, got {other:?}"),
+        }
+        match MessageEditor::classify_slash_command("/xyzzy", &commands, &skills) {
+            SlashCommandClassification::Unrecognized { typed, suggestion } => {
+                assert_eq!(typed, "xyzzy");
+                assert_eq!(suggestion, None);
+            }
+            other => panic!("expected Unrecognized, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_classify_non_command_slashes() {
+        let commands: Vec<acp::AvailableCommand> = vec![];
+        let skills: Vec<AvailableSkill> = vec![];
+        assert!(matches!(
+            MessageEditor::classify_slash_command("see /docs for info", &commands, &skills),
+            SlashCommandClassification::NotSlashCommand
+        ));
+        // path: leading slash but not a command. Either NotSlashCommand or Unrecognized is acceptable - never a hard error.
+        assert!(matches!(
+            MessageEditor::classify_slash_command("/usr/local/bin/foo", &commands, &skills),
+            SlashCommandClassification::NotSlashCommand
+                | SlashCommandClassification::Unrecognized { .. }
+        ));
     }
 
     #[gpui::test]
