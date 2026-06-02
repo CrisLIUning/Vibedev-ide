@@ -187,6 +187,8 @@ pub struct MessageEditor {
     editor: Entity<Editor>,
     workspace: WeakEntity<Workspace>,
     session_capabilities: SharedSessionCapabilities,
+    // Retained for future use (e.g. Task 3 "did you mean" notification).
+    #[allow(dead_code)]
     agent_id: AgentId,
     thread_store: Option<Entity<ThreadStore>>,
     _subscriptions: Vec<Subscription>,
@@ -458,6 +460,8 @@ enum SlashCommandClassification {
     Recognized,
     /// The command name is unrecognized; `suggestion` holds the closest match
     /// if one exists within the Levenshtein distance budget.
+    /// Fields are reserved for Task 3 "did you mean" notification.
+    #[allow(dead_code)]
     Unrecognized {
         typed: String,
         suggestion: Option<String>,
@@ -760,96 +764,6 @@ impl MessageEditor {
         &self.mention_set
     }
 
-    fn validate_slash_commands(
-        text: &str,
-        available_commands: &[acp::AvailableCommand],
-        available_skills: &[AvailableSkill],
-        agent_id: &AgentId,
-    ) -> Result<()> {
-        if let Some(parsed_command) = SlashCommandCompletion::try_parse(text, 0) {
-            if parsed_command.source_range.start != 0 {
-                return Ok(());
-            }
-            if let Some(command_name) = parsed_command.command {
-                // Two acceptance paths:
-                //
-                // 1. Direct name match. Covers bare slash commands
-                //    (`/help`), MCP prompts that were prefixed at the
-                //    agent because of a server-name collision
-                //    (`/github.create_pr`), and skills (whose bare name
-                //    is registered for the unqualified `/<name>` form).
-                //
-                // 2. Trusted native skill scope qualifier `/<scope>:<name>`. The popup
-                //    inserts this colon-separated form to disambiguate
-                //    same-named skills, so the validator splits on the
-                //    LAST `:` to recover scope + bare name. Skill
-                //    names are restricted to `[a-z0-9-]+` (no colons),
-                //    so the rightmost colon is always the scope/name
-                //    boundary — this lets scope labels (e.g. worktree
-                //    root names) themselves contain colons. The
-                //    scope is allowed to be empty: `/:<name>` is the
-                //    qualified form for a global skill (see
-                //    `SkillSource::scope_prefix`). The validator then
-                //    checks the `available_skills` slice for an entry
-                //    whose `skill.name` matches the bare name and
-                //    whose `skill.source` equals the typed scope
-                //    (including empty for globals). Without this
-                //    branch, every autocomplete pick of a same-named
-                //    skill would be rejected as "不支持"
-                //    before reaching the resolver.
-                let direct_match = available_commands
-                    .iter()
-                    .any(|available_command| available_command.name == command_name)
-                    || available_skills
-                        .iter()
-                        .any(|skill| skill.name.as_ref() == command_name);
-                let scope_match = !direct_match
-                    && command_name.rsplit_once(':').is_some_and(|(scope, bare)| {
-                        !bare.is_empty()
-                            && available_skills.iter().any(|skill| {
-                                skill.name.as_ref() == bare && skill.source.as_ref() == scope
-                            })
-                    });
-
-                if !direct_match && !scope_match {
-                    return Err(anyhow!(indoc::formatdoc!(
-                        "/{command_name} is not a recognized command in {agent_id}. \
-                         Messages that start with `/` are interpreted as commands.
-
-                         If you are trying to send a message and not run a command, \
-                         try preceding the `/` with a space.
-
-                         Available commands for {agent_id}: {commands}",
-                        commands =
-                            Self::format_available_commands(available_commands, available_skills),
-                    )));
-                }
-            }
-        }
-        Ok(())
-    }
-
-    /// Render the available-commands list for error messages. Trusted native skills
-    /// are shown in their qualified `/<scope>:<name>` form so users
-    /// see the exact text the popup would insert — otherwise the
-    /// listing would contain confusing duplicates like `/foo, /foo`
-    /// when both a global and a project-local skill share a name.
-    /// Globals carry an empty scope and so render as `/:<name>`.
-    fn format_available_commands(
-        commands: &[acp::AvailableCommand],
-        skills: &[AvailableSkill],
-    ) -> String {
-        if commands.is_empty() && skills.is_empty() {
-            return "none".to_string();
-        }
-        skills
-            .iter()
-            .map(|skill| format!("/{}:{}", skill.source, skill.name))
-            .chain(commands.iter().map(|command| format!("/{}", command.name)))
-            .collect::<Vec<_>>()
-            .join(", ")
-    }
-
     /// Pure classifier: determines whether `text` begins with a recognised slash
     /// command, an unrecognised one (with an optional closest-match suggestion),
     /// or is not a slash command at all.  Does not return an error; callers
@@ -933,6 +847,19 @@ impl MessageEditor {
         prev[b.len()]
     }
 
+    /// Prepend a single space to the first text block so a leading `/x` is parsed
+    /// by the backend as prose, not a slash command (the documented manual workaround).
+    fn prepend_space_to_first_text_block(blocks: &mut [acp::ContentBlock]) {
+        for block in blocks.iter_mut() {
+            if let acp::ContentBlock::Text(text_content) = block {
+                if text_content.text.starts_with('/') {
+                    text_content.text.insert(0, ' ');
+                }
+                break; // only the first text block carries the leading command token
+            }
+        }
+    }
+
     pub fn contents(
         &self,
         full_mention_content: bool,
@@ -946,17 +873,16 @@ impl MessageEditor {
                 session_capabilities.available_skills().to_vec(),
             )
         };
-        let agent_id = self.agent_id.clone();
+        let classification =
+            Self::classify_slash_command(&text, &available_commands, &available_skills);
         let build_task = self.build_content_blocks(full_mention_content, cx);
 
         cx.spawn(async move |_, _cx| {
-            Self::validate_slash_commands(
-                &text,
-                &available_commands,
-                &available_skills,
-                &agent_id,
-            )?;
-            build_task.await
+            let (mut blocks, buffers) = build_task.await?;
+            if matches!(classification, SlashCommandClassification::Unrecognized { .. }) {
+                Self::prepend_space_to_first_text_block(&mut blocks);
+            }
+            Ok((blocks, buffers))
         })
     }
 
@@ -2325,7 +2251,7 @@ mod tests {
     use language_model::LanguageModelRegistry;
     use lsp::{CompletionContext, CompletionTriggerKind};
     use parking_lot::RwLock;
-    use project::{AgentId, CompletionIntent, Project, ProjectPath};
+    use project::{CompletionIntent, Project, ProjectPath};
     use serde_json::{Value, json};
 
     use text::Point;
@@ -2366,8 +2292,7 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_slash_commands_accepts_scope_qualified_skill() {
-        let agent_id = AgentId::from("Zed");
+    fn test_classify_scope_qualified_skill() {
         let make_skill = |name: &str, source: &str| AvailableSkill {
             name: name.into(),
             description: "desc".into(),
@@ -2381,86 +2306,88 @@ mod tests {
         // named `global` no longer collides with the global source.
         let commands = vec![acp::AvailableCommand::new("help", "获取帮助")];
         let skills = vec![make_skill("deploy", ""), make_skill("deploy", "zed")];
-        let no_skills = Vec::new();
+        let no_skills: Vec<AvailableSkill> = Vec::new();
 
         // Bare name still works (current behavior — the resolver
         // applies project-overrides-global for unqualified commands).
-        MessageEditor::validate_slash_commands("/deploy", &commands, &skills, &agent_id)
-            .expect("当存在名为 `deploy` 的技能时,裸名 /deploy 应该通过验证");
-        MessageEditor::validate_slash_commands("/zed:deploy", &commands, &no_skills, &agent_id)
-            .expect_err("限定范围的技能需要是一级可用技能");
+        assert!(
+            matches!(
+                MessageEditor::classify_slash_command("/deploy", &commands, &skills),
+                SlashCommandClassification::Recognized
+            ),
+            "当存在名为 `deploy` 的技能时,裸名 /deploy 应该被识别"
+        );
 
-        // Scope-qualified forms both validate, each pointing at the
+        // Scope-qualified form requires the skill to actually be in `available_skills`.
+        assert!(
+            matches!(
+                MessageEditor::classify_slash_command("/zed:deploy", &commands, &no_skills),
+                SlashCommandClassification::Unrecognized { .. }
+            ),
+            "限定范围的技能需要是一级可用技能"
+        );
+
+        // Scope-qualified forms both classify as Recognized, each pointing at the
         // matching source. `/:<name>` is the qualified form for a
         // global skill; `/<worktree>:<name>` is the qualified form
         // for a project-local skill.
-        MessageEditor::validate_slash_commands("/:deploy", &commands, &skills, &agent_id)
-            .expect("当存在名为 `deploy` 的全局技能时,/:deploy 应该通过验证");
-        MessageEditor::validate_slash_commands("/zed:deploy", &commands, &skills, &agent_id).expect(
-            "当 `zed` 工作树中存在名为 `deploy` 的项目技能时,/zed:deploy 应该通过验证",
+        assert!(
+            matches!(
+                MessageEditor::classify_slash_command("/:deploy", &commands, &skills),
+                SlashCommandClassification::Recognized
+            ),
+            "当存在名为 `deploy` 的全局技能时,/:deploy 应该被识别"
+        );
+        assert!(
+            matches!(
+                MessageEditor::classify_slash_command("/zed:deploy", &commands, &skills),
+                SlashCommandClassification::Recognized
+            ),
+            "当 `zed` 工作树中存在名为 `deploy` 的项目技能时,/zed:deploy 应该被识别"
         );
 
         // Hand-typed `/global:<name>` is NOT an alias for `/:<name>`.
         // It looks for a project-local skill from a worktree named
-        // `global`, and fails when no such worktree skill exists.
-        MessageEditor::validate_slash_commands("/global:deploy", &commands, &skills, &agent_id)
-            .expect_err(
-                "当没有名为 `global` 的工作树拥有 `deploy` 技能时,/global:deploy 应该失败",
-            );
+        // `global`, and should be Unrecognized when no such worktree skill exists.
+        assert!(
+            matches!(
+                MessageEditor::classify_slash_command("/global:deploy", &commands, &skills),
+                SlashCommandClassification::Unrecognized { .. }
+            ),
+            "当没有名为 `global` 的工作树拥有 `deploy` 技能时,/global:deploy 应为 Unrecognized"
+        );
 
         // The `:` separator is what distinguishes a skill scope from
         // an MCP server prefix — the dotted form `/zed.deploy` is an
         // MCP-style lookup, which doesn't match here.
-        MessageEditor::validate_slash_commands("/zed.deploy", &commands, &skills, &agent_id)
-            .expect_err("/zed.deploy(点号形式)应被视为 MCP 风格前缀并失败");
+        assert!(
+            matches!(
+                MessageEditor::classify_slash_command("/zed.deploy", &commands, &skills),
+                SlashCommandClassification::Unrecognized { .. }
+            ),
+            "/zed.deploy(点号形式)应被视为 MCP 风格前缀并得到 Unrecognized"
+        );
 
-        // Wrong scope is rejected so the resolver doesn't silently
-        // fall through when the user meant a skill. `zed:help` looks
-        // like a skill scope qualifier but no skill named `help`
-        // exists in the `zed` worktree (it's an MCP command).
-        let err =
-            MessageEditor::validate_slash_commands("/zed:help", &commands, &skills, &agent_id)
-                .expect_err(
-                    "/zed:help 应该失败——`help` 是 MCP 命令,不是工作树技能",
-                );
-        let err_message = err.to_string();
+        // Wrong scope is Unrecognized — `zed:help` looks like a skill scope qualifier
+        // but no skill named `help` exists in the `zed` worktree (it's an MCP command).
         assert!(
-            err_message.contains("/zed:help"),
-            "错误应提及输入的命令:{err_message}"
-        );
-        // Error listing shows qualified forms for skills so users see
-        // the exact text the popup would have inserted. Globals
-        // render with an empty scope as `/:<name>`.
-        assert!(
-            err_message.contains("/:deploy"),
-            "错误列表应显示限定的全局形式:{err_message}"
-        );
-        assert!(
-            err_message.contains("/zed:deploy"),
-            "错误列表应显示限定的工作树形式:{err_message}"
-        );
-        assert!(
-            err_message.contains("/help"),
-            "错误列表仍应显示裸名 MCP 命令:{err_message}"
+            matches!(
+                MessageEditor::classify_slash_command("/zed:help", &commands, &skills),
+                SlashCommandClassification::Unrecognized { .. }
+            ),
+            "/zed:help 应为 Unrecognized——`help` 是 MCP 命令,不是工作树技能"
         );
 
         // Slashes that appear mid-text (paths, URLs, pasted logs)
-        // should NOT be validated as commands.
-        MessageEditor::validate_slash_commands(
-            "查看 /docs 了解信息",
-            &commands,
-            &skills,
-            &agent_id,
-        )
-        .expect("文本中间的 /docs 不应被视为斜杠命令");
-
-        MessageEditor::validate_slash_commands(
-            "查看 /usr/local/bin/foo",
-            &commands,
-            &skills,
-            &agent_id,
-        )
-        .expect("包含斜杠的文件路径不应触发验证");
+        // should NOT be treated as slash commands (already covered by
+        // test_classify_non_command_slashes, preserved here for regression).
+        assert!(
+            matches!(
+                MessageEditor::classify_slash_command("查看 /docs 了解信息", &commands, &skills),
+                SlashCommandClassification::NotSlashCommand
+            ),
+            "文本中间的 /docs 不应被视为斜杠命令"
+        );
     }
 
     #[test]
@@ -2755,7 +2682,8 @@ mod tests {
         });
         let editor = message_editor.update(cx, |message_editor, _| message_editor.editor.clone());
 
-        // Test that slash commands fail when no available_commands are set (empty list means no commands supported)
+        // Unrecognized slash command with empty available_commands list:
+        // should send as prose (Ok), NOT hard-block.
         editor.update_in(cx, |editor, window, cx| {
             editor.set_text("/file test.txt", window, cx);
         });
@@ -2764,18 +2692,29 @@ mod tests {
             .update(cx, |message_editor, cx| message_editor.contents(false, cx))
             .await;
 
-        // Should fail because available_commands is empty (no commands supported)
-        assert!(contents_result.is_err());
-        let error_message = contents_result.unwrap_err().to_string();
-        assert!(error_message.contains("不是 Claude Agent 中可识别的命令"));
-        assert!(error_message.contains("Claude Agent 的可用命令:无"));
+        // Should succeed — unrecognized commands are forwarded as prose, not rejected.
+        assert!(
+            contents_result.is_ok(),
+            "当 available_commands 为空时,/file 应作为文本发送而不是报错"
+        );
+        let (content, _) = contents_result.unwrap();
+        assert_eq!(content.len(), 1);
+        if let acp::ContentBlock::Text(text) = &content[0] {
+            assert!(
+                text.text.starts_with(' '),
+                "未识别的斜杠命令应在首个文本块前加空格,实际内容:{:?}",
+                text.text
+            );
+        } else {
+            panic!("Expected ContentBlock::Text");
+        }
 
         // Now simulate Claude providing its list of available commands (which doesn't include file)
         session_capabilities
             .write()
             .set_available_commands(vec![acp::AvailableCommand::new("help", "获取帮助")]);
 
-        // Test that unsupported slash commands trigger an error when we have a list of available commands
+        // Unrecognized command when we DO have a command list: still sends as prose.
         editor.update_in(cx, |editor, window, cx| {
             editor.set_text("/file test.txt", window, cx);
         });
@@ -2784,13 +2723,22 @@ mod tests {
             .update(cx, |message_editor, cx| message_editor.contents(false, cx))
             .await;
 
-        assert!(contents_result.is_err());
-        let error_message = contents_result.unwrap_err().to_string();
-        assert!(error_message.contains("不是 Claude Agent 中可识别的命令"));
-        assert!(error_message.contains("/file"));
-        assert!(error_message.contains("Claude Agent 的可用命令:/help"));
+        assert!(
+            contents_result.is_ok(),
+            "有 available_commands 时,/file 仍应作为文本发送而不是报错"
+        );
+        let (content, _) = contents_result.unwrap();
+        if let acp::ContentBlock::Text(text) = &content[0] {
+            assert!(
+                text.text.starts_with(' '),
+                "未识别命令的文本块应以空格开头,实际内容:{:?}",
+                text.text
+            );
+        } else {
+            panic!("Expected ContentBlock::Text");
+        }
 
-        // Test that supported commands work fine
+        // Test that recognized commands are passed through unchanged (no leading space).
         editor.update_in(cx, |editor, window, cx| {
             editor.set_text("/help", window, cx);
         });
@@ -2800,7 +2748,10 @@ mod tests {
             .await;
 
         // Should succeed because /help is in available_commands
-        assert!(contents_result.is_ok());
+        assert!(
+            contents_result.is_ok(),
+            "/help 是已知命令,应该成功发送"
+        );
 
         // Test that regular text works fine
         editor.update_in(cx, |editor, window, cx| {
