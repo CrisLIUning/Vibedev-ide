@@ -1381,7 +1381,7 @@ async fn test_slow_lsp_server(cx_a: &mut TestAppContext, cx_b: &mut TestAppConte
     assert_eq!(
         requests_completed.load(atomic::Ordering::Acquire),
         1,
-        "After enough time, a single, deduplicated, LSP request should have been served by the language server"
+        "经过足够的时间后,语言服务器应已处理单个去重后的 LSP 请求"
     );
     let resulting_lens_actions = editor_b
         .update(cx_b, |editor, cx| {
@@ -1405,7 +1405,7 @@ async fn test_slow_lsp_server(cx_a: &mut TestAppContext, cx_b: &mut TestAppConte
             .unwrap()
             .lsp_action
             .title(),
-        "LSP Command 1",
+        "LSP 命令 1",
         "Only the final code lens action should be in the data"
     )
 }
@@ -5014,7 +5014,7 @@ async fn test_mutual_editor_semantic_token_cache_update(
         assert_eq!(
             ranges,
             vec![MultiBufferOffset(3)..MultiBufferOffset(3 + initial_edit + 4)],
-            "Host should get its first semantic tokens when opening an editor"
+            "主机打开编辑器时应获取其首批语义令牌"
         );
     });
 
@@ -5035,7 +5035,7 @@ async fn test_mutual_editor_semantic_token_cache_update(
         assert_eq!(
             ranges,
             vec![MultiBufferOffset(3)..MultiBufferOffset(3 + initial_edit + 4)],
-            "Client should get its first semantic tokens when opening an editor"
+            "客户端打开编辑器时应获取其首批语义令牌"
         );
     });
 
@@ -5240,7 +5240,7 @@ async fn test_semantic_token_refresh_is_forwarded(
     editor_a.update(cx_a, |editor, cx| {
         assert!(
             extract_semantic_token_ranges(editor, cx).is_empty(),
-            "Host should get no semantic tokens due to them turned off"
+            "由于语义令牌已关闭,主机不应获取任何语义令牌"
         );
     });
 
@@ -5249,7 +5249,7 @@ async fn test_semantic_token_refresh_is_forwarded(
         assert_eq!(
             vec![MultiBufferOffset(3)..MultiBufferOffset(7)],
             extract_semantic_token_ranges(editor, cx),
-            "Client should get its first semantic tokens when opening an editor"
+            "客户端打开编辑器时应获取其首批语义令牌"
         );
     });
 
@@ -5258,14 +5258,14 @@ async fn test_semantic_token_refresh_is_forwarded(
         .request::<lsp::request::SemanticTokensRefresh>((), DEFAULT_LSP_REQUEST_TIMEOUT)
         .await
         .into_response()
-        .expect("semantic tokens refresh request failed");
+        .expect("语义令牌刷新请求失败");
     // wait out the debounce timeout
     executor.advance_clock(LSP_REQUEST_DEBOUNCE_TIMEOUT);
     executor.run_until_parked();
     editor_a.update(cx_a, |editor, cx| {
         assert!(
             extract_semantic_token_ranges(editor, cx).is_empty(),
-            "Host should get no semantic tokens due to them turned off, even after the /refresh"
+            "即使执行了 /refresh,由于语义令牌已关闭,主机仍不应获取任何语义令牌"
         );
     });
 
@@ -5274,7 +5274,7 @@ async fn test_semantic_token_refresh_is_forwarded(
         assert_eq!(
             vec![MultiBufferOffset(0)..MultiBufferOffset(2)],
             extract_semantic_token_ranges(editor, cx),
-            "Guest should get a /refresh LSP request propagated by host despite host tokens are off"
+            "尽管主机的令牌已关闭,访客仍应收到由主机传播的 /refresh LSP 请求"
         );
     });
 }
@@ -5382,12 +5382,12 @@ async fn test_document_folding_ranges(cx_a: &mut TestAppContext, cx_b: &mut Test
     assert_eq!(
         0,
         folding_request_count.load(atomic::Ordering::Acquire),
-        "LSP folding ranges are off by default, no request should have been made"
+        "LSP 折叠范围默认关闭,不应发起任何请求"
     );
     editor_a.update(cx_a, |editor, cx| {
         assert!(
             !editor.document_folding_ranges_enabled(cx),
-            "Host should not have LSP folding ranges enabled"
+            "主机不应启用 LSP 折叠范围"
         );
     });
 
@@ -5405,7 +5405,7 @@ async fn test_document_folding_ranges(cx_a: &mut TestAppContext, cx_b: &mut Test
     editor_b.update(cx_b, |editor, cx| {
         assert!(
             !editor.document_folding_ranges_enabled(cx),
-            "Client should not have LSP folding ranges enabled by default"
+            "客户端默认不应启用 LSP 折叠范围"
         );
     });
 
@@ -5426,18 +5426,18 @@ async fn test_document_folding_ranges(cx_a: &mut TestAppContext, cx_b: &mut Test
 
     assert!(
         folding_request_count.load(atomic::Ordering::Acquire) > 0,
-        "After the client enables LSP folding ranges, a request should be made"
+        "客户端启用 LSP 折叠范围后,应发起请求"
     );
     editor_b.update(cx_b, |editor, cx| {
         assert!(
             editor.document_folding_ranges_enabled(cx),
-            "Client should have LSP folding ranges enabled after toggling the setting on"
+            "开启设置后,客户端应启用 LSP 折叠范围"
         );
     });
     editor_a.update(cx_a, |editor, cx| {
         assert!(
             !editor.document_folding_ranges_enabled(cx),
-            "Host should remain unaffected by the client's setting change"
+            "主机应不受客户端设置更改的影响"
         );
     });
 
@@ -5445,7 +5445,7 @@ async fn test_document_folding_ranges(cx_a: &mut TestAppContext, cx_b: &mut Test
         let snapshot = editor.display_snapshot(cx);
         assert!(
             !snapshot.is_line_folded(MultiBufferRow(0)),
-            "Line 0 should not be folded before fold_at"
+            "在 fold_at 之前,第 0 行不应被折叠"
         );
         editor.fold_at(MultiBufferRow(0), window, cx);
     });
@@ -5455,7 +5455,7 @@ async fn test_document_folding_ranges(cx_a: &mut TestAppContext, cx_b: &mut Test
         let snapshot = editor.display_snapshot(cx);
         assert!(
             snapshot.is_line_folded(MultiBufferRow(0)),
-            "Line 0 should be folded after fold_at using LSP folding range"
+            "使用 LSP 折叠范围执行 fold_at 后,第 0 行应被折叠"
         );
     });
 }
@@ -5704,12 +5704,12 @@ async fn test_document_symbols(cx_a: &mut TestAppContext, cx_b: &mut TestAppCont
     editor_a.update(cx_a, |editor, cx| {
         let (breadcrumbs, _) = editor
             .breadcrumbs(cx)
-            .expect("Host should have breadcrumbs");
+            .expect("主机应有面包屑导航");
         let texts: Vec<_> = breadcrumbs.iter().map(|b| b.text.as_str()).collect();
         assert_eq!(
             texts,
             vec!["main.rs", "struct Foo"],
-            "Host should see file path and LSP symbol 'Foo' in breadcrumbs"
+            "主机应在面包屑导航中看到文件路径和 LSP 符号 'Foo'"
         );
     });
 
@@ -5737,13 +5737,13 @@ async fn test_document_symbols(cx_a: &mut TestAppContext, cx_b: &mut TestAppCont
         assert_eq!(
             editor
                 .breadcrumbs(cx)
-                .expect("Client B should have breadcrumbs")
+                .expect("客户端 B 应有面包屑导航")
                 .0
                 .iter()
                 .map(|b| b.text.as_str())
                 .collect::<Vec<_>>(),
             vec!["main.rs", "struct Foo"],
-            "Client B should see file path and LSP symbol 'Foo' via remote project"
+            "客户端 B 应通过远程项目看到文件路径和 LSP 符号 'Foo'"
         );
     });
 }

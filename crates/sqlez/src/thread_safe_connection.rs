@@ -87,7 +87,7 @@ impl<M: Migrator> ThreadSafeConnectionBuilder<M> {
                 if let Some(db_initialize_query) = db_initialize_query {
                     connection.exec(db_initialize_query).with_context(|| {
                         format!(
-                            "Db initialize query failed to execute: {}",
+                            "数据库初始化查询执行失败: {}",
                             db_initialize_query
                         )
                     })?()?;
@@ -218,7 +218,7 @@ impl ThreadSafeConnection {
                     }
                     Err(err) => {
                         panic!(
-                            "Initialize query failed to execute: {}\n\nCaused by:\n{err:#}",
+                            "初始化查询执行失败: {}\n\n原因:\n{err:#}",
                             initialize_query
                         )
                     }
@@ -227,9 +227,9 @@ impl ThreadSafeConnection {
 
             if !initialized {
                 let err = last_error
-                    .expect("connection initialization retries should record the last error");
+                    .expect("连接初始化重试应记录最后的错误");
                 panic!(
-                    "Initialize query failed to execute after retries: {}\n\nCaused by:\n{err:#}",
+                    "重试后初始化查询执行失败: {}\n\n原因:\n{err:#}",
                     initialize_query
                 );
             }

@@ -8,6 +8,9 @@ pub struct TitleBarSettings {
     pub show_user_picture: bool,
     pub show_branch_name: bool,
     pub show_project_items: bool,
+    // VIBEDEV: kept for settings schema parity (read in `from_settings` above) — VibeDev does not
+    // render Zed Cloud's "Sign In" chip in the title bar, so this value never gates UI.
+    #[allow(dead_code)]
     pub show_sign_in: bool,
     pub show_user_menu: bool,
     pub show_menus: bool,

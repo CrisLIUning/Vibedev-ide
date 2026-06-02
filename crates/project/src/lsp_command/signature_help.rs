@@ -73,7 +73,7 @@ impl SignatureHelp {
                                     Some(offset1..offset2)
                                 } else {
                                     log::warn!(
-                                        "language server {lang_server_id:?} produced invalid parameter label range: {offset1:?}..{offset2:?}",
+                                        "语言服务器 {lang_server_id:?} 生成了无效的参数标签范围: {offset1:?}..{offset2:?}",
                                     );
                                     None
                                 }

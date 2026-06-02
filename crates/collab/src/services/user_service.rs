@@ -39,7 +39,7 @@ pub trait UserService: Send + Sync + 'static {
 
     #[cfg(feature = "test-support")]
     fn as_fake(&self) -> std::sync::Arc<FakeUserService> {
-        panic!("called as_fake on a real `UserService`");
+        panic!("在真实的 `UserService` 上调用了 as_fake 方法");
     }
 }
 
@@ -74,13 +74,13 @@ impl CloudUserService {
                 format!("Bearer {}", &self.internal_api_key),
             )
             .build()
-            .context("failed to build request")?;
+            .context("构建请求失败")?;
 
         let response = self
             .http_client
             .execute(request)
             .await
-            .context("failed to send request to Cloud")?;
+            .context("发送请求到 Cloud 失败")?;
 
         let status = response.status();
         match response.error_for_status() {
@@ -88,11 +88,11 @@ impl CloudUserService {
                 let response_body: T = response
                     .json()
                     .await
-                    .context("failed to parse response body")?;
+                    .context("解析响应体失败")?;
 
                 Ok(response_body)
             }
-            Err(_err) => Err(anyhow!("request to Cloud failed with status {status}",))?,
+            Err(_err) => Err(anyhow!("请求 Cloud 失败,状态码:{status}",))?,
         }
     }
 }
@@ -333,7 +333,7 @@ mod fake_user_service {
         async fn fuzzy_search_users(&self, query: &str, limit: u32) -> Result<Vec<User>> {
             let _ = query;
             let _ = limit;
-            unimplemented!("not currently exercised by any tests")
+            unimplemented!("当前测试未覆盖此功能")
         }
 
         async fn search_channel_members(

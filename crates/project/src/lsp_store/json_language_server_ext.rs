@@ -30,7 +30,7 @@ impl Global for SchemaHandlingImpl {}
 pub fn register_schema_handler(handler: SchemaRequestHandler, cx: &mut App) {
     debug_assert!(
         !cx.has_global::<SchemaHandlingImpl>(),
-        "SchemaHandlingImpl already registered"
+        "SchemaHandlingImpl 已注册"
     );
     cx.set_global(SchemaHandlingImpl(handler));
 }
@@ -43,7 +43,7 @@ impl lsp::notification::Notification for SchemaContentsChanged {
 }
 
 pub fn notify_schemas_changed(lsp_store: Entity<LspStore>, uris: &[String], cx: &App) {
-    zlog::trace!(LOGGER => "Notifying schema changes for URIs: {:?}", uris);
+    zlog::trace!(LOGGER => "通知 URI 的 schema 变更: {:?}", uris);
     let servers = lsp_store.read_with(cx, |lsp_store, _| {
         let mut servers = Vec::new();
         let Some(local) = lsp_store.as_local() else {
@@ -64,13 +64,13 @@ pub fn notify_schemas_changed(lsp_store: Entity<LspStore>, uris: &[String], cx: 
     });
     for server in servers {
         for uri in uris {
-            zlog::trace!(LOGGER => "Notifying server {NAME} (id {ID:?}) of schema change for URI: {uri:?}",
+            zlog::trace!(LOGGER => "正在通知服务器 {NAME} (id {ID:?}) URI 的 schema 变更: {uri:?}",
                 NAME = server.name(),
                 ID = server.server_id()
             );
             if let Err(error) = server.notify::<SchemaContentsChanged>(uri.clone()) {
                 zlog::error!(
-                    LOGGER => "Failed to notify server {NAME} (id {ID:?}) of schema change for URI {uri:?}: {error:#}",
+                    LOGGER => "无法通知服务器 {NAME} (id {ID:?}) URI 的 schema 变更 {uri:?}: {error:#}",
                         NAME = server.name(),
                         ID = server.server_id(),
                 );

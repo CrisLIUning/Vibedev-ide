@@ -297,7 +297,7 @@ fn group_bindings(
             // This is a group - create a single entry with just the first keystroke
             let first_keystroke = vec![first_key];
             let count = group_bindings.len();
-            result.push((first_keystroke, format!("+{} keybinds", count).into()));
+            result.push((first_keystroke, format!("+{} 个快捷键", count).into()));
         } else {
             // Not a group or empty keystrokes - add all bindings as-is
             result.append(&mut group_bindings);

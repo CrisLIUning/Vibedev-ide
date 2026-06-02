@@ -1004,7 +1004,7 @@ async fn test_stack_frame_filter(executor: BackgroundExecutor, cx: &mut TestAppC
 
     stack_frame_list.update(cx, |stack_frame_list, cx| {
         let all_frames = stack_frame_list.flatten_entries(true, false);
-        assert_eq!(all_frames.len(), 5, "Should see all 5 frames initially");
+        assert_eq!(all_frames.len(), 5, "初始应显示全部 5 个帧");
 
         stack_frame_list
             .toggle_frame_filter(Some(project::debugger::session::ThreadStatus::Stopped), cx);
@@ -1016,7 +1016,7 @@ async fn test_stack_frame_filter(executor: BackgroundExecutor, cx: &mut TestAppC
 
     stack_frame_list.update(cx, |stack_frame_list, cx| {
         let user_frames = stack_frame_list.dap_stack_frames(cx);
-        assert_eq!(user_frames.len(), 2, "Should only see 2 user frames");
+        assert_eq!(user_frames.len(), 2, "应仅显示 2 个用户帧");
         assert_eq!(user_frames[0].name, "main");
         assert_eq!(user_frames[1].name, "doSomething");
 
@@ -1031,7 +1031,7 @@ async fn test_stack_frame_filter(executor: BackgroundExecutor, cx: &mut TestAppC
         assert_eq!(
             all_frames_again.len(),
             5,
-            "Should see all 5 frames after toggling back"
+            "切换回后应显示全部 5 个帧"
         );
 
         // Test 3: Verify collapsed entries stay expanded
@@ -1087,7 +1087,7 @@ async fn test_stack_frame_filter(executor: BackgroundExecutor, cx: &mut TestAppC
                 StackFrameEntry::Normal(stack_frames_for_assertions[3].clone()),
                 StackFrameEntry::Normal(stack_frames_for_assertions[4].clone()),
             ],
-            "Expanded entries should remain expanded after toggling filter"
+            "切换过滤器后,展开的条目应保持展开状态"
         );
     });
 }
@@ -1196,7 +1196,7 @@ async fn test_stack_frame_filter_persistence(
         assert_eq!(
             stack_frame_list.list_filter(),
             StackFrameFilter::All,
-            "Initial filter should be All"
+            "初始过滤器应为 All"
         );
     });
 
@@ -1206,7 +1206,7 @@ async fn test_stack_frame_filter_persistence(
         assert_eq!(
             stack_frame_list.list_filter(),
             StackFrameFilter::OnlyUserFrames,
-            "Filter should be OnlyUserFrames after toggle"
+            "切换后过滤器应为 OnlyUserFrames"
         );
     });
 
@@ -1216,7 +1216,7 @@ async fn test_stack_frame_filter_persistence(
         .update(cx, |workspace, _window, cx| workspace.database_id(cx))
         .ok()
         .flatten()
-        .expect("workspace id has to be some for this test to work properly");
+        .expect("工作区 ID 必须存在,此测试才能正常运行");
 
     let key = stack_frame_filter_key(&adapter_name, workspace_id);
     let stored_value = cx
@@ -1226,7 +1226,7 @@ async fn test_stack_frame_filter_persistence(
     assert_eq!(
         stored_value,
         Some(StackFrameFilter::OnlyUserFrames.into()),
-        "Filter should be persisted in KVP store with key: {}",
+        "过滤器应持久化在 KVP 存储中,键为:{}",
         key
     );
 
@@ -1267,7 +1267,7 @@ async fn test_stack_frame_filter_persistence(
         assert_eq!(
             stack_frame_list.list_filter(),
             StackFrameFilter::OnlyUserFrames,
-            "Filter should be restored from KVP store in new session"
+            "新会话中应从 KVP 存储恢复过滤器"
         );
     });
 }

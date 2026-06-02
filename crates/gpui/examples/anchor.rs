@@ -92,7 +92,7 @@ impl Render for AnchorDemo {
             .bg(gpui::white())
             .gap_4()
             .p_10()
-            .child("Popover with Anchor")
+            .child("带锚点的弹出框")
             .child(
                 div()
                     .size_128()

@@ -49,7 +49,7 @@ const REMOTE_SERVER_CACHE_LIMIT: usize = 5;
 fn linux_rsync_install_hint() -> &'static str {
     let os_release = match std::fs::read_to_string("/etc/os-release") {
         Ok(os_release) => os_release,
-        Err(_) => return "Please install rsync using your package manager",
+        Err(_) => return "请使用您的包管理器安装 rsync",
     };
 
     let mut distribution_ids = Vec::new();
@@ -86,12 +86,12 @@ fn linux_rsync_install_hint() -> &'static str {
         .iter()
         .any(|distribution_id| distribution_id == "nixos")
     {
-        Some("Install pkgs.rsync from nixpkgs")
+        Some("从 nixpkgs 安装 rsync")
     } else {
         None
     };
 
-    package_manager_hint.unwrap_or("Please install rsync using your package manager")
+    package_manager_hint.unwrap_or("请使用您的包管理器安装 rsync")
 }
 
 actions!(
@@ -170,6 +170,12 @@ pub struct AutoUpdater {
     pending_poll: Option<Task<Option<()>>>,
     quit_subscription: Option<gpui::Subscription>,
     update_check_type: UpdateCheckType,
+    // VIBEDEV (agent-OTA): the version of a freshly-staged `agent.new/`, set once
+    // `check_and_stage_agent_update` publishes a stage on the poll. Decoupled from
+    // the app `status` (the agent version line is independent of the app version).
+    // A later UI task reads this via `staged_agent_version()` to show a "restart to
+    // apply the agent update" notice; this crate intentionally builds no UI for it.
+    staged_agent_version: Option<Version>,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -199,7 +205,7 @@ impl Drop for MacOsUnmounter<'_> {
                     }
                     Ok(output) => {
                         log::error!(
-                            "Failed to unmount disk image: {:?}",
+                            "卸载磁盘镜像失败: {:?}",
                             String::from_utf8_lossy(&output.stderr)
                         );
                     }
@@ -230,6 +236,20 @@ struct GlobalAutoUpdate(Option<Entity<AutoUpdater>>);
 impl Global for GlobalAutoUpdate {}
 
 pub fn init(client: Arc<Client>, cx: &mut App) {
+    // VIBEDEV: this body runs (the prior early-return was removed) so the
+    // GlobalAutoUpdate is registered — required by SSH remote-server download
+    // (download_remote_server_release / get_remote_server_release_url) AND by
+    // future app self-update, which share get_release_asset. That asset URL is
+    // repointed at VibeDev's own server (see get_release_asset below); it never
+    // hits zed.dev.
+    //
+    // App self-update POLLING stays OFF without any extra guard here: the
+    // `auto_update` setting in assets/settings/default.json is `false`, and the
+    // polling loop below is only armed when `AutoUpdateSetting::get_global(cx).0`
+    // is true. With the setting false, `start_polling` is never called and the
+    // SettingsStore observer only ever arms polling if the user explicitly flips
+    // the setting on. So registering the global here does NOT start any app
+    // self-update download/install.
     cx.observe_new(|workspace: &mut Workspace, _window, _cx| {
         workspace.register_action(|_, action, window, cx| check(action, window, cx));
 
@@ -279,7 +299,7 @@ pub fn check(_: &Check, window: &mut Window, cx: &mut App) {
     {
         drop(window.prompt(
             gpui::PromptLevel::Info,
-            "Zed was installed via a package manager.",
+            "VibeDev 是通过包管理器安装的。",
             Some(&message),
             &["Ok"],
             cx,
@@ -299,8 +319,8 @@ pub fn check(_: &Check, window: &mut Window, cx: &mut App) {
     } else {
         drop(window.prompt(
             gpui::PromptLevel::Info,
-            "Could not check for updates",
-            Some("Auto-updates disabled for non-bundled app."),
+            "无法检查更新",
+            Some("非捆绑应用已禁用自动更新。"),
             &["Ok"],
             cx,
         ));
@@ -416,6 +436,7 @@ impl AutoUpdater {
             pending_poll: None,
             quit_subscription,
             update_check_type: UpdateCheckType::Automatic,
+            staged_agent_version: None,
         }
     }
 
@@ -468,7 +489,7 @@ impl AutoUpdater {
                         error.downcast_ref::<MissingDependencyError>().is_some();
                     this.status = match check_type {
                         UpdateCheckType::Automatic if is_missing_dependency => {
-                            log::warn!("auto-update: {}", error);
+                            log::warn!("自动更新: {}", error);
                             AutoUpdateStatus::Errored {
                                 error: Arc::new(error),
                             }
@@ -501,6 +522,15 @@ impl AutoUpdater {
         self.status.clone()
     }
 
+    // VIBEDEV (agent-OTA): the version staged at `<install_dir>/agent.new/` by the
+    // last successful poll, if any. `None` means no agent update is pending. A
+    // later UI task uses this to surface a "restart to apply the agent update"
+    // notice; the swap itself happens at next launch (see
+    // `vibedev_account::launcher::apply_staged_agent_update`).
+    pub fn staged_agent_version(&self) -> Option<&Version> {
+        self.staged_agent_version.as_ref()
+    }
+
     pub fn dismiss(&mut self, cx: &mut Context<Self>) -> bool {
         if let AutoUpdateStatus::Idle = self.status {
             return false;
@@ -528,12 +558,12 @@ impl AutoUpdater {
                 .context("auto-update not initialized")
         })?;
 
-        set_status("Fetching remote server release", cx);
+        set_status("正在获取远程服务器版本", cx);
         let release = Self::get_release_asset(
             &this,
             release_channel,
             version,
-            "zed-remote-server",
+            "vibedev-remote-server",
             os,
             arch,
             cx,
@@ -550,10 +580,10 @@ impl AutoUpdater {
 
         if smol::fs::metadata(&version_path).await.is_err() {
             log::info!(
-                "downloading zed-remote-server {os} {arch} version {}",
+                "downloading vibedev-remote-server {os} {arch} version {}",
                 release.version
             );
-            set_status("Downloading remote server", cx);
+            set_status("正在下载远程服务器", cx);
             download_remote_server_binary(&version_path, release, client).await?;
         }
 
@@ -562,7 +592,7 @@ impl AutoUpdater {
                 .await
         {
             log::warn!(
-                "Failed to clean up remote server cache in {:?}: {error:#}",
+                "清理 {:?} 中的远程服务器缓存失败: {error:#}",
                 platform_dir
             );
         }
@@ -585,7 +615,7 @@ impl AutoUpdater {
         })?;
 
         let release =
-            Self::get_release_asset(&this, channel, version, "zed-remote-server", os, arch, cx)
+            Self::get_release_asset(&this, channel, version, "vibedev-remote-server", os, arch, cx)
                 .await?;
 
         Ok(Some(release.url))
@@ -621,18 +651,30 @@ impl AutoUpdater {
         };
         let http_client = client.http_client();
 
+        // VIBEDEV: the release asset URL must point at VibeDev's own server and
+        // must NEVER hit zed.dev / cloud.zed.dev / zed-industries. This is the
+        // single shared download endpoint used by BOTH SSH remote-server
+        // provisioning (download_remote_server_release /
+        // get_remote_server_release_url) AND (future) app self-update.
+        //
+        // Upstream built this via http_client.build_zed_cloud_url_with_query(),
+        // whose base resolves to cloud.zed.dev. We intentionally do NOT use that
+        // helper here (it stays untouched because cloud_api_client relies on it
+        // for sign-in / llm_tokens). Instead we build the URL directly against
+        // VIBEDEV_RELEASES_BASE, mirroring the helper's shape:
+        //   {base}{path}?{serde_urlencoded(query)}
+        const VIBEDEV_RELEASES_BASE: &str = "https://aitoken.bigopen.cn/vibedev";
+
         let path = format!("/releases/{}/{}/asset", release_channel.dev_name(), version,);
-        let url = http_client.build_zed_cloud_url_with_query(
-            &path,
-            AssetQuery {
-                os,
-                arch,
-                asset,
-                metrics_id: metrics_id.as_deref(),
-                system_id: system_id.as_deref(),
-                is_staff,
-            },
-        )?;
+        let query = serde_urlencoded::to_string(AssetQuery {
+            os,
+            arch,
+            asset,
+            metrics_id: metrics_id.as_deref(),
+            system_id: system_id.as_deref(),
+            is_staff,
+        })?;
+        let url = format!("{VIBEDEV_RELEASES_BASE}{path}?{query}");
 
         let mut response = http_client
             .get(url.as_str(), Default::default(), true)
@@ -642,16 +684,268 @@ impl AutoUpdater {
 
         anyhow::ensure!(
             response.status().is_success(),
-            "failed to fetch release: {:?}",
+            "获取发布版本失败: {:?}",
             String::from_utf8_lossy(&body),
         );
 
         serde_json::from_slice(body.as_slice()).with_context(|| {
             format!(
-                "error deserializing release {:?}",
+                "反序列化发布版本 {:?} 时出错",
                 String::from_utf8_lossy(&body),
             )
         })
+    }
+
+    /// VIBEDEV (agent-OTA): the detect + download + STAGE half of agent-OTA. Runs
+    /// on the auto-update poll (see `update`). Checks the separately-versioned
+    /// `vibedev-agent` release asset against the local `<install_dir>/agent/VERSION`
+    /// and, if newer (and nothing is already staged), downloads the tarball,
+    /// extracts + TRANSFORMS it into the bundled flattened layout, and publishes it
+    /// at `<install_dir>/agent.new/`. A separate already-landed task
+    /// (`vibedev_account::launcher::apply_staged_agent_update`) swaps `agent.new/`
+    /// → `agent/` on the next launch; a later task shows a notice.
+    ///
+    /// LAYOUT (single-binary): the `vibedev-agent-<os>-x86_64.tar.gz` asset is now
+    /// FLAT — `vibedev-agent[.exe]`, `VERSION`, `vendor/...` at the tarball root —
+    /// which is EXACTLY the bundled `agent/` layout the launcher reads. So there is
+    /// no dist/→flatten transform anymore: the extracted tree IS the agent, and we
+    /// just move it into the stage. (The old split layout shipped `bin/bun[.exe]` +
+    /// `dist/cli-bun.js`; the compiled single binary embeds the Bun runtime, so
+    /// there is no separate bun runtime + entry script.)
+    ///
+    /// Non-fatal by contract: every failure path returns `Err` (the caller logs a
+    /// warning and continues the app-update poll). On ANY error during
+    /// download/extract/transform/verify, ALL partials are removed so a failed
+    /// attempt leaves NO `agent.new/` — the next poll retries cleanly. The atomic
+    /// `rename(agent.new.partial -> agent.new)` is the ONLY step that makes the
+    /// stage "exist", so a half-built stage is never observed by the swap task.
+    async fn check_and_stage_agent_update(
+        this: &Entity<Self>,
+        release_channel: ReleaseChannel,
+        client: Arc<HttpClientWithUrl>,
+        cx: &mut AsyncApp,
+    ) -> Result<()> {
+        // a. Resolve the install dir + the agent paths. This duplicates the 2-line
+        // `current_exe().parent()` resolution that `InstallerDir::new` (windows)
+        // and `cleanup_windows`/`install_release_windows` already use here; the
+        // canonical copy is `vibedev_account::launcher::install_dir()`, but we do
+        // NOT add a cross-crate dependency on it for this.
+        let install_dir = std::env::current_exe()?
+            .parent()
+            .context("agent-OTA: no parent dir for the running executable")?
+            .to_path_buf();
+        let agent = install_dir.join("agent");
+        let staged = install_dir.join("agent.new");
+
+        // a (cont). If a stage already exists, do NOT re-download. The swap-on-launch
+        // task / the notice handle the pending stage; clobbering it would risk
+        // tearing a stage another (earlier) poll already published.
+        if smol::fs::metadata(&staged).await.is_ok() {
+            log::info!(
+                "auto-update (agent-OTA): agent update already staged at {}; skipping",
+                staged.display()
+            );
+            return Ok(());
+        }
+
+        // b. Fetch the `vibedev-agent` asset. A fetch failure (e.g. the manifest has
+        // no `vibedev-agent` entry yet) is NON-fatal: log info and return Ok so the
+        // app-update poll continues unaffected.
+        let release = match Self::get_release_asset(
+            this,
+            release_channel,
+            None,
+            "vibedev-agent",
+            OS,
+            ARCH,
+            cx,
+        )
+        .await
+        {
+            Ok(release) => release,
+            Err(error) => {
+                log::info!(
+                    "auto-update (agent-OTA): no vibedev-agent asset available (skipping): {error:#}"
+                );
+                return Ok(());
+            }
+        };
+        let manifest_version = release
+            .version
+            .parse::<Version>()
+            .with_context(|| format!("agent-OTA: bad manifest agent version {:?}", release.version))?;
+
+        // c. Read the local `<install_dir>/agent/VERSION` (trimmed semver) and
+        // decide. The decision is extracted into the pure `should_stage_agent`
+        // helper (unit-tested). A missing/unparseable local VERSION counts as
+        // "stage it" (a known-good newer build should win over an unknown local).
+        let local_version = smol::fs::read_to_string(agent.join("VERSION"))
+            .await
+            .ok()
+            .and_then(|contents| contents.trim().parse::<Version>().ok());
+        if !should_stage_agent(&manifest_version, local_version.as_ref()) {
+            log::info!(
+                "auto-update (agent-OTA): agent up to date (local {}, manifest {manifest_version})",
+                local_version
+                    .as_ref()
+                    .map(|v| v.to_string())
+                    .unwrap_or_else(|| "none".to_string()),
+            );
+            return Ok(());
+        }
+        log::info!(
+            "auto-update (agent-OTA): staging agent update (local {} -> manifest {manifest_version})",
+            local_version
+                .as_ref()
+                .map(|v| v.to_string())
+                .unwrap_or_else(|| "none".to_string()),
+        );
+
+        // d-h. Download → extract → transform → verify → publish, with a single
+        // cleanup site for every partial on any error.
+        // Fixed name (not PID-suffixed): the single-instance mutex already prevents
+        // concurrent polls, so a PID buys no safety — it only prevents the pre-clean
+        // below from reclaiming a tarball orphaned by a crashed prior poll (a dead
+        // PID's name would never be swept = an unbounded ~100MB+ leak in the install
+        // dir). A fixed name self-heals: the next poll's pre-clean removes it.
+        let tarball = install_dir.join("agent.dl.tar.gz");
+        let extract_dir = install_dir.join("agent.new.extract");
+        let partial = install_dir.join("agent.new.partial");
+
+        let result = Self::download_extract_transform_agent(
+            &release,
+            client,
+            &install_dir,
+            &tarball,
+            &extract_dir,
+            &partial,
+            &staged,
+        )
+        .await;
+
+        // i. Cleanup. The temp tarball and the extraction dir are always removed
+        // (whether or not the stage published). On error, the partial stage is also
+        // removed so NO `agent.new/` (and no `agent.new.partial/`) is left behind —
+        // the next poll retries cleanly.
+        let _ = smol::fs::remove_file(&tarball).await;
+        let _ = smol::fs::remove_dir_all(&extract_dir).await;
+        if result.is_err() {
+            let _ = smol::fs::remove_dir_all(&partial).await;
+        }
+
+        result?;
+
+        // On success, record the staged version on the entity so a later UI task can
+        // show a notice. Decoupled from `status`.
+        let staged_version = manifest_version.clone();
+        this.update(cx, |this, cx| {
+            this.staged_agent_version = Some(staged_version);
+            cx.notify();
+        });
+
+        log::info!(
+            "auto-update (agent-OTA): staged agent {manifest_version} at {}",
+            staged.display()
+        );
+        Ok(())
+    }
+
+    /// VIBEDEV (agent-OTA): the download → extract → TRANSFORM → verify → publish
+    /// pipeline. Split out from `check_and_stage_agent_update` so the latter owns a
+    /// single cleanup site for all partials (any `Err` from here triggers removal of
+    /// `agent.new.partial/` + the temp tarball + `agent.new.extract/`). All fs ops
+    /// use `smol::fs` (async) so the large `dist/` copy/move never blocks the UI
+    /// thread.
+    async fn download_extract_transform_agent(
+        release: &ReleaseAsset,
+        client: Arc<HttpClientWithUrl>,
+        install_dir: &Path,
+        tarball: &Path,
+        extract_dir: &Path,
+        partial: &Path,
+        staged: &Path,
+    ) -> Result<()> {
+        // Pre-clean any debris from a previously-interrupted attempt so the renames
+        // below don't trip over a leftover partial/extract dir.
+        let _ = smol::fs::remove_file(tarball).await;
+        let _ = smol::fs::remove_dir_all(extract_dir).await;
+        let _ = smol::fs::remove_dir_all(partial).await;
+
+        // d. Download the tarball next to the install dir (same volume as the final
+        // stage, so the publish rename is a cheap metadata move).
+        download_release(tarball, release.clone(), client)
+            .await
+            .with_context(|| format!("agent-OTA: downloading agent tarball to {}", tarball.display()))?;
+
+        // e. Extract via `tar -xzf`, mirroring `install_release_linux`. Windows tar
+        // gotcha: a GNU `tar` on PATH reads an absolute `C:\...` path as
+        // `host:path`. To dodge that on every platform, run `tar` from the install
+        // dir (`current_dir`) and pass RELATIVE paths for both the archive and the
+        // `-C` target. The extraction dir must exist first (tar `-C` does not create
+        // it).
+        smol::fs::create_dir_all(extract_dir)
+            .await
+            .with_context(|| format!("agent-OTA: creating extraction dir {}", extract_dir.display()))?;
+        let tarball_rel = tarball
+            .file_name()
+            .context("agent-OTA: tarball has no file name")?;
+        let extract_rel = extract_dir
+            .file_name()
+            .context("agent-OTA: extraction dir has no file name")?;
+        let mut cmd = new_command("tar");
+        cmd.current_dir(install_dir)
+            .arg("-xzf")
+            .arg(tarball_rel)
+            .arg("-C")
+            .arg(extract_rel);
+        let output = cmd
+            .output()
+            .await
+            .context("agent-OTA: failed to run tar")?;
+        anyhow::ensure!(
+            output.status.success(),
+            "agent-OTA: extracting {} failed: {:?}",
+            tarball.display(),
+            String::from_utf8_lossy(&output.stderr)
+        );
+
+        // f. The tarball is FLAT (vibedev-agent[.exe] + VERSION + vendor/ at root),
+        // i.e. already the bundled agent/ layout — so the "transform" is just moving
+        // the extracted tree into the stage. One rename of the whole extraction dir
+        // brings the binary + VERSION + vendor/ across; no dist/→flatten, no
+        // separate bun runtime to place.
+        smol::fs::rename(extract_dir, partial)
+            .await
+            .with_context(|| {
+                format!("agent-OTA: moving extracted agent -> {}", partial.display())
+            })?;
+
+        // g. Verify the staged contract before publishing. These are exactly what
+        // the launcher reads from `agent/` after the swap: the compiled agent binary
+        // + `VERSION` (the swap-on-launch version gate). Any missing → treat as
+        // failure (caller cleans up the partial).
+        let agent_bin = if cfg!(target_os = "windows") {
+            "vibedev-agent.exe"
+        } else {
+            "vibedev-agent"
+        };
+        anyhow::ensure!(
+            smol::fs::metadata(partial.join(agent_bin)).await.is_ok(),
+            "agent-OTA: staged agent missing {agent_bin}"
+        );
+        anyhow::ensure!(
+            smol::fs::metadata(partial.join("VERSION")).await.is_ok(),
+            "agent-OTA: staged agent missing VERSION"
+        );
+
+        // h. Atomically publish: rename the verified partial to `agent.new/`. Only
+        // after this does the stage "exist" for the swap-on-launch task — a
+        // half-built stage is never observed.
+        smol::fs::rename(partial, staged)
+            .await
+            .with_context(|| format!("agent-OTA: publishing stage -> {}", staged.display()))?;
+
+        Ok(())
     }
 
     async fn update(this: Entity<Self>, cx: &mut AsyncApp) -> Result<()> {
@@ -673,8 +967,22 @@ impl AutoUpdater {
             cx.notify();
         });
 
+        // VIBEDEV (agent-OTA): on the same poll, check the separately-versioned
+        // bundled backend ("agent") and stage `agent.new/` if a newer one is
+        // available. This is DECOUPLED from the app version line: it must run even
+        // when the app itself is up to date (the early `return` for a not-newer app
+        // is below). Its failure must NEVER abort the app-update flow — log a
+        // warning and continue. The swap-on-launch + notice are separate tasks.
+        if let Err(error) =
+            Self::check_and_stage_agent_update(&this, release_channel, client.clone(), cx).await
+        {
+            log::warn!("auto-update: agent-OTA check/stage failed (non-fatal): {error:#}");
+        }
+
         let fetched_release_data =
-            Self::get_release_asset(&this, release_channel, None, "zed", OS, ARCH, cx).await?;
+            // VIBEDEV: app self-update asset is "vibedev" (the installer), parallel
+            // to the SSH "vibedev-remote-server" asset; the manifest keys on these.
+            Self::get_release_asset(&this, release_channel, None, "vibedev", OS, ARCH, cx).await?;
         let fetched_version = fetched_release_data.clone().version;
         let app_commit_sha = Ok(cx.update(|cx| AppCommitSha::try_global(cx).map(|sha| sha.full())));
         let newer_version = Self::check_if_fetched_version_is_newer(
@@ -706,11 +1014,11 @@ impl AutoUpdater {
 
         let installer_dir = InstallerDir::new()
             .await
-            .context("Failed to create installer dir")?;
+            .context("创建安装程序目录失败")?;
         let target_path = Self::target_path(&installer_dir).await?;
         download_release(&target_path, fetched_release_data, client)
             .await
-            .with_context(|| format!("Failed to download update to {}", target_path.display()))?;
+            .with_context(|| format!("下载更新到 {} 失败", target_path.display()))?;
 
         this.update(cx, |this, cx| {
             this.status = AutoUpdateStatus::Installing {
@@ -721,7 +1029,7 @@ impl AutoUpdater {
 
         let new_binary_path = Self::install_release(installer_dir, &target_path, cx)
             .await
-            .with_context(|| format!("Failed to install update at: {}", target_path.display()))?;
+            .with_context(|| format!("在 {} 安装更新失败", target_path.display()))?;
         if let Some(new_binary_path) = new_binary_path {
             cx.update(|cx| cx.set_restart_path(new_binary_path));
         }
@@ -794,7 +1102,7 @@ impl AutoUpdater {
         if which::which("rsync").is_err() {
             let install_hint = linux_rsync_install_hint();
             return Err(MissingDependencyError(format!(
-                "rsync is required for auto-updates but is not installed. {install_hint}"
+                "自动更新需要 rsync,但尚未安装。{install_hint}"
             ))
             .into());
         }
@@ -802,7 +1110,7 @@ impl AutoUpdater {
         #[cfg(target_os = "macos")]
         anyhow::ensure!(
             which::which("rsync").is_ok(),
-            "Could not auto-update because the required rsync utility was not found."
+            "无法自动更新,因为未找到所需的 rsync 工具。"
         );
 
         Ok(())
@@ -890,7 +1198,7 @@ async fn download_remote_server_binary(
     let mut response = client.get(&release.url, Default::default(), true).await?;
     anyhow::ensure!(
         response.status().is_success(),
-        "failed to download remote server release: {:?}",
+        "下载远程服务器发布版本失败: {:?}",
         response.status()
     );
     smol::io::copy(response.body_mut(), &mut temp_file).await?;
@@ -946,7 +1254,7 @@ async fn cleanup_remote_server_cache(
 
         if let Err(error) = smol::fs::remove_file(&path).await {
             log::warn!(
-                "Failed to remove old remote server archive {:?}: {}",
+                "删除旧的远程服务器归档 {:?} 失败: {}",
                 path,
                 error
             );
@@ -954,6 +1262,21 @@ async fn cleanup_remote_server_cache(
     }
 
     Ok(())
+}
+
+/// VIBEDEV (agent-OTA): the pure version-comparison decision for staging a new
+/// agent. Stage iff the local agent VERSION is absent/unparseable (`None`) OR the
+/// manifest's agent version is strictly greater than the local one. Extracted as a
+/// free, side-effect-free fn so it is unit-testable without touching the network or
+/// the filesystem (see the `should_stage_agent_*` tests). Mirrors the version gate
+/// in `vibedev_account::launcher::apply_staged_agent_update`, but on the DOWNLOAD
+/// side: a missing local version is treated as "older" so a known-good newer build
+/// still wins.
+fn should_stage_agent(manifest: &Version, local: Option<&Version>) -> bool {
+    match local {
+        Some(local) => manifest > local,
+        None => true,
+    }
 }
 
 async fn download_release(
@@ -966,7 +1289,7 @@ async fn download_release(
     let mut response = client.get(&release.url, Default::default(), true).await?;
     anyhow::ensure!(
         response.status().is_success(),
-        "failed to download update: {:?}",
+        "下载更新失败: {:?}",
         response.status()
     );
     smol::io::copy(response.body_mut(), &mut target_file).await?;
@@ -997,11 +1320,11 @@ async fn install_release_linux(
     let output = cmd
         .output()
         .await
-        .with_context(|| "failed to extract: {cmd}")?;
+        .with_context(|| "解压失败: {cmd}")?;
 
     anyhow::ensure!(
         output.status.success(),
-        "failed to extract {:?} to {:?}: {:?}",
+        "解压 {:?} 到 {:?} 失败: {:?}",
         downloaded_tar_gz,
         extracted,
         String::from_utf8_lossy(&output.stderr)
@@ -1031,11 +1354,11 @@ async fn install_release_linux(
     let output = cmd
         .output()
         .await
-        .with_context(|| "failed to rsync: {cmd}")?;
+        .with_context(|| "rsync 同步失败: {cmd}")?;
 
     anyhow::ensure!(
         output.status.success(),
-        "failed to copy Zed update from {:?} to {:?}: {:?}",
+        "从 {:?} 复制 VibeDev 更新到 {:?} 失败: {:?}",
         from,
         to,
         String::from_utf8_lossy(&output.stderr)
@@ -1066,11 +1389,11 @@ async fn install_release_macos(
     let output = cmd
         .output()
         .await
-        .with_context(|| "failed to mount: {cmd}")?;
+        .with_context(|| "挂载失败: {cmd}")?;
 
     anyhow::ensure!(
         output.status.success(),
-        "failed to mount: {:?}",
+        "挂载失败: {:?}",
         String::from_utf8_lossy(&output.stderr)
     );
 
@@ -1087,11 +1410,11 @@ async fn install_release_macos(
     let output = cmd
         .output()
         .await
-        .with_context(|| "failed to rsync: {cmd}")?;
+        .with_context(|| "rsync 同步失败: {cmd}")?;
 
     anyhow::ensure!(
         output.status.success(),
-        "failed to copy app: {:?}",
+        "复制应用失败: {:?}",
         String::from_utf8_lossy(&output.stderr)
     );
 
@@ -1113,6 +1436,17 @@ async fn cleanup_windows() -> Result<()> {
 }
 
 async fn install_release_windows(downloaded_installer: &Path) -> Result<Option<PathBuf>> {
+    // VIBEDEV: strip the Mark-of-the-Web (`:Zone.Identifier` alternate data stream
+    // Windows attaches to internet-downloaded files) BEFORE running the installer.
+    // VibeDev's installer is currently unsigned (free auto-update path); removing
+    // the MOTW keeps Defender/SmartScreen from treating this silent programmatic
+    // install as a suspicious "downloaded" exe. Best-effort: no MOTW => harmless
+    // NotFound, ignored.
+    let _ = smol::fs::remove_file(format!(
+        "{}:Zone.Identifier",
+        downloaded_installer.display()
+    ))
+    .await;
     let mut cmd = new_command(downloaded_installer);
     cmd.arg("/verysilent")
         .arg("/update=true")
@@ -1120,7 +1454,7 @@ async fn install_release_windows(downloaded_installer: &Path) -> Result<Option<P
     let output = cmd.output().await?;
     anyhow::ensure!(
         output.status.success(),
-        "failed to start installer: {:?}",
+        "启动安装程序失败: {:?}",
         String::from_utf8_lossy(&output.stderr)
     );
     // We return the path to the update helper program, because it will
@@ -1551,5 +1885,51 @@ mod tests {
             newer_version.unwrap(),
             Some(VersionCheckType::Sha(AppCommitSha::new(fetched_sha)))
         );
+    }
+
+    // VIBEDEV (agent-OTA): tests for the pure staging decision. The download/extract
+    // pipeline (network + tar) is deliberately NOT unit-tested here — it's verified
+    // in a later joint build; the decision helper carries the logic worth asserting.
+
+    #[test]
+    fn test_should_stage_agent_when_manifest_is_newer() {
+        // Manifest strictly newer than local → stage it.
+        let manifest = semver::Version::new(1, 0, 1);
+        let local = semver::Version::new(1, 0, 0);
+        assert!(should_stage_agent(&manifest, Some(&local)));
+    }
+
+    #[test]
+    fn test_should_not_stage_agent_when_manifest_is_older() {
+        // Manifest strictly older than local → do not stage (no downgrade).
+        let manifest = semver::Version::new(1, 0, 0);
+        let local = semver::Version::new(1, 0, 1);
+        assert!(!should_stage_agent(&manifest, Some(&local)));
+    }
+
+    #[test]
+    fn test_should_not_stage_agent_when_versions_are_equal() {
+        // Manifest equal to local → do not stage (already up to date).
+        let manifest = semver::Version::new(1, 2, 3);
+        let local = semver::Version::new(1, 2, 3);
+        assert!(!should_stage_agent(&manifest, Some(&local)));
+    }
+
+    #[test]
+    fn test_should_stage_agent_when_local_is_missing() {
+        // No local VERSION (file absent) → `None` → stage the known-good build.
+        let manifest = semver::Version::new(1, 0, 0);
+        assert!(should_stage_agent(&manifest, None));
+    }
+
+    #[test]
+    fn test_should_stage_agent_when_local_is_unparseable() {
+        // An unparseable local VERSION collapses to `None` at the read boundary
+        // (see `check_and_stage_agent_update`), so it maps to the same "stage it"
+        // decision as a missing file. Assert the `None` branch holds for that case.
+        let manifest = semver::Version::new(1, 0, 0);
+        let unparseable_local = "not-a-semver".parse::<semver::Version>().ok();
+        assert!(unparseable_local.is_none());
+        assert!(should_stage_agent(&manifest, unparseable_local.as_ref()));
     }
 }

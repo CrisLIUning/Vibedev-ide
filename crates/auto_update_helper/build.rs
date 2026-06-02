@@ -4,6 +4,6 @@ fn main() {
         println!("cargo:rerun-if-env-changed=RELEASE_CHANNEL");
         println!("cargo:rerun-if-env-changed=GITHUB_RUN_NUMBER");
 
-        windows_resources::compile(true).expect("failed to compile Windows resources");
+        windows_resources::compile(true).expect("Windows 资源编译失败");
     }
 }

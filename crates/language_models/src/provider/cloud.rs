@@ -1,6 +1,6 @@
 use ai_onboarding::YoungAccountBanner;
 use anyhow::Result;
-use client::{Client, RefreshLlmTokenListener, UserStore, global_llm_token, zed_urls};
+use client::{Client, RefreshLlmTokenListener, UserStore, global_llm_token};
 use cloud_api_client::LlmApiToken;
 use cloud_api_types::OrganizationId;
 use cloud_api_types::Plan;
@@ -281,7 +281,7 @@ impl LanguageModelProvider for CloudLanguageModelProvider {
                         | client::Status::Connected { .. }
                 ) {
                     return Err(AuthenticateError::Other(anyhow::anyhow!(
-                        "sign-in did not complete: {current_status:?}"
+                        "登录未完成: {current_status:?}"
                     )));
                 }
                 futures::select_biased! {
@@ -322,62 +322,62 @@ impl RenderOnce for ZedAiConfiguration {
     fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
         let (subscription_text, has_paid_plan) = match self.plan {
             Some(Plan::ZedPro) => (
-                "You have access to Zed's hosted models through your Pro subscription.",
+                "您可以通过 Pro 订阅访问 VibeDev 托管的模型。",
                 true,
             ),
             Some(Plan::ZedProTrial) => (
-                "You have access to Zed's hosted models through your Pro trial.",
+                "您可以通过 Pro 试用访问 VibeDev 托管的模型。",
                 false,
             ),
             Some(Plan::ZedStudent) => (
-                "You have access to Zed's hosted models through your Student subscription.",
+                "您可以通过学生订阅访问 VibeDev 托管模型。",
                 true,
             ),
             Some(Plan::ZedBusiness) => (
                 if self.is_zed_model_provider_enabled {
-                    "You have access to Zed's hosted models through your organization."
+                    "您通过组织获得了 VibeDev 托管模型的访问权限。"
                 } else {
-                    "Zed's hosted models are disabled by your organization's configuration."
+                    "VibeDev 托管模型已被组织配置禁用。"
                 },
                 true,
             ),
             Some(Plan::ZedFree) | None => (
                 if self.eligible_for_trial {
-                    "Subscribe for access to Zed's hosted models. Start with a 14 day free trial."
+                    "订阅以访问 VibeDev 托管的模型。从 14 天免费试用开始。"
                 } else {
-                    "Subscribe for access to Zed's hosted models."
+                    "订阅以访问 VibeDev 托管的模型。"
                 },
                 false,
             ),
         };
 
         let manage_subscription_buttons = if has_paid_plan {
-            Button::new("manage_settings", "Manage Subscription")
+            Button::new("manage_settings", "管理订阅")
                 .full_width()
                 .label_size(LabelSize::Small)
                 .style(ButtonStyle::Tinted(TintColor::Accent))
-                .on_click(|_, _, cx| cx.open_url(&zed_urls::account_url(cx)))
+                .on_click(|_, _, _cx| { /* VIBEDEV: was zed.dev/account; Cloud provider unregistered anyway */ })
                 .into_any_element()
         } else if self.plan.is_none() || self.eligible_for_trial {
-            Button::new("start_trial", "Start 14-day Free Pro Trial")
+            Button::new("start_trial", "开始 14 天免费 Pro 试用")
                 .full_width()
                 .style(ui::ButtonStyle::Tinted(ui::TintColor::Accent))
-                .on_click(|_, _, cx| cx.open_url(&zed_urls::start_trial_url(cx)))
+                .on_click(|_, _, _cx| { /* VIBEDEV: was zed.dev/account/start-trial; Cloud provider unregistered anyway */ })
                 .into_any_element()
         } else {
-            Button::new("upgrade", "Upgrade to Pro")
+            Button::new("upgrade", "升级到 Pro")
                 .full_width()
                 .style(ui::ButtonStyle::Tinted(ui::TintColor::Accent))
-                .on_click(|_, _, cx| cx.open_url(&zed_urls::upgrade_to_zed_pro_url(cx)))
+                .on_click(|_, _, _cx| { /* VIBEDEV: was zed.dev/account/upgrade; Cloud provider unregistered anyway */ })
                 .into_any_element()
         };
 
         if !self.is_connected {
             return v_flex()
                 .gap_2()
-                .child(Label::new("Sign in to have access to Zed's complete agentic experience with hosted models."))
+                .child(Label::new("登录以使用 VibeDev 托管模型的完整智能体体验。"))
                 .child(
-                    Button::new("sign_in", "Sign In to use Zed AI")
+                    Button::new("sign_in", "登录以使用 VibeDev AI")
                         .start_icon(Icon::new(IconName::Github).size(IconSize::Small).color(Color::Muted))
                         .full_width()
                         .on_click({
@@ -390,10 +390,10 @@ impl RenderOnce for ZedAiConfiguration {
         v_flex().gap_2().w_full().map(|this| {
             if self.account_too_young {
                 this.child(YoungAccountBanner).child(
-                    Button::new("upgrade", "Upgrade to Pro")
+                    Button::new("upgrade", "升级到 Pro")
                         .style(ui::ButtonStyle::Tinted(ui::TintColor::Accent))
                         .full_width()
-                        .on_click(|_, _, cx| cx.open_url(&zed_urls::upgrade_to_zed_pro_url(cx))),
+                        .on_click(|_, _, _cx| { /* VIBEDEV: was zed.dev/account/upgrade; Cloud provider unregistered anyway */ }),
                 )
             } else {
                 this.text_sm()
@@ -754,7 +754,7 @@ impl Component for ZedAiConfiguration {
                         }),
                     ),
                     single_example(
-                        "Business Plan - Zed models enabled",
+                        "商业版 - VibeDev 模型已启用",
                         configuration(PreviewConfiguration {
                             plan: Some(Plan::ZedBusiness),
                             is_connected: true,
@@ -763,7 +763,7 @@ impl Component for ZedAiConfiguration {
                         }),
                     ),
                     single_example(
-                        "Business Plan - Zed models disabled",
+                        "商业版 - VibeDev 模型已禁用",
                         configuration(PreviewConfiguration {
                             plan: Some(Plan::ZedBusiness),
                             is_connected: true,

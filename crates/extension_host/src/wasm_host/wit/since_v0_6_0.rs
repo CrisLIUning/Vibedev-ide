@@ -406,7 +406,7 @@ impl TryFrom<latest::dap::TcpArguments> for dap::TcpArguments {
             latest::dap::IpAddress::Ipv6((a, b, c, d, e, f, g, h)) => {
                 let addr = std::net::Ipv6Addr::new(a, b, c, d, e, f, g, h);
                 anyhow::bail!(
-                    "DAP returned IPv6 host {addr}, which the v0.6.0 extension API cannot represent; the extension must be updated to v0.8.0 or later"
+                    "DAP 返回了 IPv6 地址 {addr},v0.6.0 扩展 API 无法表示;必须将扩展更新到 v0.8.0 或更高版本"
                 );
             }
         };
@@ -441,7 +441,7 @@ impl From<latest::dap::TcpArgumentsTemplate> for dap::TcpArgumentsTemplate {
                 latest::dap::IpAddress::Ipv6((a, b, c, d, e, f, g, h)) => {
                     let addr = std::net::Ipv6Addr::new(a, b, c, d, e, f, g, h);
                     log::warn!(
-                        "Dropping IPv6 host {addr} when handing TCP arguments back to a v0.6.0 extension; update the extension to v0.8.0 or later for IPv6 support"
+                        "向 v0.6.0 扩展传回 TCP 参数时丢弃了 IPv6 地址 {addr};请将扩展更新到 v0.8.0 或更高版本以支持 IPv6"
                     );
                     None
                 }

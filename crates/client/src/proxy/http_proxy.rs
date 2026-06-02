@@ -127,13 +127,13 @@ where
                 Ok(())
             } else {
                 Err(anyhow::anyhow!(
-                    "Proxy connection failed with HTTP code: {code}"
+                    "代理连接失败,HTTP 代码: {code}"
                 ))
             }
         }
         None => Err(anyhow::anyhow!(
-            "Proxy connection failed with no HTTP code: {}",
-            parser.reason.unwrap_or("Unknown reason")
+            "代理连接失败,无 HTTP 代码: {}",
+            parser.reason.unwrap_or("未知原因")
         )),
     }
 }

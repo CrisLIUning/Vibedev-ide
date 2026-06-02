@@ -111,8 +111,8 @@ impl RpcMessages {
     }
 }
 
-const SEND: &str = "// Send";
-const RECEIVE: &str = "// Receive";
+const SEND: &str = "// 发送";
+const RECEIVE: &str = "// 接收";
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum MessageKind {
@@ -318,7 +318,7 @@ impl LogStore {
         };
 
         let message = match io_kind {
-            IoKind::StdErr => format!("stderr: {message}").into(),
+            IoKind::StdErr => format!("标准错误: {message}").into(),
             _ => message,
         };
 
@@ -401,7 +401,7 @@ impl LogStore {
                 id.session_id,
                 adapter_name,
                 session_label
-                    .unwrap_or_else(|| format!("Session {} (child)", id.session_id.0).into()),
+                    .unwrap_or_else(|| format!("会话 {} (子级)", id.session_id.0).into()),
                 has_adapter_logs,
             ));
 
@@ -535,7 +535,7 @@ impl Render for DapLogToolbarItemView {
                             }
                         ))
                     })
-                    .unwrap_or_else(|| "No adapter selected".into()),
+                    .unwrap_or_else(|| "未选择适配器".into()),
             ))
             .menu(move |window, cx| {
                 let log_view = log_view.clone();
@@ -633,7 +633,7 @@ impl Render for DapLogToolbarItemView {
             .child(
                 div()
                     .child(
-                        Button::new("clear_log_button", "Clear").on_click(cx.listener(
+                        Button::new("clear_log_button", "清除").on_click(cx.listener(
                             |this, _, window, cx| {
                                 if let Some(log_view) = this.log_view.as_ref() {
                                     log_view.update(cx, |log_view, cx| {
@@ -993,7 +993,7 @@ impl Item for DapLogView {
     }
 
     fn tab_content_text(&self, _detail: usize, _cx: &App) -> SharedString {
-        "DAP Logs".into()
+        "DAP 日志".into()
     }
 
     fn telemetry_event_text(&self) -> Option<&'static str> {

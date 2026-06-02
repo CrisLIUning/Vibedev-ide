@@ -23,11 +23,11 @@ static KEYMAP_WINDOWS: LazyLock<KeymapFile> = LazyLock::new(|| {
 });
 
 static KEYMAP_JETBRAINS_MACOS: LazyLock<KeymapFile> = LazyLock::new(|| {
-    load_keymap("keymaps/macos/jetbrains.json").expect("Failed to load JetBrains macOS keymap")
+    load_keymap("keymaps/macos/jetbrains.json").expect("加载 JetBrains macOS 键位映射失败")
 });
 
 static KEYMAP_JETBRAINS_LINUX: LazyLock<KeymapFile> = LazyLock::new(|| {
-    load_keymap("keymaps/linux/jetbrains.json").expect("Failed to load JetBrains Linux keymap")
+    load_keymap("keymaps/linux/jetbrains.json").expect("加载 JetBrains Linux 键位映射失败")
 });
 
 static ALL_ACTIONS: LazyLock<ActionManifest> = LazyLock::new(load_all_actions);
@@ -168,7 +168,7 @@ impl std::fmt::Display for PreprocessorError {
             PreprocessorError::UnknownKeymapOverlay { overlay_name } => {
                 write!(
                     f,
-                    "Unknown keymap overlay: '{}'. Supported overlays: jetbrains",
+                    "未知的键位映射覆盖: '{}'。支持的覆盖: jetbrains",
                     overlay_name
                 )
             }
@@ -287,7 +287,7 @@ fn template_and_validate_keybindings(book: &mut Book, errors: &mut HashSet<Prepr
                         .unwrap_or_default();
 
                 if macos_binding.is_empty() && linux_binding.is_empty() {
-                    return "<div>No default binding</div>".to_string();
+                    return "<div>无默认绑定</div>".to_string();
                 }
 
                 let formatted_macos_binding = format_binding(macos_binding);
@@ -393,12 +393,12 @@ fn template_and_validate_json_snippets(book: &mut Book, errors: &mut HashSet<Pre
     };
     let settings_schema = SettingsStore::json_schema(&params);
     let settings_validator = jsonschema::validator_for(&settings_schema)
-        .expect("failed to compile settings JSON schema");
+        .expect("编译设置 JSON schema 失败");
 
     let keymap_schema =
         keymap_schema_for_actions(&ALL_ACTIONS.actions, &ALL_ACTIONS.schema_definitions);
     let keymap_validator =
-        jsonschema::validator_for(&keymap_schema).expect("failed to compile keymap JSON schema");
+        jsonschema::validator_for(&keymap_schema).expect("编译键位映射 JSON schema 失败");
 
     fn for_each_labeled_code_block_mut(
         book: &mut Book,
@@ -419,7 +419,7 @@ fn template_and_validate_json_snippets(book: &mut Book, errors: &mut HashSet<Pre
                         chapter,
                         loc,
                         chapter.content[loc..tag_start].to_string(),
-                        "Unclosed JSON block tag".to_string(),
+                        "未闭合的 JSON 块标签".to_string(),
                     ));
                     continue;
                 };
@@ -432,7 +432,7 @@ fn template_and_validate_json_snippets(book: &mut Book, errors: &mut HashSet<Pre
                         chapter,
                         loc,
                         chapter.content[loc..tag_start].to_string(),
-                        "Unclosed JSON block tag".to_string(),
+                        "未闭合的 JSON 块标签".to_string(),
                     ));
                     continue;
                 }
@@ -446,7 +446,7 @@ fn template_and_validate_json_snippets(book: &mut Book, errors: &mut HashSet<Pre
                         chapter,
                         loc,
                         chapter.content[loc..tag_end + 1].to_string(),
-                        "Missing closing code block".to_string(),
+                        "缺少闭合的代码块".to_string(),
                     ));
                     continue;
                 };
@@ -550,7 +550,7 @@ fn template_and_validate_json_snippets(book: &mut Book, errors: &mut HashSet<Pre
                     &snippet_json_fixed,
                 )?;
             }
-            label => anyhow::bail!("Unexpected JSON code block tag: {label}"),
+            label => anyhow::bail!("意外的 JSON 代码块标签: {label}"),
         };
         Ok(())
     });
@@ -644,7 +644,7 @@ fn load_all_actions() -> ActionManifest {
                 panic!("actions.json not found at {}: {}", asset_path, err);
             }
             eprintln!(
-                "Warning: actions.json not found, action validation will be skipped: {}",
+                "警告: 未找到 actions.json,将跳过操作验证: {}",
                 err
             );
             ActionManifest {
@@ -710,7 +710,7 @@ fn handle_postprocessing() -> Result<()> {
                 )
             {
                 if ignore_list.contains(&&*entry.file_name().to_string_lossy()) {
-                    zlog::info!(logger => "Ignoring {}", entry.path().to_string_lossy());
+                    zlog::info!(logger => "正在忽略 {}", entry.path().to_string_lossy());
                 } else {
                     files.push(entry.path());
                 }
@@ -718,7 +718,7 @@ fn handle_postprocessing() -> Result<()> {
         }
     }
 
-    zlog::info!(logger => "Processing {} `.html` files", files.len());
+    zlog::info!(logger => "正在处理 {} 个 `.html` 文件", files.len());
     let meta_regex = Regex::new(&FRONT_MATTER_COMMENT.replace("{}", "(.*)")).unwrap();
     for file in files {
         let contents = std::fs::read_to_string(&file)?;
@@ -735,23 +735,23 @@ fn handle_postprocessing() -> Result<()> {
                         meta_title = Some(content);
                     }
                     _ => {
-                        zlog::warn!(logger => "Unrecognized frontmatter key: {} in {:?}", kind, pretty_path(&file, &root_dir));
+                        zlog::warn!(logger => "无法识别的 frontmatter 键: {} 位于 {:?}", kind, pretty_path(&file, &root_dir));
                     }
                 }
             }
             String::new()
         });
         let meta_description = meta_description.as_ref().unwrap_or_else(|| {
-            zlog::warn!(logger => "No meta description found for {:?}", pretty_path(&file, &root_dir));
+            zlog::warn!(logger => "未找到 {:?} 的元描述", pretty_path(&file, &root_dir));
             &default_description
         });
         let page_title = extract_title_from_page(&contents, pretty_path(&file, &root_dir));
         let meta_title = meta_title.as_ref().unwrap_or_else(|| {
-            zlog::debug!(logger => "No meta title found for {:?}", pretty_path(&file, &root_dir));
+            zlog::debug!(logger => "未找到 {:?} 的元标题", pretty_path(&file, &root_dir));
             &default_title
         });
         let meta_title = format!("{} | {}", page_title, meta_title);
-        zlog::trace!(logger => "Updating {:?}", pretty_path(&file, &root_dir));
+        zlog::trace!(logger => "正在更新 {:?}", pretty_path(&file, &root_dir));
         let contents = contents.replace("#description#", meta_description);
         let contents = contents.replace("#amplitude_key#", &amplitude_key);
         let contents = contents.replace("#consent_io_instance#", &consent_io_instance);
@@ -823,11 +823,11 @@ fn generate_big_table_of_actions() -> String {
             );
             output.push_str("<br>\n");
         }
-        output.push_str("Keymap Name: <code>");
+        output.push_str("键位映射名称: <code>");
         output.push_str(&action.name);
         output.push_str("</code><br>\n");
         if !action.deprecated_aliases.is_empty() {
-            output.push_str("Deprecated Alias(es): ");
+            output.push_str("已弃用的别名: ");
             for alias in action.deprecated_aliases.iter() {
                 output.push_str("<code>");
                 output.push_str(alias);

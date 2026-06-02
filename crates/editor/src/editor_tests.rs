@@ -1504,7 +1504,7 @@ async fn test_fold_with_unindented_multiline_raw_string(cx: &mut TestAppContext)
             "})),
             ..Default::default()
         })
-        .expect("Could not parse queries"),
+        .expect("无法解析查询"),
     );
 
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(language), cx));
@@ -1584,7 +1584,7 @@ async fn test_fold_with_unindented_multiline_block_comment(cx: &mut TestAppConte
             "})),
             ..Default::default()
         })
-        .expect("Could not parse queries"),
+        .expect("无法解析查询"),
     );
 
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(language), cx));
@@ -1656,7 +1656,7 @@ async fn test_fold_preserves_top_level_comments_between_python_classes(cx: &mut 
             "})),
             ..Default::default()
         })
-        .expect("Could not parse queries"),
+        .expect("无法解析查询"),
     );
 
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(language), cx));
@@ -1715,7 +1715,7 @@ async fn test_fold_preserves_top_level_comments_between_rust_functions(cx: &mut 
             "})),
             ..Default::default()
         })
-        .expect("Could not parse queries"),
+        .expect("无法解析查询"),
     );
 
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(language), cx));
@@ -1773,7 +1773,7 @@ async fn test_fold_terminates_at_top_level_multiline_string_between_python_class
             "})),
             ..Default::default()
         })
-        .expect("Could not parse queries"),
+        .expect("无法解析查询"),
     );
 
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(language), cx));
@@ -4172,21 +4172,21 @@ fn test_newline_respects_read_only(cx: &mut TestAppContext) {
         assert_eq!(
             editor.text(cx),
             "aaaa\nbbbb\n",
-            "newline should not modify a read-only editor"
+            "换行不应修改只读编辑器"
         );
 
         editor.newline_above(&NewlineAbove, window, cx);
         assert_eq!(
             editor.text(cx),
             "aaaa\nbbbb\n",
-            "newline_above should not modify a read-only editor"
+            "在上方插入行不应修改只读编辑器"
         );
 
         editor.newline_below(&NewlineBelow, window, cx);
         assert_eq!(
             editor.text(cx),
             "aaaa\nbbbb\n",
-            "newline_below should not modify a read-only editor"
+            "在下方插入行不应修改只读编辑器"
         );
     });
 }
@@ -5731,7 +5731,7 @@ fn test_join_lines_with_single_selection(cx: &mut TestAppContext) {
         assert_eq!(
             buffer.read(cx).text(),
             "aaa bbb\nccc\nddd\n\n",
-            "only the two selected lines (a and b) should be joined"
+            "仅应连接两条选定的行(a 和 b)"
         );
 
         // When multiple lines are selected, remove newlines that are spanned by the selection
@@ -6087,7 +6087,7 @@ async fn test_custom_newlines_cause_no_false_positive_diffs(
                 .diff_hunks_in_range(MultiBufferOffset(0)..snapshot.buffer_snapshot().len())
                 .collect::<Vec<_>>(),
             Vec::new(),
-            "Should not have any diffs for files with custom newlines"
+            "对于使用自定义换行符的文件不应有任何差异"
         );
     });
 }
@@ -9651,7 +9651,7 @@ async fn test_split_selection_into_lines_does_not_scroll(cx: &mut TestAppContext
     let scroll_position_after_split = cx.update_editor(|editor, _, cx| editor.scroll_position(cx));
     assert_eq!(
         initial_scroll_position, scroll_position_after_split,
-        "Scroll position should not change after splitting selection into lines"
+        "将选区拆分为行后,滚动位置不应改变"
     );
 }
 
@@ -10582,7 +10582,7 @@ async fn test_select_all_matches_does_not_scroll(cx: &mut TestAppContext) {
         assert_eq!(
             editor.scroll_position(cx),
             initial_scroll_position,
-            "Scroll position should not change after editing all matches"
+            "编辑所有匹配项后滚动位置不应改变"
         )
     });
 
@@ -10613,7 +10613,7 @@ async fn test_select_all_matches_does_not_scroll(cx: &mut TestAppContext) {
         assert_eq!(
             editor.scroll_position(cx),
             initial_scroll_position,
-            "Scroll position should not change after editing all matches"
+            "编辑所有匹配项后滚动位置不应改变"
         )
     });
 }
@@ -19585,7 +19585,7 @@ fn test_header_jump_data_uses_selection_excerpt(cx: &mut TestAppContext) {
     // 25-line buffer so excerpts at rows 1, 10, and 20 (each a 1-line range,
     // expanded by 2 context lines) can't merge into a single excerpt.
     let buffer_text = (0..25)
-        .map(|row| format!("line {row}"))
+        .map(|row| format!("第 {row} 行"))
         .collect::<Vec<_>>()
         .join("\n");
     let buffer = cx.new(|cx| Buffer::local(buffer_text, cx));
@@ -19627,7 +19627,7 @@ fn test_header_jump_data_uses_selection_excerpt(cx: &mut TestAppContext) {
         let selection_anchor = editor.buffer().update(cx, |multibuffer, cx| {
             multibuffer
                 .buffer_point_to_anchor(&buffer_entity, Point::new(selection_buffer_row, 0), cx)
-                .expect("buffer row 20 maps to a multibuffer anchor")
+                .expect("缓冲区行 20 映射到 multibuffer 锚点")
         });
         editor.change_selections(SelectionEffects::no_scroll(), window, cx, |s| {
             s.select_anchor_ranges([selection_anchor..selection_anchor])
@@ -19649,7 +19649,7 @@ fn test_header_jump_data_uses_selection_excerpt(cx: &mut TestAppContext) {
             .buffer_snapshot()
             .excerpt_boundaries_in_range(MultiBufferOffset(0)..snapshot.buffer_snapshot().len())
             .next()
-            .expect("multibuffer has at least one excerpt")
+            .expect("multibuffer 至少有一个摘录")
             .next;
 
         let jump_data = header_jump_data(
@@ -19668,7 +19668,7 @@ fn test_header_jump_data_uses_selection_excerpt(cx: &mut TestAppContext) {
             } => {
                 assert_eq!(
                     position.row, selection_buffer_row,
-                    "jump should target the cursor's buffer row, not the first excerpt's row"
+                    "跳转应定位到光标的缓冲区行,而非第一个摘录的行"
                 );
                 assert!(
                     line_offset_from_top < selection_buffer_row,
@@ -19678,7 +19678,7 @@ fn test_header_jump_data_uses_selection_excerpt(cx: &mut TestAppContext) {
                 );
             }
             JumpData::MultiBufferRow { .. } => {
-                panic!("expected MultiBufferPoint jump data when a selection is present")
+                panic!("存在选区时期望 MultiBufferPoint 跳转数据")
             }
         }
     });
@@ -22703,7 +22703,7 @@ async fn test_range_format_with_prettier(cx: &mut TestAppContext) {
     assert_eq!(
         editor.update(cx, |editor, cx| editor.text(cx)),
         format!("one\ntwo{prettier_range_format_suffix}\nthree\nfour\nfive\n"),
-        "Range formatting (via test prettier) was not applied to the buffer text",
+        "未对缓冲区文本应用范围格式化(通过测试 prettier)",
     );
 }
 
@@ -22787,7 +22787,7 @@ async fn test_range_format_with_prettier_explicit_language(cx: &mut TestAppConte
     assert_eq!(
         editor.update(cx, |editor, cx| editor.text(cx)),
         format!("one\ntwo{prettier_range_format_suffix}\ntypescript\nthree\nfour\nfive\n"),
-        "Range formatting (via test prettier) was not applied with explicit language",
+        "未使用显式语言应用范围格式化(通过测试 prettier)",
     );
 }
 
@@ -26400,7 +26400,7 @@ async fn test_goto_definition_close_ranges_open_singleton(cx: &mut TestAppContex
     let navigated = cx
         .update_editor(|editor, window, cx| editor.go_to_definition(&GoToDefinition, window, cx))
         .await
-        .expect("Failed to navigate to definitions");
+        .expect("无法跳转到定义");
     assert_eq!(navigated, Navigated::Yes);
 
     let editors = cx.update_workspace(|workspace, _, cx| {
@@ -26410,7 +26410,7 @@ async fn test_goto_definition_close_ranges_open_singleton(cx: &mut TestAppContex
         assert_eq!(
             editors.len(),
             1,
-            "Close ranges should navigate in-place without opening a new editor"
+            "相近的范围应在原地导航而不打开新编辑器"
         );
     });
 
@@ -26484,7 +26484,7 @@ async fn test_goto_definition_far_ranges_open_multibuffer(cx: &mut TestAppContex
     let navigated = cx
         .update_editor(|editor, window, cx| editor.go_to_definition(&GoToDefinition, window, cx))
         .await
-        .expect("Failed to navigate to definitions");
+        .expect("无法跳转到定义");
     assert_eq!(navigated, Navigated::Yes);
 
     let editors = cx.update_workspace(|workspace, _, cx| {
@@ -26494,16 +26494,16 @@ async fn test_goto_definition_far_ranges_open_multibuffer(cx: &mut TestAppContex
         assert_eq!(
             editors.len(),
             2,
-            "Far apart ranges should open a new multibuffer editor"
+            "较远的范围应打开新的多重缓冲区编辑器"
         );
         let multibuffer_editor = editors
             .into_iter()
             .find(|editor| *editor != test_editor_cx.entity())
-            .expect("Should have a multibuffer editor");
+            .expect("应有一个多重缓冲区编辑器");
         let multibuffer_text = multibuffer_editor.read(test_editor_cx).text(test_editor_cx);
         assert!(
             multibuffer_text.contains("target_a"),
-            "Multibuffer should contain the first definition"
+            "多重缓冲区应包含第一个定义"
         );
         assert!(
             multibuffer_text.contains("target_b"),
@@ -26557,7 +26557,7 @@ async fn test_goto_definition_contained_ranges(cx: &mut TestAppContext) {
     let navigated = cx
         .update_editor(|editor, window, cx| editor.go_to_definition(&GoToDefinition, window, cx))
         .await
-        .expect("Failed to navigate to definitions");
+        .expect("无法跳转到定义");
     assert_eq!(navigated, Navigated::Yes);
 }
 
@@ -26639,7 +26639,7 @@ async fn test_goto_definition_preserve_scroll_strategy(cx: &mut TestAppContext) 
         editor
             .visible_line_count()
             .map(|count| ((count - 1.0) / 2.0).floor())
-            .expect("Visible line count should be available")
+            .expect("可见行数应该可用")
     });
 
     // When the cursor is visible inside the viewport, going to a definition
@@ -26680,9 +26680,9 @@ async fn test_goto_definition_preserve_scroll_strategy(cx: &mut TestAppContext) 
             .as_f64();
         let visible_lines = editor
             .visible_line_count()
-            .expect("Visible line count should be available");
+            .expect("可见行数应该可用");
 
-        assert!(cursor_row >= visible_lines, "Cursor should be offscreen");
+        assert!(cursor_row >= visible_lines, "光标应该在屏幕外");
     });
 
     cx.update_editor(|editor, window, cx| editor.go_to_definition(&GoToDefinition, window, cx))
@@ -26952,7 +26952,7 @@ async fn test_toggle_code_actions_build_tasks_context_error_notifies(cx: &mut Te
             _: Arc<dyn LanguageToolchainStore>,
             _: &mut gpui::App,
         ) -> Task<anyhow::Result<TaskVariables>> {
-            Task::ready(Err(anyhow::anyhow!("Task context provider failed")))
+            Task::ready(Err(anyhow::anyhow!("任务上下文提供者失败")))
         }
     }
 
@@ -32296,7 +32296,7 @@ async fn test_inlay_hints_request_timeout(cx: &mut TestAppContext) {
         .update(cx, |editor, _window, cx| {
             assert!(
                 cached_hint_labels(editor, cx).is_empty(),
-                "First request should time out, no hints cached"
+                "首次请求应超时,无缓存提示"
             );
         })
         .unwrap();
@@ -32319,7 +32319,7 @@ async fn test_inlay_hints_request_timeout(cx: &mut TestAppContext) {
         .update(cx, |editor, _window, cx| {
             assert!(
                 cached_hint_labels(editor, cx).is_empty(),
-                "Second request should also time out with BASE_TIMEOUT, no hints cached"
+                "第二次请求也应因 BASE_TIMEOUT 超时,无缓存提示"
             );
         })
         .unwrap();
@@ -32355,7 +32355,7 @@ async fn test_inlay_hints_request_timeout(cx: &mut TestAppContext) {
             assert_eq!(
                 vec!["1".to_string()],
                 cached_hint_labels(editor, cx),
-                "With extended timeout (BASE * 4), hints should arrive successfully"
+                "延长超时时间(BASE * 4)后,提示应成功到达"
             );
             assert_eq!(vec!["1".to_string()], visible_hint_labels(editor, cx));
         })
@@ -33421,7 +33421,7 @@ async fn test_sticky_scroll_with_decoration_prefix_in_item(cx: &mut TestAppConte
                 name: (_) @name) @item
             "#,
         )
-        .expect("TypeScript outline query"),
+        .expect("TypeScript 大纲查询"),
     );
 
     let buffer = indoc! {"
@@ -37316,7 +37316,7 @@ async fn test_restore_hunk_with_stale_base_text(cx: &mut TestAppContext) {
             .diff_hunks_in_range(MultiBufferOffset(0)..snapshot.buffer_snapshot().len());
         hunks.count() > 0
     });
-    assert!(has_hunks, "should have diff hunks before restoring");
+    assert!(has_hunks, "恢复前应有差异代码块");
 
     // Now trigger a git HEAD change to a much shorter base text.
     // After this, the live BufferDiff entity's base_text buffer will be
@@ -37562,7 +37562,7 @@ async fn test_custom_fallback_highlights(cx: &mut TestAppContext) {
             assert_eq!(
                 expected,
                 snapshot.combined_highlights(MultiBufferOffset(0)..snapshot.buffer().len(), &theme),
-                "Test case with '{test_case}' highlights query did not pass",
+                "包含 '{test_case}' 高亮查询的测试用例未通过",
             );
         });
     }
@@ -37668,7 +37668,7 @@ async fn test_toggle_diagnostics_persists_across_settings_change(cx: &mut TestAp
     cx.update_editor(|editor, _, _| {
         assert!(
             editor.diagnostics_enabled(),
-            "diagnostics should start enabled by default"
+            "诊断默认应该启用"
         );
     });
 
@@ -37676,7 +37676,7 @@ async fn test_toggle_diagnostics_persists_across_settings_change(cx: &mut TestAp
         editor.toggle_diagnostics(&actions::ToggleDiagnostics, window, cx);
         assert!(
             !editor.diagnostics_enabled(),
-            "diagnostics should be disabled after toggle"
+            "切换后诊断应该被禁用"
         );
     });
 
@@ -37688,7 +37688,7 @@ async fn test_toggle_diagnostics_persists_across_settings_change(cx: &mut TestAp
     cx.update_editor(|editor, _, _| {
         assert!(
             !editor.diagnostics_enabled(),
-            "diagnostics should remain disabled after settings change"
+            "设置更改后诊断应该保持禁用"
         );
     });
 
@@ -37696,7 +37696,7 @@ async fn test_toggle_diagnostics_persists_across_settings_change(cx: &mut TestAp
         editor.toggle_diagnostics(&actions::ToggleDiagnostics, window, cx);
         assert!(
             editor.diagnostics_enabled(),
-            "diagnostics should be re-enabled after second toggle"
+            "第二次切换后诊断应该重新启用"
         );
     });
 }

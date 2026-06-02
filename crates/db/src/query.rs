@@ -7,7 +7,7 @@ macro_rules! query {
             let sql_stmt = $crate::sqlez_macros::sql!($($sql)+);
 
             self.exec(sql_stmt)?().context(::std::format!(
-                "Error in {}, exec failed to execute or parse for: {}",
+                "{} 出错, exec 执行或解析失败: {}",
                 ::std::stringify!($id),
                 sql_stmt,
             ))
@@ -21,7 +21,7 @@ macro_rules! query {
                 let sql_stmt = $crate::sqlez_macros::sql!($($sql)+);
 
                 connection.exec(sql_stmt)?().context(::std::format!(
-                    "Error in {}, exec failed to execute or parse for: {}",
+                    "{} 出错, exec 执行或解析失败: {}",
                     ::std::stringify!($id),
                     sql_stmt
                 ))
@@ -36,7 +36,7 @@ macro_rules! query {
 
             self.exec_bound::<($($arg_type),+)>(sql_stmt)?(($($arg),+))
                 .context(::std::format!(
-                    "Error in {}, exec_bound failed to execute or parse for: {}",
+                    "{} 出错, exec_bound 执行或解析失败: {}",
                     ::std::stringify!($id),
                     sql_stmt
                 ))
@@ -51,7 +51,7 @@ macro_rules! query {
 
                 connection.exec_bound::<$arg_type>(sql_stmt)?($arg)
                     .context(::std::format!(
-                        "Error in {}, exec_bound failed to execute or parse for: {}",
+                        "{} 出错, exec_bound 执行或解析失败: {}",
                         ::std::stringify!($id),
                         sql_stmt
                     ))
@@ -67,7 +67,7 @@ macro_rules! query {
 
                 connection.exec_bound::<($($arg_type),+)>(sql_stmt)?(($($arg),+))
                     .context(::std::format!(
-                        "Error in {}, exec_bound failed to execute or parse for: {}",
+                        "{} 出错, exec_bound 执行或解析失败: {}",
                         ::std::stringify!($id),
                         sql_stmt
                     ))
@@ -82,7 +82,7 @@ macro_rules! query {
 
             self.select::<$return_type>(sql_stmt)?()
                 .context(::std::format!(
-                    "Error in {}, select_row failed to execute or parse for: {}",
+                    "{} 出错, select_row 执行或解析失败: {}",
                     ::std::stringify!($id),
                     sql_stmt
                 ))
@@ -97,7 +97,7 @@ macro_rules! query {
 
                 connection.select::<$return_type>(sql_stmt)?()
                     .context(::std::format!(
-                        "Error in {}, select_row failed to execute or parse for: {}",
+                        "{} 出错, select_row 执行或解析失败: {}",
                         ::std::stringify!($id),
                         sql_stmt
                     ))
@@ -112,7 +112,7 @@ macro_rules! query {
 
             self.select_bound::<($($arg_type),+), $return_type>(sql_stmt)?(($($arg),+))
                 .context(::std::format!(
-                    "Error in {}, exec_bound failed to execute or parse for: {}",
+                    "{} 出错, exec_bound 执行或解析失败: {}",
                     ::std::stringify!($id),
                     sql_stmt
                 ))
@@ -127,7 +127,7 @@ macro_rules! query {
 
                 connection.select_bound::<($($arg_type),+), $return_type>(sql_stmt)?(($($arg),+))
                     .context(::std::format!(
-                        "Error in {}, exec_bound failed to execute or parse for: {}",
+                        "{} 出错, exec_bound 执行或解析失败: {}",
                         ::std::stringify!($id),
                         sql_stmt
                     ))
@@ -142,7 +142,7 @@ macro_rules! query {
 
             self.select_row::<$return_type>(sql_stmt)?()
                 .context(::std::format!(
-                    "Error in {}, select_row failed to execute or parse for: {}",
+                    "{} 出错, select_row 执行或解析失败: {}",
                     ::std::stringify!($id),
                     sql_stmt
                 ))
@@ -157,7 +157,7 @@ macro_rules! query {
 
                 connection.select_row::<$return_type>(sql_stmt)?()
                     .context(::std::format!(
-                        "Error in {}, select_row failed to execute or parse for: {}",
+                        "{} 出错, select_row 执行或解析失败: {}",
                         ::std::stringify!($id),
                         sql_stmt
                     ))
@@ -172,7 +172,7 @@ macro_rules! query {
 
             self.select_row_bound::<$arg_type, $return_type>(sql_stmt)?($arg)
                 .context(::std::format!(
-                    "Error in {}, select_row_bound failed to execute or parse for: {}",
+                    "{} 出错, select_row_bound 执行或解析失败: {}",
                     ::std::stringify!($id),
                     sql_stmt
                 ))
@@ -187,7 +187,7 @@ macro_rules! query {
 
             self.select_row_bound::<($($arg_type),+), $return_type>(sql_stmt)?(($($arg),+))
                 .context(::std::format!(
-                    "Error in {}, select_row_bound failed to execute or parse for: {}",
+                    "{} 出错, select_row_bound 执行或解析失败: {}",
                     ::std::stringify!($id),
                     sql_stmt
                 ))
@@ -204,7 +204,7 @@ macro_rules! query {
 
                 connection.select_row_bound::<($($arg_type),+), $return_type>(sql_stmt)?(($($arg),+))
                     .context(::std::format!(
-                        "Error in {}, select_row_bound failed to execute or parse for: {}",
+                        "{} 出错, select_row_bound 执行或解析失败: {}",
                         ::std::stringify!($id),
                         sql_stmt
                     ))
@@ -219,12 +219,12 @@ macro_rules! query {
 
             self.select_row::<$return_type>(sql_stmt)?()
                 .context(::std::format!(
-                    "Error in {}, select_row_bound failed to execute or parse for: {}",
+                    "{} 出错, select_row_bound 执行或解析失败: {}",
                     ::std::stringify!($id),
                     sql_stmt
                 ))?
                 .context(::std::format!(
-                    "Error in {}, select_row_bound expected single row result but found none for: {}",
+                    "{} 出错, select_row_bound 预期单行结果但未找到: {}",
                     ::std::stringify!($id),
                     sql_stmt
                 ))
@@ -239,12 +239,12 @@ macro_rules! query {
 
                 connection.select_row::<$return_type>(sql_stmt)?()
                     .context(::std::format!(
-                        "Error in {}, select_row_bound failed to execute or parse for: {}",
+                        "{} 出错, select_row_bound 执行或解析失败: {}",
                         ::std::stringify!($id),
                         sql_stmt
                     ))?
                     .context(::std::format!(
-                        "Error in {}, select_row_bound expected single row result but found none for: {}",
+                        "{} 出错, select_row_bound 预期单行结果但未找到: {}",
                         ::std::stringify!($id),
                         sql_stmt
                     ))
@@ -259,12 +259,12 @@ macro_rules! query {
 
             self.select_row_bound::<$arg_type, $return_type>(sql_stmt)?($arg)
                 .context(::std::format!(
-                    "Error in {}, select_row_bound failed to execute or parse for: {}",
+                    "{} 出错, select_row_bound 执行或解析失败: {}",
                     ::std::stringify!($id),
                     sql_stmt
                 ))?
                 .context(::std::format!(
-                    "Error in {}, select_row_bound expected single row result but found none for: {}",
+                    "{} 出错, select_row_bound 预期单行结果但未找到: {}",
                     ::std::stringify!($id),
                     sql_stmt
                 ))
@@ -278,12 +278,12 @@ macro_rules! query {
 
             self.select_row_bound::<($($arg_type),+), $return_type>(sql_stmt)?(($($arg),+))
                 .context(::std::format!(
-                    "Error in {}, select_row_bound failed to execute or parse for: {}",
+                    "{} 出错, select_row_bound 执行或解析失败: {}",
                     ::std::stringify!($id),
                     sql_stmt
                 ))?
                 .context(::std::format!(
-                    "Error in {}, select_row_bound expected single row result but found none for: {}",
+                    "{} 出错, select_row_bound 预期单行结果但未找到: {}",
                     ::std::stringify!($id),
                     sql_stmt
                 ))
@@ -299,12 +299,12 @@ macro_rules! query {
 
                 connection.select_row_bound::<($($arg_type),+), $return_type>(sql_stmt)?(($($arg),+))
                     .context(::std::format!(
-                        "Error in {}, select_row_bound failed to execute or parse for: {}",
+                        "{} 出错, select_row_bound 执行或解析失败: {}",
                         ::std::stringify!($id),
                         sql_stmt
                     ))?
                     .context(::std::format!(
-                        "Error in {}, select_row_bound expected single row result but found none for: {}",
+                        "{} 出错, select_row_bound 预期单行结果但未找到: {}",
                         ::std::stringify!($id),
                         sql_stmt
                     ))

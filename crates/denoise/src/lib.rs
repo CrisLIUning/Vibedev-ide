@@ -26,7 +26,7 @@ pub struct Denoiser<S: Source> {
 
 impl<S: Source> fmt::Debug for Denoiser<S> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Denoiser")
+        f.debug_struct("降噪器")
             .field("state", &self.state)
             .finish_non_exhaustive()
     }
@@ -45,7 +45,7 @@ impl Queue {
     fn pop(&mut self) -> [Sample; BLOCK_SHIFT] {
         debug_assert!(self.0.len() == 4);
         self.0.pop_front().expect(
-            "There is no State where the queue is popped while there are less then 4 entries",
+            "不存在在队列条目少于 4 时弹出队列的状态",
         )
     }
 }
@@ -84,7 +84,7 @@ impl<S: Source> Denoiser<S> {
             .spawn(move || {
                 run_neural_denoiser(denoised_tx, input_rx);
             })
-            .expect("Should be ablet to spawn threads");
+            .expect("应该能够生成线程");
 
         Ok(Self {
             inner: source,

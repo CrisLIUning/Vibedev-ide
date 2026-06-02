@@ -2540,7 +2540,7 @@ async fn test_restart_request_is_not_sent_more_than_once_until_response(
     assert_eq!(
         restart_count.load(Ordering::SeqCst),
         1,
-        "Only one restart request should be sent while a restart is in-flight"
+        "当重启请求正在处理中时,只应发送一个重启请求"
     );
 
     session.update(cx, |session, cx| {
@@ -2552,6 +2552,6 @@ async fn test_restart_request_is_not_sent_more_than_once_until_response(
     assert_eq!(
         restart_count.load(Ordering::SeqCst),
         2,
-        "A second restart should be allowed after the first one completes"
+        "第一个重启请求完成后,应允许进行第二次重启"
     );
 }

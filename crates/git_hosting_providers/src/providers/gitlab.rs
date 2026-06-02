@@ -106,7 +106,7 @@ impl Gitlab {
         if response.status().is_client_error() {
             let text = String::from_utf8_lossy(body.as_slice());
             bail!(
-                "status error {}, response: {text:?}",
+                "状态错误 {}, 响应: {text:?}",
                 response.status().as_u16()
             );
         }
@@ -134,7 +134,7 @@ impl Gitlab {
         if response.status().is_client_error() {
             let text = String::from_utf8_lossy(body.as_slice());
             bail!(
-                "status error {}, response: {text:?}",
+                "状态错误 {}, 响应: {text:?}",
                 response.status().as_u16()
             );
         }
@@ -441,7 +441,7 @@ mod tests {
 
         let url = provider
             .build_create_pull_request_url(&remote, "feature/cool stuff")
-            .expect("create PR url should be constructed");
+            .expect("应能构建 PR URL");
 
         assert_eq!(
             url.as_str(),
@@ -512,7 +512,7 @@ mod tests {
         let github = Gitlab::new("GitLab Self-Hosted", base_url);
         let url = github
             .build_create_pull_request_url(&remote, "feature/new-feature")
-            .expect("should be able to build pull request url");
+            .expect("应能构建合并请求 URL");
 
         assert_eq!(
             url.as_str(),

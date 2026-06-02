@@ -54,8 +54,8 @@ impl Model {
     pub fn display_name(&self) -> &str {
         match self {
             Self::Grok43 => "Grok 4.3",
-            Self::Grok420Reasoning => "Grok 4.20 Reasoning",
-            Self::Grok420NonReasoning => "Grok 4.20 (Non-Reasoning)",
+            Self::Grok420Reasoning => "Grok 4.20 推理",
+            Self::Grok420NonReasoning => "Grok 4.20(非推理)",
             Self::Custom {
                 name, display_name, ..
             } => display_name.as_ref().unwrap_or(name),

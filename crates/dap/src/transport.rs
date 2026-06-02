@@ -382,7 +382,7 @@ impl TransportDelegate {
             };
 
             anyhow::bail!(
-                "Received error response from adapter. Response: {:?}",
+                "收到来自适配器的错误响应。响应: {:?}",
                 response
             );
         }
@@ -550,7 +550,7 @@ impl TcpTransport {
             .unwrap_or_else(|| cx.update(|cx| DebuggerSettings::get_global(cx).timeout));
 
         log::info!(
-            "Debug adapter has connected to TCP server {}:{}",
+            "调试适配器已连接到 TCP 服务器 {}:{}",
             host,
             port
         );
@@ -660,7 +660,7 @@ impl StdioTransport {
     ) -> Result<Self> {
         let Some(binary_command) = &binary.command else {
             bail!(
-                "When using the `stdio` transport, the path to a debug adapter binary must be set by Zed."
+                "使用 `stdio` 传输时,必须由 VibeDev 设置调试适配器二进制文件的路径。"
             );
         };
         let mut command = util::command::new_std_command(&binary_command);

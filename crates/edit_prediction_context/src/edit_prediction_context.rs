@@ -393,7 +393,7 @@ impl RelatedExcerptStore {
 
         if let Some(file) = &file {
             log::debug!(
-                "finished retrieving context buffer:{}, latency:{:?}",
+                "完成获取上下文 缓冲区:{}, 延迟:{:?}",
                 file.path().as_unix_str(),
                 start_time.elapsed()
             );

@@ -91,7 +91,7 @@ impl Component for Indicator {
 
     fn description() -> Option<&'static str> {
         Some(
-            "Visual indicators used to represent status, notifications, or draw attention to specific elements.",
+            "用于表示状态、通知或引起对特定元素注意的视觉指示器。",
         )
     }
 
@@ -101,23 +101,23 @@ impl Component for Indicator {
                 .gap_6()
                 .children(vec![
                     example_group_with_title(
-                        "Dot Indicators",
+                        "圆点指示器",
                         vec![
-                            single_example("Default", Indicator::dot().into_any_element()),
+                            single_example("默认", Indicator::dot().into_any_element()),
                             single_example(
-                                "Success",
+                                "成功",
                                 Indicator::dot().color(Color::Success).into_any_element(),
                             ),
                             single_example(
-                                "Warning",
+                                "警告",
                                 Indicator::dot().color(Color::Warning).into_any_element(),
                             ),
                             single_example(
-                                "Error",
+                                "错误",
                                 Indicator::dot().color(Color::Error).into_any_element(),
                             ),
                             single_example(
-                                "With Border",
+                                "带边框",
                                 Indicator::dot()
                                     .color(Color::Accent)
                                     .border_color(Color::Default)
@@ -126,44 +126,44 @@ impl Component for Indicator {
                         ],
                     ),
                     example_group_with_title(
-                        "Bar Indicators",
+                        "条形指示器",
                         vec![
-                            single_example("Default", Indicator::bar().into_any_element()),
+                            single_example("默认", Indicator::bar().into_any_element()),
                             single_example(
-                                "Success",
+                                "成功",
                                 Indicator::bar().color(Color::Success).into_any_element(),
                             ),
                             single_example(
-                                "Warning",
+                                "警告",
                                 Indicator::bar().color(Color::Warning).into_any_element(),
                             ),
                             single_example(
-                                "Error",
+                                "错误",
                                 Indicator::bar().color(Color::Error).into_any_element(),
                             ),
                         ],
                     ),
                     example_group_with_title(
-                        "Icon Indicators",
+                        "图标指示器",
                         vec![
                             single_example(
-                                "Default",
+                                "默认",
                                 Indicator::icon(Icon::new(IconName::Circle)).into_any_element(),
                             ),
                             single_example(
-                                "Success",
+                                "成功",
                                 Indicator::icon(Icon::new(IconName::Check))
                                     .color(Color::Success)
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Warning",
+                                "警告",
                                 Indicator::icon(Icon::new(IconName::Warning))
                                     .color(Color::Warning)
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Error",
+                                "错误",
                                 Indicator::icon(Icon::new(IconName::Close))
                                     .color(Color::Error)
                                     .into_any_element(),

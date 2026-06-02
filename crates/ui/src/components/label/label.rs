@@ -21,7 +21,7 @@ use gpui::{HighlightStyle, StyleRefinement, StyledText};
 /// ```
 /// use ui::prelude::*;
 ///
-/// let my_label = Label::new("Delete").color(Color::Error);
+/// let my_label = Label::new("删除").color(Color::Error);
 /// ```
 ///
 /// **A label with a strikethrough**, for example labeling something that has been deleted:
@@ -29,7 +29,7 @@ use gpui::{HighlightStyle, StyleRefinement, StyledText};
 /// ```
 /// use ui::prelude::*;
 ///
-/// let my_label = Label::new("Deleted").strikethrough();
+/// let my_label = Label::new("已删除").strikethrough();
 /// ```
 #[derive(IntoElement, RegisterComponent)]
 pub struct Label {
@@ -353,7 +353,7 @@ impl Component for Label {
     }
 
     fn description() -> Option<&'static str> {
-        Some("A text label component that supports various styles, sizes, and formatting options.")
+        Some("支持多种样式、大小和格式选项的文本标签组件。")
     }
 
     fn preview(_window: &mut Window, cx: &mut App) -> Option<AnyElement> {
@@ -362,45 +362,45 @@ impl Component for Label {
                 .gap_6()
                 .children(vec![
                     example_group_with_title(
-                        "Sizes",
+                        "尺寸",
                         vec![
-                            single_example("Default", Label::new("Project Explorer").into_any_element()),
-                            single_example("Small", Label::new("File: main.rs").size(LabelSize::Small).into_any_element()),
-                            single_example("Large", Label::new("Welcome to Zed").size(LabelSize::Large).into_any_element()),
+                            single_example("默认", Label::new("项目资源管理器").into_any_element()),
+                            single_example("小", Label::new("文件: main.rs").size(LabelSize::Small).into_any_element()),
+                            single_example("大", Label::new("欢迎使用 VibeDev").size(LabelSize::Large).into_any_element()),
                         ],
                     ),
                     example_group_with_title(
-                        "Colors",
+                        "颜色",
                         vec![
-                            single_example("Default", Label::new("Status: Ready").into_any_element()),
-                            single_example("Accent", Label::new("New Update Available").color(Color::Accent).into_any_element()),
-                            single_example("Error", Label::new("Build Failed").color(Color::Error).into_any_element()),
+                            single_example("默认", Label::new("状态: 就绪").into_any_element()),
+                            single_example("强调", Label::new("有新更新可用").color(Color::Accent).into_any_element()),
+                            single_example("错误", Label::new("构建失败").color(Color::Error).into_any_element()),
                         ],
                     ),
                     example_group_with_title(
-                        "Styles",
+                        "样式",
                         vec![
-                            single_example("Default", Label::new("Normal Text").into_any_element()),
-                            single_example("Bold", Label::new("Important Notice").weight(gpui::FontWeight::BOLD).into_any_element()),
-                            single_example("Italic", Label::new("Code Comment").italic().into_any_element()),
-                            single_example("Strikethrough", Label::new("Deprecated Feature").strikethrough().into_any_element()),
-                            single_example("Underline", Label::new("Clickable Link").underline().into_any_element()),
-                            single_example("Inline Code", Label::new("fn main() {}").inline_code(cx).into_any_element()),
+                            single_example("默认", Label::new("普通文本").into_any_element()),
+                            single_example("粗体", Label::new("重要通知").weight(gpui::FontWeight::BOLD).into_any_element()),
+                            single_example("斜体", Label::new("代码注释").italic().into_any_element()),
+                            single_example("删除线", Label::new("已弃用功能").strikethrough().into_any_element()),
+                            single_example("下划线", Label::new("可点击链接").underline().into_any_element()),
+                            single_example("行内代码", Label::new("fn main() {}").inline_code(cx).into_any_element()),
                         ],
                     ),
                     example_group_with_title(
-                        "Line Height Styles",
+                        "行高样式",
                         vec![
-                            single_example("Default", Label::new("Multi-line\nText\nExample").into_any_element()),
-                            single_example("UI Label", Label::new("Compact\nUI\nLabel").line_height_style(LineHeightStyle::UiLabel).into_any_element()),
+                            single_example("默认", Label::new("多行\n文本\n示例").into_any_element()),
+                            single_example("UI 标签", Label::new("紧凑\nUI\n标签").line_height_style(LineHeightStyle::UiLabel).into_any_element()),
                         ],
                     ),
                     example_group_with_title(
-                        "Special Cases",
+                        "特殊情况",
                         vec![
-                            single_example("Single Line", Label::new("Line 1\nLine 2\nLine 3").single_line().into_any_element()),
-                            single_example("Regular Truncation", div().max_w_24().child(Label::new("This is a very long file name that should be truncated: very_long_file_name_with_many_words.rs").truncate()).into_any_element()),
-                            single_example("Start Truncation", div().max_w_24().child(Label::new("zed/crates/ui/src/components/label/truncate/label/label.rs").truncate_start()).into_any_element()),
+                            single_example("单行", Label::new("第 1 行\n第 2 行\n第 3 行").single_line().into_any_element()),
+                            single_example("常规截断", div().max_w_24().child(Label::new("这是一个非常长的文件名,应该被截断:very_long_file_name_with_many_words.rs").truncate()).into_any_element()),
+                            single_example("起始截断", div().max_w_24().child(Label::new("zed/crates/ui/src/components/label/truncate/label/label.rs").truncate_start()).into_any_element()),
                         ],
                     ),
                 ])

@@ -1910,7 +1910,7 @@ impl Buffer {
                 .unwrap();
             assert_eq!(
                 insertion_fragment.fragment_id, fragment.id,
-                "fragment: {:?}\ninsertion: {:?}",
+                "片段: {:?}\n插入: {:?}",
                 fragment, insertion_fragment
             );
         }
@@ -2000,7 +2000,7 @@ impl Buffer {
             if let Some(entry) = self.history.undo_stack.choose(rng) {
                 let transaction = entry.transaction.clone();
                 log::info!(
-                    "undoing buffer {:?} transaction {:?}",
+                    "正在撤销缓冲区 {:?} 的提交 {:?}",
                     self.replica_id,
                     transaction
                 );
@@ -2410,7 +2410,7 @@ impl BufferSnapshot {
 
             let Some(insertion) = self.try_find_fragment(&anchor) else {
                 panic!(
-                    "invalid insertion for buffer {}@{:?} with anchor {:?}",
+                    "缓冲区 {}@{:?} 中存在无效插入,锚点为 {:?}",
                     self.remote_id(),
                     self.version,
                     anchor
@@ -2462,7 +2462,7 @@ impl BufferSnapshot {
             debug_assert_eq!(anchor.buffer_id, self.remote_id);
             debug_assert!(
                 self.version.observed(anchor.timestamp()),
-                "Anchor timestamp {:?} not observed by buffer {:?}",
+                "缓冲区 {:?} 未观察到锚点时间戳 {:?}",
                 anchor.timestamp(),
                 self.version
             );
@@ -2493,17 +2493,17 @@ impl BufferSnapshot {
     fn panic_bad_anchor(&self, anchor: &Anchor) -> ! {
         if anchor.buffer_id != self.remote_id {
             panic!(
-                "invalid anchor - buffer id does not match: anchor {anchor:?}; buffer id: {}, version: {:?}",
+                "无效锚点 - 缓冲区 ID 不匹配: 锚点 {anchor:?}; 缓冲区 ID: {}, 版本: {:?}",
                 self.remote_id, self.version
             );
         } else if !self.version.observed(anchor.timestamp()) {
             panic!(
-                "invalid anchor - snapshot has not observed lamport: {:?}; version: {:?}",
+                "无效锚点 - 快照未观察到 lamport: {:?}; 版本: {:?}",
                 anchor, self.version
             );
         } else {
             panic!(
-                "invalid anchor {:?}. buffer id: {}, version: {:?}",
+                "无效锚点 {:?}。缓冲区 ID: {}, 版本: {:?}",
                 anchor, self.remote_id, self.version
             );
         }
@@ -2599,7 +2599,7 @@ impl BufferSnapshot {
             let Some(fragment) = item else {
                 // We got a bad offset, likely out of bounds
                 debug_panic!(
-                    "Failed to find fragment at offset {} (len: {})",
+                    "在偏移量 {} 处查找片段失败 (长度: {})",
                     offset,
                     self.len()
                 );

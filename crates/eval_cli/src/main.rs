@@ -149,21 +149,21 @@ fn main() {
     ctrlc::set_handler(|| {
         TERMINATED.store(true, Ordering::SeqCst);
     })
-    .expect("failed to set signal handler");
+    .expect("设置信号处理器失败");
 
     let instruction = read_instruction(&args).unwrap_or_else(|e| {
-        eprintln!("Error reading instruction: {e}");
+        eprintln!("读取指令时出错: {e}");
         process::exit(EXIT_ERROR);
     });
 
     let workdir = args.workdir.canonicalize().unwrap_or_else(|e| {
-        eprintln!("Invalid --workdir {:?}: {e}", args.workdir);
+        eprintln!("无效的 --workdir {:?}: {e}", args.workdir);
         process::exit(EXIT_ERROR);
     });
 
     let output_dir = args.output_dir.clone();
     if let Err(e) = std::fs::create_dir_all(&output_dir) {
-        eprintln!("Error creating output dir {}: {e}", output_dir.display());
+        eprintln!("创建输出目录 {} 时出错: {e}", output_dir.display());
         process::exit(EXIT_ERROR);
     }
 
@@ -210,15 +210,15 @@ fn main() {
             let (status, error, exit_code) = match &outcome {
                 Ok(AgentOutcome::Completed) => ("completed".to_string(), None, EXIT_OK),
                 Ok(AgentOutcome::Timeout { seconds }) => {
-                    eprintln!("Timeout: agent exceeded {seconds}s time limit");
+                    eprintln!("超时: Agent 超过 {seconds} 秒时间限制");
                     ("timeout".to_string(), None, EXIT_TIMEOUT)
                 }
                 Ok(AgentOutcome::Interrupted) => {
-                    eprintln!("Interrupted: received SIGTERM, saved partial output");
+                    eprintln!("已中断: 收到 SIGTERM,已保存部分输出");
                     ("interrupted".to_string(), None, EXIT_INTERRUPTED)
                 }
                 Err(e) => {
-                    eprintln!("Error: {e:#}");
+                    eprintln!("错误: {e:#}");
                     ("error".to_string(), Some(format!("{e:#}")), EXIT_ERROR)
                 }
             };
@@ -244,11 +244,11 @@ fn main() {
             match serde_json::to_string_pretty(&result) {
                 Ok(json) => {
                     if let Err(e) = std::fs::write(output_dir.join("result.json"), &json) {
-                        eprintln!("Error writing result.json: {e:#}");
+                        eprintln!("写入 result.json 时出错: {e:#}");
                     }
-                    eprintln!("[eval-cli] result: {json}");
+                    eprintln!("[eval-cli] 结果: {json}");
                 }
-                Err(e) => eprintln!("Error serializing result: {e:#}"),
+                Err(e) => eprintln!("序列化结果时出错: {e:#}"),
             }
 
             cx.update(|cx| cx.quit());
@@ -266,10 +266,10 @@ fn read_instruction(args: &Args) -> Result<String> {
         let mut buf = String::new();
         std::io::stdin()
             .read_to_string(&mut buf)
-            .context("reading instruction from stdin")?;
+            .context("从标准输入读取指令")?;
         buf
     };
-    anyhow::ensure!(!text.trim().is_empty(), "instruction is empty");
+    anyhow::ensure!(!text.trim().is_empty(), "指令为空");
     Ok(text)
 }
 
@@ -308,11 +308,11 @@ fn ensure_provider_authenticated(selected: &SelectedModel, cx: &gpui::App) -> Re
     let provider = registry
         .read(cx)
         .provider(&selected.provider)
-        .ok_or_else(|| anyhow::anyhow!("Provider {} not found", selected.provider.0))?;
+        .ok_or_else(|| anyhow::anyhow!("未找到提供商 {}", selected.provider.0))?;
 
     anyhow::ensure!(
         provider.is_authenticated(cx),
-        "Provider {} is not authenticated",
+        "提供商 {} 未通过身份验证",
         selected.provider.0
     );
 
@@ -400,12 +400,12 @@ fn model_not_found_error(model_name: &str, cx: &gpui::App) -> anyhow::Error {
         .map(|model| format!("{}/{}", model.provider_id().0, model.id().0))
         .collect::<Vec<_>>();
     let available = if available.is_empty() {
-        "(none)".to_string()
+        "(无)".to_string()
     } else {
         available.join(", ")
     };
 
-    anyhow::anyhow!("Model {model_name} not found. Available: {available}")
+    anyhow::anyhow!("未找到模型 {model_name}。可用模型: {available}")
 }
 
 #[cfg(test)]
@@ -476,7 +476,7 @@ async fn run_agent(
         let provider = registry
             .read(cx)
             .provider(&model.provider_id())
-            .context("Provider not found")?;
+            .context("未找到提供者")?;
 
         let supports_thinking = model.supports_thinking();
         let model_id = model.id().0.to_string();
@@ -517,7 +517,7 @@ async fn run_agent(
             );
             store.set_user_settings(&settings, cx).result()
         })
-        .context("updating agent settings")?;
+        .context("更新代理设置")?;
 
         anyhow::Ok(())
     });
@@ -545,12 +545,12 @@ async fn run_agent(
     let worktree = project.update(cx, |project, cx| project.create_worktree(workdir, true, cx));
     let worktree = match worktree.await {
         Ok(w) => w,
-        Err(e) => return (Err(e).context("creating worktree"), None),
+        Err(e) => return (Err(e).context("创建工作树"), None),
     };
 
     let scan_result = worktree.update(cx, |tree, _cx| {
         tree.as_local()
-            .context("expected local worktree")
+            .context("预期为本地工作树")
             .map(|local| local.scan_complete())
     });
     match scan_result {
@@ -579,7 +579,7 @@ async fn run_agent(
         .await
     {
         Ok(t) => t,
-        Err(e) => return (Err(e).context("creating ACP session"), None),
+        Err(e) => return (Err(e).context("创建 ACP 会话"), None),
     };
 
     let _subscription = cx.subscribe(&acp_thread, |acp_thread, event, cx| {
@@ -615,21 +615,21 @@ async fn run_agent(
     let outcome = select_biased! {
         result = send_future.fuse() => match result {
             Ok(Some(response)) => {
-                eprintln!("[eval-cli] stopped: {:?}", response.stop_reason);
+                eprintln!("[eval-cli] 已停止: {:?}", response.stop_reason);
                 if response.stop_reason == acp::StopReason::MaxTokens {
-                    Err(anyhow::anyhow!("Model hit maximum token limit"))
+                    Err(anyhow::anyhow!("模型已达到最大 Token 限制"))
                 } else {
                     Ok(AgentOutcome::Completed)
                 }
             }
             Ok(None) => {
-                eprintln!("[eval-cli] completed (no response)");
+                eprintln!("[eval-cli] 已完成 (无响应)");
                 Ok(AgentOutcome::Completed)
             }
-            Err(e) => Err(e).context("agent run failed"),
+            Err(e) => Err(e).context("Agent 运行失败"),
         },
         _ = sigterm_future.fuse() => {
-            eprintln!("[eval-cli] received SIGTERM, cancelling...");
+            eprintln!("[eval-cli] 收到 SIGTERM,正在取消...");
             acp_thread.update(cx, |t: &mut acp_thread::AcpThread, cx| t.cancel(cx)).await;
             Ok(AgentOutcome::Interrupted)
         },
@@ -673,7 +673,7 @@ async fn run_agent(
     if let (Some(thread), Some(dir)) = (&thread, output_dir) {
         let markdown = thread.read_with(cx, |thread, _cx| thread.to_markdown());
         if let Err(e) = std::fs::write(dir.join("thread.md"), markdown) {
-            eprintln!("Error writing thread.md: {e:#}");
+            eprintln!("写入对话线程.md 时出错: {e:#}");
         }
 
         let db_thread = thread.read_with(cx, |thread, cx| thread.to_db(cx));
@@ -681,10 +681,10 @@ async fn run_agent(
         match serde_json::to_string_pretty(&db_thread) {
             Ok(json) => {
                 if let Err(e) = std::fs::write(dir.join("thread.json"), json) {
-                    eprintln!("Error writing thread.json: {e:#}");
+                    eprintln!("写入对话线程.json 时出错: {e:#}");
                 }
             }
-            Err(e) => eprintln!("Error serializing thread.json: {e:#}"),
+            Err(e) => eprintln!("序列化对话线程.json 时出错: {e:#}"),
         }
     }
 
@@ -724,10 +724,10 @@ fn log_acp_thread_event(
                             eprintln!("[tool] {name} ✗");
                         }
                         acp_thread::ToolCallStatus::Rejected => {
-                            eprintln!("[tool] {name} rejected");
+                            eprintln!("[tool] {name} 已拒绝");
                         }
                         acp_thread::ToolCallStatus::Canceled => {
-                            eprintln!("[tool] {name} canceled");
+                            eprintln!("[tool] {name} 已取消");
                         }
                         _ => {}
                     }
@@ -735,16 +735,16 @@ fn log_acp_thread_event(
             }
         }
         acp_thread::AcpThreadEvent::Stopped(reason) => {
-            eprintln!("\n[eval-cli] stopped: {reason:?}");
+            eprintln!("\n[eval-cli] 已停止: {reason:?}");
         }
         acp_thread::AcpThreadEvent::Error => {
-            eprintln!("[eval-cli] error event");
+            eprintln!("[eval-cli] 错误事件");
         }
         acp_thread::AcpThreadEvent::Retry(status) => {
-            eprintln!("[eval-cli] retry: {status:?}");
+            eprintln!("[eval-cli] 重试: {status:?}");
         }
         acp_thread::AcpThreadEvent::SubagentSpawned(session_id) => {
-            eprintln!("[eval-cli] subagent spawned: {session_id}");
+            eprintln!("[eval-cli] 子 Agent 已生成: {session_id}");
         }
         _ => {}
     }

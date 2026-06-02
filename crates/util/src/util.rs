@@ -342,7 +342,7 @@ pub fn get_zed_cli_path() -> Result<PathBuf> {
         })
         .with_context(|| {
             format!(
-                "could not find zed-cli from any of: {}",
+                "无法从以下任一位置找到 zed-cli:{}",
                 possible_locations.join(", ")
             )
         })

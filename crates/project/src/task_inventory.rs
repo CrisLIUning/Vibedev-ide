@@ -749,7 +749,7 @@ impl Inventory {
                     .join(", ");
 
                 validation_errors.push(format!(
-                    "Task '{}' uses unknown variables: {}",
+                    "任务 '{}' 使用了未知变量: {}",
                     template.label, variables_list
                 ));
 

@@ -122,7 +122,7 @@ fn manifest() -> ExtensionManifest {
         name: "Test Extension".into(),
         version: "0.1.0".into(),
         schema_version: SchemaVersion(1),
-        description: Some("An extension for use in tests.".into()),
+        description: Some("用于测试的扩展。".into()),
         authors: Vec::new(),
         repository: None,
         themes: Default::default(),

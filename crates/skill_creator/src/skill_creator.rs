@@ -55,7 +55,7 @@ enum ScopeChoice {
 impl ScopeChoice {
     fn label(&self) -> SharedString {
         match self {
-            ScopeChoice::Global => "Global".into(),
+            ScopeChoice::Global => "全局".into(),
             ScopeChoice::Project { root_name, .. } => root_name.clone(),
         }
     }
@@ -148,7 +148,7 @@ pub fn open_skill_creator(
             cx.open_window(
                 WindowOptions {
                     titlebar: Some(TitlebarOptions {
-                        title: Some("New Skill".into()),
+                        title: Some("新建技能".into()),
                         appears_transparent: true,
                         traffic_light_position: Some(point(px(12.0), px(12.0))),
                     }),
@@ -221,7 +221,7 @@ impl SkillCreator {
 
         let name_editor = cx.new(|cx| {
             InputField::new(window, cx, "my-new-skill")
-                .label("Name")
+                .label("名称")
                 .tab_index(NAME_FIELD_TAB_INDEX)
                 .tab_stop(true)
         });
@@ -237,9 +237,9 @@ impl SkillCreator {
             InputField::new(
                 window,
                 cx,
-                "e.g., Fill the PR description following this template.",
+                "例如:按此模板填写 PR 描述",
             )
-            .label("Description")
+            .label("描述")
             .tab_index(DESCRIPTION_FIELD_TAB_INDEX)
             .tab_stop(true)
         });
@@ -251,7 +251,7 @@ impl SkillCreator {
                 buffer
             });
             let mut editor = Editor::for_buffer(buffer, None, window, cx);
-            editor.set_placeholder_text("Add skill content…", window, cx);
+            editor.set_placeholder_text("添加技能内容…", window, cx);
             editor.set_soft_wrap_mode(SoftWrap::EditorWidth, cx);
             editor.set_show_gutter(false, cx);
             editor.set_show_wrap_guides(false, cx);
@@ -409,7 +409,7 @@ impl SkillCreator {
     fn recompute_body_error(&mut self, cx: &App) {
         let body = self.current_body(cx);
         self.body_error = if body.trim().is_empty() {
-            Some("Body is required.")
+            Some("内容不能为空")
         } else {
             None
         };
@@ -440,7 +440,7 @@ impl SkillCreator {
         }
 
         let Some(scope) = self.selected_scope().cloned() else {
-            self.save_error = Some("Select a scope to save this skill to.".into());
+            self.save_error = Some("请选择保存位置".into());
             cx.notify();
             return;
         };
@@ -482,7 +482,7 @@ impl SkillCreator {
                                     Toast::new(
                                         NotificationId::unique::<SaveSkill>(),
                                         format!(
-                                            "Saved skill \"{name}\" to {scope_label} ({})",
+                                            "技能 \"{name}\" 已保存至 {scope_label} ({})",
                                             path.display()
                                         ),
                                     ),
@@ -533,9 +533,9 @@ impl SkillCreator {
         let scopes = self.scopes.clone();
         let selected = self.selected_scope().cloned();
         let selected_label: SharedString = match selected.as_ref() {
-            Some(ScopeChoice::Global) => "Global".into(),
+            Some(ScopeChoice::Global) => "全局".into(),
             Some(ScopeChoice::Project { root_name, .. }) => {
-                SharedString::from(format!("{root_name} (project)"))
+                SharedString::from(format!("{root_name}(项目)"))
             }
             None => "Select a scope\u{2026}".into(),
         };
@@ -549,7 +549,7 @@ impl SkillCreator {
                 "Only available when this project is open. \
                 Saved to {root_name}{sep}{AGENTS_DIR_NAME}{sep}{SKILLS_DIR_NAME}{sep}\u{2039}name\u{203A}{sep}{SKILL_FILE_NAME}."
             )),
-            None => "Choose where this skill should live.".into(),
+            None => "选择技能的保存位置".into(),
         };
 
         let selected_label = h_flex()
@@ -563,9 +563,9 @@ impl SkillCreator {
                 let key = scope.key();
                 let weak = weak.clone();
                 let entry_label: SharedString = match scope {
-                    ScopeChoice::Global => "Global".into(),
+                    ScopeChoice::Global => "全局".into(),
                     ScopeChoice::Project { root_name, .. } => {
-                        SharedString::from(format!("{root_name} (project)"))
+                        SharedString::from(format!("{root_name}(项目)"))
                     }
                 };
                 menu = menu.entry(entry_label, None, move |_window, cx| {
@@ -587,7 +587,7 @@ impl SkillCreator {
                 v_flex()
                     .flex_1()
                     .min_w_0()
-                    .child(Label::new("Scope"))
+                    .child(Label::new("范围"))
                     .child(Label::new(scope_hint).color(Color::Muted)),
             )
             .child(
@@ -604,9 +604,9 @@ impl SkillCreator {
 
         SwitchField::new(
             "disable-model-invocation",
-            Some("Disable model invocation"),
+            Some("禁用模型调用"),
             Some(
-                "Hide this skill from the model's catalog. It can still be invoked via slash command."
+                "在模型目录中隐藏此技能,仍可通过斜杠命令调用"
                     .into(),
             ),
             toggle_state,
@@ -673,7 +673,7 @@ impl SkillCreator {
     fn render_action_bar(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let valid = self.is_valid(cx);
         let saving = self.saving;
-        let main_action = if saving { "Saving…" } else { "Save Skill" };
+        let main_action = if saving { "保存中…" } else { "保存技能" };
 
         h_flex()
             .w_full()
@@ -694,7 +694,7 @@ impl SkillCreator {
                 h_flex()
                     .gap_1()
                     .child(
-                        Button::new("cancel-skill", "Cancel")
+                        Button::new("cancel-skill", "取消")
                             .disabled(saving)
                             .on_click(|_, window, cx| {
                                 window.dispatch_action(Box::new(Cancel), cx);
@@ -724,7 +724,7 @@ impl SkillCreator {
             .when(needs_traffic_light_clearance, |this| this.pl(px(84.)))
             .border_b_1()
             .border_color(theme.colors().border)
-            .child(Headline::new("Skill Creator").size(HeadlineSize::XSmall))
+            .child(Headline::new("技能创建器").size(HeadlineSize::XSmall))
     }
 
     fn focus_next_field(
@@ -823,7 +823,7 @@ impl Render for SkillCreator {
                             v_flex()
                                 .flex_1()
                                 .gap_2()
-                                .child(Label::new("Skill Content"))
+                                .child(Label::new("技能内容"))
                                 .child(self.render_body_field(window, cx)),
                         ),
                 )
@@ -860,7 +860,7 @@ async fn write_skill_to_disk(
     match fs.metadata(&skill_dir).await {
         Ok(Some(metadata)) if metadata.is_dir => {
             anyhow::bail!(
-                "A skill named \"{name}\" already exists at {}. Pick a different name.",
+                "技能 \"{name}\" 已存在于 {},请选择其他名称",
                 skill_dir.display()
             );
         }
@@ -868,7 +868,7 @@ async fn write_skill_to_disk(
             // Something exists at this path, but it isn't a directory — e.g.
             // a stray file the user (or another tool) left there. Without
             // this branch we'd fall through to `create_dir`, which on the
-            // real fs returns a generic "File exists" IO error that gives
+            // real fs returns a generic "文件已存在" IO error that gives
             // the user no idea what's wrong or how to recover.
             anyhow::bail!(
                 "A file (not a skill directory) already exists at {}. \
@@ -880,7 +880,7 @@ async fn write_skill_to_disk(
         Err(err) => {
             return Err(err).with_context(|| {
                 format!(
-                    "failed to check whether {} already exists",
+                    "无法检查 {} 是否已存在",
                     skill_dir.display()
                 )
             });
@@ -891,11 +891,11 @@ async fn write_skill_to_disk(
 
     fs.create_dir(&skill_dir)
         .await
-        .with_context(|| format!("failed to create skill directory {}", skill_dir.display()))?;
+        .with_context(|| format!("无法创建技能目录 {}", skill_dir.display()))?;
     let skill_file_path = skill_dir.join(SKILL_FILE_NAME);
     fs.write(&skill_file_path, content.as_bytes())
         .await
-        .with_context(|| format!("failed to write {}", skill_file_path.display()))?;
+        .with_context(|| format!("无法写入 {}", skill_file_path.display()))?;
 
     Ok(skill_file_path)
 }
@@ -912,7 +912,7 @@ fn format_skill_file(
         disable_model_invocation,
     };
     let frontmatter = serde_yaml_ng::to_string(&metadata)
-        .context("failed to serialize skill frontmatter as YAML")?;
+        .context("无法将技能前置元数据序列化为 YAML")?;
 
     let mut content = String::with_capacity(frontmatter.len() + body.len() + 16);
     content.push_str("---\n");
@@ -942,15 +942,15 @@ mod tests {
     #[test]
     fn format_skill_file_round_trips_through_parser() {
         let content =
-            format_skill_file("draft-pr", "Push a draft PR", "Do the thing.", false).unwrap();
+            format_skill_file("draft-pr", "推送草稿 PR", "执行操作", false).unwrap();
         let skill = parse_skill_frontmatter(
             Path::new("/skills/draft-pr/SKILL.md"),
             &content,
             SkillSource::Global,
         )
-        .expect("generated frontmatter must round-trip through parse_skill_frontmatter");
+        .expect("生成的前置元数据必须能通过解析器");
         assert_eq!(skill.name, "draft-pr");
-        assert_eq!(skill.description, "Push a draft PR");
+        assert_eq!(skill.description, "推送草稿 PR");
         assert!(!skill.disable_model_invocation);
     }
 
@@ -972,14 +972,14 @@ mod tests {
         // serde_yaml_ng must quote/escape descriptions that contain YAML
         // specials so the file round-trips. If we ever swap formatters,
         // this test will catch a regression.
-        let tricky = "contains: a colon, # a hash, and a \"quote\"";
+        let tricky = "包含:冒号、井号和引号";
         let content = format_skill_file("weird-skill", tricky, "body", false).unwrap();
         let skill = parse_skill_frontmatter(
             Path::new("/skills/weird-skill/SKILL.md"),
             &content,
             SkillSource::Global,
         )
-        .expect("YAML-special characters must round-trip");
+        .expect("YAML 特殊字符必须能往返解析");
         assert_eq!(skill.description, tricky);
     }
 
@@ -992,19 +992,19 @@ mod tests {
             fs.as_ref(),
             Path::new("/skills"),
             "draft-pr",
-            "Push a draft PR",
-            "Body of the skill.",
+            "推送草稿 PR",
+            "技能内容",
             false,
         )
         .await
-        .expect("write should succeed");
+        .expect("写入应该成功");
 
         assert_eq!(path, Path::new("/skills/draft-pr/SKILL.md"));
-        let content = fs.load(&path).await.expect("file should exist");
+        let content = fs.load(&path).await.expect("文件应该存在");
         let skill = parse_skill_frontmatter(&path, &content, SkillSource::Global)
-            .expect("written file should be parseable");
+            .expect("写入的文件应该可解析");
         assert_eq!(skill.name, "draft-pr");
-        assert_eq!(skill.description, "Push a draft PR");
+        assert_eq!(skill.description, "推送草稿 PR");
     }
 
     #[gpui::test]
@@ -1024,15 +1024,15 @@ mod tests {
             fs.as_ref(),
             Path::new("/skills"),
             "draft-pr",
-            "Push a draft PR",
-            "Body of the skill.",
+            "推送草稿 PR",
+            "技能内容",
             false,
         )
         .await
-        .expect_err("writing over an existing skill must fail");
+        .expect_err("覆盖已存在的技能必须失败");
         assert!(
-            err.to_string().contains("already exists"),
-            "error message should mention the conflict, got: {err}"
+            err.to_string().contains("已存在"),
+            "错误消息应提及冲突,got: {err}"
         );
     }
 
@@ -1043,7 +1043,7 @@ mod tests {
         let fs = FakeFs::new(cx.executor());
         // A *file* (not a directory) sitting at `/skills/draft-pr`. With the
         // old `is_dir` check this slipped through and we ended up surfacing
-        // the underlying "File exists" OS error.
+        // the underlying "文件已存在" OS error.
         fs.insert_tree(
             "/skills",
             serde_json::json!({ "draft-pr": "i am a stray file" }),
@@ -1054,16 +1054,16 @@ mod tests {
             fs.as_ref(),
             Path::new("/skills"),
             "draft-pr",
-            "Push a draft PR",
-            "Body of the skill.",
+            "推送草稿 PR",
+            "技能内容",
             false,
         )
         .await
-        .expect_err("writing where a file already lives must fail");
+        .expect_err("写入已存在文件的路径必须失败");
         let message = err.to_string();
         assert!(
-            message.contains("not a skill directory"),
-            "error should explain the conflict is a non-directory, got: {message}"
+            message.contains("不是技能目录"),
+            "错误应说明冲突是非目录,got: {message}"
         );
         // Path separator differs between platforms (`/` on Unix, `\` on
         // Windows), so reconstruct the expected `Display` form rather than
@@ -1072,7 +1072,7 @@ mod tests {
         let expected_path = expected_path.display().to_string();
         assert!(
             message.contains(&expected_path),
-            "error should include the conflicting path {expected_path:?}, got: {message}"
+            "错误应包含冲突路径 {expected_path:?},got: {message}"
         );
     }
 }

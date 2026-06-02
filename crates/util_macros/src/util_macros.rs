@@ -124,7 +124,7 @@ impl PerfArgs {
         } else if meta.path.is_ident("fluff") {
             self.importance = Importance::Fluff;
         } else {
-            return Err(syn::Error::new_spanned(meta.path, "unexpected identifier"));
+            return Err(syn::Error::new_spanned(meta.path, "意外的标识符"));
         }
         Ok(())
     }

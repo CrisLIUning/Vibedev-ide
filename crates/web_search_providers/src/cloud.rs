@@ -90,6 +90,6 @@ async fn perform_web_search(
         let status = response.status();
         let mut body = String::new();
         response.body_mut().read_to_string(&mut body).await?;
-        anyhow::bail!("error performing web search.\nStatus: {status:?}\nBody: {body}");
+        anyhow::bail!("执行网络搜索时出错。\n状态码: {status:?}\n响应体: {body}");
     }
 }

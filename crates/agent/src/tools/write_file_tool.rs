@@ -15,7 +15,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use ui::SharedString;
 
-const DEFAULT_UI_TEXT: &str = "Writing file";
+const DEFAULT_UI_TEXT: &str = "正在写入文件";
 
 /// This is a tool for creating a new file or overwriting an existing file with completely new contents.
 ///
@@ -113,7 +113,7 @@ impl WriteFileTool {
                                         {
                                             Ok(created_session) => session = Some(created_session),
                                             Err(error) => {
-                                                log::error!("Failed to create edit session: {}", error);
+                                                log::error!("创建编辑会话失败: {}", error);
                                                 return EditSessionResult::Failed {
                                                     error,
                                                     session: None,
@@ -125,7 +125,7 @@ impl WriteFileTool {
                                     if let Some(current_session) = &mut session
                                         && let Err(error) = current_session.process_write(parsed.content.as_deref(), cx)
                                     {
-                                        log::error!("Failed to process write: {}", error);
+                                        log::error!("处理写入失败: {}", error);
                                         return EditSessionResult::Failed { error, session };
                                     }
                                 }
@@ -146,7 +146,7 @@ impl WriteFileTool {
                                     {
                                         Ok(created_session) => created_session,
                                         Err(error) => {
-                                            log::error!("Failed to create edit session: {}", error);
+                                            log::error!("创建编辑会话失败: {}", error);
                                             return EditSessionResult::Failed {
                                                 error,
                                                 session: None,
@@ -158,7 +158,7 @@ impl WriteFileTool {
                                 return match session.finalize_write(&full_input.content, cx).await {
                                     Ok(()) => EditSessionResult::Completed(session),
                                     Err(error) => {
-                                        log::error!("Failed to finalize write: {}", error);
+                                        log::error!("完成写入失败: {}", error);
                                         EditSessionResult::Failed {
                                             error,
                                             session: Some(session),
@@ -167,7 +167,7 @@ impl WriteFileTool {
                                 };
                             }
                             ToolInputPayload::InvalidJson { error_message } => {
-                                log::error!("Received invalid JSON: {error_message}");
+                                log::error!("收到无效 JSON:{error_message}");
                                 return EditSessionResult::Failed {
                                     error: error_message,
                                     session,
@@ -184,7 +184,7 @@ impl WriteFileTool {
                 }
                 _ = event_stream.cancelled_by_user().fuse() => {
                     return EditSessionResult::Failed {
-                        error: "Write cancelled by user".to_string(),
+                        error: "写入已被用户取消".to_string(),
                         session,
                     };
                 }
@@ -294,7 +294,7 @@ mod tests {
             .await;
 
         let EditSessionOutput::Success { new_text, diff, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "Hello, World!");
         assert!(!diff.is_empty());
@@ -321,7 +321,7 @@ mod tests {
             new_text, old_text, ..
         } = result.unwrap()
         else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "new content");
         assert_eq!(*old_text, "old content");
@@ -355,7 +355,7 @@ mod tests {
 
         let result = task.await;
         let EditSessionOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "new content");
     }
@@ -391,7 +391,7 @@ mod tests {
 
         let result = task.await;
         let EditSessionOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "Hello, World!");
     }
@@ -421,7 +421,7 @@ mod tests {
 
         let result = task.await;
         let EditSessionOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "streamed content");
     }
@@ -445,13 +445,13 @@ mod tests {
         let result = test_resolve_path(&mode, "root/dir/subdir", cx);
         assert_eq!(
             result.await.unwrap_err(),
-            "Can't write to file: path is a directory"
+            "无法写入文件:路径是目录"
         );
 
         let result = test_resolve_path(&mode, "root/dir/nonexistent_dir/new.txt", cx);
         assert_eq!(
             result.await.unwrap_err(),
-            "Can't create file: parent directory doesn't exist"
+            "无法创建文件:父目录不存在"
         );
     }
 
@@ -563,7 +563,7 @@ mod tests {
         assert_eq!(
             new_content.replace("\r\n", "\n"),
             FORMATTED_CONTENT,
-            "Code should be formatted when format_on_save is enabled"
+            "启用 format_on_save 时代码应被格式化"
         );
 
         let stale_buffer_count = thread
@@ -572,7 +572,7 @@ mod tests {
 
         assert_eq!(
             stale_buffer_count, 0,
-            "BUG: Buffer is incorrectly marked as stale after format-on-save. Found {} stale buffers.",
+            "BUG:format-on-保存 后缓冲区被错误标记为过期。发现 {} 个过期缓冲区。",
             stale_buffer_count
         );
 
@@ -617,7 +617,7 @@ mod tests {
         assert_eq!(
             new_content.replace("\r\n", "\n"),
             UNFORMATTED_CONTENT,
-            "Code should not be formatted when format_on_save is disabled"
+            "禁用 format_on_save 时代码不应被格式化"
         );
     }
 
@@ -676,7 +676,7 @@ mod tests {
                 .unwrap()
                 .replace("\r\n", "\n"),
             "fn main() {\n    println!(\"Hello!\");\n}\n",
-            "Trailing whitespace should be removed when remove_trailing_whitespace_on_save is enabled"
+            "启用 remove_trailing_whitespace_on_save 时应删除尾随空格"
         );
 
         // Test with remove_trailing_whitespace_on_save disabled
@@ -719,7 +719,7 @@ mod tests {
         assert_eq!(
             final_content.replace("\r\n", "\n"),
             CONTENT_WITH_TRAILING_WHITESPACE,
-            "Trailing whitespace should remain when remove_trailing_whitespace_on_save is disabled"
+            "禁用 remove_trailing_whitespace_on_save 时应保留尾随空格"
         );
     }
 
@@ -838,7 +838,7 @@ mod tests {
 
         let result = task.await;
         let EditSessionOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "line 1\nline 2\nline 3\n");
     }
@@ -898,7 +898,7 @@ mod tests {
             new_text, old_text, ..
         } = result.unwrap()
         else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "new line 1\nnew line 2\n");
         assert_eq!(*old_text, "old line 1\nold line 2\nold line 3\n");
@@ -965,7 +965,7 @@ mod tests {
             new_text, old_text, ..
         } = result.unwrap()
         else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "new line 1\nnew line 2\nnew line 3\n");
         assert_eq!(*old_text, "old line 1\nold line 2\nold line 3\n");
@@ -994,7 +994,7 @@ mod tests {
         });
 
         let result = task.await;
-        assert!(result.is_ok(), "write should succeed: {:?}", result.err());
+        assert!(result.is_ok(), "写入应该成功: {:?}", result.err());
 
         cx.run_until_parked();
 
@@ -1033,7 +1033,7 @@ mod tests {
 
         let result = task.await;
         let EditSessionOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "new_content");
     }
@@ -1061,19 +1061,19 @@ mod tests {
             )
         });
         let result = task.await;
-        assert!(result.is_ok(), "create should succeed: {:?}", result.err());
+        assert!(result.is_ok(), "创建应该成功: {:?}", result.err());
         cx.run_until_parked();
 
         assert!(
             fs.is_file(path!("/root/dir/new_file.txt").as_ref()).await,
-            "file should exist after creation"
+            "创建后文件应该存在"
         );
 
         // Reject all edits — this should delete the newly created file
         let changed = action_log.read_with(cx, |log, cx| log.changed_buffers(cx));
         assert!(
             !changed.is_empty(),
-            "action_log should track the created file as changed"
+            "action_log 应该跟踪已创建的文件为已更改"
         );
 
         action_log
@@ -1083,12 +1083,12 @@ mod tests {
 
         assert!(
             !fs.is_file(path!("/root/dir/new_file.txt").as_ref()).await,
-            "file should be deleted after rejecting creation, but an empty file was left behind"
+            "拒绝创建后文件应该被删除,但留下了空文件"
         );
     }
 
     /// When the buffer has unsaved user edits and the user picks
-    /// "Discard my edits", the pending edits are reverted to match disk
+    /// "放弃我的编辑", the pending edits are reverted to match disk
     /// and the agent's overwrite proceeds.
     #[gpui::test]
     async fn test_streaming_write_dirty_buffer_discard(cx: &mut TestAppContext) {
@@ -1099,7 +1099,7 @@ mod tests {
             .read_with(cx, |project, cx| {
                 project.find_project_path("root/file.txt", cx)
             })
-            .expect("Should find project path");
+            .expect("应该找到项目路径");
         let buffer = project
             .update(cx, |project, cx| project.open_buffer(project_path, cx))
             .await
@@ -1127,16 +1127,16 @@ mod tests {
 
         // Verify the prompt is the overwrite-mode prompt.
         let content = auth.tool_call.fields.content.as_deref().unwrap_or(&[]);
-        let acp::ToolCallContent::Content(text) = content.first().expect("expected message body")
+        let acp::ToolCallContent::Content(text) = content.first().expect("预期消息体")
         else {
-            panic!("expected text body, got: {:?}", content.first());
+            panic!("预期文本体,得到:{:?}", content.first());
         };
         let acp::ContentBlock::Text(text) = &text.content else {
-            panic!("expected text body, got: {:?}", text.content);
+            panic!("预期文本体,得到:{:?}", text.content);
         };
         assert!(
             text.text.contains("overwrite"),
-            "expected overwrite-mode prompt, got: {:?}",
+            "预期覆盖模式提示,得到: {:?}",
             text.text,
         );
 
@@ -1145,10 +1145,10 @@ mod tests {
             acp_thread::PermissionOptions::Flat(opts) => {
                 opts.iter().map(|o| o.option_id.0.as_ref()).collect()
             }
-            other => panic!("expected flat options, got: {other:?}"),
+            other => panic!("预期平面选项,得到: {other:?}"),
         };
-        assert!(option_ids.contains(&"keep"), "options: {option_ids:?}");
-        assert!(option_ids.contains(&"discard"), "options: {option_ids:?}");
+        assert!(option_ids.contains(&"keep"), "选项: {option_ids:?}");
+        assert!(option_ids.contains(&"discard"), "选项: {option_ids:?}");
 
         auth.response
             .send(acp_thread::SelectedPermissionOutcome::new(
@@ -1158,7 +1158,7 @@ mod tests {
             .unwrap();
 
         let EditSessionOutput::Success { new_text, .. } = task.await.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "agent overwrote it");
         assert!(!buffer.read_with(cx, |buffer, _| buffer.is_dirty()));
@@ -1167,7 +1167,7 @@ mod tests {
     }
 
     /// When the buffer has unsaved user edits and the user picks
-    /// "Keep my edits", the overwrite is cancelled with an error and the
+    /// "保留我的编辑", the overwrite is cancelled with an error and the
     /// user's pending edits are preserved.
     #[gpui::test]
     async fn test_streaming_write_dirty_buffer_keep(cx: &mut TestAppContext) {
@@ -1178,7 +1178,7 @@ mod tests {
             .read_with(cx, |project, cx| {
                 project.find_project_path("root/file.txt", cx)
             })
-            .expect("Should find project path");
+            .expect("应该找到项目路径");
         let buffer = project
             .update(cx, |project, cx| project.open_buffer(project_path, cx))
             .await
@@ -1211,11 +1211,11 @@ mod tests {
             .unwrap();
 
         let EditSessionOutput::Error { error, .. } = task.await.unwrap_err() else {
-            panic!("expected error");
+            panic!("预期错误");
         };
         assert!(
             error.contains("keep") || error.contains("cancelled"),
-            "expected cancel-style error message, got: {error:?}",
+            "预期取消式错误消息,得到: {error:?}",
         );
 
         // The user's in-memory edits are preserved.
@@ -1229,7 +1229,7 @@ mod tests {
     }
 
     /// When the user manually saves the buffer (e.g. cmd-s) while the
-    /// overwrite prompt is visible, that's treated as "Keep my edits":
+    /// overwrite prompt is visible, that's treated as "保留我的编辑":
     /// the user just deliberately persisted their work, so we cancel the
     /// agent's overwrite to avoid clobbering it.
     #[gpui::test]
@@ -1241,7 +1241,7 @@ mod tests {
             .read_with(cx, |project, cx| {
                 project.find_project_path("root/file.txt", cx)
             })
-            .expect("Should find project path");
+            .expect("应该找到项目路径");
         let buffer = project
             .update(cx, |project, cx| project.open_buffer(project_path, cx))
             .await
@@ -1280,11 +1280,11 @@ mod tests {
 
         // The overwrite is cancelled with an error.
         let EditSessionOutput::Error { error, .. } = task.await.unwrap_err() else {
-            panic!("expected error");
+            panic!("预期错误");
         };
         assert!(
             error.contains("saved") || error.contains("cancelled"),
-            "expected cancel-on-manual-save error, got: {error:?}",
+            "预期手动保存取消错误,得到: {error:?}",
         );
 
         // The user's edits were saved to disk and not clobbered.
@@ -1370,7 +1370,7 @@ mod tests {
 
     #[track_caller]
     fn assert_resolved_path_eq(path: Result<ProjectPath, String>, expected: &RelPath) {
-        let actual = path.expect("Should return valid path").path;
+        let actual = path.expect("应该返回有效路径").path;
         assert_eq!(actual.as_ref(), expected);
     }
 

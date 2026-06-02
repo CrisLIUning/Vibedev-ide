@@ -68,7 +68,7 @@ impl Database {
 
             let username = user
                 .map(|u| u.github_login)
-                .unwrap_or_else(|| "Unknown".to_string());
+                .unwrap_or_else(|| "未知".to_string());
 
             Ok(Some((thread, username)))
         })

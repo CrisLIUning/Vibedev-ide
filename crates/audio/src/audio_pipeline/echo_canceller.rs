@@ -30,7 +30,7 @@ mod real_implementation {
             self.0
                 .lock()
                 .process_stream(buf, SAMPLE_RATE.get() as i32, CHANNEL_COUNT.get() as i32)
-                .context("livekit audio processor error")
+                .context("livekit 音频处理器错误")
         }
     }
 }

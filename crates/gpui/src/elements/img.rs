@@ -646,7 +646,7 @@ impl Asset for ImageAssetLoader {
                         data.to_vec()
                     } else {
                         return Err(ImageCacheError::Asset(
-                            format!("Embedded resource not found: {}", path).into(),
+                            format!("未找到内嵌资源: {}", path).into(),
                         ));
                     }
                 }
@@ -669,7 +669,7 @@ impl Asset for ImageAssetLoader {
                                 }
                                 Err(err) => {
                                     log::debug!(
-                                        "Skipping GIF frame in {source:?} due to decode error: {err}"
+                                        "跳过 {source:?} 中的 GIF 帧, 原因: 解码错误: {err}"
                                     );
                                 }
                             }
@@ -677,7 +677,7 @@ impl Asset for ImageAssetLoader {
 
                         if frames.is_empty() {
                             return Err(ImageCacheError::Other(Arc::new(anyhow::anyhow!(
-                                "GIF could not be decoded: all frames failed ({source:?})"
+                                "无法解码 GIF: 所有帧均失败 ({source:?})"
                             ))));
                         }
 
@@ -701,7 +701,7 @@ impl Asset for ImageAssetLoader {
                                     }
                                     Err(err) => {
                                         log::debug!(
-                                            "Skipping WebP frame in {source:?} due to decode error: {err}"
+                                            "跳过 {source:?} 中的 WebP 帧, 原因: 解码错误: {err}"
                                         );
                                     }
                                 }
@@ -709,7 +709,7 @@ impl Asset for ImageAssetLoader {
 
                             if frames.is_empty() {
                                 return Err(ImageCacheError::Other(Arc::new(anyhow::anyhow!(
-                                    "WebP could not be decoded: all frames failed ({source:?})"
+                                    "无法解码 WebP: 所有帧均失败 ({source:?})"
                                 ))));
                             }
 
@@ -824,7 +824,7 @@ mod tests {
             move |_, _, window, _| {
                 window.with_global_id(TEST_IMG_ID.into(), |id, window| {
                     window.with_element_state::<ImgState, _>(id, |state, _| {
-                        let mut state = state.expect("img state should be initialized");
+                        let mut state = state.expect("img 状态未初始化");
                         state.frame_index = frame_index;
                         ((), state)
                     });

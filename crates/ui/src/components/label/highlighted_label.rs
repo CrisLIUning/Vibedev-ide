@@ -25,7 +25,7 @@ impl HighlightedLabel {
         {
             let location = std::panic::Location::caller();
             debug_panic!(
-                "highlight index {index} is not a valid UTF-8 boundary (called from {location})"
+                "高亮索引 {index} 不是有效的 UTF-8 边界(调用位置 {location})"
             );
             highlight_indices.clear();
         }
@@ -224,7 +224,7 @@ impl Component for HighlightedLabel {
     }
 
     fn description() -> Option<&'static str> {
-        Some("A label with highlighted characters based on specified indices.")
+        Some("根据指定索引高亮字符的标签。")
     }
 
     fn preview(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
@@ -233,72 +233,72 @@ impl Component for HighlightedLabel {
                 .gap_6()
                 .children(vec![
                     example_group_with_title(
-                        "Basic Usage",
+                        "基本用法",
                         vec![
                             single_example(
-                                "Default",
-                                HighlightedLabel::new("Highlighted Text", vec![0, 1, 2, 3]).into_any_element(),
+                                "默认",
+                                HighlightedLabel::new("高亮文本", vec![0, 1, 2, 3]).into_any_element(),
                             ),
                             single_example(
-                                "Custom Color",
-                                HighlightedLabel::new("Colored Highlight", vec![0, 1, 7, 8, 9])
+                                "自定义颜色",
+                                HighlightedLabel::new("彩色高亮", vec![0, 1, 7, 8, 9])
                                     .color(Color::Accent)
                                     .into_any_element(),
                             ),
                         ],
                     ),
                     example_group_with_title(
-                        "Styles",
+                        "样式",
                         vec![
                             single_example(
-                                "Bold",
-                                HighlightedLabel::new("Bold Highlight", vec![0, 1, 2, 3])
+                                "粗体",
+                                HighlightedLabel::new("粗体高亮", vec![0, 1, 2, 3])
                                     .weight(FontWeight::BOLD)
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Italic",
-                                HighlightedLabel::new("Italic Highlight", vec![0, 1, 6, 7, 8])
+                                "斜体",
+                                HighlightedLabel::new("斜体高亮", vec![0, 1, 6, 7, 8])
                                     .italic()
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Underline",
-                                HighlightedLabel::new("Underlined Highlight", vec![0, 1, 10, 11, 12])
+                                "下划线",
+                                HighlightedLabel::new("下划线高亮", vec![0, 1, 10, 11, 12])
                                     .underline()
                                     .into_any_element(),
                             ),
                         ],
                     ),
                     example_group_with_title(
-                        "Sizes",
+                        "尺寸",
                         vec![
                             single_example(
-                                "Small",
-                                HighlightedLabel::new("Small Highlight", vec![0, 1, 5, 6, 7])
+                                "小",
+                                HighlightedLabel::new("小号高亮", vec![0, 1, 5, 6, 7])
                                     .size(LabelSize::Small)
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Large",
-                                HighlightedLabel::new("Large Highlight", vec![0, 1, 5, 6, 7])
+                                "大",
+                                HighlightedLabel::new("大号高亮", vec![0, 1, 5, 6, 7])
                                     .size(LabelSize::Large)
                                     .into_any_element(),
                             ),
                         ],
                     ),
                     example_group_with_title(
-                        "Special Cases",
+                        "特殊情况",
                         vec![
                             single_example(
-                                "Single Line",
-                                HighlightedLabel::new("Single Line Highlight\nWith Newline", vec![0, 1, 7, 8, 9])
+                                "单行",
+                                HighlightedLabel::new("单行高亮\n带换行符", vec![0, 1, 7, 8, 9])
                                     .single_line()
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Truncate",
-                                HighlightedLabel::new("This is a very long text that should be truncated with highlights", vec![0, 1, 2, 3, 4, 5])
+                                "截断",
+                                HighlightedLabel::new("这是一段带有高亮效果的非常长的文本,应该被截断", vec![0, 1, 2, 3, 4, 5])
                                     .truncate()
                                     .into_any_element(),
                             ),

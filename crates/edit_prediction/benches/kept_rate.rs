@@ -22,7 +22,7 @@ fn localized_rename_inputs(line_count: usize) -> (String, String, String) {
 
     let offset = base
         .rfind(needle)
-        .expect("expected needle in synthetic input");
+        .expect("在合成输入中未找到预期字符串");
     let end = offset + needle.len();
 
     predicted.replace_range(offset..end, prediction);

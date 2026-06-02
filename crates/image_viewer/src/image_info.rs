@@ -56,7 +56,7 @@ impl Render for ImageInfo {
 
         if let Some(colors) = metadata.colors {
             components.push(format!(
-                "{} channels, {} bits per pixel",
+                "{} 通道, {} 位/像素",
                 colors.channels,
                 colors.bits_per_pixel()
             ));
@@ -72,7 +72,7 @@ impl Render for ImageInfo {
                 ImageFormat::Bmp => "BMP",
                 ImageFormat::Ico => "ICO",
                 ImageFormat::Avif => "Avif",
-                _ => "Unknown",
+                _ => "未知",
             }
             .to_string(),
         );

@@ -84,7 +84,7 @@ impl Render for HelloWorld {
                     .items_center()
                     .border_1()
                     .text_color(gpui::blue())
-                    .child(div().child("This is background text.")),
+                    .child(div().child("这是背景文本。")),
             )
             .child(
                 div()
@@ -121,7 +121,7 @@ impl Render for HelloWorld {
                                 offset: point(px(10.0), px(10.0)),
                             }])
                             .child(img("image/app-icon.png").size_8())
-                            .child("Opacity Panel (Click to test)")
+                            .child("不透明度面板(点击测试)")
                             .child(
                                 div()
                                     .id("deep-level-text")
@@ -134,7 +134,7 @@ impl Render for HelloWorld {
                                     .text_decoration_2()
                                     .text_decoration_wavy()
                                     .text_decoration_color(gpui::red())
-                                    .child(format!("opacity: {:.1}", self.opacity)),
+                                    .child(format!("不透明度: {:.1}", self.opacity)),
                             )
                             .child(
                                 svg()

@@ -385,7 +385,7 @@ impl Render for DataTable {
             .flex()
             .flex_col()
             .child(format!(
-                "Total {} items, visible range: {:?}",
+                "共 {} 项,可见范围:{:?}",
                 self.quotes.len(),
                 self.visible_range
             ))

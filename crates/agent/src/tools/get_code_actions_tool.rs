@@ -12,7 +12,7 @@ use crate::{AgentTool, ToolCallEventStream, ToolInput};
 
 /// Gets the list of available code actions at a symbol location from the language server.
 ///
-/// Code actions include quick fixes, refactorings, and other automated transformations suggested by the language server (e.g. "Add missing import", "Extract to function").
+/// Code actions include quick fixes, refactorings, and other automated transformations suggested by the language server (e.g. "添加缺失的导入", "提取为函数").
 ///
 /// Returns a numbered list of available actions. Use apply_code_action with the corresponding number to apply one.
 ///
@@ -53,9 +53,9 @@ impl AgentTool for GetCodeActionsTool {
         _cx: &mut App,
     ) -> SharedString {
         if let Ok(input) = input {
-            format!("Get code actions for `{}`", input.symbol.symbol_name).into()
+            format!("获取 `{}` 的代码操作", input.symbol.symbol_name).into()
         } else {
-            "Get code actions".into()
+            "获取代码操作".into()
         }
     }
 
@@ -71,7 +71,7 @@ impl AgentTool for GetCodeActionsTool {
             let input = input
                 .recv()
                 .await
-                .map_err(|e| format!("Failed to receive tool input: {e}"))?;
+                .map_err(|e| format!("接收工具输入失败: {e}"))?;
 
             let resolved = input.symbol.resolve(&project, cx).await?;
 
@@ -82,24 +82,24 @@ impl AgentTool for GetCodeActionsTool {
 
             let actions = actions_task
                 .await
-                .map_err(|e| format!("Failed to get code actions: {e}"))?
+                .map_err(|e| format!("获取代码操作失败: {e}"))?
                 .unwrap_or_default();
 
             if actions.is_empty() {
                 store.update(cx, |store, _cx| *store = None);
                 return Ok(format!(
-                    "No code actions available for '{}' at this location.",
+                    "在此位置没有适用于 '{}' 的代码操作",
                     input.symbol.symbol_name
                 ));
             }
 
-            let mut output = format!("Found {} code action(s):\n", actions.len());
+            let mut output = format!("找到 {} 个代码操作:\n", actions.len());
             for (i, action) in actions.iter().enumerate() {
                 writeln!(output, "{}. {}", i + 1, action.lsp_action.title()).ok();
             }
             write!(
                 output,
-                "\nUse apply_code_action with the number of the action you want to apply."
+                "\n使用 apply_code_action 并输入操作编号来应用该操作。"
             )
             .ok();
 

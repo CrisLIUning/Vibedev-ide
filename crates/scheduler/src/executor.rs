@@ -68,7 +68,7 @@ impl ForegroundExecutor {
         self.scheduler
             .block(Some(self.session_id), future.as_mut(), None);
 
-        output.take().expect("block_on future did not complete")
+        output.take().expect("block_on future 未完成")
     }
 
     /// Block until the future completes or timeout occurs.
@@ -340,7 +340,7 @@ where
             assert_eq!(
                 self.id,
                 thread_id(),
-                "local task dropped by a thread that didn't spawn it. Task spawned at {}",
+                "本地任务被非创建线程丢弃。任务创建于 {}",
                 self.location
             );
             // SAFETY: `inner` is wrapped in `ManuallyDrop`, so this is the only
@@ -360,7 +360,7 @@ where
             let this = unsafe { self.get_unchecked_mut() };
             assert!(
                 this.id == thread_id(),
-                "local task polled by a thread that didn't spawn it. Task spawned at {}",
+                "本地任务被非创建线程轮询。任务创建于 {}",
                 this.location
             );
             // SAFETY: `inner` is structurally pinned by `Checked`; after

@@ -72,9 +72,9 @@ pub(crate) fn render_edit_prediction_setup_page(
         Some(
             render_api_key_provider(
                 IconName::AiOpenAiCompat,
-                "OpenAI Compatible API",
+                "OpenAI 兼容 API",
                 ApiKeyDocs::Custom {
-                    message: "The API key sent as Authorization: Bearer {key}.".into(),
+                    message: "API 密钥将作为 Authorization: Bearer {key} 发送。".into(),
                 },
                 open_ai_compatible_api_token(cx),
                 |cx| open_ai_compatible_api_url(cx),
@@ -115,7 +115,7 @@ fn render_provider_dropdown(window: &mut Window, cx: &mut App) -> AnyElement {
     let current_provider = AllLanguageSettings::get_global(cx)
         .edit_predictions
         .provider;
-    let current_provider_name = current_provider.display_name().unwrap_or("No provider set");
+    let current_provider_name = current_provider.display_name().unwrap_or("未设置提供商");
 
     let menu = ContextMenu::build(window, cx, move |mut menu, _, cx| {
         let available_providers = get_available_providers(cx);
@@ -141,7 +141,7 @@ fn render_provider_dropdown(window: &mut Window, cx: &mut App) -> AnyElement {
         .id("provider-selector")
         .min_w_0()
         .gap_1p5()
-        .child(SettingsSectionHeader::new("Active Provider").no_padding(true))
+        .child(SettingsSectionHeader::new("当前提供商").no_padding(true))
         .child(
             h_flex()
                 .pt_2p5()
@@ -153,9 +153,9 @@ fn render_provider_dropdown(window: &mut Window, cx: &mut App) -> AnyElement {
                         .w_full()
                         .min_w_0()
                         .max_w_1_2()
-                        .child(Label::new("Provider"))
+                        .child(Label::new("提供商"))
                         .child(
-                            Label::new("Select which provider to use for edit predictions.")
+                            Label::new("选择用于编辑预测的提供商。")
                                 .size(LabelSize::Small)
                                 .color(Color::Muted),
                         ),
@@ -233,7 +233,7 @@ fn render_api_key_provider(
     let header = SettingsSectionHeader::new(title)
         .icon(icon)
         .no_padding(true);
-    let button_link_label = format!("{} dashboard", title);
+    let button_link_label = format!("{} 控制台", title);
     let description = match docs {
         ApiKeyDocs::Custom { message } => div().min_w_0().w_full().child(
             Label::new(message)
@@ -246,7 +246,7 @@ fn render_api_key_provider(
             .flex_wrap()
             .gap_0p5()
             .child(
-                Label::new("Visit the")
+                Label::new("访问")
                     .size(LabelSize::Small)
                     .color(Color::Muted),
             )
@@ -257,27 +257,27 @@ fn render_api_key_provider(
                     .label_color(Color::Muted),
             )
             .child(
-                Label::new("to generate an API key.")
+                Label::new("以生成 API 密钥。")
                     .size(LabelSize::Small)
                     .color(Color::Muted),
             ),
     };
     let configured_card_label = if is_from_env_var {
-        "API Key Set in Environment Variable"
+        "已在环境变量中设置 API 密钥"
     } else {
-        "API Key Configured"
+        "已配置 API 密钥"
     };
 
     let container = if has_key {
         base_container.child(header).child(
             ConfiguredApiCard::new(configured_card_label)
-                .button_label("Reset Key")
+                .button_label("重置密钥")
                 .button_tab_index(0)
                 .disabled(is_from_env_var)
                 .when_some(env_var_name, |this, env_var_name| {
                     this.when(is_from_env_var, |this| {
                         this.tooltip_label(format!(
-                            "To reset your API key, unset the {} environment variable.",
+                            "要重置 API 密钥,请取消设置 {} 环境变量。",
                             env_var_name
                         ))
                     })
@@ -298,12 +298,12 @@ fn render_api_key_provider(
                         .w_full()
                         .min_w_0()
                         .max_w_1_2()
-                        .child(Label::new("API Key"))
+                        .child(Label::new("API 密钥"))
                         .child(description)
                         .when_some(env_var_name, |this, env_var_name| {
                             this.child({
                                 let label = format!(
-                                    "Or set the {} env var and restart Zed.",
+                                    "Or set the {} env var and restart VibeDev.",
                                     env_var_name.as_ref()
                                 );
                                 Label::new(label).size(LabelSize::Small).color(Color::Muted)
@@ -360,7 +360,7 @@ fn ollama_settings() -> Box<[SettingsPageItem]> {
     Box::new([
         SettingsPageItem::SettingItem(SettingItem {
             title: "API URL",
-            description: "The base URL of your Ollama server.",
+            description: "Ollama 服务器的基础 URL。",
             field: Box::new(SettingField {
                 pick: |settings| {
                     settings
@@ -392,8 +392,8 @@ fn ollama_settings() -> Box<[SettingsPageItem]> {
             files: USER,
         }),
         SettingsPageItem::SettingItem(SettingItem {
-            title: "Model",
-            description: "The Ollama model to use for edit predictions.",
+            title: "模型",
+            description: "用于编辑预测的 Ollama 模型。",
             field: Box::new(SettingField {
                 pick: |settings| {
                     settings
@@ -425,8 +425,8 @@ fn ollama_settings() -> Box<[SettingsPageItem]> {
             files: USER,
         }),
         SettingsPageItem::SettingItem(SettingItem {
-            title: "Prompt Format",
-            description: "The prompt format to use when requesting predictions. Set to Infer to have the format inferred based on the model name.",
+            title: "提示词格式",
+            description: "请求预测时使用的提示词格式。设置为 Infer 可根据模型名称自动推断格式。",
             field: Box::new(SettingField {
                 pick: |settings| {
                     settings
@@ -455,8 +455,8 @@ fn ollama_settings() -> Box<[SettingsPageItem]> {
             metadata: None,
         }),
         SettingsPageItem::SettingItem(SettingItem {
-            title: "Max Output Tokens",
-            description: "The maximum number of tokens to generate.",
+            title: "最大输出 Token",
+            description: "要生成的最大 token 数量。",
             field: Box::new(SettingField {
                 pick: |settings| {
                     settings
@@ -491,7 +491,7 @@ fn open_ai_compatible_settings() -> Box<[SettingsPageItem]> {
     Box::new([
         SettingsPageItem::SettingItem(SettingItem {
             title: "API URL",
-            description: "The URL of your OpenAI-compatible server's completions API.",
+            description: "OpenAI 兼容服务器的补全 API URL。",
             field: Box::new(SettingField {
                 pick: |settings| {
                     settings
@@ -523,8 +523,8 @@ fn open_ai_compatible_settings() -> Box<[SettingsPageItem]> {
             files: USER,
         }),
         SettingsPageItem::SettingItem(SettingItem {
-            title: "Model",
-            description: "The model string to pass to the OpenAI-compatible server.",
+            title: "模型",
+            description: "传递给 OpenAI 兼容服务器的模型字符串。",
             field: Box::new(SettingField {
                 pick: |settings| {
                     settings
@@ -556,8 +556,8 @@ fn open_ai_compatible_settings() -> Box<[SettingsPageItem]> {
             files: USER,
         }),
         SettingsPageItem::SettingItem(SettingItem {
-            title: "Prompt Format",
-            description: "The prompt format to use when requesting predictions. Set to Infer to have the format inferred based on the model name.",
+            title: "提示词格式",
+            description: "请求预测时使用的提示词格式。设置为 Infer 可根据模型名称自动推断格式。",
             field: Box::new(SettingField {
                 pick: |settings| {
                     settings
@@ -586,8 +586,8 @@ fn open_ai_compatible_settings() -> Box<[SettingsPageItem]> {
             metadata: None,
         }),
         SettingsPageItem::SettingItem(SettingItem {
-            title: "Max Output Tokens",
-            description: "The maximum number of tokens to generate.",
+            title: "最大输出 Token",
+            description: "要生成的最大 token 数量。",
             field: Box::new(SettingField {
                 pick: |settings| {
                     settings
@@ -622,7 +622,7 @@ fn codestral_settings() -> Box<[SettingsPageItem]> {
     Box::new([
         SettingsPageItem::SettingItem(SettingItem {
             title: "API URL",
-            description: "The API URL to use for Codestral.",
+            description: "用于 Codestral 的 API URL。",
             field: Box::new(SettingField {
                 pick: |settings| {
                     settings
@@ -654,8 +654,8 @@ fn codestral_settings() -> Box<[SettingsPageItem]> {
             files: USER,
         }),
         SettingsPageItem::SettingItem(SettingItem {
-            title: "Max Tokens",
-            description: "The maximum number of tokens to generate.",
+            title: "最大 Token",
+            description: "要生成的最大 token 数量。",
             field: Box::new(SettingField {
                 pick: |settings| {
                     settings
@@ -684,8 +684,8 @@ fn codestral_settings() -> Box<[SettingsPageItem]> {
             files: USER,
         }),
         SettingsPageItem::SettingItem(SettingItem {
-            title: "Model",
-            description: "The Codestral model id to use.",
+            title: "模型",
+            description: "要使用的 Codestral 模型 ID。",
             field: Box::new(SettingField {
                 pick: |settings| {
                     settings

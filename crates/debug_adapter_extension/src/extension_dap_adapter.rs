@@ -32,11 +32,11 @@ impl ExtensionDapAdapter {
     ) -> Result<Self> {
         let schema = std::fs::read_to_string(&schema_path).with_context(|| {
             format!(
-                "Failed to read debug adapter schema for {debug_adapter_name} (from path: `{schema_path:?}`)"
+                "无法读取 {debug_adapter_name} 的调试适配器 schema (路径: `{schema_path:?}`)"
             )
         })?;
         let schema = serde_json::Value::from_str(&schema).with_context(|| {
-            format!("Debug adapter schema for {debug_adapter_name} is not a valid JSON")
+            format!("{debug_adapter_name} 的调试适配器 schema 不是有效的 JSON")
         })?;
         Ok(Self {
             extension,

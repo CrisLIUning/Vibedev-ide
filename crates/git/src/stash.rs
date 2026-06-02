@@ -68,7 +68,7 @@ fn parse_stash_line(line: &str) -> Result<StashEntry> {
 
     if parts.len() != 4 {
         return Err(anyhow!(
-            "Expected 4 null-separated parts, got {}",
+            "预期 4 个空字符分隔的部分, 但得到 {} 个",
             parts.len()
         ));
     }
@@ -100,7 +100,7 @@ fn parse_stash_index(input: &str) -> Result<usize> {
 
     if !trimmed.starts_with("stash@{") || !trimmed.ends_with('}') {
         return Err(anyhow!(
-            "Invalid stash index format: expected 'stash@{{N}}'"
+            "无效的贮藏索引格式: 预期 'stash@{{N}}'"
         ));
     }
 

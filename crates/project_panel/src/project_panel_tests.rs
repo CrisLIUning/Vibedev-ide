@@ -1799,7 +1799,7 @@ async fn test_copy_paste_directory(cx: &mut gpui::TestAppContext) {
             "          default.conf",
             "    > [EDITOR: 'd.1.20 copy']  <== selected",
         ],
-        "Dotted directory names should not be split at the dot when disambiguating"
+        "消除歧义时,带点的目录名不应在点处拆分"
     );
 }
 
@@ -2084,11 +2084,11 @@ async fn test_copy_and_cut_write_to_system_clipboard(cx: &mut gpui::TestAppConte
 
     let clipboard = cx
         .read_from_clipboard()
-        .expect("clipboard should have content after copy");
-    let text = clipboard.text().expect("clipboard should contain text");
+        .expect("复制后剪贴板应有内容");
+    let text = clipboard.text().expect("剪贴板应包含文本");
     assert!(
         text.contains("file_a.txt"),
-        "System clipboard should contain the copied file path, got: {text}"
+        "系统剪贴板应包含复制的文件路径,得到: {text}"
     );
 
     select_path(&panel, "root/file_b.txt", cx);
@@ -2098,11 +2098,11 @@ async fn test_copy_and_cut_write_to_system_clipboard(cx: &mut gpui::TestAppConte
 
     let clipboard = cx
         .read_from_clipboard()
-        .expect("clipboard should have content after cut");
-    let text = clipboard.text().expect("clipboard should contain text");
+        .expect("剪切后剪贴板应有内容");
+    let text = clipboard.text().expect("剪贴板应包含文本");
     assert!(
         text.contains("file_b.txt"),
-        "System clipboard should contain the cut file path, got: {text}"
+        "系统剪贴板应包含剪切的文件路径,得到: {text}"
     );
 }
 
@@ -3835,7 +3835,7 @@ async fn test_collapse_all_entries_with_invisible_worktree(cx: &mut gpui::TestAp
     assert_eq!(
         visible_entries_as_strings(&panel, 0..10, cx),
         &["v project_root", "    > dir_1", "    > dir_2",],
-        "invisible worktree should not appear in project panel"
+        "不可见的工作树不应出现在项目面板中"
     );
 
     toggle_expand_dir(&panel, "project_root/dir_1", cx);
@@ -3848,7 +3848,7 @@ async fn test_collapse_all_entries_with_invisible_worktree(cx: &mut gpui::TestAp
     assert_eq!(
         visible_entries_as_strings(&panel, 0..10, cx),
         &["v project_root", "    > dir_1  <== selected", "    > dir_2",],
-        "with single visible worktree, root should stay expanded even if invisible worktrees exist"
+        "对于单个可见的工作树,即使存在不可见的工作树,根目录也应保持展开"
     );
 }
 
@@ -4642,7 +4642,7 @@ async fn test_dragging_same_named_files_preserves_one_source_on_conflict(
 
     assert_eq!(
         remaining_sources, 1,
-        "one conflicting source file should remain in place"
+        "一个冲突的源文件应保留在原位"
     );
 }
 
@@ -5103,7 +5103,7 @@ async fn test_autoreveal_and_gitignored_files(cx: &mut gpui::TestAppContext) {
             "          file_3.py",
             "      .gitignore",
         ],
-        "After switching to dir_2_file, it should be selected and marked"
+        "切换到 dir_2_file 后,应被选中并标记"
     );
 
     panel.update(cx, |panel, cx| {
@@ -5133,7 +5133,7 @@ async fn test_autoreveal_and_gitignored_files(cx: &mut gpui::TestAppContext) {
             "          file_3.py",
             "      .gitignore",
         ],
-        "When a gitignored entry is already visible, auto reveal should mark it as selected"
+        "当 gitignored 条目已可见时,自动显示应将其标记为选中"
     );
 }
 
@@ -7509,7 +7509,7 @@ async fn test_collapse_selected_entry_and_children_action(cx: &mut gpui::TestApp
             "    v dir2  <== selected",
             "          file4.txt",
         ],
-        "Initial state with directories expanded"
+        "目录展开时的初始状态"
     );
 
     select_path(&panel, "root/dir1", cx);
@@ -7528,7 +7528,7 @@ async fn test_collapse_selected_entry_and_children_action(cx: &mut gpui::TestApp
             "    v dir2",
             "          file4.txt",
         ],
-        "dir1 and all its children should be collapsed, dir2 should remain expanded"
+        "dir1 及其所有子项应被折叠,dir2 应保持展开"
     );
 
     toggle_expand_dir(&panel, "root/dir1", cx);
@@ -7544,7 +7544,7 @@ async fn test_collapse_selected_entry_and_children_action(cx: &mut gpui::TestApp
             "    v dir2",
             "          file4.txt",
         ],
-        "After re-expanding dir1, its children should still be collapsed"
+        "重新展开 dir1 后,其子项应仍处于折叠状态"
     );
 }
 
@@ -7594,7 +7594,7 @@ async fn test_collapse_root_single_worktree(cx: &mut gpui::TestAppContext) {
             "    v dir2  <== selected",
             "          file3.txt",
         ],
-        "Initial state with directories expanded"
+        "目录展开时的初始状态"
     );
 
     // Select the root and collapse it and its children
@@ -7610,7 +7610,7 @@ async fn test_collapse_root_single_worktree(cx: &mut gpui::TestAppContext) {
     assert_eq!(
         visible_entries_as_strings(&panel, 0..20, cx),
         &["> root  <== selected"],
-        "Root and all children should be collapsed"
+        "根目录和所有子项应被折叠"
     );
 
     // Re-expand root and dir1, verify children were recursively collapsed
@@ -7627,7 +7627,7 @@ async fn test_collapse_root_single_worktree(cx: &mut gpui::TestAppContext) {
             "          file2.txt",
             "    > dir2",
         ],
-        "After re-expanding root and dir1, subdir1 should still be collapsed"
+        "重新展开 root 和 dir1 后,subdir1 应仍处于折叠状态"
     );
 }
 
@@ -7691,7 +7691,7 @@ async fn test_collapse_root_multi_worktree(cx: &mut gpui::TestAppContext) {
             "          file3.txt",
             "      file4.txt",
         ],
-        "Initial state with directories expanded across worktrees"
+        "跨工作树展开目录时的初始状态"
     );
 
     // Select root1 and collapse it and its children.
@@ -7714,7 +7714,7 @@ async fn test_collapse_root_multi_worktree(cx: &mut gpui::TestAppContext) {
             "          file3.txt",
             "      file4.txt",
         ],
-        "Only root1 should be collapsed, root2 should remain expanded"
+        "仅 root1 应被折叠,root2 应保持展开"
     );
 
     // Re-expand root1 and verify its children were recursively collapsed
@@ -7730,7 +7730,7 @@ async fn test_collapse_root_multi_worktree(cx: &mut gpui::TestAppContext) {
             "          file3.txt",
             "      file4.txt",
         ],
-        "After re-expanding root1, dir1 should still be collapsed, root2 should be unaffected"
+        "重新展开 root1 后,dir1 应仍处于折叠状态,root2 不受影响"
     );
 }
 
@@ -7798,7 +7798,7 @@ async fn test_collapse_non_root_multi_worktree(cx: &mut gpui::TestAppContext) {
             "              file3.txt",
             "          file4.txt",
         ],
-        "Initial state with directories expanded across worktrees"
+        "跨工作树展开目录时的初始状态"
     );
 
     // Select dir1 in root1 and collapse it
@@ -7821,7 +7821,7 @@ async fn test_collapse_non_root_multi_worktree(cx: &mut gpui::TestAppContext) {
             "              file3.txt",
             "          file4.txt",
         ],
-        "Only dir1 should be collapsed, root2 should be completely unaffected"
+        "仅 dir1 应被折叠,root2 应完全不受影响"
     );
 
     // Re-expand dir1 and verify subdir1 was recursively collapsed
@@ -7840,7 +7840,7 @@ async fn test_collapse_non_root_multi_worktree(cx: &mut gpui::TestAppContext) {
             "              file3.txt",
             "          file4.txt",
         ],
-        "After re-expanding dir1, subdir1 should still be collapsed"
+        "重新展开 dir1 后,subdir1 应仍处于折叠状态"
     );
 }
 
@@ -7890,7 +7890,7 @@ async fn test_collapse_all_for_root_single_worktree(cx: &mut gpui::TestAppContex
             "    v dir2  <== selected",
             "          file3.txt",
         ],
-        "Initial state with directories expanded"
+        "目录展开时的初始状态"
     );
 
     select_path(&panel, "root", cx);
@@ -7904,7 +7904,7 @@ async fn test_collapse_all_for_root_single_worktree(cx: &mut gpui::TestAppContex
     assert_eq!(
         visible_entries_as_strings(&panel, 0..20, cx),
         &["v root  <== selected", "    > dir1", "    > dir2"],
-        "Root should remain expanded but all children should be collapsed"
+        "根目录应保持展开,但所有子项应被折叠"
     );
 
     toggle_expand_dir(&panel, "root/dir1", cx);
@@ -7919,7 +7919,7 @@ async fn test_collapse_all_for_root_single_worktree(cx: &mut gpui::TestAppContex
             "          file2.txt",
             "    > dir2",
         ],
-        "After re-expanding dir1, subdir1 should still be collapsed"
+        "重新展开 dir1 后,subdir1 应仍处于折叠状态"
     );
 }
 
@@ -7983,7 +7983,7 @@ async fn test_collapse_all_for_root_multi_worktree(cx: &mut gpui::TestAppContext
             "          file3.txt",
             "      file4.txt",
         ],
-        "Initial state with directories expanded across worktrees"
+        "跨工作树展开目录时的初始状态"
     );
 
     select_path(&panel, "root1", cx);
@@ -8003,7 +8003,7 @@ async fn test_collapse_all_for_root_multi_worktree(cx: &mut gpui::TestAppContext
             "          file3.txt",
             "      file4.txt",
         ],
-        "With multiple worktrees, root1 should collapse completely (including itself)"
+        "对于多个工作树,root1 应完全折叠(包括其自身)"
     );
 }
 
@@ -8051,7 +8051,7 @@ async fn test_collapse_all_for_root_noop_on_non_root(cx: &mut gpui::TestAppConte
             "    v dir2  <== selected",
             "          file2.txt",
         ],
-        "Initial state with directories expanded"
+        "目录展开时的初始状态"
     );
 
     select_path(&panel, "root/dir1", cx);
@@ -8072,7 +8072,7 @@ async fn test_collapse_all_for_root_noop_on_non_root(cx: &mut gpui::TestAppConte
             "    v dir2",
             "          file2.txt",
         ],
-        "collapse_all_for_root should be a no-op when called on a non-root directory"
+        "在非根目录上调用 collapse_all_for_root 应为空操作"
     );
 }
 
@@ -9341,10 +9341,10 @@ async fn test_reveal_in_file_manager_path_falls_back_to_worktree_root(
     select_path(&panel, "root/file.txt", cx);
     let selected_reveal_path = panel
         .update(cx, |panel, cx| panel.reveal_in_file_manager_path(cx))
-        .expect("selected entry should produce a reveal path");
+        .expect("选中的条目应生成显示路径");
     assert!(
         selected_reveal_path.ends_with(Path::new("file.txt")),
-        "Expected selected file path, got {:?}",
+        "预期选中的文件路径,得到 {:?}",
         selected_reveal_path
     );
 
@@ -9354,10 +9354,10 @@ async fn test_reveal_in_file_manager_path_falls_back_to_worktree_root(
     });
     let fallback_reveal_path = panel
         .update(cx, |panel, cx| panel.reveal_in_file_manager_path(cx))
-        .expect("project root should be used when selection is empty");
+        .expect("当选择为空时应使用项目根目录");
     assert!(
         fallback_reveal_path.ends_with(Path::new("root")),
-        "Expected worktree root path, got {:?}",
+        "预期工作树根路径,得到 {:?}",
         fallback_reveal_path
     );
 }
@@ -9584,14 +9584,14 @@ fn set_folded_active_ancestor(
         }
 
         let leaf_entry_id =
-            leaf_entry_id.unwrap_or_else(|| panic!("no entry for leaf path {leaf_path:?}"));
+            leaf_entry_id.unwrap_or_else(|| panic!("叶路径 {leaf_path:?} 没有条目"));
         let target_entry_id = target_entry_id
-            .unwrap_or_else(|| panic!("no entry for active path {active_ancestor_path:?}"));
+            .unwrap_or_else(|| panic!("活动路径 {active_ancestor_path:?} 没有条目"));
         let folded_ancestors = panel
             .state
             .ancestors
             .get_mut(&leaf_entry_id)
-            .unwrap_or_else(|| panic!("leaf path {leaf_path:?} should be folded"));
+            .unwrap_or_else(|| panic!("叶路径 {leaf_path:?} 应被折叠"));
         let ancestor_ids = folded_ancestors.ancestors.clone();
 
         let mut depth_for_target = None;
@@ -9609,7 +9609,7 @@ fn set_folded_active_ancestor(
 
         folded_ancestors.current_ancestor_depth = depth_for_target.unwrap_or_else(|| {
             panic!(
-                "active path {active_ancestor_path:?} is not part of folded ancestors {ancestor_ids:?}"
+                "活动路径 {active_ancestor_path:?} 不是折叠祖先 {ancestor_ids:?} 的一部分"
             )
         });
     });
@@ -10116,24 +10116,24 @@ async fn test_preserve_temporary_unfolded_active_index_on_blur_from_context_menu
     });
 
     let parent_entry_id = find_project_entry(&panel, "root1/parent", cx)
-        .expect("parent directory should exist for this test");
+        .expect("此测试需要存在 parent 目录");
     let subdir_entry_id = find_project_entry(&panel, "root1/parent/subdir", cx)
-        .expect("subdir directory should exist for this test");
+        .expect("此测试需要存在 subdir 目录");
     let child_entry_id = find_project_entry(&panel, "root1/parent/subdir/child", cx)
-        .expect("child directory should exist for this test");
+        .expect("此测试需要存在 child 目录");
 
     panel.update(cx, |panel, _| {
         let selection = panel
             .selection
-            .expect("leaf directory should be selected before creating a new entry");
+            .expect("在创建新条目之前应选中叶目录");
         assert_eq!(
             selection.entry_id, child_entry_id,
-            "initial selection should be the folded leaf entry"
+            "初始选择应为折叠的叶条目"
         );
         assert_eq!(
             panel.resolve_entry(selection.entry_id),
             subdir_entry_id,
-            "active folded component should start at subdir"
+            "活动折叠组件应从 subdir 开始"
         );
     });
 
@@ -10167,19 +10167,19 @@ async fn test_preserve_temporary_unfolded_active_index_on_blur_from_context_menu
     panel.update(cx, |panel, _| {
         assert!(
             panel.state.edit_state.is_none(),
-            "opening another context menu should blur the filename editor and discard edit state"
+            "打开另一个上下文菜单应使文件名编辑器失焦并丢弃编辑状态"
         );
         let selection = panel
             .selection
-            .expect("selection should restore to the previously focused leaf entry");
+            .expect("选择应恢复为先前聚焦的叶条目");
         assert_eq!(
             selection.entry_id, child_entry_id,
-            "blur-driven cancellation should restore the previous leaf selection"
+            "失焦驱动的取消应恢复先前的叶选择"
         );
         assert_eq!(
             panel.resolve_entry(selection.entry_id),
             parent_entry_id,
-            "temporary unfolded pending state should preserve the active ancestor chosen before blur"
+            "临时展开的待定状态应保留失焦前选择的活动祖先"
         );
     });
 
@@ -10195,18 +10195,18 @@ async fn test_preserve_temporary_unfolded_active_index_on_blur_from_context_menu
             "        > subdir/child",
             "          [EDITOR: '']  <== selected",
         ],
-        "new file after blur should use the preserved active ancestor"
+        "失焦后的新文件应使用保留的活动祖先"
     );
     panel.update(cx, |panel, _| {
         let edit_state = panel
             .state
             .edit_state
             .as_ref()
-            .expect("new file should enter edit state");
+            .expect("新文件应进入编辑状态");
         assert_eq!(
             edit_state.temporarily_unfolded,
             Some(parent_entry_id),
-            "temporary unfolding should now target parent after restoring the active ancestor"
+            "恢复活动祖先后,临时展开现在应以 parent 为目标"
         );
     });
 
@@ -10217,22 +10217,22 @@ async fn test_preserve_temporary_unfolded_active_index_on_blur_from_context_menu
                 editor.set_text(file_name, window, cx);
             });
             panel.confirm_edit(true, window, cx).expect(
-                "confirm_edit should start creation for the file created after blur transition",
+                "confirm_edit 应开始创建失焦转换后创建的文件",
             )
         })
         .await
-        .expect("creating file after blur transition should succeed");
+        .expect("失焦转换后创建文件应成功");
     cx.run_until_parked();
 
     assert!(
         fs.is_file(Path::new("/root1/parent/created_after_blur.txt"))
             .await,
-        "file should be created under parent after active ancestor is restored to parent"
+        "将活动祖先恢复为 parent 后,文件应在 parent 下创建"
     );
     assert!(
         !fs.is_file(Path::new("/root1/parent/subdir/created_after_blur.txt"))
             .await,
-        "file should not be created under subdir when parent is the active ancestor"
+        "当 parent 是活动祖先时,不应在 subdir 下创建文件"
     );
 }
 
@@ -10302,7 +10302,7 @@ async fn run_create_file_in_folded_path_case(
     assert_eq!(
         visible_entries_as_strings(&panel, 0..10, cx),
         expected_collapsed_state,
-        "case '{}' should start from a folded state",
+        "用例 '{}' 应从折叠状态开始",
         case_name
     );
 
@@ -10317,14 +10317,14 @@ async fn run_create_file_in_folded_path_case(
     assert_eq!(
         visible_entries_as_strings(&panel, 0..10, cx),
         expected_temporary_state,
-        "case '{}' ({}) should temporarily unfold the active ancestor while editing",
+        "用例 '{}' ({}) 应在编辑时临时展开活动祖先",
         case_name,
         if accept_creation { "accept" } else { "cancel" }
     );
 
     let relative_directory = active_ancestor_path
         .strip_prefix("root1/")
-        .expect("active_ancestor_path should start with root1/");
+        .expect("active_ancestor_path 应以 root1/ 开头");
     let created_file_path = PathBuf::from("/root1")
         .join(relative_directory)
         .join(created_file_name);
@@ -10344,12 +10344,12 @@ async fn run_create_file_in_folded_path_case(
         assert_eq!(
             visible_entries_as_strings(&panel, 0..10, cx),
             expected_final_state,
-            "case '{}' should keep the newly created file selected and marked after accept",
+            "用例 '{}' 应在确认后保持新创建的文件处于选中并标记状态",
             case_name
         );
         assert!(
             fs.is_file(created_file_path.as_path()).await,
-            "case '{}' should create file '{}'",
+            "用例 '{}' 应创建文件 '{}'",
             case_name,
             created_file_path.display()
         );
@@ -10362,12 +10362,12 @@ async fn run_create_file_in_folded_path_case(
         assert_eq!(
             visible_entries_as_strings(&panel, 0..10, cx),
             expected_final_state,
-            "case '{}' should keep the expected panel state after cancel",
+            "用例 '{}' 应在取消后保持预期的面板状态",
             case_name
         );
         assert!(
             !fs.is_file(created_file_path.as_path()).await,
-            "case '{}' should not create a file after cancel",
+            "用例 '{}' 不应在取消后创建文件",
             case_name
         );
     }
@@ -10603,10 +10603,10 @@ async fn test_delete_prompt_escapes_markdown_in_file_name(cx: &mut gpui::TestApp
     });
     let (message, _detail) = cx
         .pending_prompt()
-        .expect("delete should show a confirmation prompt");
+        .expect("删除应显示确认提示");
 
     assert_eq!(
         message,
-        "Are you sure you want to permanently delete `__somefile__`?"
+        "确定要永久删除 `__somefile__` 吗?"
     );
 }

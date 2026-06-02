@@ -194,7 +194,7 @@ mod tests {
         cx.editor.read_with(&cx.cx.cx, |editor, cx| {
             assert!(
                 editor.document_folding_ranges_enabled(cx),
-                "Expected LSP folding ranges to be populated"
+                "预期 LSP 折叠范围已填充"
             );
         });
 
@@ -202,11 +202,11 @@ mod tests {
             let snapshot = editor.display_snapshot(cx);
             assert!(
                 !snapshot.is_line_folded(MultiBufferRow(0)),
-                "Line 0 should not be folded before any fold action"
+                "在任何折叠操作之前,第 0 行不应被折叠"
             );
             assert!(
                 !snapshot.is_line_folded(MultiBufferRow(6)),
-                "Line 6 should not be folded before any fold action"
+                "在任何折叠操作之前,第 6 行不应被折叠"
             );
         });
 
@@ -218,7 +218,7 @@ mod tests {
             let snapshot = editor.display_snapshot(cx);
             assert!(
                 snapshot.is_line_folded(MultiBufferRow(0)),
-                "Line 0 should be folded after fold_at on an LSP crease"
+                "在 LSP 折叠线上执行 fold_at 后,第 0 行应被折叠"
             );
             assert_eq!(
                 editor.display_text(cx),
@@ -234,7 +234,7 @@ mod tests {
             let snapshot = editor.display_snapshot(cx);
             assert!(
                 snapshot.is_line_folded(MultiBufferRow(6)),
-                "Line 6 should be folded after fold_at on the second LSP crease"
+                "在第二个 LSP 折叠线上执行 fold_at 后,第 6 行应被折叠"
             );
             assert_eq!(editor.display_text(cx), "fn main() ⋯\n\nfn other() ⋯\n",);
         });
@@ -259,7 +259,7 @@ mod tests {
         cx.editor.read_with(&cx.cx.cx, |editor, cx| {
             assert!(
                 !editor.document_folding_ranges_enabled(cx),
-                "LSP folding ranges should not be enabled by default"
+                "LSP 折叠范围默认不应启用"
             );
         });
     }
@@ -302,7 +302,7 @@ mod tests {
         cx.editor.read_with(&cx.cx.cx, |editor, cx| {
             assert!(
                 editor.document_folding_ranges_enabled(cx),
-                "Expected LSP folding ranges to be active before toggling off"
+                "预期 LSP 折叠范围在关闭前处于活动状态"
             );
         });
 
@@ -313,7 +313,7 @@ mod tests {
             let snapshot = editor.display_snapshot(cx);
             assert!(
                 snapshot.is_line_folded(MultiBufferRow(0)),
-                "Line 0 should be folded via LSP crease before toggling off"
+                "在关闭之前,第 0 行应通过 LSP 折叠线被折叠"
             );
             assert_eq!(editor.display_text(cx), "fn main() ⋯\n",);
         });
@@ -326,7 +326,7 @@ mod tests {
         cx.editor.read_with(&cx.cx.cx, |editor, cx| {
             assert!(
                 !editor.document_folding_ranges_enabled(cx),
-                "LSP folding ranges should be cleared after toggling off"
+                "关闭后应清除 LSP 折叠范围"
             );
         });
     }
@@ -479,7 +479,7 @@ mod tests {
         cx.editor.read_with(&cx.cx.cx, |editor, cx| {
             assert!(
                 editor.document_folding_ranges_enabled(cx),
-                "Expected LSP folding ranges to be populated despite unsorted server response"
+                "尽管服务器响应未排序,预期 LSP 折叠范围已填充"
             );
         });
 
@@ -523,7 +523,7 @@ mod tests {
         cx.editor.read_with(&cx.cx.cx, |editor, cx| {
             assert!(
                 !editor.document_folding_ranges_enabled(cx),
-                "LSP folding ranges should be off by default"
+                "LSP 折叠范围默认应为关闭"
             );
         });
 
@@ -534,7 +534,7 @@ mod tests {
             let snapshot = editor.display_snapshot(cx);
             assert!(
                 snapshot.is_line_folded(MultiBufferRow(0)),
-                "Indentation-based fold should work on the function"
+                "基于缩进的折叠应在此函数上生效"
             );
             assert_eq!(editor.display_text(cx), "fn main() {⋯}\n",);
         });
@@ -547,7 +547,7 @@ mod tests {
                 !editor
                     .display_snapshot(cx)
                     .is_line_folded(MultiBufferRow(0)),
-                "Function should be unfolded"
+                "函数应处于展开状态"
             );
         });
 
@@ -587,7 +587,7 @@ mod tests {
         cx.editor.read_with(&cx.cx.cx, |editor, cx| {
             assert!(
                 editor.document_folding_ranges_enabled(cx),
-                "LSP folding ranges should now be active"
+                "LSP 折叠范围现在应处于活动状态"
             );
         });
 
@@ -601,7 +601,7 @@ mod tests {
                 !editor
                     .display_snapshot(cx)
                     .is_line_folded(MultiBufferRow(0)),
-                "Row 0 has no LSP crease, so fold_at should be a no-op"
+                "第 0 行没有 LSP 折叠线,因此 fold_at 应为无效操作"
             );
         });
 
@@ -613,7 +613,7 @@ mod tests {
                 editor
                     .display_snapshot(cx)
                     .is_line_folded(MultiBufferRow(1)),
-                "First odd LSP range should fold"
+                "第一个特殊 LSP 范围应可折叠"
             );
             assert_eq!(
                 editor.display_text(cx),
@@ -629,7 +629,7 @@ mod tests {
                 editor
                     .display_snapshot(cx)
                     .is_line_folded(MultiBufferRow(3)),
-                "Second odd LSP range should fold"
+                "第二个特殊 LSP 范围应可折叠"
             );
             assert_eq!(
                 editor.display_text(cx),
@@ -651,7 +651,7 @@ mod tests {
         cx.editor.read_with(&cx.cx.cx, |editor, cx| {
             assert!(
                 !editor.document_folding_ranges_enabled(cx),
-                "LSP folding ranges should be cleared after switching back"
+                "切换回来后应清除 LSP 折叠范围"
             );
         });
 
@@ -662,7 +662,7 @@ mod tests {
             let snapshot = editor.display_snapshot(cx);
             assert!(
                 snapshot.is_line_folded(MultiBufferRow(0)),
-                "Indentation-based fold should work again after switching back"
+                "切换回来后,基于缩进的折叠应再次生效"
             );
             assert_eq!(editor.display_text(cx), "fn main() {⋯}\n",);
         });

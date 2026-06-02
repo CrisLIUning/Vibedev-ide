@@ -118,18 +118,18 @@ async fn send_anthropic_event(
 
     let request = request_builder
         .body(AsyncBody::from(serialized_event.to_string()))
-        .context("Failed to construct Anthropic telemetry HTTP request body")?;
+        .context("构建 Anthropic 遥测 HTTP 请求体失败")?;
 
     let response = client
         .send(request)
         .await
-        .context("Failed to send telemetry HTTP request to Anthropic")?;
+        .context("向 Anthropic 发送遥测 HTTP 请求失败")?;
 
     if response.status().is_success() {
         Ok(())
     } else {
         Err(anyhow!(
-            "Anthropic telemetry logging failed with HTTP status: {}",
+            "Anthropic 遥测记录失败,HTTP 状态码: {}",
             response.status()
         ))
     }

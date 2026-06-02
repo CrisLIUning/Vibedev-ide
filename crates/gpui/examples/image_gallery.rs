@@ -45,7 +45,7 @@ impl Render for ImageGallery {
             .flex()
             .flex_col()
             .text_color(gpui::white())
-            .child("Manually managed image cache:")
+            .child("手动管理的图像缓存:")
             .child(
                 div()
                     .image_cache(self.image_cache.clone())
@@ -66,7 +66,7 @@ impl Render for ImageGallery {
                             .flex_row()
                             .justify_between()
                             .child(format!(
-                                "Example to show images and test memory usage (Rendered: {} images).",
+                                "展示图像并测试内存使用的示例(已渲染:{} 张图像)。",
                                 self.total_count
                             ))
                             .child(
@@ -79,7 +79,7 @@ impl Render for ImageGallery {
                                     .text_color(gpui::white())
                                     .text_center()
                                     .w_40()
-                                    .child("Next Photos")
+                                    .child("下一组照片")
                                     .on_click(cx.listener(Self::on_next_image)),
                             ),
                     )
@@ -99,7 +99,7 @@ impl Render for ImageGallery {
                     ),
             )
             .child(
-                "Automatically managed image cache:"
+                "自动管理的图像缓存:"
             )
             .child(image_cache(simple_lru_cache("lru-cache", IMAGES_IN_GALLERY)).child(
                 div()
@@ -265,7 +265,7 @@ fn run_example() {
             // created and used exclusively on the main thread.
             let http_client = unsafe {
                 gpui_web::FetchHttpClient::with_user_agent("gpui example")
-                    .expect("failed to create FetchHttpClient")
+                    .expect("无法创建 FetchHttpClient")
             };
             cx.set_http_client(Arc::new(http_client));
         }
@@ -273,7 +273,7 @@ fn run_example() {
         cx.activate(true);
         cx.on_action(|_: &Quit, cx| cx.quit());
         cx.bind_keys([KeyBinding::new("cmd-q", Quit, None)]);
-        cx.set_menus([Menu::new("Image Gallery").items([MenuItem::action("Quit", Quit)])]);
+        cx.set_menus([Menu::new("Image Gallery").items([MenuItem::action("退出", Quit)])]);
 
         let window_options = WindowOptions {
             titlebar: Some(TitlebarOptions {

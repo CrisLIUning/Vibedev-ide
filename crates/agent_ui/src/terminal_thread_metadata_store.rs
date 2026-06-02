@@ -346,7 +346,7 @@ impl TerminalThreadMetadataStore {
                 let rows = cx
                     .background_spawn(async move {
                         db.list()
-                            .context("Failed to fetch terminal thread metadata")
+                            .context("获取终端线程元数据失败")
                     })
                     .await
                     .log_err()
@@ -431,7 +431,7 @@ impl TerminalThreadMetadataDb {
             .as_ref()
             .map(serde_json::to_string)
             .transpose()
-            .context("serialize terminal thread remote connection")?;
+            .context("序列化终端线程远程连接")?;
 
         self.write(move |conn| {
             let sql = "INSERT INTO sidebar_terminal_threads(terminal_id, title, custom_title, created_at, working_directory, folder_paths, folder_paths_order, main_worktree_paths, main_worktree_paths_order, remote_connection) \
@@ -515,7 +515,7 @@ impl Column for TerminalThreadMetadata {
             .as_deref()
             .map(serde_json::from_str::<RemoteConnectionOptions>)
             .transpose()
-            .context("deserialize terminal thread remote connection")?;
+            .context("反序列化终端线程远程连接")?;
 
         let worktree_paths = WorktreePaths::from_path_lists(main_worktree_paths, folder_paths)
             .unwrap_or_else(|_| WorktreePaths::default());

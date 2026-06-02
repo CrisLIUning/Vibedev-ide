@@ -100,7 +100,7 @@ impl Forgejo {
         }
 
         Ok(Self::new(
-            "Forgejo Self-Hosted",
+            "Forgejo 自托管",
             Url::parse(&format!("https://{}", host))?,
         ))
     }
@@ -142,7 +142,7 @@ impl Forgejo {
         if response.status().is_client_error() {
             let text = String::from_utf8_lossy(body.as_slice());
             bail!(
-                "status error {}, response: {text:?}",
+                "状态错误 {}, 响应: {text:?}",
                 response.status().as_u16()
             );
         }

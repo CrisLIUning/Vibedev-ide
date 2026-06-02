@@ -464,7 +464,7 @@ pub async fn stream_completion(
         let mut body = String::new();
         response.body_mut().read_to_string(&mut body).await?;
         anyhow::bail!(
-            "Failed to connect to Mistral API: {} {}",
+            "连接 Mistral API 失败: {} {}",
             response.status(),
             body,
         );

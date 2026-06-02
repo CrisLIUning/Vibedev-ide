@@ -1,11 +1,15 @@
-// Zed settings
+// VibeDev settings
 //
-// For information on how to configure Zed, see the Zed
-// documentation: https://zed.dev/docs/configuring-zed
+// For information on how to configure VibeDev, see the documentation
+// at https://aitoken.bigopen.cn/docs/configuring-vibedev (forthcoming).
+// VibeDev is built on the Zed editor; upstream Zed's configuration
+// reference at https://zed.dev/docs/configuring-zed also applies to
+// most keys here.
 //
-// To see all of Zed's default settings without changing your
-// custom settings, run `zed: open default settings` from the
-// command palette (cmd-shift-p / ctrl-shift-p)
+// To see all default settings without changing your custom settings,
+// run `zed: open default settings` from the command palette
+// (cmd-shift-p / ctrl-shift-p). The command palette namespace stays
+// `zed:` because it matches the underlying editor command identifiers.
 {
   "ui_font_size": 16,
   "buffer_font_size": 15,

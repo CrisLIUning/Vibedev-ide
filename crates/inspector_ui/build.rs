@@ -4,14 +4,14 @@ fn main() {
 
     if path.file_name().as_ref().and_then(|name| name.to_str()) != Some("inspector_ui") {
         panic!(
-            "expected CARGO_MANIFEST_DIR to end with crates/inspector_ui, but got {cargo_manifest_dir}"
+            "预期 CARGO_MANIFEST_DIR 以 crates/inspector_ui 结尾,但得到的是 {cargo_manifest_dir}"
         );
     }
     path.pop();
 
     if path.file_name().as_ref().and_then(|name| name.to_str()) != Some("crates") {
         panic!(
-            "expected CARGO_MANIFEST_DIR to end with crates/inspector_ui, but got {cargo_manifest_dir}"
+            "预期 CARGO_MANIFEST_DIR 以 crates/inspector_ui 结尾,但得到的是 {cargo_manifest_dir}"
         );
     }
     path.pop();

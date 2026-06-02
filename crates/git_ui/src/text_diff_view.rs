@@ -222,8 +222,8 @@ impl TextDiffView {
 
         Self {
             diff_editor,
-            title: format!("Clipboard ↔ {selection_location_title}").into(),
-            path: Some(format!("Clipboard ↔ {selection_location_path}").into()),
+            title: format!("剪贴板 ↔ {selection_location_title}").into(),
+            path: Some(format!("剪贴板 ↔ {selection_location_path}").into()),
             buffer_changes_tx,
             _recalculate_diff_task: cx.spawn(async move |_, cx| {
                 while buffer_changes_rx.recv().await.is_ok() {
@@ -761,8 +761,8 @@ mod tests {
 
         diff_view.read_with(cx, |diff_view, _cx| {
             assert!(
-                diff_view.title.contains("Clipboard"),
-                "diff view should have opened with a clipboard diff title, got: {}",
+                diff_view.title.contains("剪贴板"),
+                "差异视图应打开并显示剪贴板差异标题,但得到:{}",
                 diff_view.title
             );
         });
@@ -851,8 +851,8 @@ mod tests {
         // Empty selection should diff the full underlying buffer
         diff_view.read_with(cx, |diff_view, _cx| {
             assert!(
-                diff_view.title.contains("Clipboard"),
-                "diff view should have opened with a clipboard diff title, got: {}",
+                diff_view.title.contains("剪贴板"),
+                "差异视图应打开并显示剪贴板差异标题,但得到:{}",
                 diff_view.title
             );
         });

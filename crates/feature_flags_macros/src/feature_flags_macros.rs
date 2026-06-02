@@ -47,14 +47,14 @@ fn expand(input: &DeriveInput) -> syn::Result<TokenStream2> {
     let Data::Enum(data) = &input.data else {
         return Err(syn::Error::new_spanned(
             input,
-            "EnumFeatureFlag can only be derived for enums",
+            "EnumFeatureFlag 只能用于枚举类型",
         ));
     };
 
     if data.variants.is_empty() {
         return Err(syn::Error::new_spanned(
             input,
-            "EnumFeatureFlag requires at least one variant",
+            "EnumFeatureFlag 至少需要一个变体",
         ));
     }
 
@@ -65,14 +65,14 @@ fn expand(input: &DeriveInput) -> syn::Result<TokenStream2> {
         if !matches!(variant.fields, Fields::Unit) {
             return Err(syn::Error::new_spanned(
                 variant,
-                "EnumFeatureFlag only supports unit variants (no fields)",
+                "EnumFeatureFlag 仅支持单元变体 (无字段)",
             ));
         }
         if has_default_attr(variant) {
             if default_ident.is_some() {
                 return Err(syn::Error::new_spanned(
                     variant,
-                    "only one variant may be marked with #[default]",
+                    "只能有一个变体被标记为 #[default]",
                 ));
             }
             default_ident = Some(&variant.ident);
@@ -83,7 +83,7 @@ fn expand(input: &DeriveInput) -> syn::Result<TokenStream2> {
     let Some(default_ident) = default_ident else {
         return Err(syn::Error::new_spanned(
             input,
-            "EnumFeatureFlag requires exactly one variant to be marked with #[default]",
+            "EnumFeatureFlag 要求必须恰好有一个变体被标记为 #[default]",
         ));
     };
 

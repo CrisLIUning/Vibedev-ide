@@ -528,7 +528,7 @@ pub struct TelemetrySettingsContent {
     ///
     /// Default: true
     pub diagnostics: Option<bool>,
-    /// Send anonymized usage data like what languages you're using Zed with.
+    /// Send anonymized usage data like what languages you're using VibeDev with.
     ///
     /// Default: true
     pub metrics: Option<bool>,

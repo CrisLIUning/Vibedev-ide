@@ -78,6 +78,15 @@ pub enum OpenRequestKind {
     GitCommit {
         sha: String,
     },
+    /// VIBEDEV: the OS shell handed us `vibedev://auth-callback?payload=<base64>`
+    /// (Windows: HKCU `Software\Classes\vibedev` installed by `zed.iss`; macOS:
+    /// Info.plist URL types). Dispatched to
+    /// [`vibedev_account::url_handler::handle`], which relays `payload` to the
+    /// sidecar's `/vibedev/login/callback` and brings the window forward.
+    #[cfg(target_os = "windows")]
+    VibedevAuthCallback {
+        payload: String,
+    },
 }
 
 impl std::fmt::Debug for OpenRequestKind {
@@ -116,6 +125,15 @@ impl std::fmt::Debug for OpenRequestKind {
                 .field("repo_url", repo_url)
                 .finish(),
             Self::GitCommit { sha } => f.debug_struct("GitCommit").field("sha", sha).finish(),
+            #[cfg(target_os = "windows")]
+            Self::VibedevAuthCallback { .. } => {
+                // VIBEDEV: payload is an opaque base64 blob containing the
+                // sub2api OAuth token — never write it to the log, even at
+                // debug. The presence of the variant is enough for diagnosis.
+                f.debug_struct("VibedevAuthCallback")
+                    .field("payload", &"<redacted>")
+                    .finish()
+            }
         }
     }
 }
@@ -198,6 +216,28 @@ impl OpenRequest {
                 this.parse_git_commit_url(commit_path)?
             } else if url.starts_with("ssh://") {
                 this.parse_ssh_file_path(&url, cx)?
+            } else if url.starts_with("vibedev://") {
+                // VIBEDEV: registered with the OS as a custom scheme; lives in
+                // its own branch (not lumped under `parse_zed_link` below)
+                // because the payload is sensitive and the route handler talks
+                // to the local sidecar rather than zed.dev.
+                #[cfg(target_os = "windows")]
+                match vibedev_account::url_handler::parse_callback_url(&url) {
+                    Ok(payload) => {
+                        this.kind = Some(OpenRequestKind::VibedevAuthCallback { payload });
+                    }
+                    Err(error) => {
+                        log::error!("failed to parse vibedev:// callback URL: {error:#}");
+                    }
+                }
+                #[cfg(not(target_os = "windows"))]
+                {
+                    // macOS handles vibedev:// via `gpui_macos::register_url_scheme`
+                    // + `app.on_open_urls`, which routes through this same
+                    // function — but the dispatch arm only exists on Windows
+                    // today. macOS parity work is tracked separately.
+                    log::warn!("vibedev:// URL received on non-Windows platform: {url}");
+                }
             } else if let Some(zed_link) = parse_zed_link(&url, cx) {
                 match zed_link {
                     ZedLink::Channel { channel_id } => {
@@ -283,7 +323,7 @@ impl OpenRequest {
         let url = parse_ssh_url(file)?;
         let host = match url
             .host()
-            .with_context(|| format!("missing host in ssh url: {url}"))?
+            .with_context(|| format!("SSH URL 缺少主机: {url}"))?
         {
             url::Host::Domain(host) => host.to_string(),
             url::Host::Ipv4(host) => host.to_string(),
@@ -297,7 +337,7 @@ impl OpenRequest {
         let port = url.port();
         anyhow::ensure!(
             self.open_paths.is_empty(),
-            "cannot open both local and ssh paths"
+            "无法同时打开本地和 SSH 路径"
         );
         let mut connection_options =
             RemoteSettings::get_global(cx).connection_options_for(host, port, username);
@@ -309,7 +349,7 @@ impl OpenRequest {
         if let Some(ssh_connection) = &self.remote_connection {
             anyhow::ensure!(
                 *ssh_connection == connection_options,
-                "cannot open multiple different remote connections"
+                "无法打开多个不同的远程连接"
             );
         }
         self.remote_connection = Some(connection_options);
@@ -330,14 +370,14 @@ fn parse_ssh_url(url: &str) -> Result<url::Url> {
     // TODO: Add IPv6 support: "ssh://[2600::]:~/foo"
     let ssh_target = url
         .strip_prefix("ssh://")
-        .with_context(|| format!("invalid ssh url: {url}"))?;
+        .with_context(|| format!("无效的 SSH URL: {url}"))?;
 
     let (authority, path) = if let Some((authority, path)) = ssh_target.rsplit_once(":~/") {
         (authority, format!("/~/{path}"))
     } else if let Some((authority, path)) = ssh_target.rsplit_once(":/") {
         (authority, format!("/{path}"))
     } else {
-        anyhow::bail!("invalid ssh url: {url}");
+        anyhow::bail!("无效的 SSH URL: {url}");
     };
 
     let (userinfo, host) = authority
@@ -345,7 +385,7 @@ fn parse_ssh_url(url: &str) -> Result<url::Url> {
         .map_or((None, authority), |(userinfo, host)| (Some(userinfo), host));
     anyhow::ensure!(
         !host.is_empty() && !host.starts_with('[') && !host.contains(':'),
-        "invalid ssh url: {url}"
+        "无效的 SSH URL: {url}"
     );
 
     let normalized_authority = if let Some(userinfo) = userinfo {
@@ -502,7 +542,7 @@ pub async fn open_paths_with_positions(
                 .fs
                 .canonicalize(Path::new(raw))
                 .await
-                .with_context(|| format!("opening --diff path {raw:?}"))
+                .with_context(|| format!("正在打开 --差异 路径 {raw:?}"))
         };
         for diff_pair in diff_paths {
             let (old_path, new_path) =
@@ -529,7 +569,7 @@ pub async fn open_paths_with_positions(
 
     for (item, path) in items.iter_mut().zip(&paths) {
         if let Some(Err(error)) = item {
-            *error = anyhow!("error opening {path:?}: {error:#}");
+            *error = anyhow!("打开 {path:?} 时出错:{error:#}");
         }
     }
 
@@ -943,10 +983,10 @@ async fn open_local_workspace(
                 .map(|p| p.path.display().to_string())
                 .collect::<Vec<_>>()
                 .join(", ");
-            log::error!("failed to open workspace [{paths}]: {error:#}");
+            log::error!("无法打开工作区 [{paths}]:{error:#}");
             responses
                 .send(CliResponse::Stderr {
-                    message: format!("error opening [{paths}]: {error:#}"),
+                    message: format!("打开 [{paths}] 时出错:{error:#}"),
                 })
                 .log_err();
             return true;
@@ -1352,12 +1392,12 @@ mod tests {
             });
             assert!(
                 matches!(request.kind, Some(OpenRequestKind::FocusApp)),
-                "expected FocusApp for {url}, got {:?}",
+                "期望 {url} 的 FocusApp,得到 {:?}",
                 request.kind
             );
             assert!(
                 request.is_focus_app_only(),
-                "expected is_focus_app_only for {url}"
+                "期望 {url} 的 is_focus_app_only"
             );
         }
     }
@@ -1451,7 +1491,7 @@ mod tests {
             OpenRequestKind::GitCommit { sha } => {
                 assert_eq!(sha, "abc123");
             }
-            _ => panic!("expected GitCommit variant"),
+            _ => panic!("期望 GitCommit 变体"),
         }
         // Verify path was added to open_paths for workspace routing
         assert_eq!(request.open_paths, vec!["path/to/repo"]);
@@ -1472,7 +1512,7 @@ mod tests {
             OpenRequestKind::GitCommit { sha } => {
                 assert_eq!(sha, "def456");
             }
-            _ => panic!("expected GitCommit variant"),
+            _ => panic!("期望 GitCommit 变体"),
         }
         assert_eq!(request.open_paths, vec!["path with spaces"]);
 
@@ -1488,7 +1528,7 @@ mod tests {
                 )
                 .unwrap_err()
                 .to_string()
-                .contains("missing repo")
+                .contains("缺少 repo")
             );
         });
 
@@ -1507,7 +1547,7 @@ mod tests {
             result
                 .unwrap_err()
                 .to_string()
-                .contains("missing repo query parameter")
+                .contains("缺少 repo 查询参数")
         );
     }
 
@@ -1682,7 +1722,7 @@ mod tests {
             .update(cx, |multi_workspace, _, cx| {
                 multi_workspace.workspace().update(cx, |workspace, cx| {
                     let items = workspace.items(cx).collect::<Vec<_>>();
-                    assert_eq!(items.len(), 2, "Workspace should have two items");
+                    assert_eq!(items.len(), 2, "工作区应该有两个项目");
                 });
             })
             .unwrap();
@@ -1706,7 +1746,7 @@ mod tests {
             .update(cx, |multi_workspace, _, cx| {
                 multi_workspace.workspace().update(cx, |workspace, cx| {
                     let items = workspace.items(cx).collect::<Vec<_>>();
-                    assert_eq!(items.len(), 1, "Workspace should have two items");
+                    assert_eq!(items.len(), 1, "工作区应该有两个项目");
                 });
             })
             .unwrap();
@@ -1871,7 +1911,7 @@ mod tests {
             Some(OpenRequestKind::GitClone { repo_url }) => {
                 assert_eq!(repo_url, "https://github.com/zed-industries/zed.git");
             }
-            _ => panic!("Expected GitClone kind"),
+            _ => panic!("期望 GitClone 类型"),
         }
     }
 
@@ -1896,7 +1936,7 @@ mod tests {
             Some(OpenRequestKind::GitClone { repo_url }) => {
                 assert_eq!(repo_url, "https://github.com/zed-industries/zed.git");
             }
-            _ => panic!("Expected GitClone kind"),
+            _ => panic!("期望 GitClone 类型"),
         }
     }
 
@@ -1922,7 +1962,7 @@ mod tests {
             Some(OpenRequestKind::GitClone { repo_url }) => {
                 assert_eq!(repo_url, "https://github.com/zed-industries/zed.git");
             }
-            _ => panic!("Expected GitClone kind"),
+            _ => panic!("期望 GitClone 类型"),
         }
     }
 
@@ -2077,7 +2117,7 @@ mod tests {
             .update(cx, |workspace, _, cx| {
                 let items = workspace.workspace().read(cx).items(cx).collect::<Vec<_>>();
                 // Should have 2 items now (file2.txt and new_file.txt)
-                assert_eq!(items.len(), 2, "Focused window should have 2 items");
+                assert_eq!(items.len(), 2, "聚焦窗口应有 2 个项目");
             })
             .unwrap();
 
@@ -2085,7 +2125,7 @@ mod tests {
         multi_workspace_1
             .update(cx, |workspace, _, cx| {
                 let items = workspace.workspace().read(cx).items(cx).collect::<Vec<_>>();
-                assert_eq!(items.len(), 1, "Other window should still have 1 item");
+                assert_eq!(items.len(), 1, "其他窗口应仍只有 1 个项目");
             })
             .unwrap();
     }
@@ -2142,7 +2182,7 @@ mod tests {
                 let flag = multi_workspace.workspace().read(cx).open_in_dev_container();
                 assert!(
                     !flag,
-                    "open_in_dev_container flag should be consumed by suggest_on_worktree_updated"
+                    "open_in_dev_container 标志应被 suggest_on_worktree_updated 消费"
                 );
             })
             .unwrap();
@@ -2205,7 +2245,7 @@ mod tests {
                     .open_in_dev_container();
                 assert!(
                     !flag,
-                    "open_in_dev_container flag should be cleared when no devcontainer config exists"
+                    "当不存在 devcontainer 配置时,应清除 open_in_dev_container 标志"
                 );
             })
             .unwrap();

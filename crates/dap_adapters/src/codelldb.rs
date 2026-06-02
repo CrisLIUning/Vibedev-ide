@@ -139,23 +139,23 @@ impl DebugAdapter for CodeLldbDebugAdapter {
                 "request": {
                     "type": "string",
                     "enum": ["attach", "launch"],
-                    "description": "Debug adapter request type"
+                    "description": "调试适配器请求类型"
                 },
                 "program": {
                     "type": "string",
-                    "description": "Path to the program to debug or attach to"
+                    "description": "要调试或附加的程序路径"
                 },
                 "args": {
                     "type": ["array", "string"],
-                    "description": "Program arguments"
+                    "description": "程序参数"
                 },
                 "cwd": {
                     "type": "string",
-                    "description": "Program working directory"
+                    "description": "程序工作目录"
                 },
                 "env": {
                     "type": "object",
-                    "description": "Additional environment variables",
+                    "description": "额外的环境变量",
                     "patternProperties": {
                         ".*": {
                             "type": "string"
@@ -164,73 +164,73 @@ impl DebugAdapter for CodeLldbDebugAdapter {
                 },
                 "envFile": {
                     "type": "string",
-                    "description": "File to read the environment variables from"
+                    "description": "读取环境变量的文件"
                 },
                 "stdio": {
                     "type": ["null", "string", "array", "object"],
-                    "description": "Destination for stdio streams: null = send to debugger console or a terminal, \"<path>\" = attach to a file/tty/fifo"
+                    "description": "标准输入输出流的目标:null = 发送到调试器控制台或终端,\"<path>\" = 附加到文件/tty/fifo"
                 },
                 "terminal": {
                     "type": "string",
                     "enum": ["integrated", "console"],
-                    "description": "Terminal type to use",
+                    "description": "要使用的终端类型",
                     "default": "integrated"
                 },
                 "console": {
                     "type": "string",
                     "enum": ["integratedTerminal", "internalConsole"],
-                    "description": "Terminal type to use (compatibility alias of 'terminal')"
+                    "description": "要使用的终端类型 ('terminal' 的兼容性别名)"
                 },
                 "stopOnEntry": {
                     "type": "boolean",
-                    "description": "Automatically stop debuggee after launch",
+                    "description": "启动后自动停止被调试程序",
                     "default": false
                 },
                 "initCommands": {
                     "type": "array",
-                    "description": "Initialization commands executed upon debugger startup",
+                    "description": "调试器启动时执行的初始化命令",
                     "items": {
                         "type": "string"
                     }
                 },
                 "targetCreateCommands": {
                     "type": "array",
-                    "description": "Commands that create the debug target",
+                    "description": "创建调试目标的命令",
                     "items": {
                         "type": "string"
                     }
                 },
                 "preRunCommands": {
                     "type": "array",
-                    "description": "Commands executed just before the program is launched",
+                    "description": "程序启动前执行的命令",
                     "items": {
                         "type": "string"
                     }
                 },
                 "processCreateCommands": {
                     "type": "array",
-                    "description": "Commands that create the debuggee process",
+                    "description": "创建被调试进程的命令",
                     "items": {
                         "type": "string"
                     }
                 },
                 "postRunCommands": {
                     "type": "array",
-                    "description": "Commands executed just after the program has been launched",
+                    "description": "程序启动后执行的命令",
                     "items": {
                         "type": "string"
                     }
                 },
                 "preTerminateCommands": {
                     "type": "array",
-                    "description": "Commands executed just before the debuggee is terminated or disconnected from",
+                    "description": "被调试程序终止或断开连接前执行的命令",
                     "items": {
                         "type": "string"
                     }
                 },
                 "exitCommands": {
                     "type": "array",
-                    "description": "Commands executed at the end of debugging session",
+                    "description": "调试会话结束时执行的命令",
                     "items": {
                         "type": "string"
                     }
@@ -238,11 +238,11 @@ impl DebugAdapter for CodeLldbDebugAdapter {
                 "expressions": {
                     "type": "string",
                     "enum": ["simple", "python", "native"],
-                    "description": "The default evaluator type used for expressions"
+                    "description": "表达式使用的默认求值器类型"
                 },
                 "sourceMap": {
                     "type": "object",
-                    "description": "Source path remapping between the build machine and the local machine",
+                    "description": "构建机器与本地机器之间的源路径重映射",
                     "patternProperties": {
                         ".*": {
                             "type": ["string", "null"]
@@ -251,32 +251,32 @@ impl DebugAdapter for CodeLldbDebugAdapter {
                 },
                 "relativePathBase": {
                     "type": "string",
-                    "description": "Base directory used for resolution of relative source paths. Defaults to the workspace folder"
+                    "description": "用于解析相对源路径的基础目录。默认为工作区文件夹"
                 },
                 "sourceLanguages": {
                     "type": "array",
-                    "description": "A list of source languages to enable language-specific features for",
+                    "description": "启用特定语言功能的源语言列表",
                     "items": {
                         "type": "string"
                     }
                 },
                 "reverseDebugging": {
                     "type": "boolean",
-                    "description": "Enable reverse debugging",
+                    "description": "启用反向调试",
                     "default": false
                 },
                 "breakpointMode": {
                     "type": "string",
                     "enum": ["path", "file"],
-                    "description": "Specifies how source breakpoints should be set"
+                    "description": "指定应如何设置源断点"
                 },
                 "pid": {
                     "type": ["integer", "string"],
-                    "description": "Process id to attach to"
+                    "description": "要附加的进程 ID"
                 },
                 "waitFor": {
                     "type": "boolean",
-                    "description": "Wait for the process to launch (MacOS only)",
+                    "description": "等待进程启动 (仅限 MacOS)",
                     "default": false
                 }
             },
@@ -338,7 +338,7 @@ impl DebugAdapter for CodeLldbDebugAdapter {
             .or(self.path_to_codelldb.get().cloned());
 
         if command.is_none() {
-            delegate.output_to_console(format!("Checking latest version of {}...", self.name()));
+            delegate.output_to_console(format!("正在检查 {} 的最新版本...", self.name()));
             let adapter_path = paths::debug_adapters_dir().join(&Self::ADAPTER_NAME);
             let version_path = match self.fetch_latest_adapter_version(delegate).await {
                 Ok(version) => {
@@ -355,10 +355,10 @@ impl DebugAdapter for CodeLldbDebugAdapter {
                     version_path
                 }
                 Err(e) => {
-                    delegate.output_to_console("Unable to fetch latest version".to_string());
+                    delegate.output_to_console("无法获取最新版本".to_string());
                     log::error!("Error fetching latest version of {}: {}", self.name(), e);
                     delegate.output_to_console(format!(
-                        "Searching for adapters in: {}",
+                        "正在以下位置搜索适配器: {}",
                         adapter_path.display()
                     ));
                     let mut paths = delegate

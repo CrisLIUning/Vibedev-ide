@@ -14,7 +14,7 @@ pub struct AccentColors(pub Arc<[Hsla]>);
 impl Default for AccentColors {
     /// Don't use this!
     /// We have to have a default to be `[refineable::Refinable]`.
-    /// TODO "Find a way to not need this for Refinable"
+    /// TODO "找到一种方法,使 Refinable 不需要此默认值"
     fn default() -> Self {
         Self::dark()
     }

@@ -56,7 +56,7 @@ fn require_https_or_loopback(url: &Url) -> Result<()> {
         }
     }
     bail!(
-        "OAuth endpoint must use HTTPS (got {}://{})",
+        "OAuth 端点必须使用 HTTPS (获取到 {}://{})",
         url.scheme(),
         url.host_str().unwrap_or("?")
     )
@@ -82,7 +82,7 @@ fn validate_oauth_url(url: &Url) -> Result<()> {
                 if ip.is_private() || ip.is_link_local() || ip.is_broadcast() || ip.is_unspecified()
                 {
                     bail!(
-                        "OAuth endpoint must not point to private/reserved IP: {}",
+                        "OAuth 端点不得指向私有/保留 IP: {}",
                         ip
                     );
                 }
@@ -97,7 +97,7 @@ fn validate_oauth_url(url: &Url) -> Result<()> {
                         || mapped_v4.is_unspecified()
                     {
                         bail!(
-                            "OAuth endpoint must not point to private/reserved IP: ::ffff:{}",
+                            "OAuth 端点不得指向私有/保留 IP: ::ffff:{}",
                             mapped_v4
                         );
                     }
@@ -105,7 +105,7 @@ fn validate_oauth_url(url: &Url) -> Result<()> {
 
                 if ip.is_unspecified() || ip.is_multicast() {
                     bail!(
-                        "OAuth endpoint must not point to reserved IPv6 address: {}",
+                        "OAuth 端点不得指向保留 IPv6 地址: {}",
                         ip
                     );
                 }
@@ -113,7 +113,7 @@ fn validate_oauth_url(url: &Url) -> Result<()> {
                 // nightly-only, so check the prefix manually.
                 if (ip.segments()[0] & 0xfe00) == 0xfc00 {
                     bail!(
-                        "OAuth endpoint must not point to IPv6 unique-local address: {}",
+                        "OAuth 端点不得指向 IPv6 唯一本地地址: {}",
                         ip
                     );
                 }
@@ -165,7 +165,7 @@ impl std::fmt::Debug for OAuthClientRegistration {
             .field("client_id", &self.client_id)
             .field(
                 "client_secret",
-                &self.client_secret.as_ref().map(|_| "[redacted]"),
+                &self.client_secret.as_ref().map(|_| "[已隐藏]"),
             )
             .finish()
     }
@@ -182,10 +182,10 @@ pub struct OAuthTokens {
 impl std::fmt::Debug for OAuthTokens {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("OAuthTokens")
-            .field("access_token", &"[redacted]")
+            .field("access_token", &"[已隐藏]")
             .field(
                 "refresh_token",
-                &self.refresh_token.as_ref().map(|_| "[redacted]"),
+                &self.refresh_token.as_ref().map(|_| "[已隐藏]"),
             )
             .field("expires_at", &self.expires_at)
             .finish()
@@ -278,7 +278,7 @@ pub fn parse_www_authenticate(header: &str) -> Result<WwwAuthenticate> {
     let params_str = if header.len() >= 6 && header[..6].eq_ignore_ascii_case("bearer") {
         header[6..].trim()
     } else {
-        bail!("WWW-Authenticate header does not use Bearer scheme");
+        bail!("WWW-Authenticate 标头未使用 Bearer 方案");
     };
 
     if params_str.is_empty() {
@@ -296,7 +296,7 @@ pub fn parse_www_authenticate(header: &str) -> Result<WwwAuthenticate> {
         .get("resource_metadata")
         .map(|v| Url::parse(v))
         .transpose()
-        .map_err(|e| anyhow!("invalid resource_metadata URL: {}", e))?;
+        .map_err(|e| anyhow!("无效的 resource_metadata URL: {}", e))?;
 
     let scope = params
         .get("scope")
@@ -537,7 +537,7 @@ pub struct PkceChallenge {
 impl std::fmt::Debug for PkceChallenge {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("PkceChallenge")
-            .field("verifier", &"[redacted]")
+            .field("verifier", &"[已隐藏]")
             .field("challenge", &self.challenge)
             .finish()
     }
@@ -608,10 +608,10 @@ pub struct TokenResponse {
 impl std::fmt::Debug for TokenResponse {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("TokenResponse")
-            .field("access_token", &"[redacted]")
+            .field("access_token", &"[已隐藏]")
             .field(
                 "refresh_token",
-                &self.refresh_token.as_ref().map(|_| "[redacted]"),
+                &self.refresh_token.as_ref().map(|_| "[已隐藏]"),
             )
             .field("expires_in", &self.expires_in)
             .field("token_type", &self.token_type)
@@ -643,7 +643,7 @@ pub struct OAuthTokenError {
 
 impl std::fmt::Display for OAuthTokenError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "OAuth token error: {}", self.error)?;
+        write!(f, "OAuth 令牌错误:{}", self.error)?;
         if let Some(description) = &self.error_description {
             write!(f, " ({description})")?;
         }
@@ -774,7 +774,7 @@ pub async fn fetch_protected_resource_metadata(
             Ok(response) => {
                 if response.authorization_servers.is_empty() {
                     bail!(
-                        "Protected Resource Metadata at {} has no authorization_servers",
+                        "{} 处的受保护资源元数据没有 authorization_servers",
                         url
                     );
                 }
@@ -786,7 +786,7 @@ pub async fn fetch_protected_resource_metadata(
             }
             Err(err) => {
                 log::debug!(
-                    "Failed to fetch Protected Resource Metadata from {}: {}",
+                    "从 {} 获取受保护资源元数据失败: {}",
                     url,
                     err
                 );
@@ -795,7 +795,7 @@ pub async fn fetch_protected_resource_metadata(
     }
 
     bail!(
-        "Could not fetch Protected Resource Metadata for {}",
+        "无法获取 {} 的受保护资源元数据",
         server_url
     )
 }
@@ -815,7 +815,7 @@ pub async fn fetch_auth_server_metadata(
 
                 if reported_issuer != *issuer {
                     bail!(
-                        "Auth server metadata issuer mismatch: expected {}, got {}",
+                        "认证服务器元数据颁发者不匹配: 预期 {}, 实际 {}",
                         issuer,
                         reported_issuer
                     );
@@ -826,10 +826,10 @@ pub async fn fetch_auth_server_metadata(
                     grant_types_supported: response.grant_types_supported,
                     authorization_endpoint: response
                         .authorization_endpoint
-                        .ok_or_else(|| anyhow!("missing authorization_endpoint"))?,
+                        .ok_or_else(|| anyhow!("缺少 authorization_endpoint"))?,
                     token_endpoint: response
                         .token_endpoint
-                        .ok_or_else(|| anyhow!("missing token_endpoint"))?,
+                        .ok_or_else(|| anyhow!("缺少 token_endpoint"))?,
                     registration_endpoint: response.registration_endpoint,
                     scopes_supported: response.scopes_supported,
                     code_challenge_methods_supported: response.code_challenge_methods_supported,
@@ -839,13 +839,13 @@ pub async fn fetch_auth_server_metadata(
                 });
             }
             Err(err) => {
-                log::debug!("Failed to fetch Auth Server Metadata from {}: {}", url, err);
+                log::debug!("从 {} 获取认证服务器元数据失败: {}", url, err);
             }
         }
     }
 
     bail!(
-        "Could not fetch Authorization Server Metadata for {}",
+        "无法获取 {} 的认证服务器元数据",
         issuer
     )
 }
@@ -864,15 +864,15 @@ pub async fn discover(
     let auth_server_url = resource_metadata
         .authorization_servers
         .first()
-        .ok_or_else(|| anyhow!("no authorization servers in resource metadata"))?;
+        .ok_or_else(|| anyhow!("资源元数据中没有授权服务器"))?;
 
     let auth_server_metadata = fetch_auth_server_metadata(http_client, auth_server_url).await?;
 
     // Verify PKCE S256 support (spec requirement).
     match &auth_server_metadata.code_challenge_methods_supported {
         Some(methods) if methods.iter().any(|m| m == "S256") => {}
-        Some(_) => bail!("authorization server does not support S256 PKCE"),
-        None => bail!("authorization server does not advertise code_challenge_methods_supported"),
+        Some(_) => bail!("授权服务器不支持 S256 PKCE"),
+        None => bail!("授权服务器未公布 code_challenge_methods_supported"),
     }
 
     let scopes = select_scopes(www_authenticate, &resource_metadata);
@@ -914,7 +914,7 @@ pub async fn resolve_client_registration(
             .await
         }
         ClientRegistrationStrategy::Unavailable => {
-            bail!("authorization server supports neither CIMD nor DCR")
+            bail!("授权服务器既不支持 CIMD 也不支持 DCR")
         }
     }
 }
@@ -946,7 +946,7 @@ pub async fn perform_dcr(
         let mut error_body = String::new();
         response.body_mut().read_to_string(&mut error_body).await?;
         bail!(
-            "DCR failed with status {}: {}",
+            "DCR 失败, 状态码 {}: {}",
             response.status(),
             error_body
         );
@@ -959,7 +959,7 @@ pub async fn perform_dcr(
         .await?;
 
     let dcr_response: DcrResponse =
-        serde_json::from_str(&response_body).context("failed to parse DCR response")?;
+        serde_json::from_str(&response_body).context("解析 DCR 响应失败")?;
 
     Ok(OAuthClientRegistration {
         client_id: dcr_response.client_id,
@@ -1033,7 +1033,7 @@ async fn post_token_request(
         if let Ok(token_error) = serde_json::from_str::<OAuthTokenError>(&error_body) {
             return Err(token_error.into());
         }
-        bail!("token request failed with status {status}: {error_body}");
+        bail!("令牌请求失败,状态码 {status}:{error_body}");
     }
 
     let mut response_body = String::new();
@@ -1043,7 +1043,7 @@ async fn post_token_request(
         .await?;
 
     let token_response: TokenResponse =
-        serde_json::from_str(&response_body).context("failed to parse token response")?;
+        serde_json::from_str(&response_body).context("解析令牌响应失败")?;
 
     Ok(token_response.into_tokens())
 }
@@ -1059,8 +1059,8 @@ pub struct OAuthCallback {
 impl std::fmt::Debug for OAuthCallback {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("OAuthCallback")
-            .field("code", &"[redacted]")
-            .field("state", &"[redacted]")
+            .field("code", &"[已隐藏]")
+            .field("state", &"[已隐藏]")
             .finish()
     }
 }
@@ -1101,7 +1101,7 @@ pub fn start_callback_server() -> Result<(String, BoxFuture<'static, Result<OAut
             }),
             Ok(Err(e)) => Err(e),
             Err(_) => Err(anyhow!(
-                "OAuth callback server was shut down before receiving a response"
+                "OAuth 回调服务器在收到响应前已关闭"
             )),
         }
     }
@@ -1126,12 +1126,12 @@ async fn fetch_json<T: serde::de::DeserializeOwned>(
     let mut response = http_client.send(request).await?;
 
     if !response.status().is_success() {
-        bail!("HTTP {} fetching {}", response.status(), url);
+        bail!("获取 {} 时 HTTP {}", response.status(), url);
     }
 
     let mut body = String::new();
     response.body_mut().read_to_string(&mut body).await?;
-    serde_json::from_str(&body).with_context(|| format!("failed to parse JSON from {}", url))
+    serde_json::from_str(&body).with_context(|| format!("从 {} 解析 JSON 失败", url))
 }
 
 // -- Serde response types for discovery --------------------------------------
@@ -1273,7 +1273,7 @@ impl OAuthTokenProvider for McpOAuthTokenProvider {
                 Ok(true)
             }
             Err(err) => {
-                log::warn!("OAuth token refresh failed: {}", err);
+                log::warn!("OAuth 令牌刷新失败: {}", err);
                 Ok(false)
             }
         }
@@ -1443,13 +1443,13 @@ mod tests {
 
     #[test]
     fn test_parse_www_authenticate_with_error() {
-        let header = r#"Bearer error="insufficient_scope", scope="files:read files:write", resource_metadata="https://mcp.example.com/.well-known/oauth-protected-resource", error_description="Additional file write permission required""#;
+        let header = r#"Bearer error="insufficient_scope", scope="files:read files:write", resource_metadata="https://mcp.example.com/.well-known/oauth-protected-resource", error_description="需要额外的文件写入权限""#;
         let result = parse_www_authenticate(header).unwrap();
 
         assert_eq!(result.error, Some(BearerError::InsufficientScope));
         assert_eq!(
             result.error_description.as_deref(),
-            Some("Additional file write permission required")
+            Some("需要额外的文件写入权限")
         );
         assert_eq!(
             result.scope,
@@ -1728,7 +1728,7 @@ mod tests {
         for c in pkce.verifier.chars().chain(pkce.challenge.chars()) {
             assert!(
                 c.is_ascii_alphanumeric() || c == '-' || c == '_',
-                "invalid base64url character: {}",
+                "无效的 base64url 字符: {}",
                 c
             );
         }
@@ -2105,7 +2105,7 @@ mod tests {
                     // The cross-origin URL should NOT be fetched; only the
                     // well-known fallback at the server's own origin should be.
                     if uri.contains("attacker.example.com") {
-                        panic!("should not fetch cross-origin resource_metadata URL");
+                        panic!("不应获取跨源 resource_metadata URL");
                     } else if uri.contains(".well-known/oauth-protected-resource") {
                         json_response(
                             200,
@@ -2246,8 +2246,8 @@ mod tests {
             assert!(result.is_err());
             let err_msg = result.unwrap_err().to_string();
             assert!(
-                err_msg.contains("issuer mismatch"),
-                "unexpected error: {}",
+                err_msg.contains("签发者不匹配"),
+                "意外错误: {}",
                 err_msg
             );
         });
@@ -2412,7 +2412,7 @@ mod tests {
             let err_msg = result.unwrap_err().to_string();
             assert!(
                 err_msg.contains("code_challenge_methods_supported"),
-                "unexpected error: {}",
+                "意外错误: {}",
                 err_msg
             );
         });
@@ -2545,7 +2545,7 @@ mod tests {
             let err = result.unwrap_err();
             let token_error = err
                 .downcast_ref::<OAuthTokenError>()
-                .expect("expected OAuthTokenError");
+                .expect("期望 OAuthTokenError");
             assert_eq!(
                 *token_error,
                 OAuthTokenError {
@@ -2672,12 +2672,12 @@ mod tests {
         let err_msg = result.unwrap_err().to_string();
         assert!(
             err_msg.contains("access_denied"),
-            "unexpected error: {}",
+            "意外错误: {}",
             err_msg
         );
         assert!(
-            err_msg.contains("User denied access"),
-            "unexpected error: {}",
+            err_msg.contains("用户拒绝访问"),
+            "意外错误: {}",
             err_msg
         );
     }
@@ -2689,12 +2689,12 @@ mod tests {
         let err_msg = result.unwrap_err().to_string();
         assert!(
             err_msg.contains("server_error"),
-            "unexpected error: {}",
+            "意外错误: {}",
             err_msg
         );
         assert!(
-            err_msg.contains("no description"),
-            "unexpected error: {}",
+            err_msg.contains("无描述"),
+            "意外错误: {}",
             err_msg
         );
     }
@@ -2766,7 +2766,7 @@ mod tests {
             let provider = McpOAuthTokenProvider::new(
                 session,
                 make_fake_http_client(|_| {
-                    Box::pin(async { unreachable!("no HTTP call expected") })
+                    Box::pin(async { unreachable!("不应发起 HTTP 调用") })
                 }),
                 None,
             );
@@ -2801,7 +2801,7 @@ mod tests {
             assert!(refreshed);
             assert_eq!(provider.access_token().as_deref(), Some("new-access"));
 
-            let notified_session = rx.try_recv().expect("channel should have a session");
+            let notified_session = rx.try_recv().expect("频道应有会话");
             assert_eq!(notified_session.tokens.access_token, "new-access");
             assert_eq!(
                 notified_session.tokens.refresh_token.as_deref(),
@@ -2833,7 +2833,7 @@ mod tests {
             let refreshed = provider.try_refresh().await.unwrap();
             assert!(refreshed);
 
-            let notified_session = rx.try_recv().expect("channel should have a session");
+            let notified_session = rx.try_recv().expect("频道应有会话");
             assert_eq!(notified_session.tokens.access_token, "new-access");
             assert_eq!(
                 notified_session.tokens.refresh_token.as_deref(),

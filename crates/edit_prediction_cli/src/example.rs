@@ -245,7 +245,7 @@ pub fn read_example_files(inputs: &[PathBuf]) -> Vec<Example> {
                         let mut example =
                             serde_json::from_str::<Example>(line).unwrap_or_else(|error| {
                                 panic!(
-                                    "Failed to parse example on {}:{}\n{error}",
+                                    "无法解析 {}:{} 处的示例\n{error}",
                                     path.display(),
                                     line_ix + 1
                                 )

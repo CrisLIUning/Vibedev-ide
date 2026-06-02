@@ -1009,7 +1009,7 @@ async fn test_delete_channel_with_active_call(db: &Arc<Database>) {
         .await
         .unwrap_err()
         .to_string();
-    assert!(err.contains("call is in progress"), "{err}");
+    assert!(err.contains("通话进行中"), "{err}");
 
     // Delete fails - participants in nested calls
     db.leave_room(connection_2).await.unwrap();
@@ -1018,7 +1018,7 @@ async fn test_delete_channel_with_active_call(db: &Arc<Database>) {
         .await
         .unwrap_err()
         .to_string();
-    assert!(err.contains("call is in progress"), "{err}");
+    assert!(err.contains("通话进行中"), "{err}");
 
     // Delete succeeds - no participants in calls
     db.leave_room(connection_1).await.unwrap();

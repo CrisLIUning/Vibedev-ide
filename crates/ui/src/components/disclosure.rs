@@ -111,7 +111,7 @@ impl Component for Disclosure {
 
     fn description() -> Option<&'static str> {
         Some(
-            "An interactive element used to show or hide content, typically used in expandable sections or tree-like structures.",
+            "一种用于显示或隐藏内容的交互元素,通常用于可展开部分或树状结构中。",
         )
     }
 
@@ -121,26 +121,26 @@ impl Component for Disclosure {
                 .gap_6()
                 .children(vec![
                     example_group_with_title(
-                        "Disclosure States",
+                        "展开指示器状态",
                         vec![
                             single_example(
-                                "Closed",
+                                "已折叠",
                                 Disclosure::new("closed", false).into_any_element(),
                             ),
                             single_example(
-                                "Open",
+                                "打开",
                                 Disclosure::new("open", true).into_any_element(),
                             ),
                         ],
                     ),
                     example_group_with_title(
-                        "Interactive Example",
+                        "交互示例",
                         vec![single_example(
-                            "Toggleable",
+                            "可切换",
                             v_flex()
                                 .gap_2()
                                 .child(Disclosure::new("interactive", false).into_any_element())
-                                .child(Label::new("Click to toggle"))
+                                .child(Label::new("点击切换"))
                                 .into_any_element(),
                         )],
                     ),

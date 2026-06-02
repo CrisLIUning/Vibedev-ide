@@ -364,3 +364,12 @@ pub(crate) mod m_2026_05_04 {
 
     pub(crate) use settings::SETTINGS_PATTERNS;
 }
+
+// VIBEDEV: heal the stale `agent_servers.VibeDev = {type: registry}` user
+// setting that Zed's agent-UI writes, which shadows the baked custom agent
+// and breaks startup with "Custom agent server `VibeDev` is not registered".
+pub(crate) mod m_2026_05_29 {
+    mod settings;
+
+    pub(crate) use settings::heal_vibedev_registry_override;
+}

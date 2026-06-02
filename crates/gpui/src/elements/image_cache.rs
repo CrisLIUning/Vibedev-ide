@@ -175,7 +175,7 @@ pub enum ImageCacheItem {
 impl std::fmt::Debug for ImageCacheItem {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let status = match self {
-            ImageCacheItem::Loading(_) => &"Loading...".to_string(),
+            ImageCacheItem::Loading(_) => &"加载中...".to_string(),
             ImageCacheItem::Loaded(render_image) => &format!("{:?}", render_image),
         };
         f.debug_struct("ImageCacheItem")

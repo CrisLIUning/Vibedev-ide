@@ -259,7 +259,7 @@ pub fn run_split_commit(
                         Ok(case) => case,
                         Err(e) => {
                             let err_msg = format!(
-                                "failed to generate evaluation example for commit {} at line {} (sample {}): {}",
+                                "为第 {} 行的提交 {} 生成评估示例失败 (样本 {}): {}",
                                 annotated.commit_sha,
                                 line_num + 1,
                                 sample_idx,
@@ -301,7 +301,7 @@ pub fn run_split_commit(
                     Ok(case) => case,
                     Err(e) => {
                         let err_msg = format!(
-                            "failed to generate evaluation example for commit {} at line {}: {}",
+                            "为第 {} 行的提交 {} 生成评估示例失败: {}",
                             annotated.commit_sha,
                             line_num + 1,
                             e
@@ -1636,7 +1636,7 @@ Date: Mon Jan 1 00:00:00 2024
         // Cursor excerpt should contain the cursor marker
         assert!(
             result.cursor_position.contains("<|user_cursor|>"),
-            "Cursor excerpt should contain marker: {}",
+            "光标摘录应包含标记: {}",
             result.cursor_position
         );
     }
@@ -1844,13 +1844,13 @@ index 123..456 789
 
         assert!(
             weight_after_paren > weight_mid_ident,
-            "After '(' ({}) should be weighted higher than mid-identifier ({})",
+            "'(' 之后 ({}) 的权重应高于标识符中间 ({})",
             weight_after_paren,
             weight_mid_ident
         );
         assert!(
             weight_after_comma > weight_mid_ident,
-            "After ',' ({}) should be weighted higher than mid-identifier ({})",
+            "',' 之后 ({}) 的权重应高于标识符中间 ({})",
             weight_after_comma,
             weight_mid_ident
         );
@@ -1879,11 +1879,11 @@ index 123..456 789
         // Should have transformed the patches
         assert_ne!(
             new_src, source,
-            "Source should be modified for pure insertion"
+            "对于纯插入,源应被修改"
         );
         assert_ne!(
             new_tgt, target,
-            "Target should be modified for pure insertion"
+            "对于纯插入,目标应被修改"
         );
         assert!(cursor.is_some(), "Cursor should be set");
 
@@ -1891,18 +1891,18 @@ index 123..456 789
         let src_patch = Patch::parse_unified_diff(&new_src);
         assert!(
             src_patch.stats().added > 0,
-            "Source should have added lines"
+            "源应有添加的行"
         );
 
         // Target should have both a deletion (of partial) and addition (of full)
         let tgt_patch = Patch::parse_unified_diff(&new_tgt);
         assert!(
             tgt_patch.stats().removed > 0,
-            "Target should have removed lines (partial)"
+            "目标应有删除的行(部分)"
         );
         assert!(
             tgt_patch.stats().added > 0,
-            "Target should have added lines (full)"
+            "目标应有添加的行(完整)"
         );
 
         // The cursor should be in test.rs
@@ -1931,7 +1931,7 @@ index 123..456 789
         let src_patch = Patch::parse_unified_diff(&new_src);
         assert!(
             src_patch.stats().added > 0,
-            "Source should have added lines"
+            "源应有添加的行"
         );
     }
 
@@ -1978,7 +1978,7 @@ index 123..456 789
                                 }
                                 assert!(
                                     has_deletion,
-                                    "Target should have deletion of partial line"
+                                    "目标应有部分行的删除"
                                 );
                             }
                         }
@@ -1989,7 +1989,7 @@ index 123..456 789
 
         assert!(
             found_partial,
-            "At least one seed should produce a partial intermediate state"
+            "至少应有一个种子产生部分中间状态"
         );
     }
 
@@ -2045,7 +2045,7 @@ index 123..456 789
         let last_addition = all_additions.last().expect("Should have additions");
         assert!(
             last_addition.trim_start().starts_with("pr"),
-            "Intermediate content should be the last addition (partial 'print'), but last was: {:?}",
+            "中间内容应为最后一个添加项(部分 'print'),但最后是: {:?}",
             last_addition
         );
 
@@ -2060,12 +2060,12 @@ index 123..456 789
         assert!(qux_pos.is_some(), "Should have 'import qux'");
         assert!(
             intermediate_pos.is_some(),
-            "Should have intermediate content"
+            "应有中间内容"
         );
 
         assert!(
             foo_pos < qux_pos && qux_pos < intermediate_pos,
-            "Order should be: foo < qux < intermediate. Got foo={:?}, qux={:?}, intermediate={:?}",
+            "顺序应为: foo < qux < intermediate。实际为 foo={:?}, qux={:?}, intermediate={:?}",
             foo_pos,
             qux_pos,
             intermediate_pos
@@ -2098,7 +2098,7 @@ index 123..456 789
         if let Some(excerpt) = result {
             assert!(
                 excerpt.contains("<|user_cursor|>"),
-                "Cursor excerpt should contain marker"
+                "光标摘录应包含标记"
             );
             // The marker should be placed at a valid character boundary
             // (either at the start or after '第')

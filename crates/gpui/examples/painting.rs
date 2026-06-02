@@ -342,17 +342,17 @@ impl Render for PaintingViewer {
                     .gap_2()
                     .justify_between()
                     .items_center()
-                    .child("Mouse down any point and drag to draw lines (Hold on shift key to draw straight lines)")
+                    .child("按住鼠标并拖动以绘制线条(按住 Shift 键绘制直线)")
                     .child(
                         div()
                             .flex()
                             .gap_x_2()
                             .child(button(
-                                if dashed { "Solid" } else { "Dashed" },
+                                if dashed { "实线" } else { "虚线" },
                                 cx,
                                 move |this, _| this.dashed = !dashed,
                             ))
-                            .child(button("Clear", cx, |this, cx| this.clear(cx))),
+                            .child(button("清除", cx, |this, cx| this.clear(cx))),
                     ),
             )
             .child(

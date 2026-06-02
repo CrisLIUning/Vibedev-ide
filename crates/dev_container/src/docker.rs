@@ -57,7 +57,7 @@ impl DockerInspectConfig {
         let mut map = HashMap::new();
         for env_var in &self.env {
             let Some((key, value)) = env_var.split_once('=') else {
-                log::warn!("Skipping environment variable without a value: {env_var}");
+                log::warn!("跳过无值的环境变量: {env_var}");
                 continue;
             };
             map.insert(key.to_string(), value.to_string());
@@ -197,7 +197,7 @@ impl Docker {
         };
         if !has_buildx && docker_cli != "podman" {
             log::info!(
-                "docker buildx not found; dev container builds will use the scratch-image fallback"
+                "未找到 docker buildx; 开发容器构建将使用 scratch-image 回退方案"
             );
         }
         Self {
@@ -215,13 +215,13 @@ impl Docker {
         command.args(&["pull", "--", image]);
 
         let output = command.output().await.map_err(|e| {
-            log::error!("Error pulling image: {e}");
+            log::error!("拉取镜像出错: {e}");
             DevContainerError::ResourceFetchFailed
         })?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            log::error!("Non-success result from docker pull: {stderr}");
+            log::error!("docker pull 返回非成功结果: {stderr}");
             return Err(DevContainerError::ResourceFetchFailed);
         }
         Ok(())
@@ -266,7 +266,7 @@ impl DockerClient for Docker {
 
         let Some(docker_inspect): Option<DockerInspect> = evaluate_json_command(command).await?
         else {
-            log::error!("Docker inspect produced no deserializable output");
+            log::error!("Docker inspect 未产生可反序列化的输出");
             return Err(DevContainerError::CommandFailed(self.docker_cli.clone()));
         };
         Ok(docker_inspect)
@@ -296,13 +296,13 @@ impl DockerClient for Docker {
         command.arg("build");
 
         let output = command.output().await.map_err(|e| {
-            log::error!("Error running docker compose up: {e}");
+            log::error!("运行 docker compose up 时出错: {e}");
             DevContainerError::CommandFailed(command.get_program().display().to_string())
         })?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            log::error!("Non-success status from docker compose up: {}", stderr);
+            log::error!("docker compose up 返回非成功状态: {}", stderr);
             return Err(DevContainerError::CommandFailed(
                 command.get_program().display().to_string(),
             ));
@@ -342,15 +342,15 @@ impl DockerClient for Docker {
         command.args(&["-c", &inner_program_script.join(" ")]);
 
         let output = command.output().await.map_err(|e| {
-            log::error!("Error running command {e} in container exec");
+            log::error!("在容器 exec 中运行命令出错: {e}");
             DevContainerError::ContainerNotValid(container_id.to_string())
         })?;
         if !output.status.success() {
             let std_err = String::from_utf8_lossy(&output.stderr);
-            log::error!("Command produced a non-successful output. StdErr: {std_err}");
+            log::error!("命令产生非成功输出. StdErr: {std_err}");
         }
         let std_out = String::from_utf8_lossy(&output.stdout);
-        log::debug!("Command output:\n {std_out}");
+        log::debug!("命令输出:\n {std_out}");
 
         Ok(())
     }
@@ -360,13 +360,13 @@ impl DockerClient for Docker {
         command.args(&["start", id]);
 
         let output = command.output().await.map_err(|e| {
-            log::error!("Error running docker start: {e}");
+            log::error!("运行 docker start 出错: {e}");
             DevContainerError::CommandFailed(command.get_program().display().to_string())
         })?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            log::error!("Non-success status from docker start: {stderr}");
+            log::error!("docker start 返回非成功状态: {stderr}");
             return Err(DevContainerError::CommandFailed(
                 command.get_program().display().to_string(),
             ));
@@ -386,7 +386,7 @@ impl DockerClient for Docker {
         })?;
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            log::error!("Non-success status from docker ps: {stderr}");
+            log::error!("docker ps 返回非成功状态: {stderr}");
             return Err(DevContainerError::CommandFailed(
                 command.get_program().display().to_string(),
             ));
@@ -397,7 +397,7 @@ impl DockerClient for Docker {
             if let DevContainerError::MultipleMatchingContainers(_) = &e {
                 e
             } else {
-                log::error!("Error parsing docker ps output: {e}");
+                log::error!("解析 docker ps 输出时出错: {e}");
                 DevContainerError::CommandFailed(command.get_program().display().to_string())
             }
         })
@@ -428,7 +428,7 @@ fn parse_find_process_output(raw: &str) -> Result<Option<DockerPs>, DevContainer
         .into_iter::<DockerPs>()
         .collect::<Result<_, _>>()
         .map_err(|e| {
-            DevContainerError::CommandFailed(format!("failed to parse docker ps output: {e}"))
+            DevContainerError::CommandFailed(format!("解析 docker ps 输出失败: {e}"))
         })?;
     match containers.len() {
         0 => Ok(None),
@@ -480,7 +480,7 @@ where
         type Value = Option<HashMap<String, String>>;
 
         fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-            formatter.write_str("a sequence of strings or a map of string key-value pairs")
+            formatter.write_str("字符串序列或字符串键值对映射")
         }
 
         fn visit_seq<A>(self, seq: A) -> Result<Self::Value, A::Error>
@@ -558,7 +558,7 @@ where
                 serde_json_lenient::from_str(&json_string).or_else(|_| {
                     let single: HashMap<String, serde_json_lenient::Value> =
                         serde_json_lenient::from_str(&json_string).map_err(|e| {
-                            log::error!("Error deserializing metadata: {e}");
+                            log::error!("反序列化元数据出错: {e}");
                             serde::de::Error::custom(e)
                         })?;
                     Ok(vec![single])
@@ -775,7 +775,7 @@ mod test {
     #[test]
     fn parse_find_process_output_single() {
         let raw = r#"{"ID":"abc123"}"#;
-        let result = parse_find_process_output(raw).expect("single match must parse");
+        let result = parse_find_process_output(raw).expect("单个匹配必须能解析");
         assert_eq!(result.unwrap().id, "abc123");
     }
 
@@ -789,7 +789,7 @@ mod test {
             Err(DevContainerError::MultipleMatchingContainers(ids)) => {
                 assert_eq!(ids, vec!["abc".to_string(), "def".to_string()]);
             }
-            other => panic!("expected MultipleMatchingContainers, got {other:?}"),
+            other => panic!("期望 MultipleMatchingContainers,但得到 {other:?}"),
         }
     }
 

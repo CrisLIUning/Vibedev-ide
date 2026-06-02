@@ -118,7 +118,7 @@ fn assert_project_header_has_threads(
         assert_eq!(
             has_threads,
             Some(expected_has_threads),
-            "expected project header `{project_name}` to have has_threads={expected_has_threads}, got {has_threads:?}"
+            "预期项目头部 `{project_name}` 的 has_threads 为 {expected_has_threads},实际为 {has_threads:?}"
         );
     });
 }
@@ -180,7 +180,7 @@ fn assert_remote_project_integration_sidebar_state(
             }
             ListEntry::Terminal(terminal) => {
                 panic!(
-                    "unexpected sidebar terminal while simulating remote project integration flicker: title=`{}`",
+                    "模拟远程项目集成闪烁时出现意外侧边栏终端:title=`{}`",
                     terminal.metadata.title
                 );
             }
@@ -597,7 +597,7 @@ fn visible_entries_as_strings(
                     ListEntry::Terminal(terminal) => {
                         let title = &terminal.metadata.title;
                         let worktree = format_linked_worktree_chips(&terminal.worktrees);
-                        format!("  {title}{worktree}{selected}")
+                        format!("{title}{worktree}{selected}")
                     }
                 }
             })
@@ -1446,7 +1446,7 @@ async fn test_new_entry_noops_without_open_project(cx: &mut TestAppContext) {
 
     assert!(
         !sidebar.read_with(cx, |sidebar, _cx| sidebar.contents.has_open_projects),
-        "empty workspaces should be treated as having no open projects"
+        "空工作区应被视为没有打开的项目"
     );
 
     sidebar.update_in(cx, |sidebar, window, cx| {
@@ -1457,7 +1457,7 @@ async fn test_new_entry_noops_without_open_project(cx: &mut TestAppContext) {
     panel.read_with(cx, |panel, _cx| {
         assert!(
             panel.active_conversation_view().is_none(),
-            "sidebar should not create an agent thread without an open project"
+            "侧边栏不应在没有打开项目时创建助手线程"
         );
     });
     assert_eq!(
@@ -1548,34 +1548,34 @@ async fn test_agent_panel_terminals_appear_in_sidebar_and_search(cx: &mut TestAp
 
     let terminal_id = panel
         .update_in(cx, |panel, window, cx| {
-            panel.insert_test_terminal("Dev Server", true, window, cx)
+            panel.insert_test_terminal("开发服务器", true, window, cx)
         })
-        .expect("test terminal should be inserted");
+        .expect("测试终端应该被插入");
     cx.run_until_parked();
 
     assert_eq!(
         visible_entries_as_strings(&sidebar, cx),
-        vec!["v [my-project]", "  Dev Server"]
+        vec!["v [my-project]", "  开发服务器"]
     );
     sidebar.read_with(cx, |sidebar, _cx| {
         assert!(
             matches!(&sidebar.active_entry, Some(ActiveEntry::Terminal { terminal_id: active_terminal_id, .. }) if *active_terminal_id == terminal_id),
-            "expected active terminal entry, got {:?}",
+            "期望活动终端条目,得到 {:?}",
             sidebar.active_entry,
         );
         assert!(
             sidebar.contents.entries.iter().any(|entry| {
-                matches!(entry, ListEntry::Terminal(terminal) if terminal.metadata.terminal_id == terminal_id && terminal.metadata.title.as_ref() == "Dev Server")
+                matches!(entry, ListEntry::Terminal(terminal) if terminal.metadata.terminal_id == terminal_id && terminal.metadata.title.as_ref() == "开发服务器")
             }),
-            "expected the inserted terminal to appear in sidebar contents",
+            "期望插入的终端出现在侧边栏内容中",
         );
     });
     sidebar.read_with(cx, |_sidebar, cx| {
         let store = TerminalThreadMetadataStore::global(cx).read(cx);
         let metadata = store
             .entry(terminal_id)
-            .expect("terminal metadata should be persisted");
-        assert_eq!(metadata.title.as_ref(), "Dev Server");
+            .expect("终端元数据应该被持久化");
+        assert_eq!(metadata.title.as_ref(), "开发服务器");
         assert!(
             metadata
                 .folder_paths()
@@ -1588,7 +1588,7 @@ async fn test_agent_panel_terminals_appear_in_sidebar_and_search(cx: &mut TestAp
     type_in_search(&sidebar, "server", cx);
     assert_eq!(
         visible_entries_as_strings(&sidebar, cx),
-        vec!["v [my-project]", "  Dev Server  <== selected"]
+        vec!["v [my-project]", "  开发服务器  <== 已选择"]
     );
 
     type_in_search(&sidebar, "missing", cx);
@@ -1609,9 +1609,9 @@ async fn test_closing_last_agent_panel_terminal_restores_empty_header(cx: &mut T
 
     let terminal_id = panel
         .update_in(cx, |panel, window, cx| {
-            panel.insert_test_terminal("Dev Server", true, window, cx)
+            panel.insert_test_terminal("开发服务器", true, window, cx)
         })
-        .expect("test terminal should be inserted");
+        .expect("测试终端应该被插入");
     cx.run_until_parked();
 
     assert_project_header_has_threads(&sidebar, "my-project", true, cx);
@@ -1627,7 +1627,7 @@ async fn test_closing_last_agent_panel_terminal_restores_empty_header(cx: &mut T
                 }
                 _ => None,
             })
-            .expect("terminal should be visible in sidebar")
+            .expect("终端应该在侧边栏中可见")
     });
     sidebar.update_in(cx, |sidebar, window, cx| {
         sidebar.close_terminal(&terminal_metadata, &terminal_workspace, window, cx);
@@ -1638,7 +1638,7 @@ async fn test_closing_last_agent_panel_terminal_restores_empty_header(cx: &mut T
         assert!(!panel.has_terminal(terminal_id));
         assert!(
             panel.active_view_is_new_draft(cx),
-            "closing the active terminal should leave the panel on a hidden empty draft"
+            "关闭活动终端后,面板应停留在隐藏的空白草稿上"
         );
     });
     assert_eq!(
@@ -1676,9 +1676,9 @@ async fn test_agent_panel_terminal_metadata_remains_visible_after_panel_is_remov
 
     let terminal_id = panel
         .update_in(cx, |panel, window, cx| {
-            panel.insert_test_terminal("Dev Server", true, window, cx)
+            panel.insert_test_terminal("开发服务器", true, window, cx)
         })
-        .expect("test terminal should be inserted");
+        .expect("测试终端应该被插入");
     cx.run_until_parked();
 
     workspace.update_in(cx, |workspace, window, cx| {
@@ -1692,7 +1692,7 @@ async fn test_agent_panel_terminal_metadata_remains_visible_after_panel_is_remov
     }));
     assert_eq!(
         visible_entries_as_strings(&sidebar, cx),
-        vec!["v [my-project]", "  Dev Server"]
+        vec!["v [my-project]", "  开发服务器"]
     );
 
     sidebar.read_with(cx, |sidebar, _cx| {
@@ -1735,7 +1735,7 @@ async fn test_terminal_metadata_is_deduped_across_project_groups(cx: &mut TestAp
         .update_in(cx, |panel, window, cx| {
             panel.insert_test_terminal("Original", true, window, cx)
         })
-        .expect("test terminal should be inserted");
+        .expect("测试终端应该被插入");
     cx.run_until_parked();
 
     workspace_a.update_in(cx, |workspace, window, cx| {
@@ -1744,7 +1744,7 @@ async fn test_terminal_metadata_is_deduped_across_project_groups(cx: &mut TestAp
     let now = Utc::now();
     let metadata = TerminalThreadMetadata {
         terminal_id,
-        title: "Dev Server".into(),
+        title: "开发服务器".into(),
         custom_title: None,
         created_at: now,
         worktree_paths: WorktreePaths::from_path_lists(
@@ -1831,20 +1831,20 @@ async fn test_agent_panel_terminal_shows_project_and_linked_worktree(cx: &mut Te
 
     panel
         .update_in(cx, |panel, window, cx| {
-            panel.insert_test_terminal("Dev Server", true, window, cx)
+            panel.insert_test_terminal("开发服务器", true, window, cx)
         })
-        .expect("test terminal should be inserted");
+        .expect("测试终端应该被插入");
     cx.run_until_parked();
 
     assert_eq!(
         visible_entries_as_strings(&sidebar, cx),
-        vec!["v [project]", "  Dev Server {wt-feature-a}"]
+        vec!["v [project]", "  开发服务器 {wt-feature-a}"]
     );
 
     type_in_search(&sidebar, "wt-feature-a", cx);
     assert_eq!(
         visible_entries_as_strings(&sidebar, cx),
-        vec!["v [project]", "  Dev Server {wt-feature-a}  <== selected"]
+        vec!["v [project]", "  开发服务器 {wt-feature-a}  <== 已选择"]
     );
 }
 
@@ -1920,7 +1920,7 @@ async fn test_terminal_close_event_on_archived_linked_worktree_removes_workspace
     let archived_session_id = acp::SessionId::new(Arc::from("archived-wt-thread"));
     save_thread_metadata(
         archived_session_id.clone(),
-        Some("Archived Worktree Thread".into()),
+        Some("已归档的工作树线程".into()),
         chrono::TimeZone::with_ymd_and_hms(&Utc, 2024, 1, 1, 0, 0, 0).unwrap(),
         None,
         None,
@@ -1931,7 +1931,7 @@ async fn test_terminal_close_event_on_archived_linked_worktree_removes_workspace
         ThreadMetadataStore::global(cx)
             .read(cx)
             .entry_by_session(&archived_session_id)
-            .expect("archived thread metadata should exist")
+            .expect("已归档的线程元数据应该存在")
             .thread_id
     });
     cx.update(|_, cx| {
@@ -1958,15 +1958,15 @@ async fn test_terminal_close_event_on_archived_linked_worktree_removes_workspace
     cx.update(|_, cx| {
         assert!(
             agent_ui::draft_prompt_store::read(empty_draft_id, cx).is_none(),
-            "empty draft should not have persisted prompt content"
+            "空草稿不应持久化提示内容"
         );
     });
 
     let terminal_id = worktree_panel
         .update_in(cx, |panel, window, cx| {
-            panel.insert_test_terminal("Dev Server", true, window, cx)
+            panel.insert_test_terminal("开发服务器", true, window, cx)
         })
-        .expect("test terminal should be inserted");
+        .expect("测试终端应该被插入");
     cx.run_until_parked();
 
     assert_eq!(
@@ -1974,14 +1974,14 @@ async fn test_terminal_close_event_on_archived_linked_worktree_removes_workspace
             .workspaces()
             .count()),
         2,
-        "should start with main and linked worktree workspaces"
+        "应该从主工作区和工作树工作区开始"
     );
     let entries_before = visible_entries_as_strings(&sidebar, cx);
     assert!(
         entries_before
             .iter()
-            .any(|entry| entry.contains("Dev Server") && entry.contains('{')),
-        "expected linked worktree terminal before closing, got: {entries_before:?}"
+            .any(|entry| entry.contains("开发服务器") && entry.contains('{')),
+        "关闭前应该有链接的工作树终端,获得: {entries_before:?}"
     );
 
     worktree_panel.update(cx, |panel, cx| {
@@ -1999,7 +1999,7 @@ async fn test_terminal_close_event_on_archived_linked_worktree_removes_workspace
     });
     assert!(
         terminal_metadata_deleted,
-        "terminal metadata should be deleted after close"
+        "关闭后应该删除终端元数据"
     );
     let empty_draft_metadata_deleted = cx.update(|_, cx| {
         ThreadMetadataStore::global(cx)
@@ -2009,7 +2009,7 @@ async fn test_terminal_close_event_on_archived_linked_worktree_removes_workspace
     });
     assert!(
         empty_draft_metadata_deleted,
-        "empty draft metadata should be deleted before archiving the linked worktree"
+        "空草稿元数据应在归档链接工作树前删除"
     );
     let unarchived_worktree_threads = cx.update(|_, cx| {
         ThreadMetadataStore::global(cx)
@@ -2019,24 +2019,24 @@ async fn test_terminal_close_event_on_archived_linked_worktree_removes_workspace
     });
     assert_eq!(
         unarchived_worktree_threads, 0,
-        "closing the terminal must not create a fallback draft for the removed worktree"
+        "关闭终端不应为已移除的工作树创建后备草稿"
     );
     assert_eq!(
         multi_workspace.read_with(cx, |multi_workspace, _| multi_workspace
             .workspaces()
             .count()),
         1,
-        "linked worktree workspace should be removed after closing its last terminal"
+        "关闭最后一个终端后应该移除链接的工作树工作区"
     );
     let entries_after = visible_entries_as_strings(&sidebar, cx);
     assert!(
         !entries_after.iter().any(|entry| entry.contains('{')),
-        "no sidebar entry should reference the archived worktree, got: {entries_after:?}"
+        "侧边栏条目不应引用已归档的工作树,获得: {entries_after:?}"
     );
     assert!(
         !fs.is_dir(Path::new("/worktrees/project/feature-a/project"))
             .await,
-        "linked worktree directory should be removed from disk after closing its last terminal"
+        "关闭最后一个终端后应该从磁盘移除链接的工作树目录"
     );
 }
 
@@ -2111,9 +2111,9 @@ async fn test_terminal_close_event_deletes_empty_draft_when_linked_worktree_has_
 
     let terminal_id = worktree_panel
         .update_in(cx, |panel, window, cx| {
-            panel.insert_test_terminal("Dev Server", true, window, cx)
+            panel.insert_test_terminal("开发服务器", true, window, cx)
         })
-        .expect("test terminal should be inserted");
+        .expect("测试终端应该被插入");
     cx.run_until_parked();
 
     worktree_panel.update(cx, |panel, cx| {
@@ -2131,7 +2131,7 @@ async fn test_terminal_close_event_deletes_empty_draft_when_linked_worktree_has_
     });
     assert!(
         empty_draft_metadata_deleted,
-        "empty draft metadata should be deleted when removing the linked worktree workspace"
+        "空草稿元数据应在移除链接工作树工作区时删除"
     );
     assert!(
         multi_workspace
@@ -2139,11 +2139,11 @@ async fn test_terminal_close_event_deletes_empty_draft_when_linked_worktree_has_
                 multi_workspace.workspace_for_paths(&worktree_folder_paths, None, cx)
             })
             .is_none(),
-        "linked worktree workspace should be removed after closing its last terminal"
+        "关闭最后一个终端后应该移除链接的工作树工作区"
     );
     assert!(
         fs.is_dir(Path::new("/external-worktree")).await,
-        "external linked worktree directory should remain on disk when no archive root is produced"
+        "外部链接工作树目录应在未产生归档根目录时保留在磁盘上"
     );
 }
 
@@ -2227,7 +2227,7 @@ async fn test_terminal_close_event_keeps_linked_worktree_workspace_with_live_edi
     let worktree_folder_paths =
         PathList::new(&[PathBuf::from("/worktrees/project/feature-a/project")]);
     let draft_id = save_draft_metadata_with_main_paths(
-        Some("Worktree Draft".into()),
+        Some("工作树草稿".into()),
         worktree_folder_paths.clone(),
         PathList::new(&[PathBuf::from("/project")]),
         chrono::TimeZone::with_ymd_and_hms(&Utc, 2024, 1, 3, 0, 0, 0).unwrap(),
@@ -2252,13 +2252,13 @@ async fn test_terminal_close_event_keeps_linked_worktree_workspace_with_live_edi
     assert_eq!(
         editor_text,
         Some(None),
-        "draft should be in memory with empty editor text before editing"
+        "草稿在编辑前应在内存中且编辑器文本为空"
     );
 
     let message_editor = worktree_panel.read_with(cx, |panel, cx| {
         panel
             .active_thread_view(cx)
-            .expect("draft should be loaded in the agent panel")
+            .expect("草稿应加载到助手面板中")
             .read(cx)
             .message_editor
             .clone()
@@ -2269,9 +2269,9 @@ async fn test_terminal_close_event_keeps_linked_worktree_workspace_with_live_edi
 
     let terminal_id = worktree_panel
         .update_in(cx, |panel, window, cx| {
-            panel.insert_test_terminal("Dev Server", true, window, cx)
+            panel.insert_test_terminal("开发服务器", true, window, cx)
         })
-        .expect("test terminal should be inserted");
+        .expect("测试终端应该被插入");
     cx.run_until_parked();
     let live_blocks = worktree_panel.read_with(cx, |panel, cx| {
         panel.draft_prompt_blocks_if_in_memory(draft_id, cx)
@@ -2281,7 +2281,7 @@ async fn test_terminal_close_event_keeps_linked_worktree_workspace_with_live_edi
             live_blocks.as_deref(),
             Some([acp::ContentBlock::Text(text)]) if text.text == "keep this draft"
         ),
-        "edited draft should still be readable from the panel after opening the terminal"
+        "编辑后的草稿在打开终端后仍可从面板读取"
     );
 
     assert_eq!(
@@ -2289,7 +2289,7 @@ async fn test_terminal_close_event_keeps_linked_worktree_workspace_with_live_edi
             .workspaces()
             .count()),
         2,
-        "should start with main and linked worktree workspaces"
+        "应该从主工作区和工作树工作区开始"
     );
 
     worktree_panel.update(cx, |panel, cx| {
@@ -2307,7 +2307,7 @@ async fn test_terminal_close_event_keeps_linked_worktree_workspace_with_live_edi
     });
     assert!(
         terminal_metadata_deleted,
-        "terminal metadata should be deleted after close"
+        "关闭后应该删除终端元数据"
     );
     let unarchived_worktree_threads = cx.update(|_, cx| {
         ThreadMetadataStore::global(cx)
@@ -2317,7 +2317,7 @@ async fn test_terminal_close_event_keeps_linked_worktree_workspace_with_live_edi
     });
     assert_eq!(
         unarchived_worktree_threads, 1,
-        "edited draft should remain as a worktree thread reference"
+        "编辑后的草稿应保留为工作树对话引用"
     );
     assert!(
         multi_workspace
@@ -2325,12 +2325,12 @@ async fn test_terminal_close_event_keeps_linked_worktree_workspace_with_live_edi
                 multi_workspace.workspace_for_paths(&worktree_folder_paths, None, cx)
             })
             .is_some(),
-        "linked worktree workspace should stay open while an edited draft references it"
+        "链接工作树工作区应在有编辑后的草稿引用时保持打开"
     );
     assert!(
         fs.is_dir(Path::new("/worktrees/project/feature-a/project"))
             .await,
-        "linked worktree directory should remain on disk while an edited draft references it"
+        "链接工作树目录应在有编辑后的草稿引用时保留在磁盘上"
     );
 }
 
@@ -2414,14 +2414,14 @@ async fn test_archive_selected_draft_archives_linked_worktree_after_last_draft(
     let worktree_folder_paths =
         PathList::new(&[PathBuf::from("/worktrees/project/feature-a/project")]);
     let first_draft_id = save_draft_metadata_with_main_paths(
-        Some("First Draft".into()),
+        Some("第一个草稿".into()),
         worktree_folder_paths.clone(),
         PathList::new(&[PathBuf::from("/project")]),
         chrono::TimeZone::with_ymd_and_hms(&Utc, 2024, 1, 3, 0, 0, 0).unwrap(),
         cx,
     );
     let second_draft_id = save_draft_metadata_with_main_paths(
-        Some("Second Draft".into()),
+        Some("第二个草稿".into()),
         worktree_folder_paths.clone(),
         PathList::new(&[PathBuf::from("/project")]),
         chrono::TimeZone::with_ymd_and_hms(&Utc, 2024, 1, 4, 0, 0, 0).unwrap(),
@@ -2437,7 +2437,7 @@ async fn test_archive_selected_draft_archives_linked_worktree_after_last_draft(
         )
     })
     .await
-    .expect("first draft prompt should persist");
+    .expect("第一个草稿提示应持久化");
     cx.update(|_, cx| {
         agent_ui::draft_prompt_store::write(
             second_draft_id,
@@ -2448,7 +2448,7 @@ async fn test_archive_selected_draft_archives_linked_worktree_after_last_draft(
         )
     })
     .await
-    .expect("second draft prompt should persist");
+    .expect("第二个草稿提示应持久化");
     sidebar.update(cx, |sidebar, cx| sidebar.update_entries(cx));
     cx.run_until_parked();
 
@@ -2463,7 +2463,7 @@ async fn test_archive_selected_draft_archives_linked_worktree_after_last_draft(
                     ListEntry::Thread(thread) if thread.metadata.thread_id == first_draft_id
                 )
             })
-            .expect("first draft should be visible in sidebar")
+            .expect("第一个草稿应在侧边栏中可见")
     });
     focus_sidebar(&sidebar, cx);
     sidebar.update_in(cx, |sidebar, _window, _cx| {
@@ -2482,7 +2482,7 @@ async fn test_archive_selected_draft_archives_linked_worktree_after_last_draft(
     });
     assert!(
         first_draft_metadata_deleted,
-        "first discarded draft metadata should be deleted"
+        "第一个已丢弃的草稿元数据应被删除"
     );
     let second_draft_metadata_kept = cx.update(|_, cx| {
         ThreadMetadataStore::global(cx)
@@ -2492,7 +2492,7 @@ async fn test_archive_selected_draft_archives_linked_worktree_after_last_draft(
     });
     assert!(
         second_draft_metadata_kept,
-        "remaining contentful draft should still block worktree archival"
+        "剩余的有内容草稿仍应阻止工作树归档"
     );
     assert!(
         multi_workspace
@@ -2500,12 +2500,12 @@ async fn test_archive_selected_draft_archives_linked_worktree_after_last_draft(
                 multi_workspace.workspace_for_paths(&worktree_folder_paths, None, cx)
             })
             .is_some(),
-        "linked worktree workspace should remain while another draft references it"
+        "链接工作树工作区应在有其他草稿引用时保留"
     );
     assert!(
         fs.is_dir(Path::new("/worktrees/project/feature-a/project"))
             .await,
-        "linked worktree directory should remain while another draft references it"
+        "链接工作树目录应在有其他草稿引用时保留在磁盘上"
     );
 
     let second_draft_index = sidebar.read_with(cx, |sidebar, _cx| {
@@ -2519,7 +2519,7 @@ async fn test_archive_selected_draft_archives_linked_worktree_after_last_draft(
                     ListEntry::Thread(thread) if thread.metadata.thread_id == second_draft_id
                 )
             })
-            .expect("second draft should be visible in sidebar")
+            .expect("第二个草稿应在侧边栏中可见")
     });
     sidebar.update_in(cx, |sidebar, _window, _cx| {
         sidebar.selection = Some(second_draft_index);
@@ -2537,7 +2537,7 @@ async fn test_archive_selected_draft_archives_linked_worktree_after_last_draft(
     });
     assert!(
         second_draft_metadata_deleted,
-        "last discarded draft metadata should be deleted"
+        "最后丢弃的草稿元数据应被删除"
     );
     assert!(
         multi_workspace
@@ -2545,12 +2545,12 @@ async fn test_archive_selected_draft_archives_linked_worktree_after_last_draft(
                 multi_workspace.workspace_for_paths(&worktree_folder_paths, None, cx)
             })
             .is_none(),
-        "linked worktree workspace should be removed after closing its last draft"
+        "链接工作树工作区应在关闭其最后一个草稿后移除"
     );
     assert!(
         !fs.is_dir(Path::new("/worktrees/project/feature-a/project"))
             .await,
-        "linked worktree directory should be removed from disk after closing its last draft"
+        "链接工作树目录应在关闭其最后一个草稿后从磁盘移除"
     );
 }
 
@@ -2618,7 +2618,7 @@ async fn test_archive_selected_draft_archives_closed_linked_worktree(cx: &mut Te
     let worktree_folder_paths =
         PathList::new(&[PathBuf::from("/worktrees/project/feature-a/project")]);
     let draft_id = save_draft_metadata_with_main_paths(
-        Some("Closed Worktree Draft".into()),
+        Some("已关闭工作树草稿".into()),
         worktree_folder_paths.clone(),
         PathList::new(&[PathBuf::from("/project")]),
         chrono::TimeZone::with_ymd_and_hms(&Utc, 2024, 1, 3, 0, 0, 0).unwrap(),
@@ -2634,7 +2634,7 @@ async fn test_archive_selected_draft_archives_closed_linked_worktree(cx: &mut Te
         )
     })
     .await
-    .expect("draft prompt should persist");
+    .expect("草稿提示应持久化");
     sidebar.update(cx, |sidebar, cx| sidebar.update_entries(cx));
     cx.run_until_parked();
 
@@ -2649,7 +2649,7 @@ async fn test_archive_selected_draft_archives_closed_linked_worktree(cx: &mut Te
                     ListEntry::Thread(thread) if thread.metadata.thread_id == draft_id
                 )
             })
-            .expect("closed worktree draft should be visible in sidebar")
+            .expect("已关闭工作树草稿应在侧边栏中可见")
     });
     sidebar.read_with(cx, |sidebar, _cx| {
         match &sidebar.contents.entries[draft_index] {
@@ -2658,10 +2658,10 @@ async fn test_archive_selected_draft_archives_closed_linked_worktree(cx: &mut Te
                     assert_eq!(folder_paths, &worktree_folder_paths);
                 }
                 ThreadEntryWorkspace::Open(_) => {
-                    panic!("linked worktree draft should start closed")
+                    panic!("链接工作树草稿应初始为关闭状态")
                 }
             },
-            _ => panic!("expected draft row"),
+            _ => panic!("预期草稿行"),
         }
     });
 
@@ -2682,7 +2682,7 @@ async fn test_archive_selected_draft_archives_closed_linked_worktree(cx: &mut Te
     });
     assert!(
         draft_metadata_deleted,
-        "discarded closed worktree draft metadata should be deleted"
+        "已丢弃的已关闭工作树草稿元数据应被删除"
     );
     assert!(
         multi_workspace
@@ -2690,19 +2690,19 @@ async fn test_archive_selected_draft_archives_closed_linked_worktree(cx: &mut Te
                 multi_workspace.workspace_for_paths(&worktree_folder_paths, None, cx)
             })
             .is_none(),
-        "temporary linked worktree workspace should be removed after discarding its last draft"
+        "临时链接工作树工作区应在丢弃其最后一个草稿后移除"
     );
     assert_eq!(
         multi_workspace.read_with(cx, |multi_workspace, _| multi_workspace
             .workspaces()
             .count()),
         1,
-        "discarding a closed linked worktree draft should leave only the main workspace"
+        "丢弃已关闭的链接工作树草稿应只保留主工作区"
     );
     assert!(
         !fs.is_dir(Path::new("/worktrees/project/feature-a/project"))
             .await,
-        "linked worktree directory should be removed from disk after discarding its last draft"
+        "链接工作树目录应在丢弃其最后一个草稿后从磁盘移除"
     );
 }
 
@@ -2715,14 +2715,14 @@ async fn test_terminal_close_event_closes_sidebar_terminal(cx: &mut TestAppConte
 
     let terminal_id = panel
         .update_in(cx, |panel, window, cx| {
-            panel.insert_test_terminal("Dev Server", true, window, cx)
+            panel.insert_test_terminal("开发服务器", true, window, cx)
         })
-        .expect("test terminal should be inserted");
+        .expect("测试终端应该被插入");
     cx.run_until_parked();
 
     assert_eq!(
         visible_entries_as_strings(&sidebar, cx),
-        vec!["v [my-project]", "  Dev Server"]
+        vec!["v [my-project]", "  开发服务器"]
     );
 
     panel.update(cx, |panel, cx| {
@@ -2744,7 +2744,7 @@ async fn test_terminal_close_event_closes_sidebar_terminal(cx: &mut TestAppConte
                 .read(cx)
                 .entry(terminal_id)
                 .is_none(),
-            "terminal metadata should be deleted when the terminal requests close"
+            "终端请求关闭时应该删除终端元数据"
         );
     });
 }
@@ -2758,14 +2758,14 @@ async fn test_agent_panel_terminal_notifications_update_sidebar(cx: &mut TestApp
 
     let build_terminal_id = panel
         .update_in(cx, |panel, window, cx| {
-            panel.insert_test_terminal("Build", true, window, cx)
+            panel.insert_test_terminal("构建", true, window, cx)
         })
-        .expect("build test terminal should be inserted");
+        .expect("构建测试终端应该被插入");
     let server_terminal_id = panel
         .update_in(cx, |panel, window, cx| {
-            panel.insert_test_terminal("Server", true, window, cx)
+            panel.insert_test_terminal("服务器", true, window, cx)
         })
-        .expect("server test terminal should be inserted");
+        .expect("服务器测试终端应该被插入");
     cx.run_until_parked();
 
     panel.read_with(cx, |panel, _cx| {
@@ -2810,14 +2810,14 @@ async fn test_thread_switcher_can_activate_agent_panel_terminal(cx: &mut TestApp
 
     let build_terminal_id = panel
         .update_in(cx, |panel, window, cx| {
-            panel.insert_test_terminal("Build", true, window, cx)
+            panel.insert_test_terminal("构建", true, window, cx)
         })
-        .expect("build test terminal should be inserted");
+        .expect("构建测试终端应该被插入");
     let server_terminal_id = panel
         .update_in(cx, |panel, window, cx| {
-            panel.insert_test_terminal("Server", true, window, cx)
+            panel.insert_test_terminal("服务器", true, window, cx)
         })
-        .expect("server test terminal should be inserted");
+        .expect("服务器测试终端应该被插入");
     cx.run_until_parked();
 
     focus_sidebar(&sidebar, cx);
@@ -2838,14 +2838,14 @@ async fn test_thread_switcher_can_activate_agent_panel_terminal(cx: &mut TestApp
             .map(|entry| {
                 entry
                     .terminal_id()
-                    .expect("expected terminal switcher entry")
+                    .expect("期望终端切换器条目")
             })
             .collect::<Vec<_>>();
         let selected_terminal_id = switcher
             .selected_entry()
-            .expect("switcher should have selected entry")
+            .expect("切换器应该有选中的条目")
             .terminal_id()
-            .expect("expected selected terminal switcher entry");
+            .expect("期望选中的终端切换器条目");
         (entry_terminal_ids, selected_terminal_id)
     });
 
@@ -2869,7 +2869,7 @@ async fn test_thread_switcher_can_activate_agent_panel_terminal(cx: &mut TestApp
     sidebar.read_with(cx, |sidebar, _cx| {
         assert!(
             matches!(&sidebar.active_entry, Some(ActiveEntry::Terminal { terminal_id, .. }) if *terminal_id == selected_terminal_id),
-            "expected selected terminal to become active, got {:?}",
+            "期望选中的终端变为活动,得到 {:?}",
             sidebar.active_entry,
         );
     });
@@ -2886,15 +2886,15 @@ async fn test_thread_switcher_includes_terminal_metadata_for_open_project_group(
 
     let terminal_id = panel
         .update_in(cx, |panel, window, cx| {
-            panel.insert_test_terminal("Feature Terminal", true, window, cx)
+            panel.insert_test_terminal("功能终端", true, window, cx)
         })
-        .expect("test terminal should be inserted");
+        .expect("测试终端应该被插入");
     panel.update_in(cx, |panel, window, cx| {
         panel.close_terminal(terminal_id, window, cx);
     });
     save_thread_metadata(
         acp::SessionId::new(Arc::from("thread-newer")),
-        Some("Newer Thread".into()),
+        Some("较新的线程".into()),
         chrono::TimeZone::with_ymd_and_hms(&Utc, 2024, 1, 3, 0, 0, 0).unwrap(),
         None,
         None,
@@ -2903,7 +2903,7 @@ async fn test_thread_switcher_includes_terminal_metadata_for_open_project_group(
     );
     save_thread_metadata(
         acp::SessionId::new(Arc::from("thread-older")),
-        Some("Older Thread".into()),
+        Some("较旧的线程".into()),
         chrono::TimeZone::with_ymd_and_hms(&Utc, 2024, 1, 2, 0, 0, 0).unwrap(),
         None,
         None,
@@ -2914,7 +2914,7 @@ async fn test_thread_switcher_includes_terminal_metadata_for_open_project_group(
     let created_at = chrono::TimeZone::with_ymd_and_hms(&Utc, 2024, 1, 1, 0, 0, 0).unwrap();
     let metadata = TerminalThreadMetadata {
         terminal_id,
-        title: "Feature Terminal".into(),
+        title: "功能终端".into(),
         custom_title: None,
         created_at,
         worktree_paths: WorktreePaths::from_path_lists(
@@ -2950,7 +2950,7 @@ async fn test_thread_switcher_includes_terminal_metadata_for_open_project_group(
                 .entries()
                 .iter()
                 .any(|entry| entry.terminal_id() == Some(terminal_id)),
-            "terminal metadata row should be included like a closed thread row"
+            "终端元数据行应该像已关闭的线程行一样被包含"
         );
     });
 }
@@ -3010,9 +3010,9 @@ async fn test_thread_switcher_preserves_closed_terminal_linked_worktree_workspac
 
     let terminal_id = panel
         .update_in(cx, |panel, window, cx| {
-            panel.insert_test_terminal("Feature Terminal", true, window, cx)
+            panel.insert_test_terminal("功能终端", true, window, cx)
         })
-        .expect("test terminal should be inserted");
+        .expect("测试终端应该被插入");
     panel.update_in(cx, |panel, window, cx| {
         panel.close_terminal(terminal_id, window, cx);
     });
@@ -3021,7 +3021,7 @@ async fn test_thread_switcher_preserves_closed_terminal_linked_worktree_workspac
         PathList::new(&[PathBuf::from("/worktrees/project/feature-a/project")]);
     let metadata = TerminalThreadMetadata {
         terminal_id,
-        title: "Feature Terminal".into(),
+        title: "功能终端".into(),
         custom_title: None,
         created_at,
         worktree_paths: WorktreePaths::from_path_lists(
@@ -3055,7 +3055,7 @@ async fn test_thread_switcher_preserves_closed_terminal_linked_worktree_workspac
                 multi_workspace.workspace_for_paths(&worktree_folder_paths, None, cx)
             })
             .is_none(),
-        "linked worktree workspace should start closed"
+        "链接的工作树工作区应该从关闭状态开始"
     );
 
     focus_sidebar(&sidebar, cx);
@@ -3072,7 +3072,7 @@ async fn test_thread_switcher_preserves_closed_terminal_linked_worktree_workspac
         match switcher
             .read(cx)
             .selected_entry()
-            .expect("switcher should select the terminal row by default")
+            .expect("切换器应该默认选择终端行")
         {
             ThreadSwitcherEntry::Terminal(entry) => {
                 assert_eq!(entry.metadata.terminal_id, terminal_id);
@@ -3088,12 +3088,12 @@ async fn test_thread_switcher_preserves_closed_terminal_linked_worktree_workspac
                         );
                     }
                     ThreadEntryWorkspace::Open(_) => {
-                        panic!("closed terminal row should retain its linked worktree target")
+                        panic!("已关闭的终端行应该保留其链接的工作树目标")
                     }
                 }
             }
             ThreadSwitcherEntry::Thread(_) => {
-                panic!("terminal row should be selected by default")
+                panic!("终端行应该默认被选中")
             }
         }
     });
@@ -3152,9 +3152,9 @@ async fn test_archive_selected_terminal_archives_closed_linked_worktree(cx: &mut
 
     let terminal_id = panel
         .update_in(cx, |panel, window, cx| {
-            panel.insert_test_terminal("Feature Terminal", true, window, cx)
+            panel.insert_test_terminal("功能终端", true, window, cx)
         })
-        .expect("test terminal should be inserted");
+        .expect("测试终端应该被插入");
     panel.update_in(cx, |panel, window, cx| {
         panel.close_terminal(terminal_id, window, cx);
     });
@@ -3162,7 +3162,7 @@ async fn test_archive_selected_terminal_archives_closed_linked_worktree(cx: &mut
         PathList::new(&[PathBuf::from("/worktrees/project/feature-a/project")]);
     let metadata = TerminalThreadMetadata {
         terminal_id,
-        title: "Feature Terminal".into(),
+        title: "功能终端".into(),
         custom_title: None,
         created_at: chrono::TimeZone::with_ymd_and_hms(&Utc, 2024, 1, 1, 0, 0, 0).unwrap(),
         worktree_paths: WorktreePaths::from_path_lists(
@@ -3188,7 +3188,7 @@ async fn test_archive_selected_terminal_archives_closed_linked_worktree(cx: &mut
     cx.update(|_, cx| {
         assert!(
             agent_ui::draft_prompt_store::read(empty_draft_id, cx).is_none(),
-            "empty draft should not have persisted prompt content"
+            "空草稿不应持久化提示内容"
         );
     });
     sidebar.update(cx, |sidebar, cx| sidebar.update_entries(cx));
@@ -3200,7 +3200,7 @@ async fn test_archive_selected_terminal_archives_closed_linked_worktree(cx: &mut
             .entries
             .iter()
             .position(|entry| matches!(entry, ListEntry::Terminal(terminal) if terminal.metadata.terminal_id == terminal_id))
-            .expect("terminal should be visible in sidebar")
+            .expect("终端应该在侧边栏中可见")
     });
     sidebar.read_with(cx, |sidebar, _cx| {
         match &sidebar.contents.entries[terminal_index] {
@@ -3209,10 +3209,10 @@ async fn test_archive_selected_terminal_archives_closed_linked_worktree(cx: &mut
                     assert_eq!(folder_paths, &worktree_folder_paths);
                 }
                 ThreadEntryWorkspace::Open(_) => {
-                    panic!("linked worktree terminal should start closed")
+                    panic!("链接的工作树终端应该从关闭状态开始")
                 }
             },
-            _ => panic!("expected terminal row"),
+            _ => panic!("期望终端行"),
         }
     });
 
@@ -3233,7 +3233,7 @@ async fn test_archive_selected_terminal_archives_closed_linked_worktree(cx: &mut
     });
     assert!(
         terminal_metadata_deleted,
-        "terminal metadata should be deleted after closing from the sidebar"
+        "从侧边栏关闭后应该删除终端元数据"
     );
     let empty_draft_metadata_deleted = cx.update(|_, cx| {
         ThreadMetadataStore::global(cx)
@@ -3243,7 +3243,7 @@ async fn test_archive_selected_terminal_archives_closed_linked_worktree(cx: &mut
     });
     assert!(
         empty_draft_metadata_deleted,
-        "empty draft metadata should be deleted before archiving the linked worktree"
+        "空草稿元数据应在归档链接工作树前删除"
     );
     assert!(
         multi_workspace
@@ -3251,19 +3251,19 @@ async fn test_archive_selected_terminal_archives_closed_linked_worktree(cx: &mut
                 multi_workspace.workspace_for_paths(&worktree_folder_paths, None, cx)
             })
             .is_none(),
-        "temporary linked worktree workspace should be removed after archiving"
+        "归档后应该移除临时的链接工作树工作区"
     );
     assert_eq!(
         multi_workspace.read_with(cx, |multi_workspace, _| multi_workspace
             .workspaces()
             .count()),
         1,
-        "closing a closed linked worktree terminal should leave only the main workspace"
+        "关闭已关闭的链接工作树终端应该只保留主工作区"
     );
     assert!(
         !fs.is_dir(Path::new("/worktrees/project/feature-a/project"))
             .await,
-        "linked worktree directory should be removed from disk after closing its terminal"
+        "关闭终端后应该从磁盘移除链接的工作树目录"
     );
 }
 
@@ -3348,7 +3348,7 @@ async fn test_archive_selected_thread_archives_closed_linked_worktree(cx: &mut T
     cx.update(|_, cx| {
         assert!(
             agent_ui::draft_prompt_store::read(empty_draft_id, cx).is_none(),
-            "empty draft should not have persisted prompt content"
+            "空草稿不应持久化提示内容"
         );
     });
     sidebar.update(cx, |sidebar, cx| sidebar.update_entries(cx));
@@ -3360,7 +3360,7 @@ async fn test_archive_selected_thread_archives_closed_linked_worktree(cx: &mut T
             .entries
             .iter()
             .position(|entry| matches!(entry, ListEntry::Thread(thread) if thread.metadata.session_id.as_ref() == Some(&worktree_session_id)))
-            .expect("worktree thread should be visible in sidebar")
+            .expect("工作树线程应该在侧边栏中可见")
     });
     sidebar.read_with(cx, |sidebar, _cx| {
         match &sidebar.contents.entries[thread_index] {
@@ -3369,10 +3369,10 @@ async fn test_archive_selected_thread_archives_closed_linked_worktree(cx: &mut T
                     assert_eq!(folder_paths, &worktree_folder_paths);
                 }
                 ThreadEntryWorkspace::Open(_) => {
-                    panic!("linked worktree thread should start closed")
+                    panic!("链接的工作树线程应该从关闭状态开始")
                 }
             },
-            _ => panic!("expected thread row"),
+            _ => panic!("期望线程行"),
         }
     });
 
@@ -3394,7 +3394,7 @@ async fn test_archive_selected_thread_archives_closed_linked_worktree(cx: &mut T
     assert_eq!(
         thread_archived,
         Some(true),
-        "thread metadata should remain archived after worktree archival"
+        "工作树归档后线程元数据应该保持归档状态"
     );
     let empty_draft_metadata_deleted = cx.update(|_, cx| {
         ThreadMetadataStore::global(cx)
@@ -3404,7 +3404,7 @@ async fn test_archive_selected_thread_archives_closed_linked_worktree(cx: &mut T
     });
     assert!(
         empty_draft_metadata_deleted,
-        "empty draft metadata should be deleted before archiving the linked worktree"
+        "空草稿元数据应在归档链接工作树前删除"
     );
     assert!(
         multi_workspace
@@ -3412,19 +3412,19 @@ async fn test_archive_selected_thread_archives_closed_linked_worktree(cx: &mut T
                 multi_workspace.workspace_for_paths(&worktree_folder_paths, None, cx)
             })
             .is_none(),
-        "temporary linked worktree workspace should be removed after archiving"
+        "归档后应该移除临时的链接工作树工作区"
     );
     assert_eq!(
         multi_workspace.read_with(cx, |multi_workspace, _| multi_workspace
             .workspaces()
             .count()),
         1,
-        "archiving a closed linked worktree thread should leave only the main workspace"
+        "归档已关闭的链接工作树线程应该只保留主工作区"
     );
     assert!(
         !fs.is_dir(Path::new("/worktrees/project/feature-a/project"))
             .await,
-        "linked worktree directory should be removed from disk after archiving its thread"
+        "归档其线程后应该从磁盘移除链接的工作树目录"
     );
 }
 
@@ -3472,7 +3472,7 @@ async fn test_archive_selected_thread_deletes_empty_draft_when_linked_worktree_h
     let worktree_folder_paths = PathList::new(&[PathBuf::from("/external-worktree")]);
     save_thread_metadata_with_main_paths(
         "external-worktree-thread",
-        "External Worktree Thread",
+        "外部工作树对话",
         worktree_folder_paths.clone(),
         PathList::new(&[PathBuf::from("/project")]),
         chrono::TimeZone::with_ymd_and_hms(&Utc, 2024, 1, 1, 0, 0, 0).unwrap(),
@@ -3503,7 +3503,7 @@ async fn test_archive_selected_thread_deletes_empty_draft_when_linked_worktree_h
             .entries
             .iter()
             .position(|entry| matches!(entry, ListEntry::Thread(thread) if thread.metadata.session_id.as_ref() == Some(&worktree_session_id)))
-            .expect("worktree thread should be visible in sidebar")
+            .expect("工作树线程应该在侧边栏中可见")
     });
     focus_sidebar(&sidebar, cx);
     sidebar.update_in(cx, |sidebar, _window, _cx| {
@@ -3523,7 +3523,7 @@ async fn test_archive_selected_thread_deletes_empty_draft_when_linked_worktree_h
     assert_eq!(
         thread_archived,
         Some(true),
-        "thread metadata should remain archived after workspace removal"
+        "对话元数据在工作区移除后应保持归档状态"
     );
     let empty_draft_metadata_deleted = cx.update(|_, cx| {
         ThreadMetadataStore::global(cx)
@@ -3533,7 +3533,7 @@ async fn test_archive_selected_thread_deletes_empty_draft_when_linked_worktree_h
     });
     assert!(
         empty_draft_metadata_deleted,
-        "empty draft metadata should be deleted when removing the linked worktree workspace"
+        "空草稿元数据应在移除链接工作树工作区时删除"
     );
     assert!(
         multi_workspace
@@ -3545,7 +3545,7 @@ async fn test_archive_selected_thread_deletes_empty_draft_when_linked_worktree_h
     );
     assert!(
         fs.is_dir(Path::new("/external-worktree")).await,
-        "external linked worktree directory should remain on disk when no archive root is produced"
+        "外部链接工作树目录应在未产生归档根目录时保留在磁盘上"
     );
 }
 
@@ -3560,9 +3560,9 @@ async fn test_archive_selected_thread_closes_selected_agent_panel_terminal(
 
     let terminal_id = panel
         .update_in(cx, |panel, window, cx| {
-            panel.insert_test_terminal("Dev Server", true, window, cx)
+            panel.insert_test_terminal("开发服务器", true, window, cx)
         })
-        .expect("test terminal should be inserted");
+        .expect("测试终端应该被插入");
     cx.run_until_parked();
 
     focus_sidebar(&sidebar, cx);
@@ -3572,7 +3572,7 @@ async fn test_archive_selected_thread_closes_selected_agent_panel_terminal(
             .entries
             .iter()
             .position(|entry| matches!(entry, ListEntry::Terminal(terminal) if terminal.metadata.terminal_id == terminal_id))
-            .expect("terminal should be visible in sidebar")
+            .expect("终端应该在侧边栏中可见")
     });
     sidebar.update_in(cx, |sidebar, _window, _cx| {
         sidebar.selection = Some(terminal_index);
@@ -3592,7 +3592,7 @@ async fn test_archive_selected_thread_closes_selected_agent_panel_terminal(
         let store = TerminalThreadMetadataStore::global(cx).read(cx);
         assert!(
             store.entry(terminal_id).is_none(),
-            "terminal metadata should be deleted when closing from the sidebar"
+            "从侧边栏关闭时应该删除终端元数据"
         );
     });
 }
@@ -3605,14 +3605,14 @@ async fn test_closing_active_agent_panel_terminal_activates_neighbor(cx: &mut Te
     let (sidebar, panel) = setup_sidebar_with_agent_panel(&multi_workspace, cx);
     let build_terminal_id = panel
         .update_in(cx, |panel, window, cx| {
-            panel.insert_test_terminal("Build", true, window, cx)
+            panel.insert_test_terminal("构建", true, window, cx)
         })
-        .expect("build test terminal should be inserted");
+        .expect("构建测试终端应该被插入");
     let server_terminal_id = panel
         .update_in(cx, |panel, window, cx| {
-            panel.insert_test_terminal("Server", true, window, cx)
+            panel.insert_test_terminal("服务器", true, window, cx)
         })
-        .expect("server test terminal should be inserted");
+        .expect("服务器测试终端应该被插入");
     cx.run_until_parked();
 
     let (server_metadata, server_workspace) = sidebar.read_with(cx, |sidebar, _cx| {
@@ -3628,7 +3628,7 @@ async fn test_closing_active_agent_panel_terminal_activates_neighbor(cx: &mut Te
                 }
                 _ => None,
             })
-            .expect("server terminal should be visible in sidebar")
+            .expect("服务器终端应该在侧边栏中可见")
     });
     sidebar.update_in(cx, |sidebar, window, cx| {
         sidebar.close_terminal(&server_metadata, &server_workspace, window, cx);
@@ -3642,13 +3642,13 @@ async fn test_closing_active_agent_panel_terminal_activates_neighbor(cx: &mut Te
     sidebar.read_with(cx, |sidebar, _cx| {
         assert!(
             matches!(&sidebar.active_entry, Some(ActiveEntry::Terminal { terminal_id, .. }) if *terminal_id == build_terminal_id),
-            "expected remaining terminal to become active, got {:?}",
+            "期望剩余终端变为活动,得到 {:?}",
             sidebar.active_entry,
         );
     });
     assert_eq!(
         visible_entries_as_strings(&sidebar, cx),
-        vec!["v [my-project]", "  Build"]
+        vec!["v [my-project]", "  构建"]
     );
 }
 
@@ -4980,7 +4980,7 @@ async fn test_new_thread_button_works_after_adding_folder(cx: &mut TestAppContex
         ]
     );
 
-    // The "New Thread" button should NOT be in "active/draft" state
+    // The "新对话线程" button should NOT be in "active/draft" state
     // because the panel has a thread with messages.
     sidebar.read_with(cx, |sidebar, _cx| {
         assert!(
@@ -5015,7 +5015,7 @@ async fn test_new_thread_button_works_after_adding_folder(cx: &mut TestAppContex
     );
     assert_eq!(entries[0], "v [project-a, project-b]");
 
-    // The "New Thread" button must still be clickable (not stuck in
+    // The "新对话线程" button must still be clickable (not stuck in
     // "active/draft" state). Verify that `active_thread_is_draft` is
     // false — the panel still has the old thread with messages.
     sidebar.read_with(cx, |sidebar, _cx| {
@@ -5027,7 +5027,7 @@ async fn test_new_thread_button_works_after_adding_folder(cx: &mut TestAppContex
         );
     });
 
-    // Actually click "New Thread" by calling create_new_thread and
+    // Actually click "新对话线程" by calling create_new_thread and
     // verify a new draft is created.
     let workspace = multi_workspace.read_with(cx, |mw, _cx| mw.workspace().clone());
     sidebar.update_in(cx, |sidebar, window, cx| {
@@ -5070,7 +5070,7 @@ async fn test_draft_title_updates_from_editor_text(cx: &mut TestAppContext) {
     // Type into the (active) draft's message editor. The helper drains the
     // kvp-write debounce, so by the time it returns the prompt is on disk
     // — important for Phase 2 below, which exercises the kvp fallback.
-    agent_ui::test_support::type_draft_prompt(&panel, "Fix the login bug", cx);
+    agent_ui::test_support::type_draft_prompt(&panel, "修复登录错误", cx);
 
     // Park the draft by pressing Cmd-N while it has content.
     panel.update_in(cx, |panel, window, cx| {
@@ -5092,7 +5092,7 @@ async fn test_draft_title_updates_from_editor_text(cx: &mut TestAppContext) {
                     }
                     _ => None,
                 })
-                .expect("parked draft entry should be present")
+                .expect("停放的草稿条目应该存在")
         })
     };
 
@@ -5100,13 +5100,13 @@ async fn test_draft_title_updates_from_editor_text(cx: &mut TestAppContext) {
     // the title comes from its live message editor.
     assert_eq!(
         draft_title(&sidebar, cx).as_ref(),
-        "Fix the login bug",
-        "parked draft title should match its editor text while loaded"
+        "修复登录错误",
+        "停放的草稿标题应该与加载时的编辑器文本匹配"
     );
     panel.read_with(cx, |panel, _cx| {
         assert!(
             panel.retained_threads().contains_key(&draft_id),
-            "draft should be in retained_threads while loaded"
+            "草稿应该在 retained_threads 中"
         );
     });
 
@@ -5115,13 +5115,13 @@ async fn test_draft_title_updates_from_editor_text(cx: &mut TestAppContext) {
     // — the metadata row and the kvp draft prompt are on disk, but no
     // ConversationView has been rehydrated yet.
     let unloaded = panel.update(cx, |panel, _cx| panel.test_unload_retained_thread(draft_id));
-    assert!(unloaded, "draft should have been present before unload");
+    assert!(unloaded, "卸载前草稿应该存在");
     sidebar.update(cx, |sidebar, cx| sidebar.update_entries(cx));
     cx.run_until_parked();
 
     assert_eq!(
         draft_title(&sidebar, cx).as_ref(),
-        "Fix the login bug",
+        "修复登录错误",
         "parked draft title should still come from the kvp draft prompt store \
          even after its ConversationView is unloaded"
     );
@@ -5137,7 +5137,7 @@ async fn test_thread_switcher_includes_parked_draft(cx: &mut TestAppContext) {
 
     save_thread_metadata(
         acp::SessionId::new(Arc::from("thread-existing")),
-        Some("Existing Thread".into()),
+        Some("现有线程".into()),
         chrono::TimeZone::with_ymd_and_hms(&Utc, 2024, 1, 1, 0, 0, 0).unwrap(),
         None,
         None,
@@ -5149,7 +5149,7 @@ async fn test_thread_switcher_includes_parked_draft(cx: &mut TestAppContext) {
     agent_ui::test_support::open_draft_with_connection(&panel, connection, cx);
     cx.run_until_parked();
     let draft_id = panel.read_with(cx, |panel, cx| panel.active_thread_id(cx).unwrap());
-    agent_ui::test_support::type_draft_prompt(&panel, "Fix the login bug", cx);
+    agent_ui::test_support::type_draft_prompt(&panel, "修复登录错误", cx);
 
     panel.update_in(cx, |panel, window, cx| {
         panel.new_thread(&NewThread, window, cx);
@@ -5197,7 +5197,7 @@ async fn test_plus_button_reuses_empty_draft(cx: &mut TestAppContext) {
     let first_id = panel.read_with(cx, |panel, cx| {
         panel
             .active_thread_id(cx)
-            .expect("draft should be active after open_draft_with_connection")
+            .expect("打开草稿连接后草稿应该活动")
     });
 
     // Cmd-N with an empty draft should reuse it.
@@ -5209,11 +5209,11 @@ async fn test_plus_button_reuses_empty_draft(cx: &mut TestAppContext) {
     let second_id = panel.read_with(cx, |panel, cx| {
         panel
             .active_thread_id(cx)
-            .expect("draft should still be active after Cmd-N")
+            .expect("Cmd-N 后草稿应该仍然活动")
     });
     assert_eq!(
         first_id, second_id,
-        "an empty draft should be reused, not replaced"
+        "空草稿应该被重用,而不是替换"
     );
     let draft_rows = sidebar.read_with(cx, |sidebar, _| {
         sidebar
@@ -5225,7 +5225,7 @@ async fn test_plus_button_reuses_empty_draft(cx: &mut TestAppContext) {
     });
     assert_eq!(
         draft_rows, 0,
-        "active ephemeral draft should not appear as a sidebar row"
+        "活动的临时草稿不应该显示为侧边栏行"
     );
 }
 
@@ -5249,7 +5249,7 @@ async fn test_plus_button_parks_nonempty_draft(cx: &mut TestAppContext) {
     let thread_view = panel.read_with(cx, |panel, cx| panel.active_thread_view(cx).unwrap());
     let editor = thread_view.read_with(cx, |view, _| view.message_editor.clone());
     editor.update_in(cx, |editor, window, cx| {
-        editor.set_text("something the user typed", window, cx);
+        editor.set_text("用户输入的内容", window, cx);
     });
     cx.run_until_parked();
 
@@ -5262,7 +5262,7 @@ async fn test_plus_button_parks_nonempty_draft(cx: &mut TestAppContext) {
     let second_id = panel.read_with(cx, |panel, cx| panel.active_thread_id(cx).unwrap());
     assert_ne!(
         first_id, second_id,
-        "non-empty draft should be parked and a fresh draft activated"
+        "非空草稿应该被停放,并激活新草稿"
     );
 
     // The parked (now non-active) first draft shows as a sidebar row with
@@ -5281,9 +5281,9 @@ async fn test_plus_button_parks_nonempty_draft(cx: &mut TestAppContext) {
     assert_eq!(
         parked_titles.len(),
         1,
-        "expected the parked draft to be visible as a sidebar row, got {parked_titles:?}"
+        "期望停放的草稿在侧边栏行可见,得到 {parked_titles:?}"
     );
-    assert_eq!(parked_titles[0].as_ref(), "something the user typed");
+    assert_eq!(parked_titles[0].as_ref(), "用户输入的内容");
 }
 
 #[gpui::test]
@@ -5301,7 +5301,7 @@ async fn test_remove_draft_deletes_metadata_row(cx: &mut TestAppContext) {
     agent_ui::test_support::open_draft_with_connection(&panel, connection, cx);
     cx.run_until_parked();
     let draft_id = panel.read_with(cx, |panel, cx| panel.active_thread_id(cx).unwrap());
-    agent_ui::test_support::type_draft_prompt(&panel, "will be discarded", cx);
+    agent_ui::test_support::type_draft_prompt(&panel, "将被丢弃", cx);
     panel.update_in(cx, |panel, window, cx| {
         panel.new_thread(&NewThread, window, cx);
     });
@@ -5314,7 +5314,7 @@ async fn test_remove_draft_deletes_metadata_row(cx: &mut TestAppContext) {
             .entries
             .iter()
             .position(|e| matches!(e, ListEntry::Thread(t) if t.metadata.thread_id == draft_id))
-            .expect("parked draft should be visible before removal")
+            .expect("停放的草稿在移除前应该可见")
     });
 
     // Select the parked draft and dispatch the action a real user would
@@ -5331,11 +5331,11 @@ async fn test_remove_draft_deletes_metadata_row(cx: &mut TestAppContext) {
         let store = ThreadMetadataStore::global(cx).read(cx);
         assert!(
             store.entry(draft_id).is_none(),
-            "removed draft metadata should be deleted"
+            "移除的草稿元数据应该被删除"
         );
         assert!(
             agent_ui::draft_prompt_store::read(draft_id, cx).is_none(),
-            "removed draft's kvp prompt should also be deleted"
+            "移除的草稿的 kvp 提示也应该被删除"
         );
     });
     // And the row should be gone from the sidebar.
@@ -5348,7 +5348,7 @@ async fn test_remove_draft_deletes_metadata_row(cx: &mut TestAppContext) {
     });
     assert!(
         !still_visible,
-        "removed draft should no longer appear in the sidebar"
+        "移除的草稿不应该再出现在侧边栏"
     );
 }
 
@@ -5372,8 +5372,8 @@ async fn test_sending_message_from_draft_promotes_in_place(cx: &mut TestAppConte
     // Before sending: draft metadata row exists with session_id = None.
     cx.update(|_window, cx| {
         let store = ThreadMetadataStore::global(cx).read(cx);
-        let entry = store.entry(draft_id).expect("draft metadata row");
-        assert!(entry.is_draft(), "expected draft row before sending");
+        let entry = store.entry(draft_id).expect("草稿元数据行");
+        assert!(entry.is_draft(), "发送前应该有草稿行");
     });
 
     send_message(&panel, cx);
@@ -5383,24 +5383,24 @@ async fn test_sending_message_from_draft_promotes_in_place(cx: &mut TestAppConte
     panel.read_with(cx, |panel, cx| {
         assert!(
             !panel.active_thread_is_draft(cx),
-            "should no longer be a draft after send"
+            "发送后不应该再是草稿"
         );
         assert!(
             panel.ephemeral_draft_thread_id(cx).is_none(),
-            "ephemeral draft pointer should be cleared after promotion"
+            "推广后临时草稿指针应该被清除"
         );
         assert_eq!(
             panel.active_thread_id(cx),
             Some(draft_id),
-            "ThreadId stays the same across promotion"
+            "推广过程中 ThreadId 保持不变"
         );
     });
     cx.update(|_window, cx| {
         let store = ThreadMetadataStore::global(cx).read(cx);
-        let entry = store.entry(draft_id).expect("promoted metadata row");
+        let entry = store.entry(draft_id).expect("推广的元数据行");
         assert!(
             !entry.is_draft(),
-            "promoted thread should have a session_id"
+            "推广的线程应该有 session_id"
         );
     });
 }
@@ -5694,11 +5694,11 @@ async fn test_all_ephemeral_drafts_in_group_are_hidden_from_sidebar(cx: &mut Tes
     // active view of its own panel.
     assert!(
         !is_draft_row_visible(&sidebar, cx, main_draft_id),
-        "main panel's ephemeral draft should be hidden while it is active"
+        "主面板的临时草稿在活动时应该隐藏"
     );
     assert!(
         !is_draft_row_visible(&sidebar, cx, worktree_draft_id),
-        "worktree panel's ephemeral draft should be hidden while it is active"
+        "工作树面板的临时草稿在活动时应该隐藏"
     );
 
     // Navigate the main panel AWAY from its draft to the real thread.
@@ -5722,22 +5722,22 @@ async fn test_all_ephemeral_drafts_in_group_are_hidden_from_sidebar(cx: &mut Tes
         assert_eq!(
             panel.active_thread_id(cx),
             Some(main_real_thread_id),
-            "main panel should now be viewing the real thread"
+            "主面板现在应该查看真实线程"
         );
         assert_eq!(
             panel.ephemeral_draft_thread_id(cx),
             Some(main_draft_id),
-            "the ephemeral draft slot should still hold the parked draft"
+            "临时草稿槽应该仍然持有停放的草稿"
         );
     });
 
     assert!(
         !is_draft_row_visible(&sidebar, cx, main_draft_id),
-        "parked ephemeral draft should stay hidden when the panel's active view is a real thread"
+        "当面板的活动视图是真实线程时,停放的临时草稿应该保持隐藏"
     );
     assert!(
         !is_draft_row_visible(&sidebar, cx, worktree_draft_id),
-        "worktree panel's ephemeral draft should also stay hidden"
+        "工作树面板的临时草稿也应该保持隐藏"
     );
 
     // Switch the active workspace to the worktree: all of the above
@@ -5749,11 +5749,11 @@ async fn test_all_ephemeral_drafts_in_group_are_hidden_from_sidebar(cx: &mut Tes
 
     assert!(
         !is_draft_row_visible(&sidebar, cx, main_draft_id),
-        "main panel's parked ephemeral draft should stay hidden when worktree is active"
+        "当工作树活动时,主面板的停放临时草稿应该保持隐藏"
     );
     assert!(
         !is_draft_row_visible(&sidebar, cx, worktree_draft_id),
-        "worktree panel's ephemeral draft should stay hidden when worktree is active"
+        "当工作树活动时,工作树面板的临时草稿应该保持隐藏"
     );
 }
 
@@ -6009,7 +6009,7 @@ async fn test_two_worktree_workspaces_absorbed_when_main_added(cx: &mut TestAppC
 async fn test_threadless_workspace_shows_new_thread_with_worktree_chip(cx: &mut TestAppContext) {
     // When a group has two workspaces — one with threads and one
     // without — the threadless workspace should appear as a
-    // "New Thread" button with its worktree chip.
+    // "新对话线程" button with its worktree chip.
     init_test(cx);
     let fs = FakeFs::new(cx.executor());
 
@@ -6071,7 +6071,7 @@ async fn test_threadless_workspace_shows_new_thread_with_worktree_chip(cx: &mut 
     cx.run_until_parked();
 
     // Workspace A's thread appears normally. Workspace B (threadless)
-    // appears as a "New Thread" button with its worktree chip.
+    // appears as a "新对话线程" button with its worktree chip.
     assert_eq!(
         visible_entries_as_strings(&sidebar, cx),
         vec!["v [project]", "  Thread A {wt-feature-a}",]
@@ -6642,7 +6642,7 @@ async fn test_clicking_worktree_thread_does_not_briefly_render_as_separate_proje
                 }
                 ListEntry::Terminal(terminal) => {
                     panic!(
-                        "unexpected sidebar terminal while opening linked worktree thread: title=`{}`",
+                        "打开链接工作树线程时出现意外侧边栏终端:title=`{}`",
                         terminal.metadata.title
                     );
                 }
@@ -8557,7 +8557,7 @@ async fn test_thread_switcher_ordering(cx: &mut TestAppContext) {
                     .read(cx)
                     .entries()
                     .iter()
-                    .map(|entry| entry.thread_id().expect("expected thread switcher entry"))
+                    .map(|entry| entry.thread_id().expect("期望线程切换器条目"))
                     .collect()
             })
         };
@@ -8573,7 +8573,7 @@ async fn test_thread_switcher_ordering(cx: &mut TestAppContext) {
                 s.selected_entry()
                     .expect("should have selection")
                     .thread_id()
-                    .expect("expected selected thread entry")
+                    .expect("期望选中的线程条目")
             })
         };
 
@@ -9121,7 +9121,7 @@ async fn test_unarchive_only_shows_restored_thread(cx: &mut TestAppContext) {
     let entries = visible_entries_as_strings(&sidebar, cx);
     assert!(
         entries.iter().any(|e| e.contains(restored_title.as_ref())),
-        "expected the restored thread to be visible, got entries: {entries:?}"
+        "期望恢复的线程可见,得到条目:{entries:?}"
     );
     let thread_count = entries
         .iter()
@@ -9129,7 +9129,7 @@ async fn test_unarchive_only_shows_restored_thread(cx: &mut TestAppContext) {
         .count();
     assert!(
         thread_count <= 2,
-        "expected at most the restored thread plus a parked draft, got entries: {entries:?}"
+        "期望最多恢复的线程加上停放的草稿,得到条目:{entries:?}"
     );
 }
 
@@ -12442,7 +12442,7 @@ mod property_test {
 
         let Some(entry) = sidebar.active_entry.as_ref() else {
             if panel_has_content {
-                anyhow::bail!("active_entry is None but panel has content");
+                anyhow::bail!("active_entry 为空但面板有内容");
             }
             return Ok(());
         };
@@ -13479,7 +13479,7 @@ async fn test_discard_mixed_workspace_draft_closes_only_archived_worktree_items(
     let main_worktree_paths =
         PathList::new(&[PathBuf::from("/main-repo"), PathBuf::from("/main-repo")]);
     let draft_id = save_draft_metadata_with_main_paths(
-        Some("Mixed Workspace Draft".into()),
+        Some("混合工作区草稿".into()),
         folder_paths,
         main_worktree_paths,
         chrono::TimeZone::with_ymd_and_hms(&Utc, 2024, 1, 1, 0, 0, 0).unwrap(),
@@ -13489,13 +13489,13 @@ async fn test_discard_mixed_workspace_draft_closes_only_archived_worktree_items(
         agent_ui::draft_prompt_store::write(
             draft_id,
             &[acp::ContentBlock::Text(acp::TextContent::new(
-                "mixed workspace draft",
+                "混合工作区草稿",
             ))],
             cx,
         )
     })
     .await
-    .expect("draft prompt should persist");
+    .expect("草稿提示应持久化");
 
     sidebar.update(cx, |sidebar, cx| sidebar.update_entries(cx));
     cx.run_until_parked();
@@ -13511,7 +13511,7 @@ async fn test_discard_mixed_workspace_draft_closes_only_archived_worktree_items(
                     ListEntry::Thread(thread) if thread.metadata.thread_id == draft_id
                 )
             })
-            .expect("mixed workspace draft should be visible")
+            .expect("混合工作区草稿应可见")
     });
 
     focus_sidebar(&sidebar, cx);
@@ -13563,7 +13563,7 @@ async fn test_discard_mixed_workspace_draft_closes_only_archived_worktree_items(
     });
     assert!(
         draft_metadata_deleted,
-        "discarded draft metadata should be deleted"
+        "已丢弃的草稿元数据应被删除"
     );
 }
 
@@ -13922,7 +13922,7 @@ async fn test_remote_linked_worktree_workspace_to_remove_uses_remote_connection(
                 )
             })
             .is_some(),
-        "remote linked-worktree workspace should be open before archiving"
+        "远程链接工作树工作区应在归档前打开"
     );
     assert!(
         multi_workspace
@@ -13930,7 +13930,7 @@ async fn test_remote_linked_worktree_workspace_to_remove_uses_remote_connection(
                 multi_workspace.workspace_for_paths(&worktree_folder_paths, None, cx)
             })
             .is_none(),
-        "the test must exercise a remote-only workspace lookup"
+        "测试必须执行仅远程工作区查找"
     );
     assert_ne!(
         multi_workspace
@@ -13939,7 +13939,7 @@ async fn test_remote_linked_worktree_workspace_to_remove_uses_remote_connection(
             })
             .path_list(),
         &worktree_folder_paths,
-        "remote workspace must be classified as a linked worktree under the main project"
+        "远程工作区必须被分类为主项目下的链接工作树"
     );
 
     let workspace_to_remove = sidebar.read_with(cx, |sidebar, cx| {
@@ -13960,11 +13960,11 @@ async fn test_remote_linked_worktree_workspace_to_remove_uses_remote_connection(
     assert_eq!(
         workspace_to_remove,
         Some(active_workspace_id),
-        "archive helper should resolve the remote linked-worktree workspace"
+        "归档助手应解析远程链接工作树工作区"
     );
     assert!(
         server_fs.is_dir(Path::new("/external-worktree")).await,
-        "direct helper check should not remove the linked worktree from disk"
+        "直接助手检查不应从磁盘移除链接工作树"
     );
 }
 

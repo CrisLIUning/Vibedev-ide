@@ -152,7 +152,7 @@ mod tests {
         let max = Locator::max();
         for _ in 0..100_000 {
             let loc = Locator::between(&prev, &max);
-            assert_eq!(loc.len(), 1, "sequential forward append grew past depth 1");
+            assert_eq!(loc.len(), 1, "顺序前向追加深度超过 1");
             prev = loc;
         }
     }
@@ -170,7 +170,7 @@ mod tests {
         let mut prev = prefix;
         for _ in 0..10_000 {
             let loc = Locator::between(&prev, &suffix_id);
-            assert_eq!(loc.len(), 2, "forward typing after split grew past depth 2");
+            assert_eq!(loc.len(), 2, "分割后前向输入深度超过 2");
             prev = loc;
         }
     }

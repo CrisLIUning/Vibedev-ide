@@ -105,7 +105,7 @@ pub async fn stream_completion(
             let err = ctx.into_err();
             match &err {
                 ConverseStreamError::ValidationException(e) => {
-                    BedrockError::Validation(e.message().unwrap_or("validation error").to_string())
+                    BedrockError::Validation(e.message().unwrap_or("验证错误").to_string())
                 }
                 ConverseStreamError::ThrottlingException(_) => BedrockError::RateLimited,
                 ConverseStreamError::ServiceUnavailableException(_)
@@ -113,10 +113,10 @@ pub async fn stream_completion(
                     BedrockError::ServiceUnavailable
                 }
                 ConverseStreamError::AccessDeniedException(e) => {
-                    BedrockError::AccessDenied(e.message().unwrap_or("access denied").to_string())
+                    BedrockError::AccessDenied(e.message().unwrap_or("访问被拒绝").to_string())
                 }
                 ConverseStreamError::InternalServerException(e) => BedrockError::InternalServer(
-                    e.message().unwrap_or("internal server error").to_string(),
+                    e.message().unwrap_or("内部服务器错误").to_string(),
                 ),
                 _ => BedrockError::Other(err.into()),
             }
@@ -228,9 +228,9 @@ pub struct Metadata {
 pub enum BedrockError {
     #[error("{0}")]
     Validation(String),
-    #[error("rate limited")]
+    #[error("请求频率受限")]
     RateLimited,
-    #[error("service unavailable")]
+    #[error("服务不可用")]
     ServiceUnavailable,
     #[error("{0}")]
     AccessDenied(String),

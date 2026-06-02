@@ -146,7 +146,7 @@ impl Component for ListHeader {
 
     fn description() -> Option<&'static str> {
         Some(
-            "A header component for lists with support for icons, actions, and collapsible sections.",
+            "列表标题组件,支持图标、操作和可折叠区域。",
         )
     }
 
@@ -156,55 +156,55 @@ impl Component for ListHeader {
                 .gap_6()
                 .children(vec![
                     example_group_with_title(
-                        "Basic Headers",
+                        "基本标题",
                         vec![
                             single_example(
-                                "Simple",
-                                ListHeader::new("Section Header").into_any_element(),
+                                "简单",
+                                ListHeader::new("章节标题").into_any_element(),
                             ),
                             single_example(
-                                "With Icon",
-                                ListHeader::new("Files")
+                                "带图标",
+                                ListHeader::new("文件")
                                     .start_slot(Icon::new(IconName::File))
                                     .into_any_element(),
                             ),
                             single_example(
-                                "With End Slot",
-                                ListHeader::new("Recent")
+                                "带尾部插槽",
+                                ListHeader::new("最近")
                                     .end_slot(Label::new("5").color(Color::Muted))
                                     .into_any_element(),
                             ),
                         ],
                     ),
                     example_group_with_title(
-                        "Collapsible Headers",
+                        "可折叠标题",
                         vec![
                             single_example(
-                                "Expanded",
-                                ListHeader::new("Expanded Section")
+                                "已展开",
+                                ListHeader::new("已展开区域")
                                     .toggle(Some(true))
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Collapsed",
-                                ListHeader::new("Collapsed Section")
+                                "已折叠",
+                                ListHeader::new("已折叠区域")
                                     .toggle(Some(false))
                                     .into_any_element(),
                             ),
                         ],
                     ),
                     example_group_with_title(
-                        "States",
+                        "状态",
                         vec![
                             single_example(
-                                "Selected",
-                                ListHeader::new("Selected Header")
+                                "已选中",
+                                ListHeader::new("已选中标题")
                                     .toggle_state(true)
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Inset",
-                                ListHeader::new("Inset Header")
+                                "内凹",
+                                ListHeader::new("内嵌标题")
                                     .inset(true)
                                     .into_any_element(),
                             ),

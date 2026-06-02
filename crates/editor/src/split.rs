@@ -1403,7 +1403,7 @@ impl SplittableEditor {
 
         assert!(
             self.lhs.is_some(),
-            "debug_print is only useful when lhs editor exists"
+            "debug_print 仅在左侧编辑器存在时有用"
         );
 
         let lhs = self.lhs.as_ref().unwrap();
@@ -1668,7 +1668,7 @@ impl SplittableEditor {
     }
 
     fn check_excerpt_invariants(&self, quiesced: bool, cx: &gpui::App) {
-        let lhs = self.lhs.as_ref().expect("should have lhs editor");
+        let lhs = self.lhs.as_ref().expect("应该有左侧编辑器");
 
         let rhs_snapshot = self.rhs_multibuffer.read(cx).snapshot(cx);
         let rhs_excerpts = rhs_snapshot.excerpts().collect::<Vec<_>>();
@@ -2210,7 +2210,7 @@ mod tests {
         cx: &mut VisualTestContext,
     ) {
         let (rhs_editor, lhs_editor) = editor.update(cx, |editor, _cx| {
-            let lhs = editor.lhs.as_ref().expect("should have lhs editor");
+            let lhs = editor.lhs.as_ref().expect("应该有左侧编辑器");
             (editor.rhs_editor.clone(), lhs.editor.clone())
         });
 
@@ -2239,7 +2239,7 @@ mod tests {
 
         let (editor, cx) = init_test(cx, SoftWrap::EditorWidth, DiffViewStyle::Split).await;
         let operations = std::env::var("OPERATIONS")
-            .map(|i| i.parse().expect("invalid `OPERATIONS` variable"))
+            .map(|i| i.parse().expect("无效的 `OPERATIONS` 变量"))
             .unwrap_or(10);
         let rng = &mut rng;
         for _ in 0..operations {
@@ -2248,7 +2248,7 @@ mod tests {
             });
 
             if buffers.is_empty() {
-                log::info!("creating initial buffer");
+                log::info!("创建初始缓冲区");
                 let len = rng.random_range(200..1000);
                 let base_text: String = RandomCharIter::new(&mut *rng).take(len).collect();
                 let buffer = cx.new(|cx| Buffer::local(base_text.clone(), cx));
@@ -2283,7 +2283,7 @@ mod tests {
 
             match rng.random_range(0..100) {
                 0..=14 if buffers.len() < 6 => {
-                    log::info!("creating new buffer and setting excerpts");
+                    log::info!("创建新缓冲区并设置摘录");
                     let len = rng.random_range(200..1000);
                     let base_text: String = RandomCharIter::new(&mut *rng).take(len).collect();
                     let buffer = cx.new(|cx| Buffer::local(base_text.clone(), cx));
@@ -2326,7 +2326,7 @@ mod tests {
                     });
                 }
                 30..=44 => {
-                    log::info!("randomly editing individual buffer");
+                    log::info!("随机编辑单个缓冲区");
                     let buffer = buffers.iter().choose(rng).unwrap();
                     let edit_count = rng.random_range(1..3);
                     buffer.update(cx, |buffer, cx| {
@@ -2334,7 +2334,7 @@ mod tests {
                     });
                 }
                 45..=54 => {
-                    log::info!("recalculating diff and resetting excerpts for single buffer");
+                    log::info!("重新计算差异并重置单个缓冲区的摘录");
                     let buffer = buffers.iter().choose(rng).unwrap();
                     let buffer_snapshot = buffer.read_with(cx, |buffer, _| buffer.text_snapshot());
                     let diff = editor.update(cx, |editor, cx| {
@@ -2375,7 +2375,7 @@ mod tests {
                     });
                 }
                 65..=74 => {
-                    log::info!("removing excerpts for a random path");
+                    log::info!("移除随机路径的摘录");
                     let ids = editor.update(cx, |editor, cx| {
                         let snapshot = editor.rhs_multibuffer.read(cx).snapshot(cx);
                         snapshot.all_buffer_ids().collect::<Vec<_>>()
@@ -2389,7 +2389,7 @@ mod tests {
                     }
                 }
                 75..=79 => {
-                    log::info!("unsplit and resplit");
+                    log::info!("取消拆分并重新拆分");
                     editor.update_in(cx, |editor, window, cx| {
                         editor.unsplit(window, cx);
                     });
@@ -2408,7 +2408,7 @@ mod tests {
                         let chosen: Vec<_> =
                             excerpts.choose_multiple(rng, count).cloned().collect();
                         let line_count = rng.random_range(1..5);
-                        log::info!("expanding {count} excerpts by {line_count} lines");
+                        log::info!("将 {count} 个摘录扩展 {line_count} 行");
                         editor.update(cx, |editor, cx| {
                             editor.expand_excerpts(
                                 chosen.into_iter().map(|excerpt| {
@@ -4181,7 +4181,7 @@ mod tests {
         cx.run_until_parked();
 
         let (rhs_editor, lhs_editor) = editor.update(cx, |editor, _cx| {
-            let lhs = editor.lhs.as_ref().expect("should have lhs editor");
+            let lhs = editor.lhs.as_ref().expect("应该有左侧编辑器");
             (editor.rhs_editor.clone(), lhs.editor.clone())
         });
 
@@ -4193,10 +4193,10 @@ mod tests {
             rhs_editor.update_in(cx, |e, window, cx| e.snapshot(window, cx).scroll_position());
         let lhs_pos =
             lhs_editor.update_in(cx, |e, window, cx| e.snapshot(window, cx).scroll_position());
-        assert_eq!(rhs_pos.y, 10., "RHS should be scrolled to row 10");
+        assert_eq!(rhs_pos.y, 10., "右侧应滚动到第 10 行");
         assert_eq!(
             lhs_pos.y, rhs_pos.y,
-            "LHS should have same scroll position as RHS after set_scroll_position"
+            "设置滚动位置后,左侧应与右侧具有相同的滚动位置"
         );
 
         let draw_size = size(px(300.), px(300.));
@@ -4219,19 +4219,19 @@ mod tests {
 
         assert!(
             rhs_pos.y > 0.,
-            "RHS should have scrolled vertically to show cursor at row 25"
+            "右侧应垂直滚动以显示第 25 行的光标"
         );
         assert!(
             rhs_pos.x > 0.,
-            "RHS should have scrolled horizontally to show cursor at column 150"
+            "右侧应水平滚动以显示第 150 列的光标"
         );
         assert_eq!(
             lhs_pos.y, rhs_pos.y,
-            "LHS should have same vertical scroll position as RHS after autoscroll"
+            "自动滚动后,左侧应与右侧具有相同的垂直滚动位置"
         );
         assert_eq!(
             lhs_pos.x, rhs_pos.x,
-            "LHS should have same horizontal scroll position as RHS after autoscroll"
+            "自动滚动后,左侧应与右侧具有相同的水平滚动位置"
         )
     }
 

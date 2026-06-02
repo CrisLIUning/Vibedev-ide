@@ -217,7 +217,7 @@ impl EditPredictionContextView {
                 let blocks = excerpt_anchors_with_orders
                     .into_iter()
                     .map(|(anchor, order)| {
-                        let label = SharedString::from(format!("order: {order}"));
+                        let label = SharedString::from(format!("顺序: {order}"));
                         BlockProperties {
                             placement: BlockPlacement::Above(anchor),
                             height: Some(1),
@@ -295,7 +295,7 @@ impl EditPredictionContextView {
                     ])
                 }
                 table = table.row(vec![
-                    "Total Time".into_any_element(),
+                    "总耗时".into_any_element(),
                     format!("{} ms", (run.finished_at.unwrap_or(t0) - t0).as_millis())
                         .into_any_element(),
                 ]);
@@ -309,7 +309,7 @@ impl EditPredictionContextView {
                             IconButton::new("go-back", IconName::ChevronLeft)
                                 .disabled(self.current_ix == 0 || self.runs.len() < 2)
                                 .tooltip(ui::Tooltip::for_action_title(
-                                    "Go to previous run",
+                                    "转到上一次运行",
                                     &EditPredictionContextGoBack,
                                 ))
                                 .on_click(cx.listener(|this, _, window, cx| {
@@ -338,7 +338,7 @@ impl EditPredictionContextView {
                             IconButton::new("go-forward", IconName::ChevronRight)
                                 .disabled(self.current_ix + 1 == self.runs.len())
                                 .tooltip(ui::Tooltip::for_action_title(
-                                    "Go to next run",
+                                    "转到下一次运行",
                                     &EditPredictionContextGoBack,
                                 ))
                                 .on_click(cx.listener(|this, _, window, cx| {
@@ -369,7 +369,7 @@ impl Item for EditPredictionContextView {
     type Event = ();
 
     fn tab_content_text(&self, _detail: usize, _cx: &App) -> SharedString {
-        "Edit Prediction Context".into()
+        "编辑预测上下文".into()
     }
 
     fn buffer_kind(&self, _cx: &App) -> workspace::item::ItemBufferKind {
@@ -406,7 +406,7 @@ impl gpui::Render for EditPredictionContextView {
                             .size_full()
                             .justify_center()
                             .items_center()
-                            .child("No retrieval runs yet"),
+                            .child("暂无检索运行"),
                     )
                 } else {
                     this.child(self.runs[self.current_ix].editor.clone())

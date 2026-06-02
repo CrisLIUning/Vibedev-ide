@@ -250,7 +250,7 @@ fn open_skill_file(
                 .parent()
                 .and_then(|p| p.file_name())
                 .map(|n| n.to_string_lossy().into_owned())
-                .unwrap_or_else(|| "built-in skill".into());
+                .unwrap_or_else(|| "内置技能".into());
             editor
                 .buffer()
                 .update(cx, |buffer, cx| buffer.set_title(title, cx));

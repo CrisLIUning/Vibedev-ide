@@ -18,7 +18,7 @@ use rodio::{
 const MAX_CHANNELS: usize = 8;
 
 #[derive(Debug, thiserror::Error)]
-#[error("Replay duration is too short must be >= 100ms")]
+#[error("回放时长过短,必须 >= 100ms")]
 pub struct ReplayDurationTooShort;
 
 // These all require constant sources (so the span is infinitely long)
@@ -204,7 +204,7 @@ impl<S: Source> ToMono<S> {
             .channels()
             .min(const { NonZero::<u16>::new(MAX_CHANNELS as u16).unwrap() });
         if channels < input.channels() {
-            warn!("Ignoring input channels {}..", channels.get());
+            warn!("忽略输入通道 {}..", channels.get());
         }
 
         Self {

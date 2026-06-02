@@ -161,7 +161,7 @@ fn possibly_open_target(
             .await;
         if opened_items.len() != 1 {
             debug_panic!(
-                "Received {} items for one path {path_to_open:?}",
+                "为单个路径 {path_to_open:?} 收到了 {} 个项目",
                 opened_items.len(),
             );
         }
@@ -343,24 +343,24 @@ mod tests {
         let Some(hover_target) = hover_target else {
             assert!(
                 hover_target.is_some(),
-                "Hover target should not be `None` at {file}:{line}:"
+                "悬停目标不应为 `None`,位于 {file}:{line}:"
             );
             return;
         };
 
         assert_eq!(
             hover_target.tooltip, tooltip,
-            "Tooltip mismatch at {file}:{line}:"
+            "工具提示不匹配,位于 {file}:{line}:"
         );
         assert_eq!(
             hover_target.hovered_word.word, maybe_path,
-            "Hovered word mismatch at {file}:{line}:"
+            "悬停单词不匹配,位于 {file}:{line}:"
         );
 
         let Some(open_target) = open_target else {
             assert!(
                 open_target.is_some(),
-                "Open target should not be `None` at {file}:{line}:"
+                "打开目标不应为 `None`,位于 {file}:{line}:"
             );
             return;
         };
@@ -368,7 +368,7 @@ mod tests {
         assert_eq!(
             open_target.path().path,
             Path::new(tooltip),
-            "Open target path mismatch at {file}:{line}:"
+            "打开目标路径不匹配,位于 {file}:{line}:"
         );
 
         if background_fs_checks == BackgroundFsChecks::Disabled
@@ -380,7 +380,7 @@ mod tests {
         assert_eq!(
             open_target.found_by(),
             open_target_found_by,
-            "Open target found by mismatch at {file}:{line}:"
+            "打开目标发现方式不匹配,位于 {file}:{line}:"
         );
     }
 

@@ -79,6 +79,7 @@ impl State {
     fn authenticate(&mut self, cx: &mut Context<Self>) -> Task<Result<(), AuthenticateError>> {
         let credentials_provider = self.credentials_provider.clone();
         let api_url = AnthropicLanguageModelProvider::api_url(cx);
+
         let task = self.api_key_state.load_if_needed(
             api_url,
             |this| &mut this.api_key_state,
@@ -101,7 +102,7 @@ impl State {
         let api_url = AnthropicLanguageModelProvider::api_url(cx);
         let Some(api_key) = self.api_key_state.key(&api_url) else {
             return Task::ready(Err(anyhow::anyhow!(
-                "cannot fetch Anthropic models without an API key"
+                "获取 Anthropic 模型需要 API 密钥"
             )));
         };
 
@@ -110,8 +111,22 @@ impl State {
                 anthropic::list_models(http_client.as_ref(), &api_url, api_key.as_ref()).await?;
 
             this.update(cx, |this, cx| {
-                this.fetched_models = models;
-                cx.notify();
+                // VIBEDEV(anthropic-storm): only signal a state change when the
+                // fetched model set actually changed. `authenticate()` restarts
+                // this fetch on EVERY call (`load_if_needed` resolves `Ok` even
+                // when the key was already loaded), so anything that
+                // re-authenticates a signed-in Anthropic provider — the BYOK
+                // model picker enumerating providers, an agent/thread
+                // (re)construction's `authenticate_all_language_model_providers`,
+                // a provider-settings UI re-render — would otherwise emit a
+                // `ProviderStateChanged(anthropic)` for an identical list,
+                // several times a second. That storm starved the debounced
+                // refresh in `agent_ui::conversation_view` and burned CPU.
+                // DeepSeek has no model fetch, which is why it never showed it.
+                if this.fetched_models != models {
+                    this.fetched_models = models;
+                    cx.notify();
+                }
             })
         })
     }
@@ -441,11 +456,11 @@ impl LanguageModel for AnthropicModel {
             .map(|e| {
                 let is_default = matches!(e, anthropic::Effort::High);
                 let (name, value) = match e {
-                    anthropic::Effort::Low => ("Low".into(), "low".into()),
-                    anthropic::Effort::Medium => ("Medium".into(), "medium".into()),
-                    anthropic::Effort::High => ("High".into(), "high".into()),
-                    anthropic::Effort::XHigh => ("XHigh".into(), "xhigh".into()),
-                    anthropic::Effort::Max => ("Max".into(), "max".into()),
+                    anthropic::Effort::Low => ("低".into(), "low".into()),
+                    anthropic::Effort::Medium => ("中".into(), "medium".into()),
+                    anthropic::Effort::High => ("高".into(), "high".into()),
+                    anthropic::Effort::XHigh => ("极高".into(), "xhigh".into()),
+                    anthropic::Effort::Max => ("最大".into(), "max".into()),
                 };
                 language_model::LanguageModelEffortLevel {
                     name,
@@ -592,43 +607,43 @@ impl Render for ConfigurationView {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let env_var_set = self.state.read(cx).api_key_state.is_from_env_var();
         let configured_card_label = if env_var_set {
-            format!("API key set in {API_KEY_ENV_VAR_NAME} environment variable")
+            format!("API 密钥已在 {API_KEY_ENV_VAR_NAME} 环境变量中设置")
         } else {
             let api_url = AnthropicLanguageModelProvider::api_url(cx);
             if api_url == ANTHROPIC_API_URL {
-                "API key configured".to_string()
+                "API 密钥已配置".to_string()
             } else {
-                format!("API key configured for {}", api_url)
+                format!("已为 {} 配置 API 密钥", api_url)
             }
         };
 
         if self.load_credentials_task.is_some() {
             div()
-                .child(Label::new("Loading credentials..."))
+                .child(Label::new("正在加载凭据..."))
                 .into_any_element()
         } else if self.should_render_editor(cx) {
             v_flex()
                 .size_full()
                 .on_action(cx.listener(Self::save_api_key))
-                .child(Label::new(format!("To use {}, you need to add an API key. Follow these steps:", match &self.target_agent {
-                    ConfigurationViewTargetAgent::ZedAgent => "Zed's agent with Anthropic".into(),
+                .child(Label::new(format!("要使用 {},您需要添加 API 密钥。请按照以下步骤操作:", match &self.target_agent {
+                    ConfigurationViewTargetAgent::ZedAgent => "VibeDev's agent with Anthropic".into(),
                     ConfigurationViewTargetAgent::Other(agent) => agent.clone(),
                 })))
                 .child(
                     List::new()
                         .child(
                             ListBulletItem::new("")
-                                .child(Label::new("Create one by visiting"))
-                                .child(ButtonLink::new("Anthropic's settings", "https://console.anthropic.com/settings/keys"))
+                                .child(Label::new("访问以下地址创建一个"))
+                                .child(ButtonLink::new("Anthropic 设置", "https://console.anthropic.com/settings/keys"))
                         )
                         .child(
-                            ListBulletItem::new("Paste your API key below and hit enter to start using the agent")
+                            ListBulletItem::new("在下方粘贴您的 API 密钥并按回车键以开始使用该代理")
                         )
                 )
                 .child(self.api_key_editor.clone())
                 .child(
                     Label::new(
-                        format!("You can also set the {API_KEY_ENV_VAR_NAME} environment variable and restart Zed."),
+                        format!("You can also set the {API_KEY_ENV_VAR_NAME} environment variable and restart VibeDev."),
                     )
                     .size(LabelSize::Small)
                     .color(Color::Muted)
@@ -641,10 +656,173 @@ impl Render for ConfigurationView {
                 .on_click(cx.listener(|this, _, window, cx| this.reset_api_key(window, cx)))
                 .when(env_var_set, |this| {
                     this.tooltip_label(format!(
-                    "To reset your API key, unset the {API_KEY_ENV_VAR_NAME} environment variable."
+                    "要重置 API 密钥,请取消设置 {API_KEY_ENV_VAR_NAME} 环境变量。"
                 ))
                 })
                 .into_any_element()
         }
+    }
+}
+
+#[cfg(test)]
+mod storm_tests {
+    //! Regression coverage for the `ProviderStateChanged(anthropic)` event storm.
+    //!
+    //! The Anthropic provider re-fetches its model list on EVERY `authenticate()`
+    //! call (`authenticate` -> `restart_fetch_models_task`, and `load_if_needed`
+    //! resolves `Ok` even when the key was already loaded). Anything that
+    //! re-authenticates a signed-in Anthropic provider — e.g. the BYOK model
+    //! picker enumerating providers, an agent/thread (re)construction calling
+    //! `authenticate_all_language_model_providers`, or a provider-settings UI
+    //! re-render — therefore drives a fresh fetch. If that fetch unconditionally
+    //! `cx.notify()`s, an *identical* model list still emits a state change,
+    //! several times a second, starving debounced consumers
+    //! (`agent_ui::conversation_view`) and burning CPU. DeepSeek has no model
+    //! fetch, which is why the same churn never showed up there.
+    //!
+    //! This test reproduces the storm deterministically (no network, no
+    //! keychain, no GUI) and pins the fix: re-authenticating must NOT emit a
+    //! state change when the fetched model list is unchanged.
+
+    use super::{AnthropicLanguageModelProvider, State};
+    use anyhow::Result;
+    use credentials_provider::CredentialsProvider;
+    use gpui::{AsyncApp, Entity, TestAppContext};
+    use http_client::{AsyncBody, FakeHttpClient, HttpClient, Response};
+    use parking_lot::Mutex;
+    use settings::SettingsStore;
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    /// In-memory keychain stand-in: `set_api_key` writes here and the loaded
+    /// status is set directly, so the provider becomes authenticated without
+    /// touching the OS credential store.
+    struct FakeCredentialsProvider {
+        storage: Mutex<Option<(String, Vec<u8>)>>,
+    }
+
+    impl FakeCredentialsProvider {
+        fn new() -> Self {
+            Self {
+                storage: Mutex::new(None),
+            }
+        }
+    }
+
+    impl CredentialsProvider for FakeCredentialsProvider {
+        fn read_credentials<'a>(
+            &'a self,
+            _url: &'a str,
+            _cx: &'a AsyncApp,
+        ) -> Pin<Box<dyn Future<Output = Result<Option<(String, Vec<u8>)>>> + 'a>> {
+            Box::pin(async { Ok(self.storage.lock().clone()) })
+        }
+
+        fn write_credentials<'a>(
+            &'a self,
+            _url: &'a str,
+            username: &'a str,
+            password: &'a [u8],
+            _cx: &'a AsyncApp,
+        ) -> Pin<Box<dyn Future<Output = Result<()>> + 'a>> {
+            self.storage
+                .lock()
+                .replace((username.to_string(), password.to_vec()));
+            Box::pin(async { Ok(()) })
+        }
+
+        fn delete_credentials<'a>(
+            &'a self,
+            _url: &'a str,
+            _cx: &'a AsyncApp,
+        ) -> Pin<Box<dyn Future<Output = Result<()>> + 'a>> {
+            *self.storage.lock() = None;
+            Box::pin(async { Ok(()) })
+        }
+    }
+
+    /// A fixed, single-model `/v1/models` listing. The fake endpoint returns this
+    /// verbatim on every call, so the provider's model set never actually
+    /// changes after the first fetch.
+    fn models_response() -> String {
+        serde_json::json!({
+            "data": [
+                {
+                    "id": "claude-storm-test",
+                    "display_name": "Claude Storm Test",
+                    "max_input_tokens": 200_000,
+                    "max_tokens": 64_000
+                }
+            ]
+        })
+        .to_string()
+    }
+
+    #[gpui::test]
+    async fn reauthenticate_does_not_emit_state_change_when_models_unchanged(
+        cx: &mut TestAppContext,
+    ) {
+        cx.update(|cx| {
+            let store = SettingsStore::test(cx);
+            cx.set_global(store);
+        });
+
+        let http: Arc<dyn HttpClient> = FakeHttpClient::create(|_request| async {
+            Ok(Response::builder()
+                .status(200)
+                .body(AsyncBody::from(models_response()))?)
+        });
+        let credentials: Arc<dyn CredentialsProvider> = Arc::new(FakeCredentialsProvider::new());
+
+        let provider =
+            cx.update(|cx| AnthropicLanguageModelProvider::new(http.clone(), credentials, cx));
+        let state: Entity<State> = provider.state.clone();
+
+        // Count every state notification — the registry emits exactly one
+        // `ProviderStateChanged(anthropic)` per `State` notify (see
+        // `language_model::registry::register_provider`), so this is a faithful
+        // proxy for the storm.
+        let notifications = Arc::new(AtomicUsize::new(0));
+        let _subscription = cx.update(|cx| {
+            let notifications = notifications.clone();
+            cx.observe(&state, move |_, _| {
+                notifications.fetch_add(1, Ordering::SeqCst);
+            })
+        });
+
+        // Authenticate by setting a key: stores the (fake) credential and kicks
+        // off the first model fetch. A first fetch legitimately changes the
+        // model set, so it is allowed to notify.
+        cx.update(|cx| state.update(cx, |state, cx| state.set_api_key(Some("test-key".into()), cx)))
+            .await
+            .expect("set_api_key should succeed against the fake credential store");
+        cx.run_until_parked();
+
+        let baseline = notifications.load(Ordering::SeqCst);
+        assert!(
+            baseline >= 1,
+            "setting a key and fetching the model list should notify at least once (got {baseline})"
+        );
+
+        // Re-authenticate repeatedly. Every fetch returns the SAME model list,
+        // so the provider's observable state never changes — and it must not
+        // emit any further state-change notifications.
+        const REAUTH_ROUNDS: usize = 5;
+        for _ in 0..REAUTH_ROUNDS {
+            let _ = cx
+                .update(|cx| state.update(cx, |state, cx| state.authenticate(cx)))
+                .await;
+            cx.run_until_parked();
+        }
+
+        let spurious = notifications.load(Ordering::SeqCst) - baseline;
+        assert_eq!(
+            spurious, 0,
+            "re-authenticating must not emit a state change when the fetched model list is \
+             unchanged; got {spurious} spurious ProviderStateChanged notifications across \
+             {REAUTH_ROUNDS} re-auth rounds (this is the anthropic event storm)"
+        );
     }
 }

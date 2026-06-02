@@ -69,7 +69,7 @@ pub trait ProtoClient: Send + Sync {
     ) -> BoxFuture<'static, Result<BoxStream<'static, Result<Envelope>>>> {
         async move {
             anyhow::bail!(
-                "stream requests are not supported for {request_type}: {:?}",
+                "不支持 {request_type} 的流式请求: {:?}",
                 envelope.payload
             )
         }

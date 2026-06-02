@@ -71,7 +71,7 @@ impl LinuxClient for HeadlessClient {
     {
         let (tx, rx) = futures::channel::oneshot::channel();
         tx.send(Err(anyhow::anyhow!(
-            "Headless mode does not support screen capture."
+            "无头模式不支持屏幕捕获。"
         )))
         .ok();
         rx
@@ -90,7 +90,7 @@ impl LinuxClient for HeadlessClient {
         _handle: AnyWindowHandle,
         _params: WindowParams,
     ) -> anyhow::Result<Box<dyn PlatformWindow>> {
-        anyhow::bail!("neither DISPLAY nor WAYLAND_DISPLAY is set. You can run in headless mode");
+        anyhow::bail!("未设置 DISPLAY 或 WAYLAND_DISPLAY。您可以在无头模式下运行");
     }
 
     fn compositor_name(&self) -> &'static str {
@@ -121,7 +121,7 @@ impl LinuxClient for HeadlessClient {
             .borrow_mut()
             .event_loop
             .take()
-            .expect("App is already running");
+            .expect("应用程序已在运行");
 
         event_loop.run(None, &mut self.clone(), |_| {}).log_err();
     }

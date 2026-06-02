@@ -150,7 +150,7 @@ impl RenderOnce for SplitEditorView {
 
         assert!(
             splittable_editor.lhs_editor().is_some(),
-            "`SplitEditorView` requires `SplittableEditor` to be in split mode"
+            "`SplitEditorView` 要求 `SplittableEditor` 处于拆分模式"
         );
 
         let lhs_editor = splittable_editor.lhs_editor().unwrap().clone();

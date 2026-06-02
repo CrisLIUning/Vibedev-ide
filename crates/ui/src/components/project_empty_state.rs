@@ -47,7 +47,7 @@ impl ProjectEmptyState {
 impl RenderOnce for ProjectEmptyState {
     fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
         let id = format!("empty-state-{}", self.label);
-        let label = format!("Choose one of the options below to use the {}", self.label);
+        let label = format!("选择以下选项之一来使用 {}", self.label);
 
         v_flex()
             .id(id)
@@ -68,7 +68,7 @@ impl RenderOnce for ProjectEmptyState {
                             .child(Label::new(label).size(LabelSize::Small).color(Color::Muted)),
                     )
                     .child(
-                        Button::new("open_project", "Open Project")
+                        Button::new("open_project", "打开项目")
                             .full_width()
                             .key_binding(self.open_project_key_binding)
                             .when_some(self.on_open_project, |button, handler| {
@@ -83,7 +83,7 @@ impl RenderOnce for ProjectEmptyState {
                             .child(Divider::horizontal().color(DividerColor::Border)),
                     )
                     .child(
-                        Button::new("clone_repo", "Clone Repository")
+                        Button::new("clone_repo", "克隆仓库")
                             .full_width()
                             .when_some(self.on_clone_repo, |button, handler| {
                                 button.on_click(handler)

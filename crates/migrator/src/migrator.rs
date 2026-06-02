@@ -56,7 +56,7 @@ fn migrate(text: &str, patterns: MigrationPatterns, query: &Query) -> Result<Opt
         }
         if new_text == text {
             log::error!(
-                "Edits computed for configuration migration do not cause a change: {:?}",
+                "为配置迁移计算的编辑未产生变更: {:?}",
                 edits
             );
             Ok(None)
@@ -257,6 +257,8 @@ pub fn migrate_settings(text: &str) -> Result<Option<String>> {
             migrations::m_2026_05_04::SETTINGS_PATTERNS,
             &SETTINGS_QUERY_2026_05_04,
         ),
+        // VIBEDEV: must run last — heals stale registry-typed VibeDev override.
+        MigrationType::Json(migrations::m_2026_05_29::heal_vibedev_registry_override),
     ];
     run_migrations(text, migrations)
 }

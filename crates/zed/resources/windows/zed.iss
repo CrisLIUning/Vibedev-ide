@@ -2,10 +2,11 @@
 AppId={#AppId}
 AppName={#AppName}
 AppVerName={#AppDisplayName}
-AppPublisher=Zed Industries
-AppPublisherURL=https://www.zed.dev/
-AppSupportURL=https://www.zed.dev/
-AppUpdatesURL=https://www.zed.dev/
+; VIBEDEV: publisher + links (support -> our repo issues; was Zed Industries / zed.dev).
+AppPublisher=VibeDev
+AppPublisherURL=https://aitoken.bigopen.cn/
+AppSupportURL=https://github.com/CrisLIUning/zed-vibedev/issues
+AppUpdatesURL=https://github.com/CrisLIUning/zed-vibedev/releases
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
 DisableReadyPage=yes
@@ -42,8 +43,15 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 
 [Languages]
-Name: "english"; MessagesFile: "compiler:Default.isl,{#ResourcesDir}\messages\en.isl"; LicenseFile: "script\terms\terms.rtf"
-Name: "simplifiedChinese"; MessagesFile: "{#ResourcesDir}\messages\Default.zh-cn.isl,{#ResourcesDir}\messages\zh-cn.isl"; LicenseFile: "script\terms\terms.rtf"
+; VIBEDEV: LicenseFile removed from both languages. It pointed at
+; script/terms/terms.rtf — a 50KB RTF of Zed Industries' Terms of Service
+; (Zed Cloud, zed.dev/pricing, Zed Pro etc.) — which the installer was
+; showing to every VibeDev user during the install wizard. We don't ship
+; that legal text on the VibeDev product and the wizard now skips the
+; license-acceptance page entirely. When we have our own VibeDev ToS
+; written we'll wire it back in here as `LicenseFile: ...\vibedev-terms.rtf`.
+Name: "english"; MessagesFile: "compiler:Default.isl,{#ResourcesDir}\messages\en.isl"
+Name: "simplifiedChinese"; MessagesFile: "{#ResourcesDir}\messages\Default.zh-cn.isl,{#ResourcesDir}\messages\zh-cn.isl"
 
 [UninstallDelete]
 ; Delete logs
@@ -64,8 +72,20 @@ Name: "addtopath"; Description: "{cm:AddToPath}"; GroupDescription: "{cm:Other}"
 [Dirs]
 Name: "{app}"; AfterInstall: DisableAppDirInheritance
 
+[InstallDelete]
+; VIBEDEV: the bundled ACP agent moved from a split layout (bun.exe +
+; cli-bun.js + chunk-*.js) to a single self-contained binary
+; (vibedev-agent.exe). Inno's "ignoreversion" overwrites/adds but never
+; removes files dropped from the source, so upgrading an old install would
+; leave ~400 MB of orphaned split-layout debris beside the new binary. Wipe
+; the agent dir up front; [Files] below immediately repopulates it with the
+; current single-binary layout. (User data lives in %USERPROFILE%\.vibedev,
+; never here; an OTA-staged "agent.new" is a sibling dir, left untouched.)
+Type: filesandordirs; Name: "{code:GetInstallDir}\agent"
+
 [Files]
-Source: "{#ResourcesDir}\Zed.exe"; DestDir: "{code:GetInstallDir}"; Flags: ignoreversion
+; VIBEDEV: staging exe is VibeDev.exe (bundle-windows.ps1 stages it; matches {#AppExeName}).
+Source: "{#ResourcesDir}\VibeDev.exe"; DestDir: "{code:GetInstallDir}"; Flags: ignoreversion
 Source: "{#ResourcesDir}\bin\*"; DestDir: "{code:GetInstallDir}\bin"; Flags: ignoreversion
 Source: "{#ResourcesDir}\tools\*"; DestDir: "{app}\tools"; Flags: ignoreversion
 Source: "{#ResourcesDir}\appx\*"; DestDir: "{app}\appx";  BeforeInstall: RemoveAppxPackage; AfterInstall: AddAppxPackage; Flags: ignoreversion; Check: IsWindows11OrLater
@@ -79,6 +99,16 @@ Source: "{#ResourcesDir}\x64\OpenConsole.exe"; DestDir: "{code:GetInstallDir}\x6
 Source: "{#ResourcesDir}\arm64\OpenConsole.exe"; DestDir: "{code:GetInstallDir}\arm64"; Flags: ignoreversion
 #endif
 Source: "{#ResourcesDir}\conpty.dll"; DestDir: "{code:GetInstallDir}"; Flags: ignoreversion
+; VIBEDEV: remote_server is NOT bundled in the installer anymore — it is
+; DOWNLOADED on SSH connect (and reused by future app auto-update) from
+; VibeDev's own server. See crates/remote ensure_server_binary +
+; crates/auto_update get_release_asset (VIBEDEV_RELEASES_BASE).
+; VIBEDEV: bundled ACP agent (single-binary vibedev-agent.exe + VERSION + vendor/).
+; Goes next to VibeDev.exe so settings.rs `${ZED_BIN_DIR}/agent/...` resolves.
+; recursesubdirs preserves vendor/{audio-capture,ripgrep}/ subtree.
+#ifexist ResourcesDir + "\agent\vibedev-agent.exe"
+Source: "{#ResourcesDir}\agent\*"; DestDir: "{code:GetInstallDir}\agent"; Flags: ignoreversion recursesubdirs createallsubdirs
+#endif
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}.exe"; AppUserModelID: "{#AppUserId}"
@@ -1256,10 +1286,26 @@ Root: HKCU; Subkey: "Software\Classes\Drive\shell\{#RegValueName}\command"; Valu
 Root: HKCU; Subkey: "Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{code:AddToPath|{app}\bin}"; Tasks: addtopath; Check: NeedsAddToPath(ExpandConstant('{app}\bin'))
 
 ; URI Scheme
+; VIBEDEV: scheme name "zed" is an internal technical id (zed-cli:// / zed-dock-action://
+; handshake in windows_only_instance.rs) — kept. Only the handler exe path is rebranded.
 Root: HKCU; Subkey: "Software\Classes\zed"; ValueType: "string"; ValueData: "URL:zed Protocol"; Flags: uninsdeletekey
 Root: HKCU; Subkey: "Software\Classes\zed"; ValueType: "string"; ValueName: "URL Protocol"; ValueData: ""
-Root: HKCU; Subkey: "Software\Classes\zed\DefaultIcon"; ValueType: "string"; ValueData: "{app}\Zed.exe,1"
-Root: HKCU; Subkey: "Software\Classes\zed\shell\open\command"; ValueType: "string"; ValueData: """{app}\Zed.exe"" ""%1"""
+Root: HKCU; Subkey: "Software\Classes\zed\DefaultIcon"; ValueType: "string"; ValueData: "{app}\VibeDev.exe,1"
+Root: HKCU; Subkey: "Software\Classes\zed\shell\open\command"; ValueType: "string"; ValueData: """{app}\VibeDev.exe"" ""%1"""
+
+; VIBEDEV: vibedev:// custom URL scheme. After the user logs in on
+; aitoken.bigopen.cn/vibedev-link the browser is redirected to
+; vibedev://auth-callback?payload=<base64>; Windows shell looks up this HKCU
+; entry, launches VibeDev.exe with the URL as argv[1], and the single-instance
+; named-pipe forwards it into the already-running instance (see
+; crates/zed/src/zed/windows_only_instance.rs). Per-user install — no admin.
+; The macOS path uses Info.plist + register_url_scheme; on Windows
+; gpui_windows::register_url_scheme is a stub, so we register here instead.
+; uninsdeletekey cleans the entry on uninstall.
+Root: HKCU; Subkey: "Software\Classes\vibedev"; ValueType: string; ValueData: "URL:VibeDev Protocol"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\vibedev"; ValueName: "URL Protocol"; ValueType: string; ValueData: ""
+Root: HKCU; Subkey: "Software\Classes\vibedev\DefaultIcon"; ValueType: string; ValueData: """{app}\{#AppExeName}.exe"",0"
+Root: HKCU; Subkey: "Software\Classes\vibedev\shell\open\command"; ValueType: string; ValueData: """{app}\{#AppExeName}.exe"" ""%1"""
 
 [Code]
 function WizardNotSilent(): Boolean;

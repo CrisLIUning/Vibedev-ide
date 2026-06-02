@@ -55,10 +55,10 @@ impl CsvPreviewView {
         )
         .tooltip(Tooltip::text(match self.engine.applied_sorting {
             Some(ordering) if ordering.col_idx == col_idx => match ordering.direction {
-                SortDirection::Asc => "Sorted A-Z. Click to sort Z-A",
-                SortDirection::Desc => "Sorted Z-A. Click to disable sorting",
+                SortDirection::Asc => "已按 A-Z 排序。点击按 Z-A 排序",
+                SortDirection::Desc => "已按 Z-A 排序。点击取消排序",
             },
-            _ => "Not sorted. Click to sort A-Z",
+            _ => "未排序。点击按 A-Z 排序",
         }))
         .on_click(cx.listener(move |this, _event, _window, cx| {
             let new_sorting = match this.engine.applied_sorting {

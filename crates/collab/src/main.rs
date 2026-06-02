@@ -33,7 +33,7 @@ use util::ResultExt as _;
 async fn main() -> Result<()> {
     if let Err(error) = env::load_dotenv() {
         eprintln!(
-            "error loading .env.toml (this is expected in production): {}",
+            "加载 .env.toml 出错(这在生产环境中是预期的): {}",
             error
         );
     }
@@ -49,7 +49,7 @@ async fn main() -> Result<()> {
                 Some("api") => ServiceMode::Api,
                 Some("all") => ServiceMode::All,
                 _ => {
-                    return Err(anyhow!("usage: collab <version | serve <api|collab|all>>"))?;
+                    return Err(anyhow!("用法: collab <version | serve <api|collab|all>>"))?;
                 }
             };
 
@@ -126,7 +126,7 @@ async fn main() -> Result<()> {
                             tracing::info!(
                                 duration_ms,
                                 status = response.status().as_u16(),
-                                "finished processing request"
+                                "请求处理完成"
                             );
                         },
                     ),
@@ -176,7 +176,7 @@ async fn main() -> Result<()> {
         }
         _ => {
             Err(anyhow!(
-                "usage: collab <version | migrate | seed | serve <api|collab|llm|all>>"
+                "用法: collab <version | migrate | seed | serve <api|collab|llm|all>>"
             ))?;
         }
     }
@@ -248,6 +248,6 @@ fn init_panic_hook() {
         let location = panic_info
             .location()
             .map(|loc| format!("{}:{}", loc.file(), loc.line()));
-        tracing::error!(panic = true, ?location, %panic_message, %backtrace, "Server Panic");
+        tracing::error!(panic = true, ?location, %panic_message, %backtrace, "服务器崩溃");
     }));
 }

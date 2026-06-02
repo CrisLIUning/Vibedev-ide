@@ -233,7 +233,7 @@ impl Component for DropdownMenu {
 
     fn description() -> Option<&'static str> {
         Some(
-            "A dropdown menu displays a list of actions or options. A dropdown menu is always activated by clicking a trigger (or via a keybinding).",
+            "下拉菜单显示操作或选项列表。下拉菜单始终通过点击触发器(或通过键位映射)激活。",
         )
     }
 
@@ -248,7 +248,7 @@ impl Component for DropdownMenu {
 
         let menu_with_submenu = ContextMenu::build(window, cx, |this, _, _| {
             this.entry("Toggle All Docks", None, |_, _| {})
-                .submenu("Editor Layout", |menu, _, _| {
+                .submenu("编辑器布局", |menu, _, _| {
                     menu.entry("Split Up", None, |_, _| {})
                         .entry("Split Down", None, |_, _| {})
                         .separator()
@@ -258,11 +258,11 @@ impl Component for DropdownMenu {
                 .entry("Project Panel", None, |_, _| {})
                 .entry("Outline Panel", None, |_, _| {})
                 .separator()
-                .submenu("Autofill", |menu, _, _| {
+                .submenu("自动填充", |menu, _, _| {
                     menu.entry("Contact…", None, |_, _| {})
                         .entry("Passwords…", None, |_, _| {})
                 })
-                .submenu_with_icon("Predict", IconName::ZedPredict, |menu, _, _| {
+                .submenu_with_icon("预测", IconName::ZedPredict, |menu, _, _| {
                     menu.entry("Everywhere", None, |_, _| {})
                         .entry("At Cursor", None, |_, _| {})
                         .entry("Over Here", None, |_, _| {})
@@ -275,18 +275,18 @@ impl Component for DropdownMenu {
                 .gap_6()
                 .children(vec![
                     example_group_with_title(
-                        "Basic Usage",
+                        "基本用法",
                         vec![
                             single_example(
-                                "Default",
-                                DropdownMenu::new("default", "Select an option", menu.clone())
+                                "默认",
+                                DropdownMenu::new("default", "选择一个选项", menu.clone())
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Full Width",
+                                "全宽",
                                 DropdownMenu::new(
                                     "full-width",
-                                    "Full Width Dropdown",
+                                    "全宽下拉菜单",
                                     menu.clone(),
                                 )
                                 .full_width(true)
@@ -295,35 +295,35 @@ impl Component for DropdownMenu {
                         ],
                     ),
                     example_group_with_title(
-                        "Submenus",
+                        "子菜单",
                         vec![single_example(
-                            "With Submenus",
-                            DropdownMenu::new("submenu", "Submenu", menu_with_submenu)
+                            "带子菜单",
+                            DropdownMenu::new("submenu", "子菜单", menu_with_submenu)
                                 .into_any_element(),
                         )],
                     ),
                     example_group_with_title(
-                        "Styles",
+                        "样式",
                         vec![
                             single_example(
-                                "Outlined",
-                                DropdownMenu::new("outlined", "Outlined Dropdown", menu.clone())
+                                "轮廓",
+                                DropdownMenu::new("outlined", "轮廓下拉菜单", menu.clone())
                                     .style(DropdownStyle::Outlined)
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Ghost",
-                                DropdownMenu::new("ghost", "Ghost Dropdown", menu.clone())
+                                "幽灵",
+                                DropdownMenu::new("ghost", "幽灵下拉菜单", menu.clone())
                                     .style(DropdownStyle::Ghost)
                                     .into_any_element(),
                             ),
                         ],
                     ),
                     example_group_with_title(
-                        "States",
+                        "状态",
                         vec![single_example(
-                            "Disabled",
-                            DropdownMenu::new("disabled", "Disabled Dropdown", menu)
+                            "已禁用",
+                            DropdownMenu::new("disabled", "禁用下拉菜单", menu)
                                 .disabled(true)
                                 .into_any_element(),
                         )],

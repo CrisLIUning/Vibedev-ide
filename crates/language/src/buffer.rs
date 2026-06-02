@@ -1583,7 +1583,7 @@ impl Buffer {
 
             anyhow::ensure!(
                 analyze_byte_content(&bytes) != ByteContent::Binary,
-                "Binary files are not supported"
+                "不支持二进制文件"
             );
 
             let is_unicode = target_encoding == encoding_rs::UTF_8
@@ -5621,7 +5621,7 @@ impl<'a> BufferChunks<'a> {
                 // Seeking such BufferChunks is not supported.
                 debug_assert!(
                     false,
-                    "Attempted to seek on a language-aware buffer iterator without associated buffer snapshot"
+                    "尝试在没有关联缓冲区快照的情况下查找语言感知缓冲区迭代器"
                 );
             }
 

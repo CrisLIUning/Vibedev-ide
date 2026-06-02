@@ -143,7 +143,7 @@ pub trait Platform: 'static {
         let (sources_tx, sources_rx) = oneshot::channel();
         sources_tx
             .send(Err(anyhow::anyhow!(
-                "gpui was compiled without the screen-capture feature"
+                "gpui 编译时未包含屏幕捕获功能"
             )))
             .ok();
         sources_rx
@@ -532,7 +532,7 @@ impl WindowButtonLayout {
             && layout.right.iter().all(Option::is_none)
         {
             bail!(
-                "button layout string {:?} contains no valid buttons (unrecognized: {})",
+                "按钮布局字符串 {:?} 不包含有效按钮 (无法识别: {})",
                 layout_string,
                 unrecognized.join(", ")
             );
@@ -2126,13 +2126,13 @@ impl Image {
                             frames.push(frame);
                         }
                         Err(err) => {
-                            log::debug!("Skipping GIF frame due to decode error: {err}");
+                            log::debug!("跳过 GIF 帧, 解码错误: {err}");
                         }
                     }
                 }
 
                 if frames.is_empty() {
-                    anyhow::bail!("GIF could not be decoded: all frames failed");
+                    anyhow::bail!("GIF 无法解码: 所有帧均失败");
                 }
 
                 frames
@@ -2407,7 +2407,7 @@ mod tests {
 
         for case in cases {
             let layout = WindowButtonLayout::parse(case).unwrap();
-            assert_eq!(layout.format(), case, "Round-trip failed for: {}", case);
+            assert_eq!(layout.format(), case, "往返测试失败: {}", case);
         }
     }
 

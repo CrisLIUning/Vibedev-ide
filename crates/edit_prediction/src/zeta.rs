@@ -156,7 +156,7 @@ pub fn request_prediction_with_zeta(
                     .ok();
             }
 
-            log::trace!("Sending edit prediction request");
+            log::trace!("正在发送编辑预测请求");
 
             let Some((request_id, output, model_version, usage)) =
                 (if let Some(custom_settings) = &custom_server_settings {
@@ -309,7 +309,7 @@ pub fn request_prediction_with_zeta(
                 return Ok((None, None));
             };
 
-            log::trace!("Got edit prediction response");
+            log::trace!("已收到编辑预测响应");
 
             let Some(ParsedOutput {
                 new_editable_region: mut output_text,
@@ -507,7 +507,7 @@ fn handle_api_response<T>(
                         move |cx| {
                             cx.new(|cx| {
                                 ErrorMessagePrompt::new(error_message.clone(), cx)
-                                    .with_link_button("Update Zed", "https://zed.dev/releases")
+                                    .with_link_button("更新 VibeDev", "https://zed.dev/releases")
                             })
                         },
                     );

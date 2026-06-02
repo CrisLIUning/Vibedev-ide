@@ -2,10 +2,10 @@ use settings::SemanticTokenRules;
 
 pub(crate) fn semantic_token_rules() -> SemanticTokenRules {
     let content = grammars::get_file("cpp/semantic_token_rules.json")
-        .expect("missing cpp/semantic_token_rules.json");
-    let json = std::str::from_utf8(&content.data).expect("invalid utf-8 in semantic_token_rules");
+        .expect("缺少 cpp/semantic_token_rules.json");
+    let json = std::str::from_utf8(&content.data).expect("semantic_token_rules 中包含无效的 UTF-8 字符");
     settings::parse_json_with_comments::<SemanticTokenRules>(json)
-        .expect("failed to parse cpp semantic_token_rules.json")
+        .expect("解析 cpp semantic_token_rules.json 失败")
 }
 
 #[cfg(test)]
@@ -59,7 +59,7 @@ mod tests {
                 };
                 "#
                 .unindent(),
-                "members after access specifiers should be indented one level deeper than the specifier"
+                "访问说明符后的成员应比说明符多缩进一级"
             );
 
             buffer
@@ -111,7 +111,7 @@ mod tests {
                 };
                 "#
                 .unindent(),
-                "members after access specifiers should be indented one level deeper than the specifier"
+                "访问说明符后的成员应比说明符多缩进一级"
             );
 
             buffer
@@ -171,7 +171,7 @@ mod tests {
                 };
                 "#
                 .unindent(),
-                "nested class access specifiers should indent independently at each nesting level"
+                "嵌套类的访问说明符应在各自嵌套层级独立缩进"
             );
 
             buffer
@@ -221,7 +221,7 @@ mod tests {
                 };
                 "#
                 .unindent(),
-                "consecutive access specifiers with no members between them should all align at class level"
+                "连续的访问说明符(之间无成员)应在类级别对齐"
             );
 
             buffer
@@ -273,7 +273,7 @@ mod tests {
                 };
                 "#
                 .unindent(),
-                "access specifiers should be indented one level inside class braces"
+                "访问说明符应在类括号内缩进一级"
             );
 
             buffer
@@ -335,7 +335,7 @@ mod tests {
                 };
                 "#
                 .unindent(),
-                "method bodies inside access specifier sections should compose brace and specifier indent"
+                "访问说明符区域内的方法体应组合大括号和说明符的缩进效果"
             );
 
             buffer
@@ -365,7 +365,7 @@ mod tests {
             assert_eq!(
                 buffer.text(),
                 "int main() {\n  \n}",
-                "content inside braces should be indented"
+                "大括号内的内容应该缩进"
             );
 
             buffer
@@ -411,7 +411,7 @@ mod tests {
                 }
                 "#
                 .unindent(),
-                "body of if-statement without braces should be indented"
+                "不带大括号的 if 语句体应该缩进"
             );
 
             let ix = buffer.len() - 4;
@@ -426,7 +426,7 @@ mod tests {
                 }
                 "#
                 .unindent(),
-                "field expression (.c) should be indented further than the statement body"
+                "字段表达式 (.c) 的缩进应该比语句体更深"
             );
 
             buffer.edit([(0..buffer.len(), "")], Some(AutoindentMode::EachLine), cx);
@@ -453,7 +453,7 @@ mod tests {
                 }
                 "#
                 .unindent(),
-                "single-line if/else without braces should align at the same level"
+                "不带大括号的单行 if/else 应该在同一层级对齐"
             );
 
             buffer.edit([(0..buffer.len(), "")], Some(AutoindentMode::EachLine), cx);
@@ -484,7 +484,7 @@ mod tests {
                 }
                 "#
                 .unindent(),
-                "multi-line if/else without braces should indent statement bodies"
+                "不带大括号的多行 if/else 应该缩进语句体"
             );
 
             buffer.edit([(0..buffer.len(), "")], Some(AutoindentMode::EachLine), cx);
@@ -513,7 +513,7 @@ mod tests {
                 }
                 "#
                 .unindent(),
-                "nested if statements without braces should indent properly"
+                "不带大括号的嵌套 if 语句应该正确缩进"
             );
 
             buffer.edit([(0..buffer.len(), "")], Some(AutoindentMode::EachLine), cx);
@@ -548,7 +548,7 @@ mod tests {
                 }
                 "#
                 .unindent(),
-                "else-if chains should align all conditions at same level with indented bodies"
+                "else-if 链应该将所有条件在同一层级对齐,并缩进语句体"
             );
 
             buffer.edit([(0..buffer.len(), "")], Some(AutoindentMode::EachLine), cx);
@@ -579,7 +579,7 @@ mod tests {
                 }
                 "#
                 .unindent(),
-                "mixed braces should indent properly"
+                "混合使用大括号时应该正确缩进"
             );
 
             buffer

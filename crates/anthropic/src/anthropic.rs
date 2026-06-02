@@ -237,29 +237,29 @@ pub async fn list_models(
         .header("X-Api-Key", api_key.trim())
         .header("Accept", "application/json")
         .body(AsyncBody::default())
-        .context("failed to build Anthropic models list request")?;
+        .context("构建 Anthropic 模型列表请求失败")?;
 
     let mut response = client
         .send(request)
         .await
-        .context("failed to send Anthropic models list request")?;
+        .context("发送 Anthropic 模型列表请求失败")?;
 
     let mut body = String::new();
     response
         .body_mut()
         .read_to_string(&mut body)
         .await
-        .context("failed to read Anthropic models list response")?;
+        .context("读取 Anthropic 模型列表响应失败")?;
 
     anyhow::ensure!(
         response.status().is_success(),
-        "failed to list Anthropic models: {} {}",
+        "列出 Anthropic 模型失败:{} {}",
         response.status(),
         body,
     );
 
     let parsed: ListModelsResponse =
-        serde_json::from_str(&body).context("failed to parse Anthropic models list response")?;
+        serde_json::from_str(&body).context("解析 Anthropic 模型列表响应失败")?;
 
     let models = parsed
         .data

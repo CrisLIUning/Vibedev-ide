@@ -86,21 +86,21 @@ impl LanguageModelCompletionEvent {
 
 #[derive(Error, Debug)]
 pub enum LanguageModelCompletionError {
-    #[error("prompt too large for context window")]
+    #[error("提示词超出上下文窗口大小")]
     PromptTooLarge { tokens: Option<u64> },
-    #[error("missing {provider} API key")]
+    #[error("缺少 {provider} API 密钥")]
     NoApiKey { provider: LanguageModelProviderName },
-    #[error("{provider}'s API rate limit exceeded")]
+    #[error("{provider} API 速率限制已超出")]
     RateLimitExceeded {
         provider: LanguageModelProviderName,
         retry_after: Option<Duration>,
     },
-    #[error("{provider}'s API servers are overloaded right now")]
+    #[error("{provider} API 服务器当前过载")]
     ServerOverloaded {
         provider: LanguageModelProviderName,
         retry_after: Option<Duration>,
     },
-    #[error("{provider}'s API server reported an internal server error: {message}")]
+    #[error("{provider} API 服务器报告内部服务器错误: {message}")]
     ApiInternalServerError {
         provider: LanguageModelProviderName,
         message: String,
@@ -111,60 +111,60 @@ pub enum LanguageModelCompletionError {
         status: StatusCode,
         retry_after: Option<Duration>,
     },
-    #[error("HTTP response error from {provider}'s API: status {status_code} - {message:?}")]
+    #[error("来自 {provider} API 的 HTTP 响应错误: 状态 {status_code} - {message:?}")]
     HttpResponseError {
         provider: LanguageModelProviderName,
         status_code: StatusCode,
         message: String,
     },
-    #[error("invalid request format to {provider}'s API: {message}")]
+    #[error("发往 {provider} API 的请求格式无效: {message}")]
     BadRequestFormat {
         provider: LanguageModelProviderName,
         message: String,
     },
-    #[error("authentication error with {provider}'s API: {message}")]
+    #[error("{provider} API 认证错误: {message}")]
     AuthenticationError {
         provider: LanguageModelProviderName,
         message: String,
     },
-    #[error("Permission error with {provider}'s API: {message}")]
+    #[error("{provider} API 权限错误: {message}")]
     PermissionError {
         provider: LanguageModelProviderName,
         message: String,
     },
-    #[error("language model provider API endpoint not found")]
+    #[error("未找到语言模型提供者 API 端点")]
     ApiEndpointNotFound { provider: LanguageModelProviderName },
-    #[error("I/O error reading response from {provider}'s API")]
+    #[error("读取 {provider} API 响应时发生 I/O 错误")]
     ApiReadResponseError {
         provider: LanguageModelProviderName,
         #[source]
         error: io::Error,
     },
-    #[error("error serializing request to {provider} API")]
+    #[error("序列化发往 {provider} API 的请求时出错")]
     SerializeRequest {
         provider: LanguageModelProviderName,
         #[source]
         error: serde_json::Error,
     },
-    #[error("error building request body to {provider} API")]
+    #[error("构建发往 {provider} API 的请求体时出错")]
     BuildRequestBody {
         provider: LanguageModelProviderName,
         #[source]
         error: http::Error,
     },
-    #[error("error sending HTTP request to {provider} API")]
+    #[error("向 {provider} API 发送 HTTP 请求时出错")]
     HttpSend {
         provider: LanguageModelProviderName,
         #[source]
         error: anyhow::Error,
     },
-    #[error("error deserializing {provider} API response")]
+    #[error("反序列化 {provider} API 响应时出错")]
     DeserializeResponse {
         provider: LanguageModelProviderName,
         #[source]
         error: serde_json::Error,
     },
-    #[error("stream from {provider} ended unexpectedly")]
+    #[error("来自 {provider} 的流意外结束")]
     StreamEndedUnexpectedly { provider: LanguageModelProviderName },
     #[error(transparent)]
     Other(#[from] anyhow::Error),
@@ -357,9 +357,9 @@ pub struct LanguageModelEffortLevel {
 /// An error that occurred when trying to authenticate the language model provider.
 #[derive(Debug, Error)]
 pub enum AuthenticateError {
-    #[error("connection refused")]
+    #[error("连接被拒绝")]
     ConnectionRefused,
-    #[error("credentials not found")]
+    #[error("未找到凭据")]
     CredentialsNotFound,
     #[error(transparent)]
     Other(#[from] anyhow::Error),

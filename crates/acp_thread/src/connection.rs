@@ -88,7 +88,7 @@ pub trait AgentConnection {
         _session_id: &acp::SessionId,
         _cx: &mut App,
     ) -> Task<Result<()>> {
-        Task::ready(Err(anyhow::Error::msg("Closing sessions is not supported")))
+        Task::ready(Err(anyhow::Error::msg("不支持关闭会话")))
     }
 
     /// Whether this agent supports resuming existing sessions without loading history.
@@ -137,7 +137,7 @@ pub trait AgentConnection {
     }
 
     fn logout(&self, _cx: &mut App) -> Task<Result<()>> {
-        Task::ready(Err(anyhow::Error::msg("Logout is not supported")))
+        Task::ready(Err(anyhow::Error::msg("不支持登出")))
     }
 
     fn prompt(
@@ -620,7 +620,7 @@ impl PermissionOptions {
             return None;
         }
 
-        // Use the first choice (the "Always" choice) as the base for the outcome.
+        // Use the first choice (the "始终" choice) as the base for the outcome.
         let always_choice = choices.first()?;
         let option = if is_allow {
             &always_choice.allow

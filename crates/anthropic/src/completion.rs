@@ -533,7 +533,7 @@ mod tests {
             messages: vec![
                 LanguageModelRequestMessage {
                     role: Role::System,
-                    content: vec![MessageContent::Text("You are helpful.".to_string())],
+                    content: vec![MessageContent::Text("你是一个助手。".to_string())],
                     cache: false,
                     reasoning_details: None,
                 },
@@ -555,7 +555,7 @@ mod tests {
             temperature: None,
             tools: vec![language_model_core::LanguageModelRequestTool {
                 name: "do_thing".into(),
-                description: "Does a thing.".into(),
+                description: "执行某个操作。".into(),
                 input_schema: serde_json::json!({"type": "object"}),
                 use_input_streaming: false,
             }],
@@ -588,7 +588,7 @@ mod tests {
             };
             assert!(
                 cache_control.is_none(),
-                "message content blocks should no longer be individually marked",
+                "消息内容块不应再单独标记",
             );
         }
 
@@ -618,7 +618,7 @@ mod tests {
                     }
                 ));
             }
-            other => panic!("expected system content array, got {other:?}"),
+            other => panic!("期望系统内容数组,得到 {other:?}"),
         }
 
         // The last (and only) tool carries a long-TTL breakpoint.
@@ -638,7 +638,7 @@ mod tests {
             messages: vec![
                 LanguageModelRequestMessage {
                     role: Role::System,
-                    content: vec![MessageContent::Text("You are helpful.".to_string())],
+                    content: vec![MessageContent::Text("你是一个助手。".to_string())],
                     cache: false,
                     reasoning_details: None,
                 },
@@ -659,7 +659,7 @@ mod tests {
             temperature: None,
             tools: vec![language_model_core::LanguageModelRequestTool {
                 name: "do_thing".into(),
-                description: "Does a thing.".into(),
+                description: "执行某个操作。".into(),
                 input_schema: serde_json::json!({"type": "object"}),
                 use_input_streaming: false,
             }],
@@ -711,13 +711,13 @@ mod tests {
             messages: vec![
                 LanguageModelRequestMessage {
                     role: Role::System,
-                    content: vec![MessageContent::Text("You are helpful.".to_string())],
+                    content: vec![MessageContent::Text("你是一个助手。".to_string())],
                     cache: false,
                     reasoning_details: None,
                 },
                 LanguageModelRequestMessage {
                     role: Role::User,
-                    content: vec![MessageContent::Text("Hi".to_string())],
+                    content: vec![MessageContent::Text("你好".to_string())],
                     cache: false,
                     reasoning_details: None,
                 },
@@ -729,7 +729,7 @@ mod tests {
             temperature: None,
             tools: vec![language_model_core::LanguageModelRequestTool {
                 name: "do_thing".into(),
-                description: "Does a thing.".into(),
+                description: "执行某个操作。".into(),
                 input_schema: serde_json::json!({"type": "object"}),
                 use_input_streaming: false,
             }],

@@ -53,7 +53,7 @@ impl EditPredictionDelegate for ZedEditPredictionDelegate {
     }
 
     fn display_name() -> &'static str {
-        "Zed's Edit Predictions"
+        "VibeDev 编辑预测"
     }
 
     fn show_predictions_in_menu() -> bool {

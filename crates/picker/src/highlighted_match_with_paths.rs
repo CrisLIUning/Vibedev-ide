@@ -124,7 +124,7 @@ mod tests {
                 .highlight_positions
                 .iter()
                 .all(|&p| joined.text.is_char_boundary(p)),
-            "join produced non-boundary positions {:?} for text {:?}",
+            "join 在文本 {:?} 中产生了非边界位置 {:?}",
             joined.highlight_positions,
             joined.text
         );

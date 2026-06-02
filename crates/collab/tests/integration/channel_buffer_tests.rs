@@ -824,7 +824,7 @@ async fn test_channel_buffer_operations_lost_on_reconnect(
     );
     assert!(
         text_a.contains('a'),
-        "Initial edit 'a' missing from final text {:?}",
+        "初始编辑 'a' 缺失于最终文本 {:?}",
         text_a
     );
     assert!(
@@ -837,7 +837,7 @@ async fn test_channel_buffer_operations_lost_on_reconnect(
     );
     assert!(
         text_a.contains('c'),
-        "Racing edit 'c' missing from final text {:?}",
+        "竞争编辑 'c' 缺失于最终文本 {:?}",
         text_a
     );
 

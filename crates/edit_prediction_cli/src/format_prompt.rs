@@ -65,7 +65,7 @@ pub async fn run_format_prompt(
         }
         PredictionProvider::TeacherMultiRegion(_)
         | PredictionProvider::TeacherMultiRegionNonBatching(_) => {
-            step_progress.set_substatus("formatting teacher multi-region prompt");
+            step_progress.set_substatus("正在格式化 teacher 多区域提示词");
 
             let zeta_format = ZetaFormat::default();
             let (editable_range, context_range) =
@@ -148,7 +148,7 @@ impl TeacherPrompt {
         let cursor_excerpt = Self::format_cursor_excerpt(example, editable_range, context_range);
         let diagnostics = include_diagnostics
             .then(|| Self::format_diagnostics(example))
-            .map(|diagnostics| format!("# 4. Diagnostics\n\n{diagnostics}"));
+            .map(|diagnostics| format!("# 4. 诊断\n\n{diagnostics}"));
 
         let prompt_template = crate::prompt_assets::get_prompt("teacher.md");
         let prompt = prompt_template
@@ -205,7 +205,7 @@ impl TeacherPrompt {
         let (editable_region_offset, _) = excerpt
             .match_indices(&old_editable_region)
             .min_by_key(|(index, _)| index.abs_diff(prompt_inputs.cursor_offset_in_excerpt))
-            .context("editable region not found in prompt content")?;
+            .context("在提示词内容中未找到可编辑区域")?;
         let editable_region_start_line = excerpt[..editable_region_offset].matches('\n').count();
 
         let editable_region_lines = old_editable_region.lines().count() as u32;
@@ -248,7 +248,7 @@ impl TeacherPrompt {
 
         if lines.len() > Self::MAX_HISTORY_LINES {
             let truncated = lines[lines.len() - Self::MAX_HISTORY_LINES..].join("\n");
-            format!("{truncated}\n[...truncated...]")
+            format!("{truncated}\n[...已截断...]")
         } else {
             lines.join("\n")
         }
@@ -306,7 +306,7 @@ impl TeacherPrompt {
         let end = text.rfind(Self::EDITABLE_REGION_END).unwrap_or(text.len());
 
         if start >= end {
-            return Err(anyhow!("Invalid editable region markers"));
+            return Err(anyhow!("无效的可编辑区域标记"));
         }
 
         let region = &text[start..end];
@@ -315,7 +315,7 @@ impl TeacherPrompt {
 
     fn format_diagnostics(example: &Example) -> String {
         let Some(prompt_inputs) = example.prompt_inputs.as_ref() else {
-            return "No Diagnostics".to_string();
+            return "无诊断信息".to_string();
         };
 
         let cursor_buffer_row = prompt_inputs.excerpt_start_row.map(|excerpt_start_row| {
@@ -336,7 +336,7 @@ impl TeacherPrompt {
             .unwrap_or(&diagnostics);
 
         if diagnostics.is_empty() {
-            "No Diagnostics".to_string()
+            "无诊断信息".to_string()
         } else {
             diagnostics.to_string()
         }
@@ -363,7 +363,7 @@ impl TeacherMultiRegionPrompt {
         let cursor_excerpt = Self::format_cursor_excerpt(example, editable_range, context_range);
         let diagnostics = include_diagnostics
             .then(|| TeacherPrompt::format_diagnostics(example))
-            .map(|diagnostics| format!("# 4. Diagnostics\n\n{diagnostics}"));
+            .map(|diagnostics| format!("# 4. 诊断\n\n{diagnostics}"));
 
         let prompt_template = crate::prompt_assets::get_prompt("teacher_multi_region.md");
         let prompt = prompt_template
@@ -399,24 +399,24 @@ impl TeacherMultiRegionPrompt {
         let marker_offsets = multi_region::compute_marker_offsets(old_editable_region);
 
         let codeblock =
-            extract_last_codeblock(&response).context("no codeblock found in model response")?;
+            extract_last_codeblock(&response).context("模型响应中未找到代码块")?;
         let (start_num, end_num, raw_new_span) = multi_region::extract_marker_span(&codeblock)?;
 
         let start_idx = start_num
             .checked_sub(1)
-            .context("marker numbers are 1-indexed")?;
+            .context("标记编号从 1 开始")?;
         let end_idx = end_num
             .checked_sub(1)
-            .context("marker numbers are 1-indexed")?;
+            .context("标记编号从 1 开始")?;
         let start_byte = *marker_offsets
             .get(start_idx)
-            .context("start marker number out of range")?;
+            .context("起始标记编号超出范围")?;
         let end_byte = *marker_offsets
             .get(end_idx)
-            .context("end marker number out of range")?;
+            .context("结束标记编号超出范围")?;
 
         if start_byte > end_byte {
-            return Err(anyhow!("start marker must come before end marker"));
+            return Err(anyhow!("起始标记必须位于结束标记之前"));
         }
 
         let cursor_in_span = raw_new_span.find(Self::USER_CURSOR_MARKER);
@@ -485,7 +485,7 @@ impl TeacherMultiRegionPrompt {
 
         if lines.len() > Self::MAX_HISTORY_LINES {
             let truncated = lines[lines.len() - Self::MAX_HISTORY_LINES..].join("\n");
-            format!("{truncated}\n[...truncated...]")
+            format!("{truncated}\n[...已截断...]")
         } else {
             lines.join("\n")
         }

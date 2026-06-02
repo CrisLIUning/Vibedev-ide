@@ -117,18 +117,18 @@ impl Render for Example {
                     .child(
                         button("el1")
                             .tab_index(4)
-                            .child("Button 1")
+                            .child("按钮 1")
                             .on_click(cx.listener(|this, _, _, cx| {
-                                this.message = "You have clicked Button 1.".into();
+                                this.message = "您点击了按钮 1。".into();
                                 cx.notify();
                             })),
                     )
                     .child(
                         button("el2")
                             .tab_index(5)
-                            .child("Button 2")
+                            .child("按钮 2")
                             .on_click(cx.listener(|this, _, _, cx| {
-                                this.message = "You have clicked Button 2.".into();
+                                this.message = "您点击了按钮 2。".into();
                                 cx.notify();
                             })),
                     ),
@@ -142,17 +142,17 @@ impl Render for Example {
                     .child(
                         button("group-1-button-1")
                             .tab_index(1)
-                            .child("Tab index [6, 1]"),
+                            .child("标签页 index [6, 1]"),
                     )
                     .child(
                         button("group-1-button-2")
                             .tab_index(2)
-                            .child("Tab index [6, 2]"),
+                            .child("标签页 index [6, 2]"),
                     )
                     .child(
                         button("group-1-button-3")
                             .tab_index(3)
-                            .child("Tab index [6, 3]"),
+                            .child("标签页 index [6, 3]"),
                     ),
             )
             .child(
@@ -164,17 +164,17 @@ impl Render for Example {
                     .child(
                         button("group-2-button-1")
                             .tab_index(1)
-                            .child("Tab index [7, 1]"),
+                            .child("标签页 index [7, 1]"),
                     )
                     .child(
                         button("group-2-button-2")
                             .tab_index(2)
-                            .child("Tab index [7, 2]"),
+                            .child("标签页 index [7, 2]"),
                     )
                     .child(
                         button("group-2-button-3")
                             .tab_index(3)
-                            .child("Tab index [7, 3]"),
+                            .child("标签页 index [7, 3]"),
                     ),
             )
     }

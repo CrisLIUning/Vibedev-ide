@@ -192,7 +192,7 @@ impl Editor {
                     Editor::open_locations_in_multibuffer(
                         workspace,
                         locations,
-                        "Bookmarks".into(),
+                        "书签".into(),
                         false,
                         false,
                         MultibufferSelectionMode::First,

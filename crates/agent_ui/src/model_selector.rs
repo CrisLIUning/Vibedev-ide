@@ -223,7 +223,7 @@ impl PickerDelegate for ModelPickerDelegate {
     }
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
-        "Select a model…".into()
+        "选择模型…".into()
     }
 
     fn update_matches(
@@ -441,7 +441,7 @@ fn info_list_to_picker_entries(
 
     let has_favorites = !favorite_models.is_empty();
     if has_favorites {
-        entries.push(ModelPickerEntry::Separator("Favorite".into()));
+        entries.push(ModelPickerEntry::Separator("收藏".into()));
         for model in favorite_models {
             entries.push(ModelPickerEntry::Model((*model).clone(), true));
         }
@@ -450,7 +450,7 @@ fn info_list_to_picker_entries(
     match model_list {
         AgentModelList::Flat(list) => {
             if has_favorites {
-                entries.push(ModelPickerEntry::Separator("All".into()));
+                entries.push(ModelPickerEntry::Separator("全部".into()));
             }
             for model in list {
                 let is_favorite = favorites.contains(&model.id);
@@ -661,7 +661,7 @@ mod tests {
 
         assert!(matches!(
             entries.first(),
-            Some(ModelPickerEntry::Separator(s)) if s == "Favorite"
+            Some(ModelPickerEntry::Separator(s)) if s == "收藏"
         ));
 
         let model_ids = get_entry_model_ids(&entries);
@@ -723,7 +723,7 @@ mod tests {
     #[gpui::test]
     fn test_favorites_are_not_duplicated_when_repeated_in_other_sections(_cx: &mut TestAppContext) {
         let models = create_model_list(vec![
-            ("Recommended", vec!["zed/claude", "anthropic/claude"]),
+            ("推荐", vec!["zed/claude", "anthropic/claude"]),
             ("Zed", vec!["zed/claude", "zed/gpt-5"]),
             ("Antropic", vec!["anthropic/claude"]),
             ("OpenAI", vec!["openai/gpt-5"]),
@@ -737,9 +737,9 @@ mod tests {
         assert_eq!(
             labels,
             vec![
-                "Favorite",
+                "收藏",
                 "zed/claude",
-                "Recommended",
+                "推荐",
                 "zed/claude",
                 "anthropic/claude",
                 "Zed",
@@ -779,12 +779,12 @@ mod tests {
 
         assert!(matches!(
             entries.first(),
-            Some(ModelPickerEntry::Separator(s)) if s == "Favorite"
+            Some(ModelPickerEntry::Separator(s)) if s == "收藏"
         ));
 
         assert!(entries.iter().any(|e| matches!(
             e,
-            ModelPickerEntry::Separator(s) if s == "All"
+            ModelPickerEntry::Separator(s) if s == "全部"
         )));
     }
 
@@ -808,7 +808,7 @@ mod tests {
         let models = AgentModelList::Flat(vec![
             acp_thread::AgentModelInfo {
                 id: acp::ModelId::new("favorite-model".to_string()),
-                name: "Favorite".into(),
+                name: "收藏".into(),
                 description: None,
                 icon: None,
                 is_latest: false,

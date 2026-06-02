@@ -862,14 +862,14 @@ impl Item for BufferDiagnosticsEditor {
     }
 
     fn tab_content_text(&self, _detail: usize, _app: &App) -> SharedString {
-        "Buffer Diagnostics".into()
+        "缓冲区诊断".into()
     }
 
     fn tab_tooltip_text(&self, cx: &App) -> Option<SharedString> {
         let path_style = self.project.read(cx).path_style(cx);
         Some(
             format!(
-                "Buffer Diagnostics - {}",
+                "缓冲区诊断 - {}",
                 self.project_path.path.display(path_style)
             )
             .into(),
@@ -877,7 +877,7 @@ impl Item for BufferDiagnosticsEditor {
     }
 
     fn telemetry_event_text(&self) -> Option<&'static str> {
-        Some("Buffer Diagnostics Opened")
+        Some("缓冲区诊断已打开")
     }
 
     fn to_item_events(event: &EditorEvent, f: &mut dyn FnMut(ItemEvent)) {
@@ -897,8 +897,8 @@ impl Render for BufferDiagnosticsEditor {
 
         let child = if error_count + warning_count == 0 {
             let label = match warning_count {
-                0 => "No problems in",
-                _ => "No errors in",
+                0 => "无问题,位于",
+                _ => "无错误,位于",
             };
 
             v_flex()
@@ -916,7 +916,7 @@ impl Render for BufferDiagnosticsEditor {
                         .child(
                             Button::new("open-file", filename)
                                 .style(ButtonStyle::Transparent)
-                                .tooltip(Tooltip::text("Open File"))
+                                .tooltip(Tooltip::text("打开文件"))
                                 .on_click(cx.listener(|buffer_diagnostics, _, window, cx| {
                                     if let Some(workspace) = Workspace::for_window(window, cx) {
                                         workspace.update(cx, |workspace, cx| {
@@ -936,8 +936,8 @@ impl Render for BufferDiagnosticsEditor {
                 )
                 .when(self.summary.warning_count > 0, |div| {
                     let label = match self.summary.warning_count {
-                        1 => "Show 1 warning".into(),
-                        warning_count => format!("Show {} warnings", warning_count),
+                        1 => "显示 1 个警告".into(),
+                        warning_count => format!("显示 {} 个警告", warning_count),
                     };
 
                     div.child(

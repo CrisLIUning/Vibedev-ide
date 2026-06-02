@@ -125,7 +125,7 @@ struct Args {
     system_specs: bool,
     /// Open the project in a dev container.
     ///
-    /// Automatically triggers "Reopen in Dev Container" if a `.devcontainer/`
+    /// Automatically triggers "在 Dev Container 中重新打开" if a `.devcontainer/`
     /// configuration is found in the project directory.
     #[arg(long)]
     dev_container: bool,
@@ -274,7 +274,7 @@ fn collect_files(root: &Path) -> anyhow::Result<BTreeMap<PathBuf, PathBuf>> {
             let rel = entry
                 .path()
                 .strip_prefix(root)
-                .context("stripping directory prefix")?
+                .context("去除目录前缀")?
                 .to_path_buf();
             files.insert(rel, entry.into_path());
         }
@@ -461,7 +461,7 @@ fn parse_path_in_wsl(source: &str, wsl: &str) -> Result<String> {
 
 fn main() {
     if let Err(error) = run() {
-        eprintln!("error: {error:#}");
+        eprintln!("错误: {error:#}");
         std::process::exit(1);
     }
 }
@@ -514,8 +514,8 @@ fn run() -> Result<()> {
     if args.system_specs {
         let path = app.path();
         let msg = [
-            "The `--system-specs` argument is not supported in the Zed CLI, only on Zed binary.",
-            "To retrieve the system specs on the command line, run the following command:",
+            "`--system-specs` 参数在 VibeDev CLI 中不受支持,仅在 VibeDev 二进制文件中支持。",
+            "要在命令行获取系统规格,请运行以下命令:",
             &format!("{} --system-specs", path.display()),
         ];
         anyhow::bail!(msg.join("\n"));
@@ -613,7 +613,7 @@ fn run() -> Result<()> {
         for diff_path in [&left, &right] {
             anyhow::ensure!(
                 Path::new(diff_path).exists(),
-                "--diff path does not exist: {diff_path}"
+                "--差异 路径不存在: {diff_path}"
             );
         }
         diff_paths.push([left, right]);
@@ -656,7 +656,7 @@ fn run() -> Result<()> {
 
     anyhow::ensure!(
         args.dev_server_token.is_none(),
-        "Dev servers were removed in v0.157.x please upgrade to SSH remoting: https://zed.dev/docs/remote-development"
+        "开发服务器已在 v0.157.x 版本中移除,请升级到 SSH 远程开发:https://zed.dev/docs/remote-development"
     );
 
     rayon::ThreadPoolBuilder::new()
@@ -814,16 +814,16 @@ fn prompt_open_behavior() -> Option<cli::CliBehaviorSetting> {
     let blue = console::Style::new().blue();
     let items = [
         format!(
-            "Add to existing Zed window ({})",
+            "添加到现有的 VibeDev 窗口 ({})",
             blue.apply_to("zed --existing")
         ),
-        format!("Open a new window ({})", blue.apply_to("zed --classic")),
+        format!("打开新窗口 ({})", blue.apply_to("zed --classic")),
     ];
 
     let prompt = format!(
-        "Configure default behavior for {}\n{}",
+        "配置 {} 的默认行为\n{}",
         blue.apply_to("zed <path>"),
-        console::style("You can change this later in Zed settings"),
+        console::style("稍后可在 VibeDev 设置中更改"),
     );
 
     let selection = dialoguer::Select::new()
@@ -877,7 +877,7 @@ mod linux {
                     .iter()
                     .find_map(|p| dir.join(p).canonicalize().ok().filter(|path| path != &cli))
                     .with_context(|| {
-                        format!("could not find any of: {}", possible_locations.join(", "))
+                        format!("无法找到以下任何一项:{}", possible_locations.join(", "))
                     })?
             };
 
@@ -1052,7 +1052,7 @@ mod flatpak {
             && args.zed.is_none()
         {
             args.zed = Some("/app/libexec/zed-editor".into());
-            unsafe { env::set_var("ZED_UPDATE_EXPLANATION", "Please use flatpak to update zed") };
+            unsafe { env::set_var("ZED_UPDATE_EXPLANATION", "请使用 flatpak 更新 zed") };
         }
         args
     }
@@ -1207,14 +1207,15 @@ mod windows {
                 let cli = std::env::current_exe()?;
                 let dir = cli.parent().context("no parent path for cli")?;
 
-                // ../Zed.exe is the standard, lib/zed is for MSYS2, ./zed.exe is for the target
-                // directory in development builds.
-                let possible_locations = ["../Zed.exe", "../lib/zed/zed-editor.exe", "./zed.exe"];
+                // VIBEDEV: GUI binary is "vibedev". Installed: ../VibeDev.exe;
+                // dev target dir: ./vibedev.exe; lib/zed is the MSYS2 layout.
+                let possible_locations =
+                    ["../VibeDev.exe", "../lib/zed/zed-editor.exe", "./vibedev.exe"];
                 possible_locations
                     .iter()
                     .find_map(|p| dir.join(p).canonicalize().ok().filter(|path| path != &cli))
                     .context(format!(
-                        "could not find any of: {}",
+                        "无法找到以下任何一项:{}",
                         possible_locations.join(", ")
                     ))?
             };
@@ -1271,7 +1272,7 @@ mod mac_os {
         while app_path.extension() != Some(OsStr::new("app")) {
             anyhow::ensure!(
                 app_path.pop(),
-                "cannot find app bundle containing {cli_path:?}"
+                "找不到包含 {cli_path:?} 的 app bundle"
             );
         }
         Ok(app_path)
@@ -1292,7 +1293,7 @@ mod mac_os {
                     let plist_path = bundle_path.join("Contents/Info.plist");
                     let plist =
                         plist::from_file::<_, InfoPlist>(&plist_path).with_context(|| {
-                            format!("Reading *.app bundle plist file at {plist_path:?}")
+                            format!("读取位于 {plist_path:?} 的 *.app bundle plist 文件")
                         })?;
                     Ok(Bundle::App {
                         app_bundle: bundle_path,
@@ -1343,7 +1344,7 @@ mod mac_os {
 
                     anyhow::ensure!(
                         status == 0,
-                        "cannot start app bundle {}",
+                        "无法启动 app bundle {}",
                         self.zed_version_string()
                     );
                 }
@@ -1358,7 +1359,7 @@ mod mac_os {
                     .with_context(|| format!("Log file creation in {executable_parent:?}"))?;
                     let subprocess_stdin_file =
                         subprocess_stdout_file.try_clone().with_context(|| {
-                            format!("Cloning descriptor for file {subprocess_stdout_file:?}")
+                            format!("克隆文件 {subprocess_stdout_file:?} 的描述符")
                         })?;
                     let mut command = std::process::Command::new(executable);
                     command.env(FORCE_CLI_MODE_ENV_VAR_NAME, "");
@@ -1437,7 +1438,7 @@ mod mac_os {
             .output()?;
         if !app_path_output.status.success() {
             bail!(
-                "Could not determine app path for {}",
+                "无法确定 {} 的 app 路径",
                 channel.display_name()
             );
         }

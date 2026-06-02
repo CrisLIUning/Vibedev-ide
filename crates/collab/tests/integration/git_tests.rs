@@ -130,7 +130,7 @@ async fn load_commit_data_batch(
             CommitDataState::Loaded(data) => data.as_ref().clone(),
             CommitDataState::Loading(Some(shared)) => shared.await.unwrap().as_ref().clone(),
             CommitDataState::Loading(None) => {
-                panic!("fetch_commit_data(..., true) should return an await-result state")
+                panic!("fetch_commit_data(..., true) 应返回一个等待结果的状态")
             }
         };
         commit_data.insert(sha, data);
@@ -170,7 +170,7 @@ fn build_git_graph(
     let (repository_id, git_store) = project.read_with(cx, |project, cx| {
         let repository = project
             .active_repository(cx)
-            .expect("project should have an active repository");
+            .expect("项目应有活动的仓库");
         (repository.read(cx).id, project.git_store().clone())
     });
     let workspace = workspace.downgrade();
@@ -191,19 +191,19 @@ fn assert_initial_graph_commits_eq(
     actual: &[Arc<InitialGraphCommitData>],
     expected: &[Arc<InitialGraphCommitData>],
 ) {
-    assert_eq!(actual.len(), expected.len(), "commit count should match");
+    assert_eq!(actual.len(), expected.len(), "提交数量应匹配");
     for (index, (actual, expected)) in actual.iter().zip(expected).enumerate() {
         assert_eq!(
             actual.sha, expected.sha,
-            "sha should match at index {index}"
+            "SHA 应在索引 {index} 处匹配"
         );
         assert_eq!(
             actual.parents, expected.parents,
-            "parents should match at index {index}"
+            "父提交应在索引 {index} 处匹配"
         );
         assert_eq!(
             actual.ref_names, expected.ref_names,
-            "ref names should match at index {index}"
+            "引用名称应在索引 {index} 处匹配"
         );
     }
 }
@@ -224,34 +224,34 @@ fn assert_remote_cache_matches_local_cache(
     for (sha, remote_commit_data) in &remote_cache {
         let local_commit_data = local_cache
             .get(sha)
-            .unwrap_or_else(|| panic!("local cache missing commit data for {sha}"));
+            .unwrap_or_else(|| panic!("本地缓存缺少 {sha} 的提交数据"));
         assert_eq!(
             local_commit_data.sha, remote_commit_data.sha,
-            "local and remote cache should agree on sha for {sha}"
+            "本地和远程缓存对 {sha} 的 sha 应保持一致"
         );
         assert_eq!(
             local_commit_data.parents, remote_commit_data.parents,
-            "local and remote cache should agree on parents for {sha}"
+            "本地和远程缓存对 {sha} 的 parents 应保持一致"
         );
         assert_eq!(
             local_commit_data.author_name, remote_commit_data.author_name,
-            "local and remote cache should agree on author_name for {sha}"
+            "本地和远程缓存对 {sha} 的 author_name 应保持一致"
         );
         assert_eq!(
             local_commit_data.author_email, remote_commit_data.author_email,
-            "local and remote cache should agree on author_email for {sha}"
+            "本地和远程缓存对 {sha} 的 author_email 应保持一致"
         );
         assert_eq!(
             local_commit_data.commit_timestamp, remote_commit_data.commit_timestamp,
-            "local and remote cache should agree on commit_timestamp for {sha}"
+            "本地和远程缓存对 {sha} 的 commit_timestamp 应保持一致"
         );
         assert_eq!(
             local_commit_data.subject, remote_commit_data.subject,
-            "local and remote cache should agree on subject for {sha}"
+            "本地和远程缓存对 {sha} 的 subject 应保持一致"
         );
         assert_eq!(
             local_commit_data.message, remote_commit_data.message,
-            "local and remote cache should agree on message for {sha}"
+            "本地和远程缓存对 {sha} 的 message 应保持一致"
         );
     }
 }
@@ -546,7 +546,7 @@ async fn test_remote_git_worktrees(
         .unwrap();
     assert!(
         rename_result.is_err(),
-        "Guest should not be able to rename worktrees via collab"
+        "访客不应能通过协作重命名工作树"
     );
 
     executor.run_until_parked();
@@ -560,7 +560,7 @@ async fn test_remote_git_worktrees(
     assert_eq!(
         worktrees.len(),
         3,
-        "Worktree count should be unchanged after failed rename"
+        "重命名失败后工作树数量应保持不变"
     );
 
     // Client B (guest) attempts to remove a worktree. This should fail
@@ -575,7 +575,7 @@ async fn test_remote_git_worktrees(
         .unwrap();
     assert!(
         remove_result.is_err(),
-        "Guest should not be able to remove worktrees via collab"
+        "访客不应能通过协作移除工作树"
     );
 
     executor.run_until_parked();
@@ -589,7 +589,7 @@ async fn test_remote_git_worktrees(
     assert_eq!(
         worktrees.len(),
         3,
-        "Worktree count should be unchanged after failed removal"
+        "移除失败后工作树数量应保持不变"
     );
 }
 
@@ -693,7 +693,7 @@ async fn test_remote_git_commit_data_batches(
                     author_email: SharedString::from(format!("author{index}@example.com")),
                     commit_timestamp: 1_700_000_000 + index as i64,
                     subject: SharedString::from(format!("Subject {index}")),
-                    message: SharedString::from(format!("Subject {index}\n\nBody {index}")),
+                    message: SharedString::from(format!("主题 {index}\n\n正文 {index}")),
                 },
                 false,
             )
@@ -709,7 +709,7 @@ async fn test_remote_git_commit_data_batches(
     assert_eq!(
         primed_before.len(),
         2,
-        "host should prime two commits before sharing"
+        "主机应在共享前预加载两个提交"
     );
 
     let project_id = active_call_a
@@ -731,7 +731,7 @@ async fn test_remote_git_commit_data_batches(
         assert_eq!(commit_data.subject.as_ref(), format!("Subject {index}"));
         assert_eq!(
             commit_data.message.as_ref(),
-            format!("Subject {index}\n\nBody {index}")
+            format!("主题 {index}\n\n正文 {index}")
         );
     }
 
@@ -739,7 +739,7 @@ async fn test_remote_git_commit_data_batches(
     assert_eq!(
         primed_after.len(),
         2,
-        "host should prime remaining commits after remote fetches"
+        "主机应在远程获取后预加载剩余提交"
     );
 
     let remote_batch_two =
@@ -779,7 +779,7 @@ async fn test_remote_git_graph_data_and_search(
         )
         .await;
 
-    let search_query = "graph search match";
+    let search_query = "图形搜索匹配";
     let mut rng = StdRng::seed_from_u64(7);
     let commits = git_graph::generate_random_commit_dag(&mut rng, 12, true);
 
@@ -995,14 +995,14 @@ async fn test_linked_worktrees_sync(
     // Verify the host sees 2 linked worktrees (main worktree is filtered out).
     let host_linked = project_a.read_with(cx_a, |project, cx| {
         let repos = project.repositories(cx);
-        assert_eq!(repos.len(), 1, "host should have exactly 1 repository");
+        assert_eq!(repos.len(), 1, "宿主机应恰好有 1 个仓库");
         let repo = repos.values().next().unwrap();
         repo.read(cx).linked_worktrees().to_vec()
     });
     assert_eq!(
         host_linked.len(),
         2,
-        "host should have 2 linked worktrees (main filtered out)"
+        "宿主机应有 2 个链接工作树(主工作树已过滤)"
     );
     assert_eq!(
         host_linked[0].path,
@@ -1035,13 +1035,13 @@ async fn test_linked_worktrees_sync(
     // Verify the guest sees the same linked worktrees as the host.
     let guest_linked = project_b.read_with(cx_b, |project, cx| {
         let repos = project.repositories(cx);
-        assert_eq!(repos.len(), 1, "guest should have exactly 1 repository");
+        assert_eq!(repos.len(), 1, "访客应恰好有 1 个仓库");
         let repo = repos.values().next().unwrap();
         repo.read(cx).linked_worktrees().to_vec()
     });
     assert_eq!(
         guest_linked, host_linked,
-        "guest's linked_worktrees should match host's after initial sync"
+        "初始同步后访客的链接工作树应与宿主机一致"
     );
 
     // Now mutate: add a third linked worktree on the host side.
@@ -1072,7 +1072,7 @@ async fn test_linked_worktrees_sync(
     assert_eq!(
         host_linked_updated.len(),
         3,
-        "host should now have 3 linked worktrees"
+        "宿主机现在应有 3 个链接工作树"
     );
     assert_eq!(
         host_linked_updated[2].path,
@@ -1087,7 +1087,7 @@ async fn test_linked_worktrees_sync(
     });
     assert_eq!(
         guest_linked_updated, host_linked_updated,
-        "guest's linked_worktrees should match host's after update"
+        "更新后访客的链接工作树应与宿主机一致"
     );
 
     // Now mutate: remove one linked worktree from the host side.
@@ -1119,13 +1119,13 @@ async fn test_linked_worktrees_sync(
     assert_eq!(
         host_linked_after_removal.len(),
         2,
-        "host should have 2 linked worktrees after removal"
+        "移除后宿主机应有 2 个链接工作树"
     );
     assert!(
         host_linked_after_removal
             .iter()
             .all(|wt| wt.ref_name != Some("refs/heads/bugfix-branch".into())),
-        "bugfix-branch should have been removed"
+        "bugfix-分支应已被移除"
     );
 
     // Verify the guest also reflects the removal.
@@ -1136,7 +1136,7 @@ async fn test_linked_worktrees_sync(
     });
     assert_eq!(
         guest_linked_after_removal, host_linked_after_removal,
-        "guest's linked_worktrees should match host's after removal"
+        "移除后访客的链接工作树应与宿主机一致"
     );
 
     // Test DB roundtrip: client C joins late, getting state from the database.
@@ -1149,14 +1149,14 @@ async fn test_linked_worktrees_sync(
         assert_eq!(
             repos.len(),
             1,
-            "late joiner should have exactly 1 repository"
+            "后加入者应恰好有 1 个仓库"
         );
         let repo = repos.values().next().unwrap();
         repo.read(cx).linked_worktrees().to_vec()
     });
     assert_eq!(
         late_joiner_linked, host_linked_after_removal,
-        "late-joining client's linked_worktrees should match host's (DB roundtrip)"
+        "后加入客户端的链接工作树应与宿主机一致(数据库往返)"
     );
     let late_joiner_git_paths = project_c.read_with(cx_c, |project, cx| {
         let repos = project.repositories(cx);
@@ -1169,7 +1169,7 @@ async fn test_linked_worktrees_sync(
     });
     assert_eq!(
         late_joiner_git_paths, host_git_paths_after_removal,
-        "late-joining client's git directory paths should match host's (DB roundtrip)"
+        "晚加入的客户端 git 目录路径应与主机匹配(数据库往返)"
     );
 
     // Test reconnection: disconnect client B (guest) and reconnect.
@@ -1189,7 +1189,7 @@ async fn test_linked_worktrees_sync(
             assert_eq!(
                 repos.len(),
                 1,
-                "guest should still have exactly 1 repository after reconnect"
+                "重连后访客应仍有 1 个仓库"
             );
             let repo = repos.values().next().unwrap();
             let repo = repo.read(cx);
@@ -1203,11 +1203,11 @@ async fn test_linked_worktrees_sync(
         });
     assert_eq!(
         guest_linked_after_reconnect, host_linked_after_removal,
-        "guest's linked_worktrees should survive guest disconnect/reconnect"
+        "访客的链接工作树应在断开/重连后保持不变"
     );
     assert_eq!(
         guest_git_paths_after_reconnect, host_git_paths_after_removal,
-        "guest's git directory paths should survive guest disconnect/reconnect"
+        "客端端 git 目录路径应在断开/重新连接后保留"
     );
 }
 
@@ -1320,8 +1320,8 @@ async fn test_diff_stat_sync_between_host_and_downstream_client(
             deleted: 0,
         },
     );
-    assert_eq!(stats_a, expected, "host diff stats should match expected");
-    assert_eq!(stats_a, stats_b, "host and remote should agree");
+    assert_eq!(stats_a, expected, "主机差异统计应与预期相符");
+    assert_eq!(stats_a, stats_b, "主机与远程应保持一致");
 
     let buffer_a = project_a
         .update(cx_a, |p, cx| {
@@ -1362,11 +1362,11 @@ async fn test_diff_stat_sync_between_host_and_downstream_client(
     );
     assert_eq!(
         stats_a, expected_after_edit,
-        "host diff stats should reflect the edit"
+        "主机差异统计应反映编辑内容"
     );
     assert_eq!(
         stats_b, expected_after_edit,
-        "remote diff stats should reflect the host's edit"
+        "远程差异统计应反映主机的编辑内容"
     );
 
     let active_call_b = cx_b.read(ActiveCall::global);
@@ -1402,6 +1402,6 @@ async fn test_diff_stat_sync_between_host_and_downstream_client(
     let stats_b = collect_diff_stats(&panel_b, cx_b);
     assert_eq!(
         stats_b, expected_after_edit,
-        "remote diff stats should be restored from the database after rejoining the call"
+        "重新加入通话后,远程差异统计应从数据库中恢复"
     );
 }

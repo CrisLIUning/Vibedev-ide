@@ -354,14 +354,14 @@ async fn test_auto_watch_reopens_screen_share_from_returning_channel_participant
     workspace_a.update(user_a, |workspace, cx| {
         assert_no_screen_share_tabs_exist(
             workspace,
-            "user A should stop seeing user C's screen after user C hangs up",
+            "用户 A 应该在用户 C 挂断后停止看到用户 C 的屏幕",
             cx,
         );
     });
     workspace_b.update(user_b, |workspace, cx| {
         assert_no_screen_share_tabs_exist(
             workspace,
-            "user B should stop seeing user C's screen after user C hangs up",
+            "用户 B 应该在用户 C 挂断后停止看到用户 C 的屏幕",
             cx,
         );
     });
@@ -452,7 +452,7 @@ async fn test_auto_watch_is_disabled_when_leaving_call(
         assert_eq!(
             *workspace.auto_watch_state(),
             AutoWatch::Active { watched_peer: None },
-            "auto-watch should be enabled after toggling on"
+            "切换后自动监视应该启用"
         );
     });
 
@@ -467,7 +467,7 @@ async fn test_auto_watch_is_disabled_when_leaving_call(
         assert_eq!(
             *workspace.auto_watch_state(),
             AutoWatch::Off,
-            "auto-watch should be off after leaving the call"
+            "离开通话后自动监视应该关闭"
         );
     });
 }
@@ -487,7 +487,7 @@ fn assert_active_item_is_screen_share_for_peer(workspace: &Workspace, peer_id: P
     let active_item = workspace.active_item(cx).expect("no active item");
     let shared_screen = active_item
         .downcast::<SharedScreen>()
-        .expect("expected active item to be a shared screen");
+        .expect("期望活动项为共享屏幕");
     assert_eq!(shared_screen.read(cx).peer_id, peer_id);
 }
 

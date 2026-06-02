@@ -32,7 +32,7 @@ impl Render for ExampleWindow {
             .text_xl()
             .text_color(rgb(0xffffff))
             .child(
-                "Closing this window with cmd-w or the traffic lights should quit the application!",
+                "使用 cmd-w 或红绿灯按钮关闭此窗口将退出应用程序!",
             )
     }
 }

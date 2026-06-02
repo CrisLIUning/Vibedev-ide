@@ -602,7 +602,7 @@ async fn test_row_column_numbers_query_inside_unicode_file(cx: &mut TestAppConte
         assert_eq!(
             expected_column,
             caret_selection.start.column as usize,
-            "Query inside file should map user-visible columns to byte offsets for Unicode text"
+            "文件内查询应将用户可见列映射为 Unicode 文本的字节偏移量"
         );
     });
 }
@@ -1623,7 +1623,7 @@ async fn test_create_file_focused_file_does_not_belong_to_available_worktrees(
 
         assert!(
             project_path.is_some(),
-            "Active editor should have a project path"
+            "活动编辑器应该有一个项目路径"
         );
 
         let project_path = project_path.unwrap();
@@ -2063,7 +2063,7 @@ async fn test_history_labels_do_not_include_worktree_root_name(cx: &mut gpui::Te
             if let Match::History { panel_match, .. } = m {
                 assert!(
                     panel_match.is_none(),
-                    "History items with no query should not have a panel match"
+                    "无查询的历史项不应有面板匹配"
                 );
             }
         }
@@ -2075,7 +2075,7 @@ async fn test_history_labels_do_not_include_worktree_root_name(cx: &mut gpui::Te
         assert_eq!(
             path_label.text(),
             format!("src{separator}"),
-            "History path label must not contain root name 'my_project'"
+            "历史路径标签不得包含根名称 'my_project'"
         );
 
         let (file_label, path_label) = finder.delegate.labels_for_match(&matches[1], window, cx);
@@ -2083,7 +2083,7 @@ async fn test_history_labels_do_not_include_worktree_root_name(cx: &mut gpui::Te
         assert_eq!(
             path_label.text(),
             format!("src{separator}"),
-            "History path label must not contain root name 'my_project'"
+            "历史路径标签不得包含根名称 'my_project'"
         );
     });
 
@@ -2102,7 +2102,7 @@ async fn test_history_labels_do_not_include_worktree_root_name(cx: &mut gpui::Te
         let history_match = matches
             .iter()
             .find(|m| matches!(m, Match::History { .. }))
-            .expect("Should have a history match for 'first'");
+            .expect("应该有一个针对 'first' 的历史匹配");
 
         let (file_label, path_label) = finder.delegate.labels_for_match(history_match, window, cx);
         assert_eq!(file_label.text(), "first.rs");
@@ -2110,7 +2110,7 @@ async fn test_history_labels_do_not_include_worktree_root_name(cx: &mut gpui::Te
         assert_eq!(
             path_label.text(),
             format!("src{separator}"),
-            "Queried history path label must not contain root name 'my_project'"
+            "查询后的历史路径标签不得包含根名称 'my_project'"
         );
     });
 }
@@ -2163,7 +2163,7 @@ async fn test_history_labels_include_worktree_root_name_when_hide_root_false(
         assert_eq!(
             path_label.text(),
             format!("my_project{separator}src{separator}"),
-            "With hide_root=false, history path label should include root name 'my_project'"
+            "当 hide_root=false 时,历史路径标签应包含根名称 'my_project'"
         );
     });
 }
@@ -2232,7 +2232,7 @@ async fn test_history_labels_include_worktree_root_name_when_hide_root_true_and_
     let picker = open_file_picker(&workspace, cx);
     picker.update_in(cx, |finder, window, cx| {
         let matches = &finder.delegate.matches.matches;
-        assert!(matches.len() >= 2, "Should have at least 2 history matches");
+        assert!(matches.len() >= 2, "应该至少有 2 个历史匹配");
 
         let separator = PathStyle::local().primary_separator();
 
@@ -2247,7 +2247,7 @@ async fn test_history_labels_include_worktree_root_name_when_hide_root_true_and_
                     false
                 }
             })
-            .expect("Should have history match for first.rs");
+            .expect("应该有 first.rs 的历史匹配");
 
         let third_match = matches
             .iter()
@@ -2260,14 +2260,14 @@ async fn test_history_labels_include_worktree_root_name_when_hide_root_true_and_
                     false
                 }
             })
-            .expect("Should have history match for third.rs");
+            .expect("应该有 third.rs 的历史匹配");
 
         let (_file_label, path_label) =
             finder.delegate.labels_for_match(first_match, window, cx);
         assert_eq!(
             path_label.text(),
             format!("my_project{separator}src{separator}"),
-            "With hide_root=true and multiple folders, history path label should include root name 'my_project'"
+            "当 hide_root=true 且有多个文件夹时,历史路径标签应包含根名称 'my_project'"
         );
 
         let (_file_label, path_label) =
@@ -2275,7 +2275,7 @@ async fn test_history_labels_include_worktree_root_name_when_hide_root_true_and_
         assert_eq!(
             path_label.text(),
             format!("my_second_project{separator}src{separator}"),
-            "With hide_root=true and multiple folders, history path label should include root name 'my_second_project'"
+            "当 hide_root=true 且有多个文件夹时,历史路径标签应包含根名称 'my_second_project'"
         );
     });
 }

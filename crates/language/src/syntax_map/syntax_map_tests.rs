@@ -220,7 +220,7 @@ fn test_syntax_map_languages_match_layers_for_range(cx: &mut App) {
         all_language_names
             .iter()
             .any(|language_name| language_name == "Markdown-Inline"),
-        "expected hidden languages to be included when include_hidden is true"
+        "当 include_hidden 为 true 时,预期应包含隐藏语言"
     );
     assert!(
         all_language_names
@@ -247,7 +247,7 @@ fn test_syntax_map_languages_match_layers_for_range(cx: &mut App) {
         !visible_language_names
             .iter()
             .any(|language_name| language_name == "Markdown-Inline"),
-        "expected hidden languages to be excluded when include_hidden is false"
+        "当 include_hidden 为 false 时,预期应排除隐藏语言"
     );
     assert!(
         visible_language_names

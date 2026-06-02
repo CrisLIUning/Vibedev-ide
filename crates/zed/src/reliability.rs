@@ -23,7 +23,7 @@ const MAX_HANG_TRACES: usize = 3;
 
 pub fn init(client: Arc<Client>, cx: &mut App) {
     if cfg!(debug_assertions) {
-        log::info!("Debug assertions enabled, skipping hang monitoring");
+        log::info!("已启用调试断言,跳过卡顿监控");
     } else {
         monitor_hangs(cx);
     }
@@ -214,7 +214,7 @@ fn save_hang_trace(
         .log_err();
 
     info!(
-        "hang detected, trace file saved at: {}",
+        "检测到卡顿,追踪文件已保存至: {}",
         trace_path.display()
     );
 }
@@ -267,7 +267,7 @@ async fn upload_minidump(
     metadata: &crashes::CrashInfo,
 ) -> Result<()> {
     if metadata.init.commit_sha == "no sha" {
-        log::warn!("No commit sha set, skipping minidump upload");
+        log::warn!("未设置提交 sha,跳过 minidump 上传");
         return Ok(());
     }
     let mut form = Form::new()
@@ -448,7 +448,7 @@ async fn upload_build_timings(_client: Arc<Client>) -> Result<()> {
         let contents = match smol::fs::read_to_string(&path).await {
             Ok(contents) => contents,
             Err(err) => {
-                log::warn!("Failed to read build timing file {:?}: {}", path, err);
+                log::warn!("读取构建计时文件 {:?} 失败: {}", path, err);
                 continue;
             }
         };
@@ -456,13 +456,13 @@ async fn upload_build_timings(_client: Arc<Client>) -> Result<()> {
         let timing: BuildTiming = match serde_json::from_str(&contents) {
             Ok(timing) => timing,
             Err(err) => {
-                log::warn!("Failed to parse build timing file {:?}: {}", path, err);
+                log::warn!("解析构建计时文件 {:?} 失败: {}", path, err);
                 continue;
             }
         };
 
         telemetry::event!(
-            "Build Timing: Cargo Build",
+            "构建计时: Cargo Build",
             started_at = timing.started_at.to_rfc3339(),
             duration_ms = timing.duration_ms,
             first_crate = timing.first_crate,
@@ -474,7 +474,7 @@ async fn upload_build_timings(_client: Arc<Client>) -> Result<()> {
         );
 
         if let Err(err) = smol::fs::remove_file(&path).await {
-            log::warn!("Failed to delete build timing file {:?}: {}", path, err);
+            log::warn!("删除构建计时文件 {:?} 失败: {}", path, err);
         }
     }
 

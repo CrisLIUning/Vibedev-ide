@@ -30,7 +30,7 @@ pub(crate) struct VSyncProvider {
 impl VSyncProvider {
     pub(crate) fn new() -> Self {
         let interval = get_dwm_interval()
-            .context("Failed to get DWM interval")
+            .context("获取 DWM 间隔失败")
             .log_err()
             .unwrap_or(DEFAULT_VSYNC_INTERVAL);
         let f = Box::new(|| unsafe { DwmFlush().is_ok() });

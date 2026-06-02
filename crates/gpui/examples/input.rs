@@ -663,14 +663,14 @@ impl Render for InputExample {
                     .flex()
                     .flex_row()
                     .justify_between()
-                    .child(format!("Keyboard {}", cx.keyboard_layout().name()))
+                    .child(format!("键盘 {}", cx.keyboard_layout().name()))
                     .child(
                         div()
                             .border_1()
                             .border_color(black())
                             .px_2()
                             .bg(yellow())
-                            .child("Reset")
+                            .child("重置")
                             .hover(|style| {
                                 style
                                     .bg(yellow().blend(opaque_grey(0.5, 0.5)))
@@ -723,7 +723,7 @@ fn run_example() {
                     let text_input = cx.new(|cx| TextInput {
                         focus_handle: cx.focus_handle(),
                         content: "".into(),
-                        placeholder: "Type here...".into(),
+                        placeholder: "在此输入...".into(),
                         selected_range: 0..0,
                         selection_reversed: false,
                         marked_range: None,

@@ -188,7 +188,7 @@ impl CommitTooltip {
                 author_name: blame
                     .author
                     .clone()
-                    .unwrap_or("<no name>".to_string())
+                    .unwrap_or("<无名称>".to_string())
                     .into(),
                 author_email: blame.author_mail.clone().unwrap_or("".to_string()).into(),
                 message: details,
@@ -259,7 +259,7 @@ impl Render for CommitTooltip {
             .message
             .as_ref()
             .map(|_| MarkdownElement::new(self.markdown.clone(), markdown_style).into_any())
-            .unwrap_or("<no commit message>".into_any());
+            .unwrap_or("<无提交信息>".into_any());
 
         let pull_request = self
             .commit
@@ -386,7 +386,7 @@ impl Render for CommitTooltip {
                                         .child(Divider::vertical())
                                         .child(
                                             CopyButton::new("copy-commit-sha", full_sha)
-                                                .tooltip_label("Copy SHA"),
+                                                .tooltip_label("复制 SHA"),
                                         ),
                                 ),
                         ),
@@ -406,7 +406,7 @@ fn blame_entry_timestamp(blame_entry: &BlameEntry, format: time_format::Timestam
                 format,
             )
         }
-        Err(_) => "Error parsing date".to_string(),
+        Err(_) => "解析日期出错".to_string(),
     }
 }
 

@@ -193,10 +193,10 @@ impl KeymapFile {
                 None => Ok(key_bindings),
             },
             KeymapFileLoadResult::SomeFailedToLoad { error_message, .. } => {
-                anyhow::bail!("Error loading built-in keymap \"{asset_path}\": {error_message}",)
+                anyhow::bail!("加载内置键位映射文件“{asset_path}”时出错:{error_message}",)
             }
             KeymapFileLoadResult::JsonParseFailure { error } => {
-                anyhow::bail!("JSON parse error in built-in keymap \"{asset_path}\": {error}")
+                anyhow::bail!("内置键位映射文件“{asset_path}”中存在 JSON 解析错误:{error}")
             }
         }
     }
@@ -211,12 +211,12 @@ impl KeymapFile {
                 error_message,
                 ..
             } if key_bindings.is_empty() => {
-                anyhow::bail!("Error loading built-in keymap \"{asset_path}\": {error_message}",)
+                anyhow::bail!("加载内置键位映射文件“{asset_path}”时出错:{error_message}",)
             }
             KeymapFileLoadResult::Success { key_bindings, .. }
             | KeymapFileLoadResult::SomeFailedToLoad { key_bindings, .. } => Ok(key_bindings),
             KeymapFileLoadResult::JsonParseFailure { error } => {
-                anyhow::bail!("JSON parse error in built-in keymap \"{asset_path}\": {error}")
+                anyhow::bail!("内置键位映射文件“{asset_path}”中存在 JSON 解析错误:{error}")
             }
         }
     }
@@ -265,7 +265,7 @@ impl KeymapFile {
                         // the error occurred in.
                         errors.push((
                             context.clone(),
-                            format!(" Parse error in section `context` field: {}", err),
+                            format!(" 区段 `上下文` 字段解析错误:{}", err),
                         ));
                         continue;
                     }
@@ -277,7 +277,7 @@ impl KeymapFile {
             if !unrecognized_fields.is_empty() {
                 write!(
                     section_errors,
-                    "\n\n - Unrecognized fields: {}",
+                    "\n\n - 无法识别的字段:{}",
                     MarkdownInlineCode(&format!("{:?}", unrecognized_fields.keys()))
                 )
                 .unwrap();
@@ -306,7 +306,7 @@ impl KeymapFile {
                             }
                             write!(
                                 section_errors,
-                                "\n\n- In unbind {}, {indented_err}",
+                                "\n\n- 在解除绑定 {} 中, {indented_err}",
                                 MarkdownInlineCode(&format!("\"{}\"", keystrokes))
                             )
                             .unwrap();
@@ -338,7 +338,7 @@ impl KeymapFile {
                             }
                             write!(
                                 section_errors,
-                                "\n\n- In binding {}, {indented_err}",
+                                "\n\n- 在绑定 {} 中,{indented_err}",
                                 MarkdownInlineCode(&format!("\"{}\"", keystrokes))
                             )
                             .unwrap();
@@ -355,15 +355,15 @@ impl KeymapFile {
         if errors.is_empty() {
             KeymapFileLoadResult::Success { key_bindings }
         } else {
-            let mut error_message = "Errors in user keymap file.".to_owned();
+            let mut error_message = "用户键位映射文件中存在错误。".to_owned();
 
             for (context, section_errors) in errors {
                 if context.is_empty() {
-                    let _ = write!(error_message, "\nIn section without context predicate:");
+                    let _ = write!(error_message, "\n在没有上下文谓词的区段中:");
                 } else {
                     let _ = write!(
                         error_message,
-                        "\nIn section with {}:",
+                        "\n在包含 {} 的区段中:",
                         MarkdownInlineCode(&format!("context = \"{}\"", context))
                     );
                 }
@@ -407,7 +407,7 @@ impl KeymapFile {
             Ok(key_binding) => key_binding,
             Err(InvalidKeystrokeError { keystroke }) => {
                 return Err(format!(
-                    "invalid keystroke {}. {}",
+                    "无效的按键 {}。{}",
                     MarkdownInlineCode(&format!("\"{}\"", &keystroke)),
                     KEYSTROKE_PARSE_EXPECTED_MESSAGE
                 ));
@@ -440,12 +440,12 @@ impl KeymapFile {
         )?;
 
         if key_binding.action().partial_eq(&NoAction) {
-            return Err("expected action name string or [name, input] array.".to_string());
+            return Err("应为操作名称字符串或 [名称, 输入] 数组。".to_string());
         }
 
         if key_binding.action().name() == Unbind::name_for_type() {
             return Err(format!(
-                "can't use {} as an unbind target.",
+                "无法将 {} 用作取消绑定目标。",
                 MarkdownInlineCode(&format!("\"{}\"", Unbind::name_for_type()))
             ));
         }
@@ -460,7 +460,7 @@ impl KeymapFile {
         )
         .map_err(|InvalidKeystrokeError { keystroke }| {
             format!(
-                "invalid keystroke {}. {}",
+                "无效的按键 {}。{}",
                 MarkdownInlineCode(&format!("\"{}\"", &keystroke)),
                 KEYSTROKE_PARSE_EXPECTED_MESSAGE
             )
@@ -541,14 +541,14 @@ impl KeymapFile {
             Ok(action) => action,
             Err(ActionBuildError::NotFound { name }) => {
                 return Err(format!(
-                    "didn't find an action named {}.",
+                    "未找到名为 {} 的操作。",
                     MarkdownInlineCode(&format!("\"{}\"", &name))
                 ));
             }
             Err(ActionBuildError::BuildError { name, error }) => match action_input_string {
                 Some(action_input_string) => {
                     return Err(format!(
-                        "can't build {} action from input value {}: {}",
+                        "无法从输入值 {} 构建 {} 操作:{}",
                         MarkdownInlineCode(&format!("\"{}\"", &name)),
                         MarkdownInlineCode(&action_input_string),
                         MarkdownEscaped(&error.to_string())
@@ -556,7 +556,7 @@ impl KeymapFile {
                 }
                 None => {
                     return Err(format!(
-                        "can't build {} action - it requires input data via [name, input]: {}",
+                        "无法构建 {} 操作 - 它需要通过 [name, input] 提供输入数据:{}",
                         MarkdownInlineCode(&format!("\"{}\"", &name)),
                         MarkdownEscaped(&error.to_string())
                     ));
@@ -664,7 +664,7 @@ impl KeymapFile {
         }
 
         fn add_deprecation_preferred_name(schema: &mut schemars::Schema, new_name: &str) {
-            add_deprecation(schema, format!("Deprecated, use {new_name}"));
+            add_deprecation(schema, format!("已弃用, 请使用 {new_name}"));
         }
 
         fn add_description(schema: &mut schemars::Schema, description: &str) {
@@ -687,7 +687,7 @@ impl KeymapFile {
             "type": "string",
             "const": ""
         });
-        let no_action_message = "No action named this.";
+        let no_action_message = "没有以此命名的操作。";
         add_description(&mut empty_action_name, no_action_message);
         add_deprecation(&mut empty_action_name, no_action_message.to_string());
         let empty_action_name_with_input = json_schema!({
@@ -793,7 +793,7 @@ impl KeymapFile {
             });
             add_deprecation(
                 &mut actions_with_empty_input,
-                "This action does not take input - just the action name string should be used."
+                "此操作不接受输入 - 应仅使用操作名称字符串。"
                     .to_string(),
             );
             action_with_arguments_alternatives.push(actions_with_empty_input);
@@ -813,7 +813,7 @@ impl KeymapFile {
             });
             add_deprecation(
                 &mut actions_with_empty_input,
-                "This action does not take input - just the action name string should be used."
+                "此操作不接受输入 - 应仅使用操作名称字符串。"
                     .to_string(),
             );
             unbind_target_action_alternatives.push(actions_with_empty_input);
@@ -1023,7 +1023,7 @@ impl KeymapFile {
                 }
             } else {
                 log::warn!(
-                    "Failed to find keybinding to update `{:?} -> {}` creating new binding for `{:?} -> {}` instead",
+                    "未找到要更新的键位绑定 `{:?} -> {}`,改为创建新绑定 `{:?} -> {}`",
                     target.keystrokes,
                     target_action_value,
                     source.keystrokes,
@@ -1412,7 +1412,7 @@ impl ActionSequence {
                                 return Err(ActionBuildError::BuildError {
                                     name: Self::name_for_type().to_string(),
                                     error: anyhow::anyhow!(
-                                        "error at sequence index {index}: {err}"
+                                        "序列索引 {index} 处出错:{err}"
                                     ),
                                 });
                             }
@@ -1470,7 +1470,7 @@ impl Action for ActionSequence {
 
     fn build(_value: Value) -> Result<Box<dyn Action>> {
         Err(anyhow::anyhow!(
-            "{} cannot be built directly",
+            "{} 无法直接构建",
             Self::name_for_type()
         ))
     }
@@ -1596,7 +1596,7 @@ mod tests {
             cx,
         ) {
             crate::keymap_file::KeymapFileLoadResult::Success { key_bindings } => key_bindings,
-            other => panic!("expected Success, got {other:?}"),
+            other => panic!("预期为 Success,得到 {other:?}"),
         };
 
         assert_eq!(key_bindings.len(), 1);
@@ -1636,10 +1636,10 @@ mod tests {
                 assert!(
                     error_message
                         .0
-                        .contains("expected action name string or [name, input] array.")
+                        .contains("应为操作名称字符串或 [名称, 输入] 数组。")
                 );
             }
-            other => panic!("expected SomeFailedToLoad, got {other:?}"),
+            other => panic!("预期为 SomeFailedToLoad,得到 {other:?}"),
         }
     }
 
@@ -1665,10 +1665,10 @@ mod tests {
                 assert!(
                     error_message
                         .0
-                        .contains("can't use `\"zed::Unbind\"` as an unbind target.")
+                        .contains("无法将 `\"zed::Unbind\"` 用作解除绑定的目标.")
                 );
             }
-            other => panic!("expected SomeFailedToLoad, got {other:?}"),
+            other => panic!("预期为 SomeFailedToLoad,得到 {other:?}"),
         }
     }
 
@@ -1695,7 +1695,7 @@ mod tests {
         let schema = KeymapFile::generate_json_schema_from_inventory();
         let unbind_schema = schema
             .pointer("/$defs/UnbindTargetAction")
-            .expect("missing UnbindTargetAction schema");
+            .expect("缺少 UnbindTargetAction schema");
 
         assert!(!schema_allows(unbind_schema, &Value::Null));
         assert!(!schema_allows(

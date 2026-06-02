@@ -14,7 +14,7 @@ fn main() {
             if let Some(libdir) = pkg_config::get_variable(lib, "libdir").ok() {
                 rpath_dirs.insert(libdir);
             } else {
-                eprintln!("zed build.rs: {lib} not found in pkg-config's path");
+                eprintln!("zed build.rs: {lib} 未在 pkg-config 路径中找到");
             }
         }
 
@@ -121,7 +121,7 @@ fn main() {
 
             match download_result {
                 Ok(output) if output.status.success() => {
-                    println!("Downloaded conpty nupkg successfully");
+                    println!("成功下载 conpty nupkg");
 
                     let extract_script = format!(
                         "$ProgressPreference = 'SilentlyContinue'; Expand-Archive -Path '{}' -DestinationPath '{}' -Force",
@@ -152,7 +152,7 @@ fn main() {
 
                             match std::fs::copy(&conpty_dll_source, &conpty_dll_target) {
                                 Ok(_) => {
-                                    println!("Copied conpty.dll to {}", conpty_dll_target.display())
+                                    println!("已将 conpty.dll 复制到 {}", conpty_dll_target.display())
                                 }
                                 Err(e) => println!(
                                     "cargo::warning=Failed to copy conpty.dll from {}: {}",
@@ -163,7 +163,7 @@ fn main() {
 
                             match std::fs::copy(&open_console_source, &open_console_target) {
                                 Ok(_) => println!(
-                                    "Copied OpenConsole.exe to {}",
+                                    "已将 OpenConsole.exe 复制到 {}",
                                     open_console_target.display()
                                 ),
                                 Err(e) => println!(
@@ -207,7 +207,7 @@ fn main() {
 
         #[cfg(windows)]
         {
-            windows_resources::compile(false).expect("failed to compile Windows resources");
+            windows_resources::compile(false).expect("Windows 资源编译失败");
         }
     }
 

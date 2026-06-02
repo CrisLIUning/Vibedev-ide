@@ -105,13 +105,21 @@ impl EditPredictionProvider {
 
     pub fn display_name(&self) -> Option<&'static str> {
         match self {
-            EditPredictionProvider::Zed => Some("Zed AI"),
+            EditPredictionProvider::Zed => Some("VibeDev AI"),
             EditPredictionProvider::Copilot => Some("GitHub Copilot"),
             EditPredictionProvider::Codestral => Some("Codestral"),
             EditPredictionProvider::Mercury => Some("Mercury"),
             EditPredictionProvider::None => None,
             EditPredictionProvider::Ollama => Some("Ollama"),
-            EditPredictionProvider::OpenAiCompatibleApi => Some("OpenAI-Compatible API"),
+            // VIBEDEV: this provider is what the sidecar's loopback FIM endpoint
+            // is wired through (see `vibedev_account::launcher::configure_fim`
+            // and `edit_prediction::open_ai_compatible::vibedev_configure_fim`).
+            // In VibeDev's UI, it IS VibeDev's edit-prediction provider — the
+            // OpenAI-compatible enum variant is just the underlying transport.
+            // Keep the variant name (`OpenAiCompatibleApi`) so existing
+            // settings.json values still deserialize; only the display label
+            // changes for menus / settings pickers.
+            EditPredictionProvider::OpenAiCompatibleApi => Some("VibeDev"),
         }
     }
 }

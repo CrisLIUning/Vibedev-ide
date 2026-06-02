@@ -217,6 +217,8 @@ members = [
     "crates/ui_prompt",
     "crates/util",
     "crates/util_macros",
+    "crates/vibedev_account",
+    "crates/vibedev_ui",
     "crates/vim",
     "crates/vim_mode_setting",
     "crates/watch",
@@ -476,6 +478,8 @@ ui_macros = { path = "crates/ui_macros" }
 ui_prompt = { path = "crates/ui_prompt" }
 util = { path = "crates/util" }
 util_macros = { path = "crates/util_macros" }
+vibedev_account = { path = "crates/vibedev_account" }
+vibedev_ui = { path = "crates/vibedev_ui" }
 vim = { path = "crates/vim" }
 vim_mode_setting = { path = "crates/vim_mode_setting" }
 which_key = { path = "crates/which_key" }

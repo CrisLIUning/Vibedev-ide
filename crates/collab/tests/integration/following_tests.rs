@@ -2446,7 +2446,7 @@ async fn test_following_with_multibuffer_excerpts_at_unobserved_lamport(
     buffer_a.update(cx_a, |buf, cx| {
         for i in 0..30 {
             let len = buf.len();
-            buf.edit([(len..len, format!("\nappended line {i}"))], None, cx);
+            buf.edit([(len..len, format!("\n第 {i} 行"))], None, cx);
         }
     });
     let multibuffer_a = cx_a.new(|cx| {

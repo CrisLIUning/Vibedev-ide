@@ -361,7 +361,7 @@ impl ConfigurationView {
                 cx,
                 "xai-0000000000000000000000000000000000000000000000000",
             )
-            .label("API key")
+            .label("API 密钥")
         });
 
         cx.observe(&state, |_, _, cx| {
@@ -432,41 +432,41 @@ impl Render for ConfigurationView {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let env_var_set = self.state.read(cx).api_key_state.is_from_env_var();
         let configured_card_label = if env_var_set {
-            format!("API key set in {API_KEY_ENV_VAR_NAME} environment variable")
+            format!("API 密钥已在 {API_KEY_ENV_VAR_NAME} 环境变量中设置")
         } else {
             let api_url = XAiLanguageModelProvider::api_url(cx);
             if api_url == XAI_API_URL {
-                "API key configured".to_string()
+                "API 密钥已配置".to_string()
             } else {
-                format!("API key configured for {}", api_url)
+                format!("已为 {} 配置 API 密钥", api_url)
             }
         };
 
         let api_key_section = if self.should_render_editor(cx) {
             v_flex()
                 .on_action(cx.listener(Self::save_api_key))
-                .child(Label::new("To use Zed's agent with xAI, you need to add an API key. Follow these steps:"))
+                .child(Label::new("To use VibeDev's agent with xAI, you need to add an API key. Follow these steps:"))
                 .child(
                     List::new()
                         .child(
                             ListBulletItem::new("")
-                                .child(Label::new("Create one by visiting"))
-                                .child(ButtonLink::new("xAI console", "https://console.x.ai/team/default/api-keys"))
+                                .child(Label::new("访问以下地址创建一个"))
+                                .child(ButtonLink::new("xAI 控制台", "https://console.x.ai/team/default/api-keys"))
                         )
                         .child(
-                            ListBulletItem::new("Paste your API key below and hit enter to start using the agent")
+                            ListBulletItem::new("在下方粘贴您的 API 密钥并按回车键以开始使用该代理")
                         ),
                 )
                 .child(self.api_key_editor.clone())
                 .child(
                     Label::new(format!(
-                        "You can also set the {API_KEY_ENV_VAR_NAME} environment variable and restart Zed."
+                        "You can also set the {API_KEY_ENV_VAR_NAME} environment variable and restart VibeDev."
                     ))
                     .size(LabelSize::Small)
                     .color(Color::Muted),
                 )
                 .child(
-                    Label::new("Note that xAI is a custom OpenAI-compatible provider.")
+                    Label::new("请注意,xAI 是一个自定义的 OpenAI 兼容提供商。")
                         .size(LabelSize::Small)
                         .color(Color::Muted),
                 )
@@ -475,14 +475,14 @@ impl Render for ConfigurationView {
             ConfiguredApiCard::new(configured_card_label)
                 .disabled(env_var_set)
                 .when(env_var_set, |this| {
-                    this.tooltip_label(format!("To reset your API key, unset the {API_KEY_ENV_VAR_NAME} environment variable."))
+                    this.tooltip_label(format!("要重置 API 密钥,请取消设置 {API_KEY_ENV_VAR_NAME} 环境变量。"))
                 })
                 .on_click(cx.listener(|this, _, window, cx| this.reset_api_key(window, cx)))
                 .into_any_element()
         };
 
         if self.load_credentials_task.is_some() {
-            div().child(Label::new("Loading credentials…")).into_any()
+            div().child(Label::new("正在加载凭据…")).into_any()
         } else {
             v_flex().size_full().child(api_key_section).into_any()
         }

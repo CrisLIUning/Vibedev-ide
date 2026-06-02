@@ -41,7 +41,7 @@ impl SourceHut {
         }
 
         Ok(Self::new(
-            "SourceHut Self-Hosted",
+            "SourceHut 自托管",
             Url::parse(&format!("https://{}", host))?,
         ))
     }

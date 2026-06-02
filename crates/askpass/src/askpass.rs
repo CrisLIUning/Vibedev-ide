@@ -259,7 +259,7 @@ impl PasswordProxy {
         make_file_executable(&askpass_script_path)
             .await
             .with_context(|| {
-                format!("marking askpass script executable at {askpass_script_path:?}")
+                format!("将 {askpass_script_path:?} 处的 askpass 脚本标记为可执行")
             })?;
         // todo(shell): There might be no powershell on the system
         #[cfg(target_os = "windows")]

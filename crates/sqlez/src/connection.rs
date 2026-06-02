@@ -464,7 +464,7 @@ mod test {
         for path in &guard.paths {
             assert!(
                 fs::metadata(path).is_err(),
-                "named in-memory database unexpectedly created backing file {path}"
+                "命名内存数据库意外创建了后备文件 {path}"
             );
         }
     }

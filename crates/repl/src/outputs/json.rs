@@ -67,7 +67,7 @@ impl JsonView {
                 let preview = if is_expanded {
                     String::new()
                 } else {
-                    format!("{{ {} fields }}", map.len())
+                    format!("{{ {} 个字段 }}", map.len())
                 };
 
                 v_flex()
@@ -127,7 +127,7 @@ impl JsonView {
                 let preview = if is_expanded {
                     String::new()
                 } else {
-                    format!("[ {} items ]", arr.len())
+                    format!("[ {} 个项目 ]", arr.len())
                 };
 
                 v_flex()
@@ -263,7 +263,7 @@ mod tests {
         let view = JsonView::from_value(serde_json::json!({"key": "value"})).unwrap();
         assert!(
             view.is_expanded("root"),
-            "root should be expanded by default"
+            "根节点默认应处于展开状态"
         );
     }
 
@@ -272,11 +272,11 @@ mod tests {
         let view = JsonView::from_value(serde_json::json!({"key": "value"})).unwrap();
         assert!(
             !view.is_expanded("root.key"),
-            "non-root paths should not be expanded by default"
+            "非根路径默认不应展开"
         );
         assert!(
             !view.is_expanded("nonexistent"),
-            "unknown paths should not be expanded"
+            "未知路径不应展开"
         );
     }
 

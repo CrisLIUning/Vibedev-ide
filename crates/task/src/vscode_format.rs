@@ -81,7 +81,7 @@ fn generate_label(command: &Option<Command>) -> String {
                 command.clone()
             }
         }
-        None => "Untitled Task".to_string(),
+        None => "未命名任务".to_string(),
     }
 }
 
@@ -92,7 +92,7 @@ impl VsCodeTaskDefinition {
     ) -> anyhow::Result<Option<TaskTemplate>> {
         if self.other_attributes.contains_key("dependsOn") {
             log::warn!(
-                "Skipping deserializing of a task `{}` with the unsupported `dependsOn` key",
+                "正在跳过对包含不支持的 `dependsOn` 键的任务 `{}` 的反序列化",
                 self.label
             );
             return Ok(None);
@@ -309,7 +309,7 @@ mod tests {
             serde_json_lenient::from_str(RUST_ANALYZER_TASKS).unwrap();
         let expected = vec![
             VsCodeTaskDefinition {
-                label: "Build Extension in Background".to_string(),
+                label: "在后台构建扩展".to_string(),
                 command: Some(Command::Npm {
                     script: "watch".to_string(),
                 }),
@@ -317,7 +317,7 @@ mod tests {
                 other_attributes: Default::default(),
             },
             VsCodeTaskDefinition {
-                label: "Build Extension".to_string(),
+                label: "构建扩展".to_string(),
                 command: Some(Command::Npm {
                     script: "build".to_string(),
                 }),
@@ -325,7 +325,7 @@ mod tests {
                 other_attributes: Default::default(),
             },
             VsCodeTaskDefinition {
-                label: "Build Server".to_string(),
+                label: "构建服务器".to_string(),
                 command: Some(Command::Shell {
                     command: "cargo build --package rust-analyzer".to_string(),
                     args: Default::default(),
@@ -334,7 +334,7 @@ mod tests {
                 other_attributes: Default::default(),
             },
             VsCodeTaskDefinition {
-                label: "Build Server (Release)".to_string(),
+                label: "构建服务器 (Release)".to_string(),
                 command: Some(Command::Shell {
                     command: "cargo build --release --package rust-analyzer".to_string(),
                     args: Default::default(),
@@ -343,7 +343,7 @@ mod tests {
                 other_attributes: Default::default(),
             },
             VsCodeTaskDefinition {
-                label: "Pretest".to_string(),
+                label: "预测试".to_string(),
                 command: Some(Command::Npm {
                     script: "pretest".to_string(),
                 }),
@@ -351,13 +351,13 @@ mod tests {
                 other_attributes: Default::default(),
             },
             VsCodeTaskDefinition {
-                label: "Build Server and Extension".to_string(),
+                label: "构建服务器和扩展".to_string(),
                 command: None,
                 options: None,
                 other_attributes: Default::default(),
             },
             VsCodeTaskDefinition {
-                label: "Build Server (Release) and Extension".to_string(),
+                label: "构建服务器 (Release) 和扩展".to_string(),
                 command: None,
                 options: None,
                 other_attributes: Default::default(),
@@ -371,29 +371,29 @@ mod tests {
             .for_each(|(lhs, rhs)| compare_without_other_attributes(lhs.clone(), rhs));
         let expected = vec![
             TaskTemplate {
-                label: "Build Extension in Background".to_string(),
+                label: "在后台构建扩展".to_string(),
                 command: "npm".to_string(),
                 args: vec!["run".to_string(), "watch".to_string()],
                 ..Default::default()
             },
             TaskTemplate {
-                label: "Build Extension".to_string(),
+                label: "构建扩展".to_string(),
                 command: "npm".to_string(),
                 args: vec!["run".to_string(), "build".to_string()],
                 ..Default::default()
             },
             TaskTemplate {
-                label: "Build Server".to_string(),
+                label: "构建服务器".to_string(),
                 command: "cargo build --package rust-analyzer".to_string(),
                 ..Default::default()
             },
             TaskTemplate {
-                label: "Build Server (Release)".to_string(),
+                label: "构建服务器 (Release)".to_string(),
                 command: "cargo build --release --package rust-analyzer".to_string(),
                 ..Default::default()
             },
             TaskTemplate {
-                label: "Pretest".to_string(),
+                label: "预测试".to_string(),
                 command: "npm".to_string(),
                 args: vec!["run".to_string(), "pretest".to_string()],
                 ..Default::default()
@@ -458,6 +458,6 @@ mod tests {
             })),
             "shell"
         );
-        assert_eq!(generate_label(&None), "Untitled Task");
+        assert_eq!(generate_label(&None), "未命名任务");
     }
 }

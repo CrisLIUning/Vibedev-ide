@@ -13,13 +13,18 @@ use provider::deepseek::DeepSeekLanguageModelProvider;
 pub mod extension;
 pub mod provider;
 mod settings;
+// VIBEDEV: registers an `openai_compatible` provider pointed at the local
+// sidecar's loopback `/v1` and selects it as the inline-assistant + default
+// model, so the inline assistant (内联助手) has a configured provider instead of
+// erroring `NoProvider`. Called from `vibedev_account` after the sidecar
+// handshake, mirroring how FIM is wired.
+pub mod vibedev_inline_assistant;
 
 pub use crate::extension::init_proxy as init_extension_proxy;
+pub use crate::vibedev_inline_assistant::vibedev_configure_inline_assistant;
 
 use crate::provider::anthropic::AnthropicLanguageModelProvider;
 use crate::provider::bedrock::BedrockLanguageModelProvider;
-use crate::provider::cloud::CloudLanguageModelProvider;
-use crate::provider::copilot_chat::CopilotChatLanguageModelProvider;
 use crate::provider::google::GoogleLanguageModelProvider;
 use crate::provider::lmstudio::LmStudioLanguageModelProvider;
 pub use crate::provider::mistral::MistralLanguageModelProvider;
@@ -27,14 +32,22 @@ use crate::provider::ollama::OllamaLanguageModelProvider;
 use crate::provider::open_ai::OpenAiLanguageModelProvider;
 use crate::provider::open_ai_compatible::OpenAiCompatibleLanguageModelProvider;
 use crate::provider::open_router::OpenRouterLanguageModelProvider;
-use crate::provider::openai_subscribed::OpenAiSubscribedProvider;
 use crate::provider::opencode::OpenCodeLanguageModelProvider;
 use crate::provider::vercel_ai_gateway::VercelAiGatewayLanguageModelProvider;
 use crate::provider::x_ai::XAiLanguageModelProvider;
 pub use crate::settings::*;
 
+/// VIBEDEV: stash of the app's credentials provider — the same store the
+/// language-model providers read their API keys from — so the inline-assistant
+/// configurator (`vibedev_inline_assistant`) can write the VibeDev sidecar
+/// handshake token into the SAME keychain store the provider authenticates
+/// against (the env-var path is unreliable; see vibedev_inline_assistant).
+pub(crate) struct GlobalVibedevCredentials(pub Arc<dyn CredentialsProvider>);
+impl gpui::Global for GlobalVibedevCredentials {}
+
 pub fn init(user_store: Entity<UserStore>, client: Arc<Client>, cx: &mut App) {
     let credentials_provider = client.credentials_provider();
+    cx.set_global(GlobalVibedevCredentials(credentials_provider.clone()));
     let registry = LanguageModelRegistry::global(cx);
     registry.update(cx, |registry, cx| {
         register_language_model_providers(
@@ -226,14 +239,21 @@ fn register_language_model_providers(
     credentials_provider: Arc<dyn CredentialsProvider>,
     cx: &mut Context<LanguageModelRegistry>,
 ) {
-    registry.register_provider(
-        Arc::new(CloudLanguageModelProvider::new(
-            user_store,
-            client.clone(),
-            cx,
-        )),
-        cx,
-    );
+    // VIBEDEV: Zed Cloud provider registration disabled — its configuration UI
+    // (provider/cloud.rs) renders Sign-In / Trial / Upgrade buttons that link
+    // to zed.dev/account, wrong backend for VibeDev. Users reach Anthropic
+    // models through the sub2 gateway via the Anthropic provider's
+    // OPENAI_BASE_URL override, configured by claude-code-best's ACP agent.
+    //
+    // registry.register_provider(
+    //     Arc::new(CloudLanguageModelProvider::new(
+    //         user_store,
+    //         client.clone(),
+    //         cx,
+    //     )),
+    //     cx,
+    // );
+    let _ = user_store; // silence unused-binding warning now that Cloud is gone
     registry.register_provider(
         Arc::new(AnthropicLanguageModelProvider::new(
             client.http_client(),
@@ -330,13 +350,22 @@ fn register_language_model_providers(
         )),
         cx,
     );
-    registry.register_provider(Arc::new(CopilotChatLanguageModelProvider::new(cx)), cx);
-    registry.register_provider(
-        Arc::new(OpenAiSubscribedProvider::new(
-            client.http_client(),
-            credentials_provider,
-            cx,
-        )),
-        cx,
-    );
+    // VIBEDEV: CopilotChat provider disabled — we removed Copilot from the
+    // edit-prediction provider menu, and we don't want a separate
+    // Copilot-as-chat-model entry either. Users who actually have Copilot can
+    // re-enable in user settings if they configure it manually.
+    // registry.register_provider(Arc::new(CopilotChatLanguageModelProvider::new(cx)), cx);
+
+    // VIBEDEV: OpenAiSubscribed provider disabled — this is Zed's own OpenAI
+    // subscription resold through Zed Cloud. VibeDev uses sub2 for OpenAI
+    // access via the existing OpenAiLanguageModelProvider with a custom base URL.
+    // registry.register_provider(
+    //     Arc::new(OpenAiSubscribedProvider::new(
+    //         client.http_client(),
+    //         credentials_provider,
+    //         cx,
+    //     )),
+    //     cx,
+    // );
+    let _ = credentials_provider; // silence unused after the last consumer was disabled
 }

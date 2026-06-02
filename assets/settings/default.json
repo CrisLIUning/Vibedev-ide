@@ -1,6 +1,6 @@
 {
   "$schema": "zed://schemas/settings",
-  // The name of the Zed theme to use for the UI.
+  // The name of the VibeDev theme to use for the UI.
   //
   // `mode` is one of:
   // - "system": Use the theme that corresponds to the system's appearance
@@ -129,9 +129,9 @@
   // after the mouse moves away from the hover target.
   // Only applies when `hover_popover_sticky` is enabled.
   "hover_popover_hiding_delay": 300,
-  // Whether to confirm before quitting Zed.
+  // Whether to confirm before quitting VibeDev.
   "confirm_quit": false,
-  // Whether to restore last closed project when fresh Zed instance is opened
+  // Whether to restore last closed project when fresh VibeDev instance is opened
   // May take 3 values:
   //  1. All workspaces open during last session
   //         "restore_on_startup": "last_session"
@@ -144,7 +144,7 @@
   // an explicit `-e` (existing window) or `-n` (new window) flag.
   //
   // May take 2 values:
-  //  1. Open directories as a new workspace in the current Zed window's sidebar
+  //  1. Open directories as a new workspace in the current VibeDev window's sidebar
   //         "cli_default_open_behavior": "existing_window"
   //  2. Open directories in a new window (reuse existing windows for files
   //     that are already part of an open project)
@@ -200,23 +200,23 @@
   //
   // Default: true
   "zoomed_padding": true,
-  // What draws Zed's window decorations (titlebar):
-  // 1. Client application (Zed) draws its own window decorations
+  // What draws VibeDev's window decorations (titlebar):
+  // 1. Client application (VibeDev) draws its own window decorations
   //    "client"
   // 2. Display server draws the window decorations. Not supported by GNOME Wayland.
   //    "server"
   //
-  // This requires restarting Zed for changes to take effect.
+  // This requires restarting VibeDev for changes to take effect.
   //
   // Default: "client"
   "window_decorations": "client",
   // Whether to use the system provided dialogs for Open and Save As.
-  // When set to false, Zed will use the built-in keyboard-first pickers.
+  // When set to false, VibeDev will use the built-in keyboard-first pickers.
   "use_system_path_prompts": true,
   // Whether to use the system provided dialogs for prompts, such as confirmation
   // prompts.
-  // When set to false, Zed will use its built-in prompts. Note that on Linux,
-  // this option is ignored and Zed will always use the built-in prompts.
+  // When set to false, VibeDev will use its built-in prompts. Note that on Linux,
+  // this option is ignored and VibeDev will always use the built-in prompts.
   "use_system_prompts": true,
   // Whether the cursor blinks in the editor.
   "cursor_blink": true,
@@ -412,11 +412,11 @@
   "use_on_type_format": true,
   // Whether to automatically add matching closing characters when typing
   // opening parenthesis, bracket, brace, single or double quote characters.
-  // For example, when you type '(', Zed will add a closing ) at the correct position.
+  // For example, when you type '(', VibeDev will add a closing ) at the correct position.
   "use_autoclose": true,
   // Whether to automatically surround selected text when typing opening parenthesis,
   // bracket, brace, single or double quote characters.
-  // For example, when you select text and type '(', Zed will surround the text with ().
+  // For example, when you select text and type '(', VibeDev will surround the text with ().
   "use_auto_surround": true,
   // Controls automatic indentation behavior when typing.
   // - "syntax_aware": Adjusts indentation based on syntax context (default)
@@ -477,7 +477,7 @@
     "space": "•",
     "tab": "→",
   },
-  // Settings related to calls in Zed
+  // Settings related to calls in VibeDev
   "calls": {
     // Join calls with the microphone live by default
     "mute_on_join": false,
@@ -514,7 +514,7 @@
     // Whether to show the user menu in the titlebar.
     "show_user_menu": true,
     // Whether to show the sign in button in the titlebar.
-    "show_sign_in": true,
+    "show_sign_in": false,
     // Whether to show the menus in the titlebar.
     "show_menus": false,
     // The layout of window control buttons in the title bar (Linux only).
@@ -933,8 +933,9 @@
     "expand_outlines_with_depth": 100,
   },
   "collaboration_panel": {
+    // VIBEDEV: hide the Zed collaboration/channels button.
     // Whether to show the collaboration panel button in the status bar.
-    "button": true,
+    "button": false,
     // Where to dock the collaboration panel. Can be 'left' or 'right'.
     "dock": "right",
     // Default width of the collaboration panel.
@@ -1032,12 +1033,19 @@
     // Maximum content width in pixels when limit_content_width is enabled.
     // Content will be centered within the panel.
     "max_content_width": 850,
-    // The default model to use when creating new threads.
+    // VIBEDEV: default_model provider was "zed.dev" pointing at Zed Cloud's
+    // Anthropic re-seller, which we unregistered (see crates/language_models/
+    // src/language_models.rs commented-out CloudLanguageModelProvider
+    // registration). Switched to the still-registered "anthropic" provider
+    // pointed at sub2 (configured via env in agent_servers.VibeDev or user
+    // settings). This is the inline-assist / native-agent default; the
+    // primary VibeDev agent panel goes through agent_servers.VibeDev (ACP)
+    // and ignores this entry.
     "default_model": {
       // The provider to use.
-      "provider": "zed.dev",
+      "provider": "anthropic",
       // The model to use.
-      "model": "claude-sonnet-4",
+      "model": "claude-sonnet-4-7",
       // Whether thinking is enabled.
       "enable_thinking": false,
     },
@@ -1058,8 +1066,8 @@
       //
       // To set parameters for a specific provider and model:
       // {
-      //   "provider": "zed.dev",
-      //   "model": "claude-sonnet-4",
+      //   "provider": "anthropic",
+      //   "model": "claude-sonnet-4-7",
       //   "temperature": 1.0
       // }
     ],
@@ -1068,7 +1076,7 @@
     // The "default" setting applies when no tool-specific rules match.
     // For external agents that define their own permission modes,
     // "deny" and "confirm" still take precedence — the external agent's
-    // permission system is only used when Zed would allow the action.
+    // permission system is only used when VibeDev would allow the action.
     //
     // Per-tool regex patterns ("tools" below) match against tool input text
     // (commands, paths, URLs, etc.). For `copy_path` and `move_path`,
@@ -1257,7 +1265,7 @@
   //
   // 1. Never automatically save:
   //     "autosave": "off",
-  // 2. Save when changing focus away from the Zed window:
+  // 2. Save when changing focus away from the VibeDev window:
   //     "autosave": "on_window_change",
   // 3. Save when changing focus away from a specific buffer:
   //     "autosave": "on_focus_change",
@@ -1373,11 +1381,11 @@
     // Default: true
     "skip_focus_for_active_in_search": true,
     // Whether to use gitignored files when searching.
-    // Only the file Zed had indexed will be used, not necessary all the gitignored files.
+    // Only the file VibeDev had indexed will be used, not necessary all the gitignored files.
     //
     // Can accept 3 values:
     //   * "all": Use all gitignored files
-    //   * "indexed": Use only the files Zed had indexed
+    //   * "indexed": Use only the files VibeDev had indexed
     //   * "smart": Be smart and search for ignored when called from a gitignored worktree
     "include_ignored": "smart",
     // Whether to include text channels in file finder results.
@@ -1418,7 +1426,7 @@
   "format_on_save": "on",
   // How to perform a buffer format. This setting can take multiple values:
   //
-  // 1. Default. Format files using Zed's Prettier integration (if applicable),
+  // 1. Default. Format files using VibeDev's Prettier integration (if applicable),
   //    or falling back to formatting via language server:
   //     "formatter": "auto"
   // 2. Format code using the current language server:
@@ -1432,7 +1440,7 @@
   //         "arguments": ["--stdin-filepath", "{buffer_path}"]
   //       }
   //     }
-  // 5. Format code using Zed's Prettier integration:
+  // 5. Format code using VibeDev's Prettier integration:
   //     "formatter": "prettier"
   // 6. Format code using a code action
   //     "formatter": {"code_action": "source.fixAll.eslint"}
@@ -1473,18 +1481,23 @@
   //
   // Default: true
   "word_diff_enabled": true,
-  // Control what info is collected by Zed.
+  // Control what info is collected by VibeDev.
+  // VIBEDEV: defaults restored to ON because crash + usage now report to our
+  // own sub2api collector (handler/vibedev/telemetry.go, deployed at
+  // aitoken.bigopen.cn/crashes/upload + /telemetry/events) — NOT to zed.dev.
+  // See crates/client/src/telemetry.rs MINIDUMP_ENDPOINT + TELEMETRY_EVENTS_ENDPOINT.
+  // Users can opt out in user settings.json with telemetry.{diagnostics,metrics}: false.
   "telemetry": {
     // Send debug info like crash reports.
     "diagnostics": true,
-    // Send anonymized usage data like what languages you're using Zed with.
+    // Send anonymized usage data like what languages you're using VibeDev with.
     "metrics": true,
   },
-  // Whether to disable all AI features in Zed.
+  // Whether to disable all AI features in VibeDev.
   //
   // Default: false
   "disable_ai": false,
-  // Automatically update Zed. This setting may be ignored on Linux if
+  // Automatically update VibeDev. This setting may be ignored on Linux if
   // installed through a package manager.
   "auto_update": true,
   // How to render LSP `textDocument/documentColor` colors in the editor.
@@ -1508,7 +1521,7 @@
     //
     // Default: true
     "include_warnings": true,
-    // Settings for using LSP pull diagnostics mechanism in Zed.
+    // Settings for using LSP pull diagnostics mechanism in VibeDev.
     "lsp_pull_diagnostics": {
       // Whether to pull for diagnostics or not.
       "enabled": true,
@@ -1535,7 +1548,7 @@
       "max_severity": null,
     },
   },
-  // Files or globs of files that will be excluded by Zed entirely. They will be skipped during file
+  // Files or globs of files that will be excluded by VibeDev entirely. They will be skipped during file
   // scans, file searches, and not be displayed in the project file tree. Takes precedence over `file_scan_inclusions`.
   "file_scan_exclusions": [
     "**/.git",
@@ -1550,9 +1563,9 @@
     "**/.classpath",
     "**/.settings",
   ],
-  // Files or globs of files that will be included by Zed, even when ignored by git. This is useful
+  // Files or globs of files that will be included by VibeDev, even when ignored by git. This is useful
   // for files that are not tracked by git, but are still important to your project. Note that globs
-  // that are overly broad can slow down Zed's file scanning. `file_scan_exclusions` takes
+  // that are overly broad can slow down VibeDev's file scanning. `file_scan_exclusions` takes
   // precedence over these inclusions.
   "file_scan_inclusions": [".env*"],
   // Globs to match files that will be considered "hidden". These files can be hidden from the
@@ -1654,7 +1667,10 @@
   "load_direnv": "direct",
   "edit_predictions": {
     // Which edit prediction provider to use.
-    "provider": "zed",
+    // VIBEDEV: default to "none" — we ship no Zed AI / Zeta sign-in, so the
+    // "Sign In & Start Using" edit-prediction onboarding never appears. A later
+    // phase repoints this at the sub2api gateway FIM via "open_ai_compatible".
+    "provider": "none",
     // A list of globs representing files that edit predictions should be disabled for.
     // There's a sensible default list of globs already included.
     // Any addition to this list will be merged with the default list.
@@ -1709,7 +1725,7 @@
       "prompt_format": "infer",
       "max_output_tokens": 64,
     },
-    // Controls whether Zed may collect training data when using Zed's Edit Predictions.
+    // Controls whether VibeDev may collect training data when using VibeDev's Edit Predictions.
     // Data is only captured when the project is detected as open source.
     // Possible values:
     //   - "default": use the preference previously set via the status-bar toggle,
@@ -1988,13 +2004,13 @@
   "tasks": {
     "variables": {},
     "enabled": true,
-    // Use LSP tasks over Zed language extension ones.
+    // Use LSP tasks over VibeDev language extension ones.
     // If no LSP tasks are returned due to error/timeout or regular execution,
-    // Zed language extension tasks will be used instead.
+    // VibeDev language extension tasks will be used instead.
     //
-    // Other Zed tasks will still be shown:
-    // * Zed task from either of the task config file
-    // * Zed task from history (e.g. one-off task was spawned before)
+    // Other VibeDev tasks will still be shown:
+    // * VibeDev task from either of the task config file
+    // * VibeDev task from history (e.g. one-off task was spawned before)
     //
     // Default: true
     "prefer_lsp": true,
@@ -2024,20 +2040,20 @@
   // Settings for which version of Node.js and NPM to use when installing
   // language servers and Copilot.
   //
-  // Note: changing this setting currently requires restarting Zed.
+  // Note: changing this setting currently requires restarting VibeDev.
   "node": {
-    // By default, Zed will look for `node` and `npm` on your `$PATH`, and use the
+    // By default, VibeDev will look for `node` and `npm` on your `$PATH`, and use the
     // existing executables if their version is recent enough. Set this to `true`
-    // to prevent this, and force Zed to always download and install its own
+    // to prevent this, and force VibeDev to always download and install its own
     // version of Node.
     "ignore_system_version": false,
     // You can also specify alternative paths to Node and NPM. If you specify
-    // `path`, but not `npm_path`, Zed will assume that `npm` is located at
+    // `path`, but not `npm_path`, VibeDev will assume that `npm` is located at
     // `${path}/../npm`.
     "path": null,
     "npm_path": null,
   },
-  // The extensions that Zed should automatically install on startup.
+  // The extensions that VibeDev should automatically install on startup.
   //
   // If you don't want any of these extensions, add this field to your settings
   // and change the value to `false`.
@@ -2087,7 +2103,7 @@
     // When LSP servers give an `InsertReplaceEdit` completion, they provides two ranges: `insert` and `replace`. Usually, `insert`
     // contains the word prefix before your cursor and `replace` contains the whole word.
     //
-    // Effectively, this setting just changes whether Zed will use the received range for `insert` or `replace`, so the results may
+    // Effectively, this setting just changes whether VibeDev will use the received range for `insert` or `replace`, so the results may
     // differ depending on the underlying LSP server.
     //
     // Possible values:
@@ -2379,6 +2395,16 @@
     "x_ai": {
       "api_url": "https://api.x.ai/v1",
     },
+    // VIBEDEV: keep "zed.dev" as an EMPTY block (not removed). Upstream
+    // `crates/language_models/src/settings.rs:50` hard-unwraps
+    // `language_models.zed_dot_dev`, so deleting this key causes a runtime
+    // panic at startup ("called Option::unwrap() on a None value"). The
+    // CloudLanguageModelProvider that actually consumes this config is
+    // unregistered on a VibeDev install (see crates/language_models/
+    // src/language_models.rs commented-out CloudLanguageModelProvider
+    // registration), so the block stays empty and the provider never
+    // appears in the LLM picker. Anthropic/OpenAI providers pointed at the
+    // sub2 gateway take its functional place.
     "zed.dev": {},
   },
   "session": {
@@ -2396,7 +2422,7 @@
     // Default: false
     "trust_all_worktrees": false,
   },
-  // Zed's Prettier integration settings.
+  // VibeDev's Prettier integration settings.
   // Allows to enable/disable formatting with Prettier
   // and configure default Prettier, used when no project-level Prettier installation is found.
   "prettier": {
@@ -2424,7 +2450,7 @@
     // "rust-analyzer": {
     //     // A special flag for rust-analyzer integration, to use server-provided tasks
     //     enable_lsp_tasks": true,
-    //     // These initialization options are merged into Zed's defaults
+    //     // These initialization options are merged into VibeDev's defaults
     //     "initialization_options": {
     //         "check": {
     //             "command": "clippy" // rust-analyzer.check.command (default: "check")
@@ -2544,13 +2570,13 @@
   // The server to connect to. If the environment variable
   // ZED_SERVER_URL is set, it will override this setting.
   "server_url": "https://zed.dev",
-  // Settings overrides to use when using Zed Preview.
-  // Mostly useful for developers who are managing multiple instances of Zed.
+  // Settings overrides to use when using VibeDev Preview.
+  // Mostly useful for developers who are managing multiple instances of VibeDev.
   "preview": {
     // "theme": "Andromeda"
   },
-  // Settings overrides to use when using Zed Nightly.
-  // Mostly useful for developers who are managing multiple instances of Zed.
+  // Settings overrides to use when using VibeDev Nightly.
+  // Mostly useful for developers who are managing multiple instances of VibeDev.
   "nightly": {
     // "theme": "Andromeda"
     "instrumentation": {
@@ -2559,13 +2585,13 @@
       },
     },
   },
-  // Settings overrides to use when using Zed Stable.
-  // Mostly useful for developers who are managing multiple instances of Zed.
+  // Settings overrides to use when using VibeDev Stable.
+  // Mostly useful for developers who are managing multiple instances of VibeDev.
   "stable": {
     // "theme": "Andromeda"
   },
-  // Settings overrides to use when using Zed Dev.
-  // Mostly useful for developers who are managing multiple instances of Zed.
+  // Settings overrides to use when using VibeDev Dev.
+  // Mostly useful for developers who are managing multiple instances of VibeDev.
   "dev": {
     // "theme": "Andromeda"
     "instrumentation": {
@@ -2598,7 +2624,7 @@
   // Supported URI scheme: `http`, `https`, `socks4`, `socks4a`, `socks5`,
   // `socks5h`. `http` will be used when no scheme is specified.
   //
-  // By default no proxy will be used, or Zed will try get proxy settings from
+  // By default no proxy will be used, or VibeDev will try get proxy settings from
   // environment variables. If certain hosts should not be proxied,
   // set the `no_proxy` environment variable and provide a comma-separated list.
   //
@@ -2616,7 +2642,7 @@
   "command_aliases": {},
   // ssh_connections is an array of ssh connections.
   // You can configure these from `project: Open Remote` in the command palette.
-  // Zed's ssh support will pull configuration from your ~/.ssh too.
+  // VibeDev's ssh support will pull configuration from your ~/.ssh too.
   // Examples:
   // [
   //   {
@@ -2646,7 +2672,55 @@
   // Configures context servers for use by the agent.
   "context_servers": {},
   // Configures agent servers available in the agent panel.
-  "agent_servers": {},
+  // VIBEDEV: register the VibeDev backend as the primary ACP agent. The dev
+  // path mirrors vibedev_account/launcher.rs DEV_SIDECAR_ENTRY; Plan 4
+  // productization swaps it for the bundled install location. The per-user
+  // gateway api_key + data-plane base URL are deliberately NOT here (key
+  // isolation): the backend resolves them at runtime from ~/.vibedev/auth.json
+  // (written by the sidecar login flow), so no secret ships in this public file.
+  // Model: none is pinned here. The agent's default (claude-sonnet tier) is
+  // sent to the gateway as a claude alias and translated server-side to a
+  // DeepSeek model (Plan 2: sonnet/haiku -> deepseek-chat, opus ->
+  // deepseek-reasoner). To force one model, add "ANTHROPIC_MODEL" to env below.
+  // Config dir: the backend's `runAcpAgent()` entry calls `ensureVibedevConfigDir()`
+  // (claude-code-best `src/services/api/vibedevAuth.ts:75-79` — committed in
+  // a1c02ca), which defaults `VIBEDEV_CONFIG_DIR ??= getVibedevHomeDir()` (=
+  // `~/.vibedev`) BEFORE reading any settings. So we deliberately do NOT bake
+  // `VIBEDEV_CONFIG_DIR` into the env below: (a) the backend always lands on
+  // `~/.vibedev` regardless of which user runs the build, (b) no dev-machine
+  // home path leaks into this public open-source fork.
+  "agent_servers": {
+    "VibeDev": {
+      "type": "custom",
+      // VIBEDEV: `${ZED_BIN_DIR}` is expanded at runtime by settings.rs to the
+      // VibeDev install directory. The installer ships the compiled single-binary
+      // ACP agent at <install_dir>/agent/vibedev-agent.exe (self-contained — it
+      // embeds the Bun runtime, so there's no separate bun.exe + cli-bun.js entry
+      // script). No PATH munging or user setup required. To override on a dev
+      // checkout, set this in user settings.
+      "command": "${ZED_BIN_DIR}/agent/vibedev-agent.exe",
+      "args": [
+        "--acp"
+      ],
+      "env": {
+        "VIBEDEV_USE_OPENAI": "1",
+        "OPENAI_DEFAULT_SONNET_MODEL": "deepseek-chat",
+        "OPENAI_DEFAULT_OPUS_MODEL": "deepseek-reasoner",
+        "OPENAI_DEFAULT_HAIKU_MODEL": "deepseek-chat",
+        // VIBEDEV: expose "Bypass Permissions" in the session-mode picker.
+        // Backend gates this mode behind an explicit env opt-in
+        // (services/acp/agent.ts isAcpBypassLocallyEnabled) so people don't
+        // accidentally set agents loose. We DO opt in by default on VibeDev
+        // because the alternative — "Don't Ask" — silently DENIES all
+        // tools (permissions.ts:507 converts ask → deny), which is a UX
+        // trap that looks like Bypass but does the opposite. Default mode
+        // stays the backend's "acceptEdits" — file edits flow, Bash/Web
+        // still ask. Users wanting full autonomy can pick Bypass.
+        "VIBEDEV_ACP_ALLOW_BYPASS_PERMISSIONS": "1"
+      }
+    }
+  },
+  // VIBEDEV: end agent_servers registration.
   "debugger": {
     "stepping_granularity": "line",
     "save_breakpoints": true,
@@ -2662,7 +2736,7 @@
   // Each profile has an optional `base` ("user" or "default") and a `settings`
   // object. When `base` is "user" (the default), the profile applies on top of
   // your user settings. When `base` is "default", user settings are ignored and
-  // the profile applies on top of Zed's defaults.
+  // the profile applies on top of VibeDev's defaults.
   //
   // Examples:
   // "profiles": {

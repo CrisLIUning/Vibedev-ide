@@ -1,7 +1,8 @@
-// Some example tasks for common languages.
+// VibeDev — example debug tasks for common languages.
 //
-// For more documentation on how to configure debug tasks,
-// see: https://zed.dev/docs/debugger
+// For more documentation on how to configure debug tasks, see the
+// upstream Zed reference at https://zed.dev/docs/debugger (VibeDev
+// shares the editor debug-task schema).
 [
   {
     "label": "Debug active Python file",

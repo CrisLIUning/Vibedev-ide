@@ -83,7 +83,7 @@ impl ExtensionBuilder {
 
         if extension_dir.is_relative() {
             bail!(
-                "extension dir {} is not an absolute path",
+                "扩展目录 {} 不是绝对路径",
                 extension_dir.display()
             );
         }
@@ -104,29 +104,29 @@ impl ExtensionBuilder {
 
             let debug_adapter_schema = fs::read_to_string(&debug_adapter_schema_path)
                 .with_context(|| {
-                    format!("failed to read debug adapter schema for `{debug_adapter_name}` from `{debug_adapter_schema_path:?}`")
+                    format!("无法从 `{debug_adapter_schema_path:?}` 读取 `{debug_adapter_name}` 的调试适配器架构")
                 })?;
             _ = serde_json::Value::from_str(&debug_adapter_schema).with_context(|| {
-                format!("Debug adapter schema for `{debug_adapter_name}` (path: `{debug_adapter_schema_path:?}`) is not a valid JSON")
+                format!("`{debug_adapter_name}` 的调试适配器架构(路径:`{debug_adapter_schema_path:?}`)不是有效的 JSON")
             })?;
         }
         for (grammar_name, grammar_metadata) in &extension_manifest.grammars {
             let snake_cased_grammar_name = grammar_name.to_snake_case();
             if grammar_name.as_ref() != snake_cased_grammar_name.as_str() {
                 bail!(
-                    "grammar name '{grammar_name}' must be written in snake_case: {snake_cased_grammar_name}"
+                    "语法名称 '{grammar_name}' 必须使用 snake_case 格式:{snake_cased_grammar_name}"
                 );
             }
 
             log::info!(
-                "compiling grammar {grammar_name} for extension {}",
+                "正在为扩展 {} 编译语法 {grammar_name}",
                 extension_dir.display()
             );
             self.compile_grammar(extension_dir, grammar_name.as_ref(), grammar_metadata)
                 .await
                 .with_context(|| format!("failed to compile grammar '{grammar_name}'"))?;
             log::info!(
-                "compiled grammar {grammar_name} for extension {}",
+                "已为扩展 {} 编译语法 {grammar_name}",
                 extension_dir.display()
             );
         }
@@ -147,7 +147,7 @@ impl ExtensionBuilder {
         let cargo_toml: CargoToml = toml::from_str(&cargo_toml_content)?;
 
         log::info!(
-            "compiling Rust crate for extension {}",
+            "正在为扩展 {} 编译 Rust crate",
             extension_dir.display()
         );
         let output = util::command::new_command("cargo")
@@ -163,13 +163,13 @@ impl ExtensionBuilder {
             .context("failed to run `cargo`")?;
         if !output.status.success() {
             bail!(
-                "failed to build extension {}",
+                "构建扩展 {} 失败",
                 String::from_utf8_lossy(&output.stderr)
             );
         }
 
         log::info!(
-            "compiled Rust crate for extension {}",
+            "已为扩展 {} 编译 Rust crate",
             extension_dir.display()
         );
 
@@ -187,7 +187,7 @@ impl ExtensionBuilder {
         wasm_path.set_extension("wasm");
 
         log::info!(
-            "encoding wasm component for extension {}",
+            "正在为扩展 {} 编码 wasm 组件",
             extension_dir.display()
         );
 
@@ -208,7 +208,7 @@ impl ExtensionBuilder {
             .context("failed to write extension.wasm")?;
 
         log::info!(
-            "extension {} written to {}",
+            "扩展 {} 已写入 {}",
             extension_dir.display(),
             extension_file.display()
         );
@@ -252,7 +252,7 @@ impl ExtensionBuilder {
         if file_newer_than_deps(&grammar_wasm_path, &[&parser_path, &scanner_path]).unwrap_or(false)
         {
             log::info!(
-                "skipping compilation of {grammar_name} parser because the existing compiled grammar is up to date"
+                "跳过 {grammar_name} 解析器的编译,因为现有的已编译语法是最新的"
             );
         } else {
             log::info!("compiling {grammar_name} parser");
@@ -271,7 +271,7 @@ impl ExtensionBuilder {
 
             if !clang_output.status.success() {
                 bail!(
-                    "failed to compile {} parser with clang: {}",
+                    "使用 clang 编译 {} 解析器失败:{}",
                     grammar_name,
                     String::from_utf8_lossy(&clang_output.stderr),
                 );
@@ -296,14 +296,14 @@ impl ExtensionBuilder {
                 && String::from_utf8_lossy(&remotes_output.stdout).trim() == url;
             if !has_remote {
                 bail!(
-                    "grammar directory '{}' already exists, but is not a git clone of '{}'",
+                    "语法目录 '{}' 已存在,但不是 '{}' 的 git 克隆",
                     directory.display(),
                     url
                 );
             }
         } else {
             fs::create_dir_all(directory).with_context(|| {
-                format!("failed to create grammar directory {}", directory.display(),)
+                format!("创建语法目录 {} 失败", directory.display(),)
             })?;
             let init_output = util::command::new_command("git")
                 .arg("init")
@@ -312,7 +312,7 @@ impl ExtensionBuilder {
                 .await?;
             if !init_output.status.success() {
                 bail!(
-                    "failed to run `git init` in directory '{}'",
+                    "在目录 '{}' 中运行 `git init` 失败",
                     directory.display()
                 );
             }
@@ -326,7 +326,7 @@ impl ExtensionBuilder {
                 .context("failed to execute `git remote add`")?;
             if !remote_add_output.status.success() {
                 bail!(
-                    "failed to add remote {url} for git repository {}",
+                    "为 git 仓库 {} 添加远程源 {url} 失败",
                     git_dir.display()
                 );
             }
@@ -351,13 +351,13 @@ impl ExtensionBuilder {
         if !checkout_output.status.success() {
             if !fetch_output.status.success() {
                 bail!(
-                    "failed to fetch revision {} in directory '{}'",
+                    "在目录 '{}' 中获取修订版本 {} 失败",
                     rev,
                     directory.display()
                 );
             }
             bail!(
-                "failed to checkout revision {} in directory '{}': {}",
+                "在目录 '{}' 中检出修订版本 {} 失败:{}",
                 rev,
                 directory.display(),
                 String::from_utf8_lossy(&checkout_output.stderr)
@@ -376,7 +376,7 @@ impl ExtensionBuilder {
             .context("failed to run rustc")?;
         if !rustc_output.status.success() {
             bail!(
-                "failed to retrieve rust sysroot: {}",
+                "获取 rust sysroot 失败:{}",
                 String::from_utf8_lossy(&rustc_output.stderr)
             );
         }
@@ -395,7 +395,7 @@ impl ExtensionBuilder {
             .context("failed to run `rustup target add`")?;
         if !output.status.success() {
             bail!(
-                "failed to install the `{RUST_TARGET}` target: {}",
+                "安装 `{RUST_TARGET}` 目标失败:{}",
                 String::from_utf8_lossy(&rustc_output.stderr)
             );
         }
@@ -437,7 +437,7 @@ impl ExtensionBuilder {
         let mut async_file = io::AllowStdIo::new(tar_gz_file);
         io::copy(response_body, &mut async_file)
             .await
-            .context("failed to stream response to file")?;
+            .context("无法将响应流写入文件")?;
         drop(async_file);
 
         log::info!("un-tarring wasi-sdk to {}", tar_out_dir.display());
@@ -454,7 +454,7 @@ impl ExtensionBuilder {
 
         if !tar_output.status.success() {
             bail!(
-                "failed to extract wasi-sdk archive: {}",
+                "解压 wasi-sdk 归档失败:{}",
                 String::from_utf8_lossy(&tar_output.stderr)
             );
         }
@@ -725,19 +725,19 @@ mod tests {
 
         assert!(
             !file_newer_than_deps(&target, &[&dep1, &dep2]).unwrap(),
-            "target doesn't exist"
+            "目标不存在"
         );
         std::fs::write(&target, "foo").unwrap(); // Create target
         assert!(
             file_newer_than_deps(&target, &[&dep1, &dep2]).unwrap(),
-            "dependencies don't exist; target is newer"
+            "依赖项不存在;目标较新"
         );
         sleep(Duration::from_secs(1));
         std::fs::write(&dep1, "foo").unwrap(); // Create dep1 (newer than target)
         // Dependency is newer
         assert!(
             !file_newer_than_deps(&target, &[&dep1, &dep2]).unwrap(),
-            "a dependency is newer (target {:?}, dep1 {:?})",
+            "依赖项较新(目标 {:?},dep1 {:?})",
             target.metadata().unwrap().modified().unwrap(),
             dep1.metadata().unwrap().modified().unwrap(),
         );
@@ -747,7 +747,7 @@ mod tests {
         std::fs::write(&target, "foobar").unwrap(); // Update target
         assert!(
             file_newer_than_deps(&target, &[&dep1, &dep2]).unwrap(),
-            "target is newer than dependencies (target {:?}, dep2 {:?})",
+            "目标比依赖项新(目标 {:?},dep2 {:?})",
             target.metadata().unwrap().modified().unwrap(),
             dep2.metadata().unwrap().modified().unwrap(),
         );

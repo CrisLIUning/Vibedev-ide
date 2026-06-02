@@ -167,6 +167,13 @@ impl LanguageModelProvider for DeepSeekLanguageModelProvider {
     fn provided_models(&self, cx: &App) -> Vec<Arc<dyn LanguageModel>> {
         let mut models = IndexMap::default();
 
+        // VIBEDEV: when the user configures their OWN DeepSeek key (BYOK), this
+        // provider talks to the real DeepSeek API (DEEPSEEK_API_URL =
+        // https://api.deepseek.com/v1). Its CURRENT model ids are
+        // `deepseek-v4-flash` (non-thinking + thinking) and `deepseek-v4-pro`.
+        // The legacy `deepseek-chat`/`deepseek-reasoner` ids are deprecated
+        // aliases (scheduled for removal 2026-07-24) that just map onto v4-flash,
+        // so we offer the v4 ids. Users can add more via settings.available_models.
         models.insert("deepseek-v4-flash", deepseek::Model::V4Flash);
         models.insert("deepseek-v4-pro", deepseek::Model::V4Pro);
 
@@ -288,12 +295,12 @@ impl LanguageModel for DeepSeekLanguageModel {
 
         vec![
             LanguageModelEffortLevel {
-                name: "High".into(),
+                name: "高".into(),
                 value: "high".into(),
                 is_default: true,
             },
             LanguageModelEffortLevel {
-                name: "Max".into(),
+                name: "最大".into(),
                 value: "max".into(),
                 is_default: false,
             },
@@ -415,12 +422,12 @@ pub fn into_deepseek(
                                 text_parts.push(text.to_string());
                             }
                             LanguageModelToolResultContent::Image(_) => {
-                                text_parts.push("[Tool responded with an image]".to_string());
+                                text_parts.push("工具返回了图片".to_string());
                             }
                         }
                     }
                     let content = if text_parts.is_empty() {
-                        "<Tool returned an empty string>".to_string()
+                        "工具返回了空字符串".to_string()
                     } else {
                         text_parts.join("\n")
                     };
@@ -703,43 +710,43 @@ impl Render for ConfigurationView {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let env_var_set = self.state.read(cx).api_key_state.is_from_env_var();
         let configured_card_label = if env_var_set {
-            format!("API key set in {API_KEY_ENV_VAR_NAME} environment variable")
+            format!("API 密钥已在 {API_KEY_ENV_VAR_NAME} 环境变量中设置")
         } else {
             let api_url = DeepSeekLanguageModelProvider::api_url(cx);
             if api_url == DEEPSEEK_API_URL {
-                "API key configured".to_string()
+                "API 密钥已配置".to_string()
             } else {
-                format!("API key configured for {}", api_url)
+                format!("已为 {} 配置 API 密钥", api_url)
             }
         };
 
         if self.load_credentials_task.is_some() {
             div()
-                .child(Label::new("Loading credentials..."))
+                .child(Label::new("正在加载凭据..."))
                 .into_any_element()
         } else if self.should_render_editor(cx) {
             v_flex()
                 .size_full()
                 .on_action(cx.listener(Self::save_api_key))
-                .child(Label::new("To use DeepSeek in Zed, you need an API key:"))
+                .child(Label::new("To use DeepSeek in VibeDev, you need an API key:"))
                 .child(
                     List::new()
                         .child(
                             ListBulletItem::new("")
-                                .child(Label::new("Get your API key from the"))
+                                .child(Label::new("从"))
                                 .child(ButtonLink::new(
-                                    "DeepSeek console",
+                                    "DeepSeek 控制台",
                                     "https://platform.deepseek.com/api_keys",
                                 )),
                         )
                         .child(ListBulletItem::new(
-                            "Paste your API key below and hit enter to start using the assistant",
+                            "在下方粘贴您的 API 密钥并按回车键以开始使用助手",
                         )),
                 )
                 .child(self.api_key_editor.clone())
                 .child(
                     Label::new(format!(
-                        "You can also set the {API_KEY_ENV_VAR_NAME} environment variable and restart Zed."
+                        "You can also set the {API_KEY_ENV_VAR_NAME} environment variable and restart VibeDev."
                     ))
                     .size(LabelSize::Small)
                     .color(Color::Muted),

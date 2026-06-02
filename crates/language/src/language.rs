@@ -160,7 +160,7 @@ static WASM_ENGINE: LazyLock<wasmtime::Engine> = LazyLock::new(|| {
 pub static PLAIN_TEXT: LazyLock<Arc<Language>> = LazyLock::new(|| {
     Arc::new(Language::new(
         LanguageConfig {
-            name: "Plain Text".into(),
+            name: "纯文本".into(),
             soft_wrap: Some(SoftWrap::EditorWidth),
             matcher: LanguageMatcher {
                 path_suffixes: vec!["txt".to_owned()],
@@ -599,7 +599,7 @@ pub trait LspAdapter: 'static + Send + Sync + DynLspInstaller {
     }
 
     /// Called when a user responds to a ShowMessageRequest from this language server.
-    /// This allows adapters to intercept preference selections (like "Always" or "Never")
+    /// This allows adapters to intercept preference selections (like "始终" or "从不")
     /// for settings that should be persisted to Zed's settings file.
     fn process_prompt_response(&self, _context: &PromptResponseContext, _cx: &mut AsyncApp) {}
 }
@@ -734,7 +734,7 @@ where
                     .await
             {
                 log::info!(
-                    "found user-installed language server for {}. path: {:?}, arguments: {:?}",
+                    "找到用户安装的语言服务器 {}。路径: {:?},参数: {:?}",
                     self.name().0,
                     binary.path,
                     binary.arguments
@@ -767,7 +767,7 @@ where
                 .cached_server_binary(container_dir.to_path_buf(), delegate.as_ref())
                 .await
                 .context(
-                    "did not find existing language server binary, falling back to downloading",
+                    "未找到现有的语言服务器二进制文件,回退到下载",
                 );
             let download_binary = async move {
                 let mut binary = self
@@ -1484,7 +1484,7 @@ pub fn point_from_lsp(point: lsp::Position) -> Unclipped<PointUtf16> {
 pub fn range_to_lsp(range: Range<PointUtf16>) -> Result<lsp::Range> {
     anyhow::ensure!(
         range.start <= range.end,
-        "Inverted range provided to an LSP request: {:?}-{:?}",
+        "向 LSP 请求提供了反转的范围: {:?}-{:?}",
         range.start,
         range.end
     );
@@ -1722,7 +1722,7 @@ mod tests {
         });
         assert!(
             cancelled.is_none(),
-            "first parse should be cancelled by the progress callback"
+            "首次解析应该被进度回调取消"
         );
 
         // Deliberately do NOT call `set_language` here: tree-sitter's
@@ -1744,14 +1744,14 @@ mod tests {
                     None,
                     None,
                 )
-                .expect("parse of small_input should succeed")
+                .expect("small_input 的解析应该成功")
         });
 
         assert_eq!(tree.root_node().byte_range(), 0..small_input.len());
         assert_eq!(tree.root_node().kind(), "source_file");
         assert!(
             !tree.root_node().has_error(),
-            "tree should be error-free, got: {}",
+            "解析树应该无错误,得到: {}",
             tree.root_node().to_sexp()
         );
     }
@@ -1787,7 +1787,7 @@ mod tests {
             languages.language_names(),
             &[
                 LanguageName::new_static("JSON"),
-                LanguageName::new_static("Plain Text"),
+                LanguageName::new_static("纯文本"),
                 LanguageName::new_static("Rust"),
             ]
         );
@@ -1800,7 +1800,7 @@ mod tests {
             languages.language_names(),
             &[
                 LanguageName::new_static("JSON"),
-                LanguageName::new_static("Plain Text"),
+                LanguageName::new_static("纯文本"),
                 LanguageName::new_static("Rust"),
             ]
         );
@@ -1813,7 +1813,7 @@ mod tests {
             languages.language_names(),
             &[
                 LanguageName::new_static("JSON"),
-                LanguageName::new_static("Plain Text"),
+                LanguageName::new_static("纯文本"),
                 LanguageName::new_static("Rust"),
             ]
         );
@@ -1869,7 +1869,7 @@ mod tests {
                 regular_completion_item_1.label,
                 regular_completion_item_1.detail.unwrap()
             ),
-            "LSP completion items with both detail and label_details.description should prefer detail"
+            "同时包含 detail 和 label_details.description 的 LSP 补全项应优先使用 detail"
         );
         assert_eq!(
             CodeLabel::fallback_for_completion(&regular_completion_item_2, None).text,
@@ -1884,7 +1884,7 @@ mod tests {
                     .as_ref()
                     .unwrap()
             ),
-            "LSP completion items without detail but with label_details.description should use that"
+            "没有 detail 但有 label_details.description 的 LSP 补全项应使用后者"
         );
         assert_eq!(
             CodeLabel::fallback_for_completion(
@@ -1903,18 +1903,18 @@ mod tests {
                     .as_ref()
                     .unwrap()
             ),
-            "LSP completion items with both detail and label_details.description should prefer description only if the detail duplicates the completion label"
+            "仅当 detail 与补全标签重复时,同时包含 detail 和 label_details.description 的 LSP 补全项才应优先使用 description"
         );
         assert_eq!(
             CodeLabel::fallback_for_completion(&completion_item_with_duplicate_detail, None).text,
             regular_completion_item_1.label,
-            "LSP completion items with duplicate label and detail, should omit the detail"
+            "标签和详情重复的 LSP 补全项应省略详情"
         );
         assert_eq!(
             CodeLabel::fallback_for_completion(&completion_item_with_duplicate_description, None)
                 .text,
             regular_completion_item_2.label,
-            "LSP completion items with duplicate label and detail, should omit the detail"
+            "标签和详情重复的 LSP 补全项应省略详情"
         );
     }
 

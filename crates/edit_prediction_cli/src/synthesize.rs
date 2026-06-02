@@ -214,24 +214,24 @@ async fn synthesize_repo(
             let step_progress = Arc::new(progress.start(Step::Synthesize, &commit_label));
 
             // Single Claude call to identify and copy hunks
-            step_progress.set_substatus("analyzing...");
+            step_progress.set_substatus("分析中...");
             let claude_response =
                 match analyze_commit(client, repo_url, &commit, step_progress.clone()).await {
                     Ok(Some(response)) => response,
                     Ok(None) => {
-                        step_progress.set_info("no pattern", InfoStyle::Normal);
+                        step_progress.set_info("无模式", InfoStyle::Normal);
                         repo_state.mark_processed(&commit.sha, 0);
                         continue;
                     }
                     Err(e) => {
-                        step_progress.set_info(format!("error: {:?}", e), InfoStyle::Warning);
+                        step_progress.set_info(format!("错误: {:?}", e), InfoStyle::Warning);
                         repo_state.mark_processed(&commit.sha, 0);
                         continue;
                     }
                 };
 
             // Validate and build the example
-            step_progress.set_substatus("validating...");
+            step_progress.set_substatus("验证中...");
             match build_example(repo_url, &commit, &repo_path, &claude_response).await {
                 Ok(spec) => {
                     let timestamp = Local::now().format("%Y-%m-%d--%H-%M-%S");
@@ -250,7 +250,7 @@ async fn synthesize_repo(
                     if let Err(e) = std::fs::write(&path, content) {
                         log::warn!("Failed to write rejected example: {:?}", e);
                     }
-                    step_progress.set_info(format!("rejected: {}", filename), InfoStyle::Warning);
+                    step_progress.set_info(format!("已拒绝: {}", filename), InfoStyle::Warning);
                 }
             }
 
@@ -535,7 +535,7 @@ async fn analyze_commit(
 
     let response = client
         .generate_streaming("claude-sonnet-4-5", 8192, messages, |chars, _text| {
-            step_progress.set_substatus(format!("analyzing: {:.1}K", chars as f64 / 1000.0));
+            step_progress.set_substatus(format!("分析中: {:.1}K", chars as f64 / 1000.0));
         })
         .await?;
 
@@ -567,7 +567,7 @@ fn parse_claude_response(response: &str) -> Result<Option<ClaudeResponse>> {
         .lines()
         .find(|l| l.starts_with("NAME:"))
         .map(|l| l.strip_prefix("NAME:").unwrap_or("").trim().to_string())
-        .unwrap_or_else(|| "unnamed example".to_string());
+        .unwrap_or_else(|| "未命名示例".to_string());
 
     // Parse ANALYSIS section (Claude's planning) - this is the primary reasoning
     let reasoning = extract_section(
@@ -615,7 +615,7 @@ fn extract_section(text: &str, start_marker: &str, end_markers: &[&str]) -> Opti
 fn extract_diff_block(text: &str, section_marker: &str) -> Result<Vec<String>> {
     let section_start = text
         .find(section_marker)
-        .context(format!("Section {} not found", section_marker))?;
+        .context(format!("未找到段落 {}", section_marker))?;
 
     let after_marker = &text[section_start + section_marker.len()..];
 
@@ -730,7 +730,7 @@ async fn build_example(
     // Validate expected patch hunks
     if response.expected_patch_hunks.len() != 1 {
         return Err(format!(
-            "Expected exactly 1 expected patch hunk, got {}",
+            "预期恰好 1 个预期补丁块, 但得到 {}",
             response.expected_patch_hunks.len()
         ));
     }
@@ -738,7 +738,7 @@ async fn build_example(
     // Parse the expected patch to determine cursor file
     let expected_patch = &response.expected_patch_hunks[0];
     let cursor_file = extract_file_from_hunk(expected_patch)
-        .ok_or_else(|| "Could not determine file from expected patch".to_string())?;
+        .ok_or_else(|| "无法从预期补丁确定文件".to_string())?;
 
     // Get the file content before the commit
     let before_content = run_git(
@@ -746,7 +746,7 @@ async fn build_example(
         &["show", &format!("{}^:{}", commit.sha, cursor_file)],
     )
     .await
-    .map_err(|e| format!("Failed to get file content for {}: {}", cursor_file, e))?;
+    .map_err(|e| format!("获取 {} 的文件内容失败: {}", cursor_file, e))?;
 
     // Build edit history diff from Claude's hunks
     let edit_history = response.edit_history_hunks.join("\n");
@@ -758,14 +758,14 @@ async fn build_example(
     // Validate expected patch applies to intermediate state
     let expected_patch_with_header = ensure_diff_header(expected_patch, &cursor_file);
     apply_diff_to_string(&expected_patch_with_header, &intermediate_state)
-        .map_err(|e| format!("Expected patch failed to apply: {}", e))?;
+        .map_err(|e| format!("预期补丁应用失败: {}", e))?;
 
     // Find where the expected patch edits would apply in the intermediate state
     let edits = edits_for_diff(&intermediate_state, &expected_patch_with_header)
         .map_err(|e| format!("Failed to parse expected patch: {}", e))?;
     if edits.is_empty() {
         return Err(
-            "Could not locate expected patch in file (context not found or ambiguous)".to_string(),
+            "无法在文件中定位预期补丁 (未找到上下文或上下文不明确)".to_string(),
         );
     }
 
@@ -843,7 +843,7 @@ fn apply_edit_history_to_content(
     }
 
     apply_diff_to_string(&file_diff, content)
-        .map_err(|e| format!("Failed to apply edit history: {}", e))
+        .map_err(|e| format!("应用编辑历史失败: {}", e))
 }
 
 /// Extract hunks for a specific file from a combined diff

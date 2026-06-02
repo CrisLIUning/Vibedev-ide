@@ -50,6 +50,11 @@ ui.workspace = true
 terminal.workspace = true
 uuid.workspace = true
 util.workspace = true
+# VIBEDEV: read/write `~/.vibedev/last-session-prefs.json` so a new session
+# re-seeds the user's last model / thinking / context picks (claude-code-best
+# resets these to defaults every newSession by design — IDE-side persistence
+# is the only place to remember them).
+vibedev_account.workspace = true
 watch.workspace = true
 zed_credentials_provider.workspace = true
 

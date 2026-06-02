@@ -525,13 +525,13 @@ impl CodegenAlternative {
             let tools = vec![
                 LanguageModelRequestTool {
                     name: REWRITE_SECTION_TOOL_NAME.to_string(),
-                    description: "Replaces text in <rewrite_this></rewrite_this> tags with your replacement_text.".to_string(),
+                    description: "将 <rewrite_this></rewrite_this> 标签中的文本替换为你的 replacement_text。".to_string(),
                     input_schema: language_model::tool_schema::root_schema_for::<RewriteSectionInput>(tool_input_format).to_value(),
                     use_input_streaming: false,
                 },
                 LanguageModelRequestTool {
                     name: FAILURE_MESSAGE_TOOL_NAME.to_string(),
-                    description: "Use this tool to provide a message to the user when you're unable to complete a task.".to_string(),
+                    description: "当你无法完成任务时,使用此工具向用户提供消息。".to_string(),
                     input_schema: language_model::tool_schema::root_schema_for::<FailureMessageInput>(tool_input_format).to_value(),
                     use_input_streaming: false,
                 },
@@ -1257,6 +1257,20 @@ impl CodegenAlternative {
                             let mut lock = total_text.lock();
                             lock.push_str(&text);
                         }
+                        // VIBEDEV: thinking/reasoning models (deepseek-v4-pro /
+                        // deepseek-reasoner via the sub2 gateway) stream these
+                        // preamble events BEFORE the rewrite_section tool call.
+                        // They are not terminal — skip them and keep waiting for
+                        // the ToolUse. Without this, the catch-all below treated
+                        // the leading Thinking event as "unexpected" and broke out
+                        // before any tool use arrived, so the inline assist applied
+                        // no edit at all. Inline assist does not render thinking, so
+                        // dropping these here is correct.
+                        Ok(LanguageModelCompletionEvent::Thinking { .. })
+                        | Ok(LanguageModelCompletionEvent::RedactedThinking { .. })
+                        | Ok(LanguageModelCompletionEvent::ReasoningDetails(_))
+                        | Ok(LanguageModelCompletionEvent::Queued { .. })
+                        | Ok(LanguageModelCompletionEvent::Started) => {}
                         Ok(e) => {
                             log::warn!("Unexpected event: {:?}", e);
                             break;
@@ -1866,6 +1880,60 @@ mod tests {
         );
     }
 
+    // VIBEDEV regression test: reasoning/thinking models (deepseek-v4-pro /
+    // deepseek-reasoner via the sub2 gateway) stream Thinking events BEFORE the
+    // rewrite_section tool call. The first-event loop in handle_completion must
+    // skip them and keep waiting for the tool use. Before the fix, the loop's
+    // catch-all treated the leading Thinking event as "unexpected" and broke out
+    // before any ToolUse arrived, so first_text stayed None and the inline assist
+    // applied NO edit (silently returned nothing). Verified against the gateway:
+    // deepseek-v4-pro with tool_choice=auto returns finish_reason=tool_calls with
+    // reasoning_content interleaved ahead of the tool-call deltas.
+    #[gpui::test]
+    async fn test_thinking_events_before_tool_use_do_not_abort(cx: &mut TestAppContext) {
+        init_test(cx);
+        let text = "const x: number = 1";
+        let buffer = cx.new(|cx| Buffer::local("", cx));
+        let buffer = cx.new(|cx| MultiBuffer::singleton(buffer, cx));
+        let range = buffer.read_with(cx, |buffer, cx| {
+            let snapshot = buffer.snapshot(cx);
+            snapshot.anchor_before(Point::new(0, 0))..snapshot.anchor_after(Point::new(0, 0))
+        });
+        let prompt_builder = Arc::new(PromptBuilder::new(None).unwrap());
+        let codegen = cx.new(|cx| {
+            CodegenAlternative::new(
+                buffer.clone(),
+                range.clone(),
+                true,
+                prompt_builder,
+                Uuid::new_v4(),
+                cx,
+            )
+        });
+
+        let events_tx = simulate_tool_based_completion(&codegen, cx);
+        // Reasoning preamble arrives BEFORE the tool call (the deepseek v4-pro shape).
+        events_tx
+            .unbounded_send(LanguageModelCompletionEvent::Thinking {
+                text: "Let me work out the right type annotation…".into(),
+                signature: None,
+            })
+            .unwrap();
+        events_tx
+            .unbounded_send(rewrite_tool_use("tool_1", text, true))
+            .unwrap();
+        events_tx
+            .unbounded_send(LanguageModelCompletionEvent::Stop(StopReason::EndTurn))
+            .unwrap();
+        drop(events_tx);
+        cx.run_until_parked();
+
+        assert_eq!(
+            buffer.read_with(cx, |buffer, cx| buffer.snapshot(cx).text()),
+            text
+        );
+    }
+
     // Regression test: a second rewrite tool use with a *shorter* replacement_text
     // than the first would cause an index-out-of-bounds panic because the
     // chars_read_so_far counter was shared across all tool use IDs.
@@ -1895,7 +1963,7 @@ mod tests {
         // counter, processing tool_2 would attempt replacement_text[N..] where
         // N > replacement_text.len(), panicking with index out of bounds.
         events_tx
-            .unbounded_send(rewrite_tool_use("tool_1", "longer replacement text", true))
+            .unbounded_send(rewrite_tool_use("tool_1", "较长的替换文本", true))
             .unwrap();
         events_tx
             .unbounded_send(rewrite_tool_use("tool_2", "short", true))
@@ -1906,9 +1974,13 @@ mod tests {
         drop(events_tx);
         cx.run_until_parked();
 
+        // VIBEDEV: expected text is the concatenation of tool_1's replacement
+        // ("较长的替换文本") and tool_2's ("short"). A prior i18n pass mistranslated
+        // the literal "short" → "短" in this assertion, breaking the test; the
+        // input still feeds "short", so the output must contain "short".
         assert_eq!(
             buffer.read_with(cx, |buffer, cx| buffer.snapshot(cx).text()),
-            "longer replacement textshort"
+            "较长的替换文本short"
         );
     }
 

@@ -129,7 +129,22 @@ pub fn init(cx: &mut App) {
 }
 
 pub fn default_settings() -> Cow<'static, str> {
-    asset_str::<SettingsAssets>("settings/default.json")
+    let raw = asset_str::<SettingsAssets>("settings/default.json");
+    // VIBEDEV: rewrite the `${ZED_BIN_DIR}` placeholder so default.json can
+    // reference artifacts bundled alongside the VibeDev installer (e.g. the
+    // built-in ACP agent under <install_dir>/agent/) without hardcoding an
+    // absolute path that would break on every user's machine. Forward slashes
+    // are kept for JSON friendliness and Windows tolerates them in commands.
+    if raw.contains("${ZED_BIN_DIR}") {
+        if let Some(bin_dir) = std::env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|p| p.to_path_buf()))
+        {
+            let bin_str = bin_dir.to_string_lossy().replace('\\', "/");
+            return Cow::Owned(raw.replace("${ZED_BIN_DIR}", &bin_str));
+        }
+    }
+    raw
 }
 
 pub fn default_semantic_token_rules() -> Cow<'static, str> {

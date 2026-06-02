@@ -304,7 +304,7 @@ impl WaylandClientStatePtr {
     pub fn get_client(&self) -> Rc<RefCell<WaylandClientState>> {
         self.0
             .upgrade()
-            .expect("The pointer should always be valid when dispatching in wayland")
+            .expect("指针在 Wayland 调度期间应始终有效")
     }
 
     pub fn get_serial(&self, kind: SerialKind) -> u32 {
@@ -451,14 +451,14 @@ impl WaylandClientState {
         }
         let Some(focused_window) = self.mouse_focused_window.clone() else {
             log::warn!(
-                "wayland: no focused surface to restore cursor style {:?} after hide; cursor may stay invisible",
+                "wayland: 隐藏光标后没有焦点表面来恢复光标样式 {:?};光标可能保持不可见",
                 style
             );
             return;
         };
         let Some(wl_pointer) = self.wl_pointer.clone() else {
             log::warn!(
-                "wayland: no wl_pointer to restore cursor style {:?} after hide; cursor may stay invisible",
+                "wayland: 没有 wl_pointer 来恢复光标样式 {:?} 隐藏后;光标可能保持不可见",
                 style
             );
             return;
@@ -505,7 +505,7 @@ fn wl_seat_version(version: u32) -> u32 {
 
     if version < WL_SEAT_MIN_VERSION {
         panic!(
-            "wl_seat below required version: {} < {}",
+            "wl_seat 版号低于要求: {} < {}",
             version, WL_SEAT_MIN_VERSION
         );
     }
@@ -519,7 +519,7 @@ fn wl_output_version(version: u32) -> u32 {
 
     if version < WL_OUTPUT_MIN_VERSION {
         panic!(
-            "wl_output below required version: {} < {}",
+            "wl_output 版号低于要求: {} < {}",
             version, WL_OUTPUT_MIN_VERSION
         );
     }
@@ -794,7 +794,7 @@ impl LinuxClient for WaylandClient {
         let (sources_tx, sources_rx) = futures::channel::oneshot::channel();
         sources_tx
             .send(Err(anyhow::anyhow!(
-                "Wayland screen capture not yet implemented."
+                "Wayland 屏幕捕获尚未实现。"
             )))
             .ok();
         sources_rx
@@ -865,7 +865,7 @@ impl LinuxClient for WaylandClient {
             let wl_pointer = state
                 .wl_pointer
                 .clone()
-                .expect("window is focused by pointer");
+                .expect("窗口正被指针聚焦");
             let scale = focused_window.primary_output_scale();
             state.cursor.set_icon(
                 &wl_pointer,
@@ -930,7 +930,7 @@ impl LinuxClient for WaylandClient {
             .borrow_mut()
             .event_loop
             .take()
-            .expect("App is already running");
+            .expect("应用程序已在运行");
 
         event_loop
             .run(
@@ -1365,7 +1365,7 @@ impl Dispatch<xdg_activation_token_v1::XdgActivationTokenV1, ()> for WaylandClie
                     let activation = state.globals.activation.as_ref().unwrap();
                     activation.activate(token, &window.surface());
                 }
-                None => log::error!("activation token received with no pending activation"),
+                None => log::error!("收到激活令牌但没有待处理的激活"),
             }
         }
 
@@ -1461,7 +1461,7 @@ impl Dispatch<wl_keyboard::WlKeyboard, ()> for WaylandClientStatePtr {
                 ..
             } => {
                 if format != wl_keyboard::KeymapFormat::XkbV1 {
-                    log::error!("Received keymap format {:?}, expected XkbV1", format);
+                    log::error!("接收到键盘映射格式 {:?},应为 XkbV1", format);
                     return;
                 }
                 let xkb_context = xkb::Context::new(xkb::CONTEXT_NO_FLAGS);
@@ -1475,7 +1475,7 @@ impl Dispatch<wl_keyboard::WlKeyboard, ()> for WaylandClientStatePtr {
                     )
                     .log_err()
                     .flatten()
-                    .expect("Failed to create keymap")
+                    .expect("创建键盘映射失败")
                 };
                 state.keymap_state = Some(xkb::State::new(&keymap));
                 state.compose_state = get_xkb_compose_state(&xkb_context);
@@ -1859,7 +1859,7 @@ impl Dispatch<wl_pointer::WlPointer, ()> for WaylandClientStatePtr {
                                 let wl_pointer = state
                                     .wl_pointer
                                     .clone()
-                                    .expect("window is focused by pointer");
+                                    .expect("窗口正被指针聚焦");
                                 let scale = window.primary_output_scale();
                                 state.cursor.set_icon(
                                     &wl_pointer,
@@ -2299,7 +2299,7 @@ impl Dispatch<wl_data_device::WlDataDevice, ()> for WaylandClientStatePtr {
                             let file_list = match read_task.await {
                                 Ok(list) => list,
                                 Err(err) => {
-                                    log::error!("error reading drag and drop pipe: {err:?}");
+                                    log::error!("读取拖放管道时出错: {err:?}");
                                     return;
                                 }
                             };
@@ -2310,7 +2310,7 @@ impl Dispatch<wl_data_device::WlDataDevice, ()> for WaylandClientStatePtr {
                                 .filter_map(|url| match url.to_file_path() {
                                     Ok(url) => Some(url),
                                     Err(()) => {
-                                        log::error!("Failed turn {url:?} into a file path");
+                                        log::error!("无法将 {url:?} 转换为文件路径");
                                         None
                                     }
                                 })

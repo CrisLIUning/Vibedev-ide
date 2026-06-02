@@ -156,7 +156,7 @@ impl TextSystem {
         }
 
         panic!(
-            "failed to resolve font '{}' or any of the fallbacks: {}",
+            "无法解析字体 '{}' 或任何回退字体: {}",
             font.family,
             self.fallback_font_stack
                 .iter()
@@ -409,7 +409,7 @@ impl WindowTextSystem {
     ) -> ShapedLine {
         debug_assert!(
             text.find('\n').is_none(),
-            "text argument should not contain newlines"
+            "text 参数不应包含换行符"
         );
 
         let mut decoration_runs = SmallVec::<[DecorationRun; 32]>::new();
@@ -491,7 +491,7 @@ impl WindowTextSystem {
                 let text = materialize_text();
                 debug_assert!(
                     text.find('\n').is_none(),
-                    "text argument should not contain newlines"
+                    "text 参数不应包含换行符"
                 );
                 text
             },
@@ -943,7 +943,7 @@ impl schemars::JsonSchema for FontWeight {
             "minimum": Self::THIN,
             "maximum": Self::BLACK,
             "default": Self::default(),
-            "description": "Font weight value between 100 (thin) and 900 (black)"
+            "description": "介于 100 (细) 和 900 (黑) 之间的字重值"
         })
     }
 }

@@ -1,10 +1,12 @@
-// Zed keymap
+// VibeDev keymap
 //
-// For information on binding keys, see the Zed
-// documentation: https://zed.dev/docs/key-bindings
+// For information on binding keys, see the upstream Zed reference at
+// https://zed.dev/docs/key-bindings — VibeDev shares the editor
+// keybinding schema.
 //
-// To see the default key bindings run `zed: open default keymap`
-// from the command palette.
+// To see the default key bindings run `zed: open default keymap` from
+// the command palette. The command-palette namespace stays `zed:`
+// because it matches the underlying editor command identifiers.
 [
   {
     "context": "Workspace",

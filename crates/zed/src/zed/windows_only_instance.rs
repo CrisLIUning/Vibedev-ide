@@ -25,6 +25,14 @@ use windows::{
 
 use crate::{Args, OpenListener, RawOpenRequest};
 
+// VIBEDEV: bump the named-pipe message ceiling from 128 B → 2 KiB. The OAuth
+// payload that arrives via `vibedev://auth-callback?payload=<base64>` is a
+// signed/encoded blob from sub2api — empirically 600–1500 B — and the pipe is
+// MESSAGE-mode, so the receiver's ReadFile silently truncates anything past
+// `PIPE_BUFFER_SIZE`. 2 KiB also covers long `zed-cli://<server_name>`
+// handshake URLs without changing the on-the-wire framing.
+const PIPE_BUFFER_SIZE: u32 = 2048;
+
 #[inline]
 fn is_first_instance() -> bool {
     unsafe {
@@ -68,8 +76,8 @@ fn with_pipe(f: &dyn Fn(String)) {
             PIPE_ACCESS_INBOUND,
             PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
             1,
-            128,
-            128,
+            PIPE_BUFFER_SIZE,
+            PIPE_BUFFER_SIZE,
             0,
             None,
         )
@@ -99,7 +107,9 @@ fn retrieve_message_from_pipe(pipe: HANDLE) -> anyhow::Result<String> {
 }
 
 fn retrieve_message_from_pipe_inner(pipe: HANDLE) -> anyhow::Result<String> {
-    let mut buffer = [0u8; 128];
+    // VIBEDEV: see `PIPE_BUFFER_SIZE` — the OAuth callback URL can be ~1.5 KiB
+    // and MESSAGE-mode silently truncates past this length.
+    let mut buffer = [0u8; PIPE_BUFFER_SIZE as usize];
     unsafe {
         ReadFile(pipe, Some(&mut buffer), None, None)?;
     }
@@ -112,6 +122,30 @@ fn send_args_to_instance(args: &Args) -> anyhow::Result<()> {
     if let Some(dock_menu_action_idx) = args.dock_action {
         let url = format!("zed-dock-action://{}", dock_menu_action_idx);
         return write_message_to_instance_pipe(url.as_bytes());
+    }
+
+    // VIBEDEV: short-circuit the `vibedev://auth-callback?payload=...` path.
+    // When the OS launches us with the custom-scheme URL as argv[1], we can hand
+    // it straight to the running instance — no need for the `zed-cli://`
+    // IpcOneShotServer handshake (which exists to stream stdout/stderr back to
+    // a foreground terminal; this URL has no terminal to talk back to). The
+    // first vibedev:// URL wins; if there's more than one, we log the rest.
+    if let Some(vibedev_url) = args
+        .paths_or_urls
+        .iter()
+        .find(|arg| arg.starts_with("vibedev://"))
+    {
+        for ignored in args
+            .paths_or_urls
+            .iter()
+            .filter(|arg| arg.starts_with("vibedev://") && arg.as_str() != vibedev_url.as_str())
+        {
+            log::warn!(
+                "ignoring additional vibedev:// URL in argv (only the first is forwarded): {}",
+                ignored
+            );
+        }
+        return write_message_to_instance_pipe(vibedev_url.as_bytes());
     }
 
     let (server, server_name) =

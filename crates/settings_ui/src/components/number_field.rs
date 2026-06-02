@@ -724,11 +724,11 @@ impl Component for NumberField<usize> {
     }
 
     fn name() -> &'static str {
-        "Number Field"
+        "数字字段"
     }
 
     fn description() -> Option<&'static str> {
-        Some("A numeric input element with increment and decrement buttons.")
+        Some("带有增减按钮的数字输入元素。")
     }
 
     fn preview(window: &mut Window, cx: &mut App) -> Option<AnyElement> {
@@ -740,7 +740,7 @@ impl Component for NumberField<usize> {
                 .gap_6()
                 .children(vec![
                     single_example(
-                        "Button-Only Number Field",
+                        "仅按钮数字字段",
                         NumberField::new("number-field", *default_ex.read(cx), window, cx)
                             .on_change({
                                 let default_ex = default_ex.clone();
@@ -751,7 +751,7 @@ impl Component for NumberField<usize> {
                             .into_any_element(),
                     ),
                     single_example(
-                        "Editable Number Field",
+                        "可编辑数字字段",
                         NumberField::new("editable-number-field", *edit_ex.read(cx), window, cx)
                             .on_change({
                                 let edit_ex = edit_ex.clone();

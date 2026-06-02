@@ -397,7 +397,7 @@ pub fn into_mistral(
                                         text_parts.push(text.to_string());
                                     }
                                     LanguageModelToolResultContent::Image(_) => {
-                                        text_parts.push("[Tool responded with an image, but Zed doesn't support these in Mistral models yet]".to_string());
+                                        text_parts.push("[工具返回了图片,但 VibeDev 尚不支持 Mistral 模型中的此功能]".to_string());
                                     }
                                 }
                             }
@@ -821,41 +821,41 @@ impl Render for ConfigurationView {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let env_var_set = self.state.read(cx).api_key_state.is_from_env_var();
         let configured_card_label = if env_var_set {
-            format!("API key set in {API_KEY_ENV_VAR_NAME} environment variable")
+            format!("API 密钥已在 {API_KEY_ENV_VAR_NAME} 环境变量中设置")
         } else {
             let api_url = MistralLanguageModelProvider::api_url(cx);
             if api_url == MISTRAL_API_URL {
-                "API key configured".to_string()
+                "API 密钥已配置".to_string()
             } else {
-                format!("API key configured for {}", api_url)
+                format!("已为 {} 配置 API 密钥", api_url)
             }
         };
 
         if self.load_credentials_task.is_some() {
-            div().child(Label::new("Loading credentials...")).into_any()
+            div().child(Label::new("正在加载凭据...")).into_any()
         } else if self.should_render_api_key_editor(cx) {
             v_flex()
                 .size_full()
                 .on_action(cx.listener(Self::save_api_key))
-                .child(Label::new("To use Zed's agent with Mistral, you need to add an API key. Follow these steps:"))
+                .child(Label::new("To use VibeDev's agent with Mistral, you need to add an API key. Follow these steps:"))
                 .child(
                     List::new()
                         .child(
                             ListBulletItem::new("")
-                                .child(Label::new("Create one by visiting"))
-                                .child(ButtonLink::new("Mistral's console", "https://console.mistral.ai/api-keys"))
+                                .child(Label::new("访问以下地址创建一个"))
+                                .child(ButtonLink::new("Mistral 控制台", "https://console.mistral.ai/api-keys"))
                         )
                         .child(
-                            ListBulletItem::new("Ensure your Mistral account has credits")
+                            ListBulletItem::new("确保您的 Mistral 账户有余额")
                         )
                         .child(
-                            ListBulletItem::new("Paste your API key below and hit enter to start using the assistant")
+                            ListBulletItem::new("在下方粘贴您的 API 密钥并按回车键以开始使用助手")
                         ),
                 )
                 .child(self.api_key_editor.clone())
                 .child(
                     Label::new(
-                        format!("You can also set the {API_KEY_ENV_VAR_NAME} environment variable and restart Zed."),
+                        format!("You can also set the {API_KEY_ENV_VAR_NAME} environment variable and restart VibeDev."),
                     )
                     .size(LabelSize::Small).color(Color::Muted),
                 )

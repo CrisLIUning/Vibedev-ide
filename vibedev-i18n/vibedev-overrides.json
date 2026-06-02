@@ -1,0 +1,481 @@
+{
+  "zed/crates/activity_indicator/src/activity_indicator.rs": {
+    "Checking for Zed updates…": "正在检查 VibeDev 更新…",
+    "Downloading Zed update…": "正在下载 VibeDev 更新…",
+    "Installing Zed update…": "正在安装 VibeDev 更新…",
+    "Click to restart and update Zed": "点击重启并更新 VibeDev",
+    "Failed to update Zed": "更新 VibeDev 失败"
+  },
+  "zed/crates/agent_ui/src/agent_configuration/configure_context_server_modal.rs": {
+    "Timed out waiting for context server `{}` to start. Check the Zed log for details.": "等待上下文服务器 `{}` 启动超时。请查看 VibeDev 日志了解详情。"
+  },
+  "zed/crates/agent_ui/src/agent_configuration.rs": {
+    "Add at least one provider to use AI-powered features with Zed's native agent.": "添加至少一个提供商以使用 VibeDev 原生代理的 AI 功能。",
+    "All MCP servers connected directly or via a Zed extension.": "所有直接连接或通过 VibeDev 扩展连接的 MCP 服务器。"
+  },
+  "zed/crates/agent_ui/src/agent_panel.rs": {
+    "Zed Agent": "VibeDev Agent",
+    "Sign in to continue using Zed as your LLM provider.": "登录以继续使用 VibeDev 作为您的 LLM 提供商。"
+  },
+  "zed/crates/agent_ui/src/agent_registry_ui.rs": {
+    "Claude Code support is built-in to Zed!": "VibeDev 已内置 Claude Code 支持!",
+    "Codex CLI support is built-in to Zed!": "VibeDev 已内置 Codex CLI 支持!",
+    "Gemini CLI support is built-in to Zed!": "VibeDev 已内置 Gemini CLI 支持!",
+    "Claude Agent support is built-in to Zed!": "Claude Agent 支持已内置于 VibeDev!"
+  },
+  "zed/crates/agent_ui/src/ui/end_trial_upsell.rs": {
+    "Upgrade to Zed Pro": "升级到 VibeDev Pro",
+    "Your Zed Pro Trial has expired": "您的 VibeDev Pro 试用已过期"
+  },
+  "zed/crates/ai_onboarding/src/ai_onboarding.rs": {
+    "Welcome to Zed AI": "欢迎使用 VibeDev AI",
+    "Sign in to try Zed Pro for 14 days, no credit card required.": "登录以免费试用 VibeDev Pro 14 天,无需信用卡。",
+    "Try Zed Pro for Free": "免费试用 VibeDev Pro",
+    "Welcome to the Zed Pro Trial": "欢迎使用 VibeDev Pro 试用版",
+    "Welcome to Zed Pro": "欢迎使用 VibeDev Pro",
+    "Welcome to Zed Student": "欢迎使用 VibeDev 学生版",
+    "Welcome to Zed Business": "欢迎使用 VibeDev Business",
+    "Sign in to try Zed Pro free for 14 days.": "登录即可免费试用 VibeDev Pro 14 天"
+  },
+  "zed/crates/ai_onboarding/src/plan_definitions.rs": {
+    "Zed offers a complete agentic experience, with robust editing and reviewing features to collaborate with AI.": "VibeDev 提供完整的智能体体验,具备强大的编辑和审查功能,可与 AI 协作。",
+    "$20 of tokens in Zed agent": "VibeDev Agent 中价值 $20 的 Token",
+    "$5 of tokens in Zed agent": "VibeDev Agent 中价值 $5 的 Token",
+    "$10 of tokens in Zed agent": "VibeDev Agent 中价值 $10 的 Token"
+  },
+  "zed/crates/auto_update/src/auto_update.rs": {
+    "Zed was installed via a package manager.": "VibeDev 是通过包管理器安装的。",
+    "No parent dir for Zed.exe": "VibeDev.exe 没有父目录",
+    "failed to copy Zed update from {:?} to {:?}: {:?}": "从 {:?} 复制 VibeDev 更新到 {:?} 失败: {:?}"
+  },
+  "zed/crates/auto_update_helper/src/auto_update_helper.rs": {
+    "Error: Zed update failed, {:?}": "错误: VibeDev 更新失败, {:?}",
+    "======= Starting Zed update =======": "======= 正在启动 VibeDev 更新 =======",
+    "Error: Zed update failed.": "错误: VibeDev 更新失败。"
+  },
+  "zed/crates/auto_update_helper/src/dialog.rs": {
+    "Updating Zed...": "正在更新 VibeDev...",
+    "Failed to update Zed: {:?}": "更新 VibeDev 失败: {:?}"
+  },
+  "zed/crates/auto_update_ui/src/auto_update_ui.rs": {
+    "What's new in Zed 0.225": "VibeDev 0.225 的新功能",
+    "Mix and match Zed's agent with any ACP-compatible agent": "混合搭配 VibeDev 助手与任何兼容 ACP 的助手"
+  },
+  "zed/crates/cli/src/main.rs": {
+    "The `--system-specs` argument is not supported in the Zed CLI, only on Zed binary.": "`--system-specs` 参数在 VibeDev CLI 中不受支持,仅在 VibeDev 二进制文件中支持。",
+    "Handshake before Zed spawn": "VibeDev 启动前的握手",
+    "Handshake after Zed spawn": "VibeDev 启动后的握手",
+    "Add to existing Zed window ({})": "添加到现有的 VibeDev 窗口 ({})",
+    "You can change this later in Zed settings": "稍后可在 VibeDev 设置中更改"
+  },
+  "zed/crates/collab/src/rpc.rs": {
+    "chat has been removed in the latest version of Zed": "聊天功能已在最新版本的 VibeDev 中移除",
+    "The host (v{}) and guest (v{}) are using incompatible versions of Zed. The peer with the older version must update to collaborate.": "主机 (v{}) 和访客 (v{}) 使用了不兼容的 VibeDev 版本。版本较旧的一方必须更新才能协作。"
+  },
+  "zed/crates/collab_ui/src/notifications/incoming_call_notification.rs": {
+    "{} is sharing a project in Zed": "{}正在 VibeDev 中共享项目"
+  },
+  "zed/crates/collab_ui/src/notifications/project_shared_notification.rs": {
+    "is sharing a project in Zed{}": "正在 VibeDev 中共享一个项目{}"
+  },
+  "zed/crates/copilot_ui/src/sign_in.rs": {
+    "Use GitHub Copilot in Zed": "在 VibeDev 中使用 GitHub Copilot",
+    "To use Zed's agent with GitHub Copilot, you need to be logged in to GitHub. Note that your GitHub account must have an active Copilot Chat subscription.": "要在 VibeDev 的智能体中使用 GitHub Copilot,您需要登录 GitHub。请注意,您的 GitHub 账户必须拥有有效的 Copilot Chat 订阅。"
+  },
+  "zed/crates/debugger_ui/src/session/running.rs": {
+    "Zed cannot determine how to run this debug scenario. `build` field was not provided and Debug Adapter won't accept provided configuration because: {e}": "VibeDev 无法确定如何运行此调试场景。未提供 `build` 字段,且调试适配器不接受提供的配置,原因:{e}"
+  },
+  "zed/crates/edit_prediction/src/edit_prediction.rs": {
+    "Update Zed": "更新 VibeDev",
+    "You must update to Zed version {minimum_version} or higher to continue using edit predictions.": "您必须更新到 VibeDev {minimum_version} 或更高版本才能继续使用编辑预测。"
+  },
+  "zed/crates/edit_prediction_ui/src/edit_prediction_button.rs": {
+    "Use Zed AI": "使用 VibeDev AI",
+    "Upgrade to Zed Pro or contact us.": "升级到 VibeDev Pro 或联系我们。"
+  },
+  "zed/crates/editor/src/editor.rs": {
+    "The remote instance of Zed does not support this yet. It must be upgraded to {}": "远程 VibeDev 实例尚不支持此功能。需要升级到 {}",
+    "There should always be at least one selection in Zed. This is a bug.": "VibeDev 中应始终至少有一个选区。这是一个 bug。",
+    ".ZedMono": ".VibeDevMono"
+  },
+  "zed/crates/explorer_command_injector/src/explorer_command_injector.rs": {
+    "Open with Zed": "使用 VibeDev 打开"
+  },
+  "zed/crates/extensions_ui/src/extensions_ui.rs": {
+    "v{version} is not compatible with this version of Zed.": "v{version} 与此版本的 VibeDev 不兼容。",
+    "Claude Code support is built-in to Zed!": "VibeDev 已内置 Claude Code 支持!",
+    "Codex CLI support is built-in to Zed!": "VibeDev 已内置 Codex CLI 支持!",
+    "Gemini CLI support is built-in to Zed!": "VibeDev 已内置 Gemini CLI 支持!",
+    "Basedpyright (Python language server) support is built-in to Zed!": "Basedpyright(Python 语言服务器)支持已内置到 VibeDev 中!",
+    "Ruff (linter for Python) support is built-in to Zed!": "Ruff(Python 代码检查工具)支持已内置到 VibeDev 中!",
+    "Tailwind CSS support is built-in to Zed!": "Tailwind CSS 支持已内置到 VibeDev 中!",
+    "Ty (Python language server) support is built-in to Zed!": "Ty(Python 语言服务器)支持已内置到 VibeDev 中!",
+    "Zed comes with basic Git support—more features are coming in the future.": "VibeDev 内置基本的 Git 支持——更多功能即将推出。",
+    "Shell support is built-in to Zed!": "Shell 支持已内置到 VibeDev 中!",
+    "C support is built-in to Zed!": "C 语言支持已内置到 VibeDev 中!",
+    "C++ support is built-in to Zed!": "C++ 支持已内置到 VibeDev 中!",
+    "Go support is built-in to Zed!": "Go 支持已内置到 VibeDev 中!",
+    "Python support is built-in to Zed!": "Python 支持已内置到 VibeDev 中!",
+    "React support is built-in to Zed!": "React 支持已内置到 VibeDev 中!",
+    "Rust support is built-in to Zed!": "Rust 支持已内置到 VibeDev 中!",
+    "Typescript support is built-in to Zed!": "TypeScript 支持已内置到 VibeDev 中!",
+    "Zed supports linking to a source line on GitHub and others.": "VibeDev 支持链接到 GitHub 等平台上的源代码行。",
+    "Vim support is built-in to Zed!": "Vim 支持已内置到 VibeDev 中!",
+    "Claude Agent support is built-in to Zed!": "Claude Agent 支持已内置于 VibeDev!"
+  },
+  "zed/crates/git_ui/src/text_diff_view.rs": {
+    "There should always be at least one selection in Zed. This is a bug.": "VibeDev 中应始终至少有一个选区。这是一个 bug。"
+  },
+  "zed/crates/inspector_ui/src/inspector.rs": {
+    "Click to open by running Zed CLI": "点击运行 VibeDev CLI 打开"
+  },
+  "zed/crates/install_cli/src/install_cli_binary.rs": {
+    "If you installed Zed from our official release add ~/.local/bin to your PATH.\\n\\nIf you installed Zed from a different source like your package manager, then you may need to create an alias/symlink manually.\\n\\nDepending on your package manager, the CLI might be named zeditor, zedit, zed-editor or something else.": "如果您是通过我们的官方发布版安装的 VibeDev,请将 ~/.local/bin 添加到您的 PATH 中。\\n\\n如果您是通过其他来源(如包管理器)安装的 VibeDev,则可能需要手动创建别名或符号链接。\\n\\n根据您的包管理器,CLI 可能被命名为 zeditor、zedit、zed-编辑器 或其他名称。"
+  },
+  "zed/crates/keymap_editor/src/keymap_editor.rs": {
+    "Zed Key Bindings": "VibeDev 按键绑定",
+    "Failed to load Zed Keybind Context language": "加载 VibeDev 键位绑定上下文语言失败"
+  },
+  "zed/crates/language_models/src/provider/anthropic.rs": {
+    "Zed's agent with Anthropic": "VibeDev 的 Anthropic 代理",
+    "You can also set the {API_KEY_ENV_VAR_NAME} environment variable and restart Zed.": "您也可以设置 {API_KEY_ENV_VAR_NAME} 环境变量并重启 VibeDev。"
+  },
+  "zed/crates/language_models/src/provider/bedrock.rs": {
+    "[Tool responded with an image, but Zed doesn't support these in Bedrock models yet]": "[工具以图像响应,但 VibeDev 尚不支持 Bedrock 模型中的图像]",
+    "To use Zed's agent with Bedrock, you can set a custom authentication strategy through your settings file or use static credentials.": "要在 Bedrock 中使用 VibeDev 的代理,您可以通过设置文件设置自定义认证策略或使用静态凭证。",
+    "You can also set the {}, {} and {} environment variables (or {} for Bedrock API Key authentication) and restart Zed.": "您也可以设置 {}、{} 和 {} 环境变量(或 {} 用于 Bedrock API 密钥认证)并重启 VibeDev。"
+  },
+  "zed/crates/language_models/src/provider/cloud.rs": {
+    "failed to fetch Zed models": "获取 VibeDev 模型失败",
+    "You have access to Zed's hosted models through your Pro subscription.": "您可以通过 Pro 订阅访问 VibeDev 托管的模型。",
+    "You have access to Zed's hosted models through your Pro trial.": "您可以通过 Pro 试用访问 VibeDev 托管的模型。",
+    "Subscribe for access to Zed's hosted models. Start with a 14 day free trial.": "订阅以访问 VibeDev 托管的模型。从 14 天免费试用开始。",
+    "Subscribe for access to Zed's hosted models.": "订阅以访问 VibeDev 托管的模型。",
+    "Sign in to have access to Zed's complete agentic experience with hosted models.": "登录以使用 VibeDev 托管模型的完整智能体体验。",
+    "Sign In to use Zed AI": "登录以使用 VibeDev AI",
+    "You have access to Zed's hosted models through your Student subscription.": "您可以通过学生订阅访问 VibeDev 托管模型。",
+    "You have access to Zed's hosted models through your Organization.": "您可以通过组织订阅访问 VibeDev 托管模型。",
+    "You have access to Zed's hosted models through your organization.": "您通过组织获得了 VibeDev 托管模型的访问权限。",
+    "Zed's hosted models are disabled by your organization's configuration.": "VibeDev 托管模型已被组织配置禁用。",
+    "Business Plan - Zed models enabled": "商业版 - VibeDev 模型已启用",
+    "Business Plan - Zed models disabled": "商业版 - VibeDev 模型已禁用"
+  },
+  "zed/crates/language_models/src/provider/deepseek.rs": {
+    "To use DeepSeek in Zed, you need an API key:": "要在 VibeDev 中使用 DeepSeek, 您需要一个 API 密钥:",
+    "You can also set the {API_KEY_ENV_VAR_NAME} environment variable and restart Zed.": "您也可以设置 {API_KEY_ENV_VAR_NAME} 环境变量并重启 VibeDev。"
+  },
+  "zed/crates/language_models/src/provider/google.rs": {
+    "Zed's agent with Google AI": "VibeDev 的 Google AI 智能体",
+    "You can also set the {GEMINI_API_KEY_VAR_NAME} environment variable and restart Zed.": "您也可以设置 {GEMINI_API_KEY_VAR_NAME} 环境变量并重启 VibeDev。"
+  },
+  "zed/crates/language_models/src/provider/lmstudio.rs": {
+    "You can also set the {API_KEY_ENV_VAR_NAME} environment variable and restart Zed.": "您也可以设置 {API_KEY_ENV_VAR_NAME} 环境变量并重启 VibeDev。"
+  },
+  "zed/crates/language_models/src/provider/mistral.rs": {
+    "[Tool responded with an image, but Zed doesn't support these in Mistral models yet]": "[工具返回了图片,但 VibeDev 尚不支持 Mistral 模型中的此功能]",
+    "To use Zed's agent with Mistral, you need to add an API key. Follow these steps:": "要在 Mistral 中使用 VibeDev 的代理,您需要添加 API 密钥。请按照以下步骤操作:",
+    "You can also set the {API_KEY_ENV_VAR_NAME} environment variable and restart Zed.": "您也可以设置 {API_KEY_ENV_VAR_NAME} 环境变量并重启 VibeDev。"
+  },
+  "zed/crates/language_models/src/provider/ollama.rs": {
+    "Click 'Connect' below to start using Ollama in Zed": "点击下方的“连接”开始在 VibeDev 中使用 Ollama",
+    "You can also set the {API_KEY_ENV_VAR_NAME} environment variable and restart Zed.": "您也可以设置 {API_KEY_ENV_VAR_NAME} 环境变量并重启 VibeDev。"
+  },
+  "zed/crates/language_models/src/provider/open_ai.rs": {
+    "To use Zed's agent with OpenAI, you need to add an API key. Follow these steps:": "若要在 VibeDev 中使用 OpenAI 助手,您需要添加 API 密钥。请按照以下步骤操作:",
+    "You can also set the {API_KEY_ENV_VAR_NAME} environment variable and restart Zed.": "您也可以设置 {API_KEY_ENV_VAR_NAME} 环境变量并重启 VibeDev。",
+    "Zed also supports OpenAI-compatible models.": "VibeDev 也支持 OpenAI 兼容模型。"
+  },
+  "zed/crates/language_models/src/provider/open_ai_compatible.rs": {
+    "To use Zed's agent with an OpenAI-compatible provider, you need to add an API key.": "要将 VibeDev 的助手与 OpenAI 兼容的提供商配合使用,您需要添加 API 密钥。",
+    "You can also set the {env_var_name} environment variable and restart Zed.": "您也可以设置 {env_var_name} 环境变量并重启 VibeDev。"
+  },
+  "zed/crates/language_models/src/provider/open_router.rs": {
+    "To use Zed's agent with OpenRouter, you need to add an API key. Follow these steps:": "要在 OpenRouter 中使用 VibeDev 的智能体, 您需要添加 API 密钥。请按照以下步骤操作:",
+    "You can also set the {API_KEY_ENV_VAR_NAME} environment variable and restart Zed.": "您也可以设置 {API_KEY_ENV_VAR_NAME} 环境变量并重启 VibeDev。"
+  },
+  "zed/crates/language_models/src/provider/x_ai.rs": {
+    "To use Zed's agent with xAI, you need to add an API key. Follow these steps:": "要在 VibeDev 的助手功能中使用 xAI,您需要添加 API 密钥。请按照以下步骤操作:",
+    "You can also set the {API_KEY_ENV_VAR_NAME} environment variable and restart Zed.": "您也可以设置 {API_KEY_ENV_VAR_NAME} 环境变量并重启 VibeDev。"
+  },
+  "zed/crates/language_tools/src/key_context_view.rs": {
+    "This view lets you determine the current context stack for creating custom key bindings in Zed. When a keyboard shortcut is triggered, it also shows all the possible contexts it could have triggered in, and which one matched.": "此视图允许你确定当前的上下文栈,以便在 VibeDev 中创建自定义键位映射。当触发键盘快捷键时,它还会显示所有可能触发的上下文,以及匹配了哪一个。"
+  },
+  "zed/crates/node_runtime/src/node_runtime.rs": {
+    "using Zed managed Node.js at {} since {}": "正在使用 VibeDev 托管的 Node.js (位于 {}),因为 {}",
+    "Zed managed Node.js binary at {} failed check with output: {:?}": "位于 {} 的 VibeDev 托管 Node.js 二进制文件检查失败,输出为: {:?}"
+  },
+  "zed/crates/onboarding/src/basics_page.rs": {
+    "Help improve Zed by sending anonymous usage data": "发送匿名使用数据以帮助改进 VibeDev",
+    "Help fix Zed by sending crash reports so we can fix critical issues fast": "发送崩溃报告以帮助修复 VibeDev 关键问题",
+    "Zed can only allow services like language servers, project settings, and MCP servers to run after you mark a new project as trusted.": "VibeDev 仅在您将新项目标记为受信任后,才允许运行语言服务器、项目设置和 MCP 服务器等服务。",
+    "Automatically mark all new projects as trusted to unlock all Zed's features": "自动将所有新项目标记为受信任,以解锁 VibeDev 的所有功能",
+    "Zed Agent": "VibeDev Agent"
+  },
+  "zed/crates/onboarding/src/onboarding.rs": {
+    "Welcome to Zed": "欢迎使用 VibeDev",
+    "Welcome to VibeDev": "欢迎使用 VibeDev"
+  },
+  "zed/crates/recent_projects/src/remote_servers.rs": {
+    "Open Zed Log": "打开 VibeDev 日志"
+  },
+  "zed/crates/rules_library/src/rules_library.rs": {
+    "Built-in rules are those included out of the box with Zed.": "内置规则是 VibeDev 开箱即用包含的规则。"
+  },
+  "zed/crates/settings_ui/src/page_data.rs": {
+    "(Linux only) whether Zed or your compositor should draw window decorations.": "(仅限 Linux)由 VibeDev 还是你的合成器来绘制窗口装饰。",
+    "When opening Zed, avoid Restricted Mode by auto-trusting all projects, enabling use of all features without having to give permission to each new project.": "打开 VibeDev 时,通过自动信任所有项目来避免受限模式,从而无需为每个新项目授予权限即可使用所有功能。",
+    "What to restore from the previous session when opening Zed.": "打开 VibeDev 时从上一次会话恢复哪些内容。",
+    "Which settings should be activated only in Preview build of Zed.": "哪些设置应仅在 VibeDev 的预览版本中激活。",
+    "Send anonymized usage data like what languages you're using Zed with.": "发送匿名使用数据(例如您使用 VibeDev 编程的语言)。",
+    "The custom set of icons Zed will associate with files and directories.": "VibeDev 将与文件和目录关联的自定义图标集。",
+    "Whether breakpoints should be reused across Zed sessions.": "是否应在 VibeDev 会话之间复用断点。",
+    "Whether to log messages between active debug adapters and Zed.": "是否记录活动调试适配器与 VibeDev 之间的消息。",
+    "Disable all Git integration features in Zed.": "禁用 VibeDev 中的所有 Git 集成功能。",
+    "Files or globs of files that will be excluded by Zed entirely. They will be skipped during file scans, file searches, and not be displayed in the project file tree. Takes precedence over \"File Scan Inclusions\"": "将被 VibeDev 完全排除的文件或文件 glob 模式。它们将在文件扫描、文件搜索期间被跳过,并且不会显示在项目文件树中。优先级高于“文件扫描包含项”。",
+    "Files or globs of files that will be included by Zed, even when ignored by git. This is useful for files that are not tracked by git, but are still important to your project. Note that globs that are overly broad can slow down Zed's file scanning. \"File Scan Exclusions\" takes precedence over these inclusions": "将被 VibeDev 包含的文件或文件 glob 模式,即使它们被 git 忽略。这对于未被 git 跟踪但对项目仍然重要的文件很有用。请注意,过于宽泛的 glob 模式可能会降低 VibeDev 的文件扫描速度。“文件扫描排除项”优先于这些包含项。",
+    "Whether to automatically type closing characters for you. For example, when you type '(', Zed will automatically add a closing ')' at the correct position.": "是否自动为您输入闭合字符。例如,当您输入 '(' 时,VibeDev 将自动在正确的位置添加闭合的 ')'。",
+    "Whether to automatically surround text with characters for you. For example, when you select text and type '(', Zed will automatically surround text with ().": "是否自动使用字符包围文本。例如,当选中文本并输入 '(' 时,VibeDev 将自动使用 () 包围文本。",
+    "Use LSP tasks over Zed language extension tasks.": "优先使用 LSP 任务而不是 VibeDev 语言扩展任务。",
+    "Set up different edit prediction providers in complement to Zed's built-in Zeta model.": "设置不同的编辑预测提供商,作为 VibeDev 内置 Zeta 模型的补充。",
+    "Whether to disable all AI features in Zed.": "是否禁用 VibeDev 中的所有 AI 功能。",
+    "The URL of the Zed server to connect to.": "要连接的 VibeDev 服务器的 URL。",
+    "Files or globs of files that will be excluded by Zed entirely. They will be skipped during file scans, file searches, and not be displayed in the project file tree. Takes precedence over \\\"File Scan Inclusions\\\"": "将被 VibeDev 完全排除的文件或文件 glob 模式。它们将在文件扫描、文件搜索期间被跳过,并且不会显示在项目文件树中。优先级高于“文件扫描包含项”",
+    "Files or globs of files that will be included by Zed, even when ignored by git. This is useful for files that are not tracked by git, but are still important to your project. Note that globs that are overly broad can slow down Zed's file scanning. \\\"File Scan Exclusions\\\" takes precedence over these inclusions": "将被 VibeDev 包含的文件或文件 glob 模式,即使被 git 忽略。这对于未被 git 跟踪但对项目仍然重要的文件很有用。请注意,过于宽泛的 glob 模式可能会减慢 VibeDev 的文件扫描速度。“文件扫描排除项”优先于这些包含项",
+    "Controls whether Zed may collect training data when using Zed's Edit Predictions. Data is only collected for files in projects detected as open source. The default value uses the preference previously set via the status-bar toggle, or false if no preference has been stored.": "控制 VibeDev 是否可以在使用编辑预测时收集训练数据。数据仅针对检测为开源项目中的文件收集。默认值使用之前通过状态栏切换设置的偏好,如果没有存储任何偏好,则为 false。"
+  },
+  "zed/crates/settings_ui/src/pages/edit_prediction_provider_setup.rs": {
+    "Or set the {} env var and restart Zed.": "或设置 {} 环境变量并重启 VibeDev。"
+  },
+  "zed/crates/settings_ui/src/settings_ui.rs": {
+    "Zed — Settings": "VibeDev — 设置"
+  },
+  "zed/crates/title_bar/src/collab.rs": {
+    "{:?}\\n\\nPlease check that you have given Zed permissions to record your screen in Settings.": "{:?}\n\n请检查您是否已在设置中授予 VibeDev 录制屏幕的权限。"
+  },
+  "zed/crates/title_bar/src/title_bar.rs": {
+    "Please restart Zed to Collaborate": "请重启 VibeDev 以使用协作功能",
+    "Please update Zed to Collaborate": "请更新 VibeDev 以使用协作功能",
+    "Restart to update Zed": "重启以更新 VibeDev"
+  },
+  "zed/crates/ui/src/components/list/list_bullet_item.rs": {
+    "Create a Zed account by": "创建 VibeDev 账户,请"
+  },
+  "zed/crates/util/src/util.rs": {
+    "Failed to determine current zed executable path.": "无法确定当前 VibeDev 可执行文件路径。",
+    "Failed to shell-escape Zed executable path.": "无法对 VibeDev 可执行文件路径进行 Shell 转义。",
+    "Failed to determine parent directory of zed executable path.": "无法确定 VibeDev 可执行文件路径的父目录。"
+  },
+  "zed/crates/workspace/src/pane_group.rs": {
+    "{} is viewing an unshared Zed project": "{} 正在查看未共享的 VibeDev 项目",
+    "{} is viewing a window outside of Zed": "{} 正在查看 VibeDev 之外的窗口"
+  },
+  "zed/crates/workspace/src/welcome.rs": {
+    "Welcome back to Zed": "欢迎回到 VibeDev",
+    "Welcome to Zed": "欢迎使用 VibeDev",
+    "Welcome to VibeDev": "欢迎使用 VibeDev",
+    "Welcome back to VibeDev": "欢迎回到 VibeDev"
+  },
+  "zed/crates/workspace/src/workspace.rs": {
+    "failed to construct view from leader (maybe from a different version of zed?)": "无法从协作者构建视图(可能来自不同版本的 VibeDev?)",
+    "Your are running an unsupported version of Zed. ": "您运行的 VibeDev 版本不受支持。",
+    "could not open zed": "无法打开 VibeDev"
+  },
+  "zed/crates/zed/src/main.rs": {
+    "Zed failed to launch": "VibeDev 启动失败",
+    "Zed failed to open a window: {e:?}. See https://zed.dev/docs/linux for troubleshooting steps.": "VibeDev 无法打开窗口: {e:?}。请参阅 https://zed.dev/docs/linux 获取故障排除步骤。",
+    "Zed System Specs (from CLI):\\n{}": "VibeDev 系统规格 (来自 CLI):\\n{}",
+    "========== starting zed version {}, sha {} ==========": "========== 正在启动 VibeDev 版本 {}, sha {} =========="
+  },
+  "zed/crates/zed/src/zed/app_menus.rs": {
+    "Zed": "VibeDev",
+    "About Zed": "关于 VibeDev",
+    "Hide Zed": "隐藏 VibeDev",
+    "Quit Zed": "退出 VibeDev",
+    "Zed Repository": "VibeDev 仓库",
+    "Zed Twitter": "VibeDev Twitter",
+    "About VibeDev": "关于 VibeDev",
+    "Hide VibeDev": "隐藏 VibeDev",
+    "Quit VibeDev": "退出 VibeDev"
+  },
+  "zed/crates/zed/src/zed/quick_action_bar/repl_menu.rs": {
+    "Setup Zed REPL for {}": "为 {} 设置 VibeDev REPL"
+  },
+  "zed/crates/zed/src/zed.rs": {
+    "You're using an unstable version of Zed (Nightly)": "您正在使用 VibeDev 的不稳定版本(Nightly)",
+    "About Zed": "关于 VibeDev"
+  },
+  "zed/crates/agent/src/native_agent_server.rs": {
+    "Zed Agent": "VibeDev Agent"
+  },
+  "zed/crates/agent/src/templates.rs": {
+    "You are the Zed coding agent": "你是 VibeDev 编程助手"
+  },
+  "zed/crates/agent_ui/src/agent_ui.rs": {
+    "Zed Agent": "VibeDev Agent"
+  },
+  "zed/crates/askpass/src/askpass.rs": {
+    "Failed to determine current zed executable path.": "无法确定当前 VibeDev 可执行文件路径。"
+  },
+  "zed/crates/collab/src/auth.rs": {
+    "Dev servers were removed in Zed 0.157 please upgrade to SSH remoting": "开发服务器已在 VibeDev 0.157 中移除,请升级以使用 SSH 远程功能"
+  },
+  "zed/crates/collab/src/db/queries/rooms.rs": {
+    "user has not signed the Zed CLA": "用户尚未签署 VibeDev CLA"
+  },
+  "zed/crates/dap/src/transport.rs": {
+    "When using the `stdio` transport, the path to a debug adapter binary must be set by Zed.": "使用 `stdio` 传输时,必须由 VibeDev 设置调试适配器二进制文件的路径。"
+  },
+  "zed/crates/debugger_ui/src/tests/new_process_modal.rs": {
+    "Adapter {} should successfully convert from Zed format": "适配器 {} 应成功从 VibeDev 格式转换"
+  },
+  "zed/crates/edit_prediction/src/zed_edit_prediction_delegate.rs": {
+    "Zed's Edit Predictions": "VibeDev 编辑预测"
+  },
+  "zed/crates/editor/src/edit_prediction_tests.rs": {
+    "Non-Zed providers should not show Move predictions (jump functionality)": "非 VibeDev 提供者不应显示移动预测(跳转功能)"
+  },
+  "zed/crates/extension_host/src/wasm_host/wit.rs": {
+    "unreleased versions of the extension API can only be used on development builds of Zed": "扩展 API 的未发布版本仅可用于 VibeDev 的开发版本"
+  },
+  "zed/crates/project/src/project_settings.rs": {
+    "converting VSCode tasks into Zed ones, file {abs_path:?}": "将 VSCode 任务转换为 VibeDev 任务,文件 {abs_path:?}",
+    "serializing Zed tasks into JSON, file {abs_path:?}": "将 VibeDev 任务序列化为 JSON,文件 {abs_path:?}",
+    "converting VSCode debug tasks into Zed ones, file {abs_path:?}": "将 VSCode 调试任务转换为 VibeDev 任务,文件 {abs_path:?}"
+  },
+  "zed/crates/release_channel/src/lib.rs": {
+    "Zed Dev": "VibeDev Dev",
+    "Zed Nightly": "VibeDev Nightly",
+    "Zed Preview": "VibeDev Preview",
+    "Zed": "VibeDev"
+  },
+  "zed/crates/system_specs/src/system_specs.rs": {
+    "Zed: v{} ({}) {}{}": "VibeDev: v{} ({}) {}{}"
+  },
+  "zed/crates/theme/src/fallback_themes.rs": {
+    "Zed Default": "VibeDev 默认"
+  },
+  "zed/crates/theme/src/icon_theme.rs": {
+    "Zed (Default)": "VibeDev (默认)"
+  },
+  "zed/crates/ui/src/components/label/label.rs": {
+    "Welcome to Zed": "欢迎使用 VibeDev"
+  },
+  "zed/crates/util/src/shell_env.rs": {
+    "Failed to determine current zed executable path.": "无法确定当前 VibeDev 可执行文件路径。"
+  },
+  "zed/crates/zed/src/visual_test_runner.rs": {
+    "Show me the Zed logo": "显示 VibeDev 图标"
+  },
+  "zed/crates/zed/src/zed/mac_only_instance.rs": {
+    "Zed Editor Dev Instance Running": "VibeDev 编辑器开发版实例正在运行",
+    "Zed Editor Nightly Instance Running": "VibeDev 编辑器 Nightly 版实例正在运行",
+    "Zed Editor Preview Instance Running": "VibeDev 编辑器预览版实例正在运行",
+    "Zed Editor Stable Instance Running": "VibeDev 编辑器稳定版实例正在运行"
+  },
+  "zed/crates/zed/src/zed/windows_only_instance.rs": {
+    "Handshake before Zed spawn": "VibeDev 启动前的握手",
+    "Handshake after Zed spawn": "VibeDev 启动后的握手"
+  },
+  "zed/crates/settings_ui/src/pages/tool_permissions_setup.rs": {
+    "Note: custom tool permissions only apply to the Zed native agent and don’t extend to external agents connected through the Agent Client Protocol (ACP).": "注意:自定义工具权限仅适用于 VibeDev 原生代理,不会扩展到通过 Agent Client Protocol (ACP) 连接的外部代理。"
+  },
+  "zed/crates/ui/src/components/collab/collab_notification.rs": {
+    "a_very_long_username_that_might_overflow is sharing a project in Zed:": "a_very_long_username_that_might_overflow 正在 VibeDev 中共享项目:"
+  },
+  "zed/crates/ui/src/components/collab/update_button.rs": {
+    "Checking for Zed updates…": "正在检查 VibeDev 更新…",
+    "Downloading Zed update…": "正在下载 VibeDev 更新…",
+    "Installing Zed update…": "正在安装 VibeDev 更新…",
+    "Click to restart and update Zed": "点击重启并更新 VibeDev",
+    "Failed to update Zed": "更新 VibeDev 失败",
+    "A button component displayed in the title bar to show auto-update status and allow users to restart Zed.": "显示在标题栏中的按钮组件,用于展示自动更新状态并允许用户重启 VibeDev。",
+    "Checking for Zed Updates…": "正在检查 VibeDev 更新…",
+    "Downloading Zed Update…": "正在下载 VibeDev 更新…",
+    "Installing Zed Update…": "正在安装 VibeDev 更新…"
+  },
+  "zed/crates/edit_prediction/src/zeta.rs": {
+    "Update Zed": "更新 VibeDev"
+  },
+  "zed/crates/ui/src/components/notification/announcement_toast.rs": {
+    "What's new in Zed": "VibeDev 新特性",
+    "Mix and match Zed's agent with any ACP-compatible agent": "混合搭配 VibeDev 助手与任何兼容 ACP 的助手"
+  },
+  "zed/crates/language_models/src/provider/vercel_ai_gateway.rs": {
+    "Authentication failed for Vercel AI Gateway. Use a Vercel AI Gateway key (vck_...).\\nCreate or manage keys in Vercel AI Gateway console.\\nIf this persists, regenerate the key and update it in Vercel AI Gateway provider settings in Zed.": "Vercel AI Gateway 认证失败。请使用 Vercel AI Gateway 密钥 (vck_...)。\n在 Vercel AI Gateway 控制台中创建或管理密钥。\n如果问题持续存在,请重新生成密钥并在 VibeDev 的 Vercel AI Gateway 提供商设置中更新。",
+    "To use Zed's agent with Vercel AI Gateway, you need to add an API key. Follow these steps:": "要在 Vercel AI Gateway 中使用 VibeDev 的智能体,您需要添加 API 密钥。请按照以下步骤操作:",
+    "You can also set the {API_KEY_ENV_VAR_NAME} environment variable and restart Zed.": "您也可以设置 {API_KEY_ENV_VAR_NAME} 环境变量并重启 VibeDev。"
+  },
+  "zed/crates/eval_cli/src/main.rs": {
+    "Run Zed's agent headlessly in evaluation/benchmark environments": "在评估/基准测试环境中以无头模式运行 VibeDev Agent"
+  },
+  "zed/crates/agent_ui/src/conversation_view.rs": {
+    "Upgrade {} to work with Zed": "升级 {} 以配合 VibeDev 工作"
+  },
+  "zed/crates/agent_ui/src/conversation_view/thread_view.rs": {
+    "You reached your free usage limit. Upgrade to Zed Pro for more prompts.": "您已达到免费使用限额。升级到 VibeDev Pro 以获取更多提示次数。",
+    "Rating the thread sends all of your current conversation to the Zed team.": "评价对话线程会将您当前的所有对话发送给 VibeDev 团队。"
+  },
+  "zed/crates/agent_ui/src/threads_archive_view.rs": {
+    "Zed Agent": "VibeDev Agent"
+  },
+  "zed/crates/sidebar/src/sidebar.rs": {
+    "Import threads from your ACP agents — whether started in Zed or another client.": "从你的 ACP 代理导入对话线程,无论它们是在 VibeDev 还是其他客户端中启动的。",
+    "Import threads from agents like Claude Agent, Codex, and more, whether started in Zed or another client.": "导入来自 Claude Agent, Codex 等助手的对话线程, 无论是在 VibeDev 还是其他客户端中启动的."
+  },
+  "zed/crates/agent/src/tools/evals/fixtures/disable_cursor_blinking/before.rs": {
+    "The remote instance of Zed does not support this yet. It must be upgraded to {}": "远程 VibeDev 实例尚不支持此功能。需要升级到 {}"
+  },
+  "zed/crates/language_models/src/provider/opencode.rs": {
+    "To use OpenCode Zen models in Zed, you need an API key:": "要在 VibeDev 中使用 OpenCode Zen 模型,您需要 API 密钥:",
+    "You can also set the {API_KEY_ENV_VAR_NAME} environment variable and restart Zed.": "您也可以设置 {API_KEY_ENV_VAR_NAME} 环境变量并重启 VibeDev。",
+    "To use OpenCode models in Zed, you need an API key:": "在 VibeDev 中使用 OpenCode 模型,需要 API 密钥:"
+  },
+  "zed/crates/agent_ui/src/thread_import.rs": {
+    "from Zed Preview and Nightly": "来自 VibeDev Preview 和 Nightly"
+  },
+  "zed/crates/windows_resources/src/windows_resources.rs": {
+    "Zed Preview": "VibeDev Preview",
+    "Zed Nightly": "VibeDev Nightly",
+    "Zed Dev": "VibeDev Dev"
+  },
+  "zed/crates/zed/src/zed/move_to_applications.rs": {
+    "Move Zed to Applications?": "将 VibeDev 移至应用程序?",
+    "Zed is running from a temporary location. Move it to Applications to finish installing it.": "VibeDev 正在临时位置运行。将其移至应用程序以完成安装。",
+    "Failed to move Zed to Applications": "无法将 VibeDev 移至应用程序",
+    "Installing Zed…": "正在安装 VibeDev…",
+    "Moving Zed to Applications": "正在将 VibeDev 移至应用程序",
+    "Zed will reopen when installation is complete.": "安装完成后 VibeDev 将重新打开。"
+  },
+  "zed/crates/language_models/src/provider/openai_subscribed.rs": {
+    "Sign in with your ChatGPT Plus or Pro subscription to use OpenAI models in Zed's agent.": "请使用 ChatGPT Plus 或 Pro 订阅登录,以在 VibeDev 的助手中使用 OpenAI 模型。"
+  },
+  "zed/crates/oauth_callback_server/src/oauth_callback_server.rs": {
+    "You can close this tab and return to Zed.": "您可以关闭此标签页并返回 VibeDev。",
+    "Something went wrong. Please try again from Zed.": "出现问题,请从 VibeDev 重试。"
+  },
+  "zed/crates/editor/src/clipboard.rs": {
+    "There should always be at least one selection in Zed. This is a bug.": "VibeDev 中应始终至少有一个选区。这是一个 bug。"
+  },
+  "zed/crates/ui/src/components/ai/skills_illustration.rs": {
+    "zed": "VibeDev"
+  },
+  "zed/crates/vibedev_ui/src/account_panel.rs": {
+    "VibeDev Account": "VibeDev 账户",
+    "Connecting to backend…": "正在连接后端…",
+    "Backend not ready. Retrying…": "后端未就绪,正在重试…",
+    "Sign In": "登录",
+    "Sign Out": "退出登录",
+    "Refresh": "刷新",
+    "Sign in to view your balance.": "登录以查看余额",
+    "Signed in": "已登录",
+    "Account": "账户",
+    "Requests": "请求数",
+    "Cost": "费用",
+    "Latency": "延迟",
+    "Subscription": "订阅",
+    "Daily": "每日",
+    "Weekly": "每周",
+    "Monthly": "每月",
+    "expires {expires_at}": "{expires_at} 过期"
+  }
+}

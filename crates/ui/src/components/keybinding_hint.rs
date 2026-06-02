@@ -20,7 +20,7 @@ use theme::Appearance;
 ///     KeyBinding::from_keystrokes(vec![KeybindingKeystroke::from_keystroke(Keystroke::parse("ctrl-s").unwrap())].into(), false),
 ///     Hsla::black()
 /// )
-///     .prefix("Save:")
+///     .prefix("保存:")
 ///     .size(Pixels::from(14.0));
 /// # }
 /// ```
@@ -77,7 +77,7 @@ impl KeybindingHint {
     ///
     /// # fn example(cx: &App) {
     /// let hint = KeybindingHint::with_prefix(
-    ///     "Copy:",
+    ///     "复制:",
     ///     KeyBinding::from_keystrokes(vec![KeybindingKeystroke::from_keystroke(Keystroke::parse("ctrl-c").unwrap())].into(), false),
     ///     Hsla::black()
     /// );
@@ -112,7 +112,7 @@ impl KeybindingHint {
     /// # fn example(cx: &App) {
     /// let hint = KeybindingHint::with_suffix(
     ///     KeyBinding::from_keystrokes(vec![KeybindingKeystroke::from_keystroke(Keystroke::parse("ctrl-v").unwrap())].into(), false),
-    ///     "Paste",
+    ///     "粘贴",
     ///     Hsla::black()
     /// );
     /// # }
@@ -147,7 +147,7 @@ impl KeybindingHint {
     ///     KeyBinding::from_keystrokes(vec![KeybindingKeystroke::from_keystroke(Keystroke::parse("ctrl-x").unwrap())].into(), false),
     ///     Hsla::black()
     /// )
-    ///     .prefix("Cut:");
+    ///     .prefix("剪切:");
     /// # }
     /// ```
     pub fn prefix(mut self, prefix: impl Into<SharedString>) -> Self {
@@ -171,7 +171,7 @@ impl KeybindingHint {
     ///     KeyBinding::from_keystrokes(vec![KeybindingKeystroke::from_keystroke(Keystroke::parse("ctrl-f").unwrap())].into(), false),
     ///     Hsla::black()
     /// )
-    ///     .suffix("Find");
+    ///     .suffix("查找");
     /// # }
     /// ```
     pub fn suffix(mut self, suffix: impl Into<SharedString>) -> Self {
@@ -260,7 +260,7 @@ impl Component for KeybindingHint {
     }
 
     fn description() -> Option<&'static str> {
-        Some("Displays a keyboard shortcut hint with optional prefix and suffix text")
+        Some("显示带有可选前缀和后缀文本的键盘快捷键提示")
     }
 
     fn preview(_window: &mut Window, cx: &mut App) -> Option<AnyElement> {
@@ -273,54 +273,54 @@ impl Component for KeybindingHint {
                 .gap_6()
                 .children(vec![
                     example_group_with_title(
-                        "Basic",
+                        "基础",
                         vec![
                             single_example(
-                                "With Prefix",
+                                "带前缀",
                                 KeybindingHint::with_prefix(
-                                    "Go to Start:",
+                                    "跳转到开头:",
                                     enter.clone(),
                                     bg_color,
                                 )
                                 .into_any_element(),
                             ),
                             single_example(
-                                "With Suffix",
-                                KeybindingHint::with_suffix(enter.clone(), "Go to End", bg_color)
+                                "带后缀",
+                                KeybindingHint::with_suffix(enter.clone(), "跳转到结尾", bg_color)
                                     .into_any_element(),
                             ),
                             single_example(
-                                "With Prefix and Suffix",
+                                "带前缀和后缀",
                                 KeybindingHint::new(enter.clone(), bg_color)
-                                    .prefix("Confirm:")
-                                    .suffix("Execute selected action")
+                                    .prefix("确认:")
+                                    .suffix("执行选中的操作")
                                     .into_any_element(),
                             ),
                         ],
                     ),
                     example_group_with_title(
-                        "Sizes",
+                        "尺寸",
                         vec![
                             single_example(
-                                "Small",
+                                "小",
                                 KeybindingHint::new(enter.clone(), bg_color)
                                     .size(Pixels::from(12.0))
-                                    .prefix("Small:")
+                                    .prefix("小:")
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Medium",
+                                "中",
                                 KeybindingHint::new(enter.clone(), bg_color)
                                     .size(Pixels::from(16.0))
-                                    .suffix("Medium")
+                                    .suffix("中")
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Large",
+                                "大",
                                 KeybindingHint::new(enter, bg_color)
                                     .size(Pixels::from(20.0))
-                                    .prefix("Large:")
-                                    .suffix("Size")
+                                    .prefix("大:")
+                                    .suffix("尺寸")
                                     .into_any_element(),
                             ),
                         ],

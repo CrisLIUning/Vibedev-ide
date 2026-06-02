@@ -273,7 +273,7 @@ impl Component for LabelLike {
 
     fn description() -> Option<&'static str> {
         Some(
-            "A flexible, customizable label-like component that serves as a base for other label types.",
+            "一个灵活、可定制的类标签组件,用作其他标签类型的基础。",
         )
     }
 
@@ -283,45 +283,45 @@ impl Component for LabelLike {
                 .gap_6()
                 .children(vec![
                     example_group_with_title(
-                        "Sizes",
+                        "尺寸",
                         vec![
-                            single_example("Default", LabelLike::new().child("Default size").into_any_element()),
-                            single_example("Large", LabelLike::new().size(LabelSize::Large).child("Large size").into_any_element()),
-                            single_example("Small", LabelLike::new().size(LabelSize::Small).child("Small size").into_any_element()),
-                            single_example("XSmall", LabelLike::new().size(LabelSize::XSmall).child("Extra small size").into_any_element()),
+                            single_example("默认", LabelLike::new().child("默认大小").into_any_element()),
+                            single_example("大", LabelLike::new().size(LabelSize::Large).child("大号").into_any_element()),
+                            single_example("小", LabelLike::new().size(LabelSize::Small).child("小号").into_any_element()),
+                            single_example("超小", LabelLike::new().size(LabelSize::XSmall).child("超小号").into_any_element()),
                         ],
                     ),
                     example_group_with_title(
-                        "Styles",
+                        "样式",
                         vec![
-                            single_example("Bold", LabelLike::new().weight(FontWeight::BOLD).child("Bold text").into_any_element()),
-                            single_example("Italic", LabelLike::new().italic().child("Italic text").into_any_element()),
-                            single_example("Underline", LabelLike::new().underline().child("Underlined text").into_any_element()),
-                            single_example("Strikethrough", LabelLike::new().strikethrough().child("Strikethrough text").into_any_element()),
-                            single_example("Inline Code", LabelLike::new().inline_code(cx).child("const value = 42;").into_any_element()),
+                            single_example("粗体", LabelLike::new().weight(FontWeight::BOLD).child("粗体文本").into_any_element()),
+                            single_example("斜体", LabelLike::new().italic().child("斜体文本").into_any_element()),
+                            single_example("下划线", LabelLike::new().underline().child("带下划线的文本").into_any_element()),
+                            single_example("删除线", LabelLike::new().strikethrough().child("带删除线的文本").into_any_element()),
+                            single_example("行内代码", LabelLike::new().inline_code(cx).child("const value = 42;").into_any_element()),
                         ],
                     ),
                     example_group_with_title(
-                        "Colors",
+                        "颜色",
                         vec![
-                            single_example("Default", LabelLike::new().child("Default color").into_any_element()),
-                            single_example("Accent", LabelLike::new().color(Color::Accent).child("Accent color").into_any_element()),
-                            single_example("Error", LabelLike::new().color(Color::Error).child("Error color").into_any_element()),
-                            single_example("Alpha", LabelLike::new().alpha(0.5).child("50% opacity").into_any_element()),
+                            single_example("默认", LabelLike::new().child("默认颜色").into_any_element()),
+                            single_example("强调", LabelLike::new().color(Color::Accent).child("强调色").into_any_element()),
+                            single_example("错误", LabelLike::new().color(Color::Error).child("错误颜色").into_any_element()),
+                            single_example("透明度", LabelLike::new().alpha(0.5).child("50% 不透明度").into_any_element()),
                         ],
                     ),
                     example_group_with_title(
-                        "Line Height",
+                        "行高",
                         vec![
-                            single_example("Default", LabelLike::new().child("Default line height\nMulti-line text").into_any_element()),
-                            single_example("UI Label", LabelLike::new().line_height_style(LineHeightStyle::UiLabel).child("UI label line height\nMulti-line text").into_any_element()),
+                            single_example("默认", LabelLike::new().child("默认行高\n多行文本").into_any_element()),
+                            single_example("UI 标签", LabelLike::new().line_height_style(LineHeightStyle::UiLabel).child("UI 标签行高\n多行文本").into_any_element()),
                         ],
                     ),
                     example_group_with_title(
-                        "Special Cases",
+                        "特殊情况",
                         vec![
-                            single_example("Single Line", LabelLike::new().single_line().child("This is a very long text that should be displayed in a single line").into_any_element()),
-                            single_example("Truncate", LabelLike::new().truncate().child("This is a very long text that should be truncated with an ellipsis").into_any_element()),
+                            single_example("单行", LabelLike::new().single_line().child("这是一段很长的文本,应该在单行中显示").into_any_element()),
+                            single_example("截断", LabelLike::new().truncate().child("这是一段很长的文本,应该用省略号截断").into_any_element()),
                         ],
                     ),
                 ])

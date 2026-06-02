@@ -1,0 +1,21 @@
+VibeDev i18n — third-party translation attribution
+===================================================
+
+The base Simplified-Chinese translation data in this directory
+(`zh-CN.json`) and the do-not-translate ruleset (`do_not_translate.json`),
+together with the `zedl10n` build-time replacement tool used by `build-zh.ps1`,
+are derived from:
+
+    zed-globalization  —  https://github.com/x6nux/zed-globalization
+    (a localization fork of the Zed editor)
+
+zed-globalization is licensed under GPL-3.0 — the same license as Zed and as
+this VibeDev fork (GPL-3.0-or-later) — so its translation data is reused here
+under those terms. All credit for the Chinese translations of upstream Zed
+strings goes to the zed-globalization project and its contributors.
+
+`vibedev-overrides.json` contains VibeDev-specific strings translated by the
+VibeDev project. The "VibeDev" product name itself is left untranslated.
+
+The base `zh-CN.json` corresponds to zed-globalization's `v1.4.2-pre` snapshot.
+Refresh it from their `i18n` branch when rebasing onto a newer upstream Zed.

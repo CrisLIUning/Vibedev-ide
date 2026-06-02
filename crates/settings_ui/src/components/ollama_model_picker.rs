@@ -81,7 +81,7 @@ impl PickerDelegate for OllamaModelPickerDelegate {
     }
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
-        "Search models…".into()
+        "搜索模型…".into()
     }
 
     fn update_matches(
@@ -168,7 +168,7 @@ pub fn render_ollama_model_picker(
         .trigger(render_picker_trigger_button(
             "ollama_model_picker_trigger".into(),
             if current_value.is_empty() {
-                "Select a model…".into()
+                "选择模型…".into()
             } else {
                 current_value.clone()
             },

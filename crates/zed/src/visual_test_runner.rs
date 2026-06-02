@@ -464,35 +464,35 @@ fn run_visual_tests(project_path: PathBuf, update_baseline: bool) -> Result<()> 
     }
 
     // Run Test 3: Multi-workspace sidebar visual tests
-    println!("\n--- Test 3: multi_workspace_sidebar ---");
+    println!("\n--- 测试 3: 多工作区侧边栏 ---");
     match run_multi_workspace_sidebar_visual_tests(app_state.clone(), &mut cx, update_baseline) {
         Ok(TestResult::Passed) => {
-            println!("✓ multi_workspace_sidebar: PASSED");
+            println!("✓ 多工作区侧边栏: 通过");
             passed += 1;
         }
         Ok(TestResult::BaselineUpdated(_)) => {
-            println!("✓ multi_workspace_sidebar: Baselines updated");
+            println!("✓ 多工作区侧边栏: 基线已更新");
             updated += 1;
         }
         Err(e) => {
-            eprintln!("✗ multi_workspace_sidebar: FAILED - {}", e);
+            eprintln!("✗ 多工作区侧边栏: 失败 - {}", e);
             failed += 1;
         }
     }
 
     // Run Test 4: Error wrapping visual tests
-    println!("\n--- Test 4: error_message_wrapping ---");
+    println!("\n--- 测试 4: 错误消息换行 ---");
     match run_error_wrapping_visual_tests(app_state.clone(), &mut cx, update_baseline) {
         Ok(TestResult::Passed) => {
-            println!("✓ error_message_wrapping: PASSED");
+            println!("✓ 错误消息换行: 通过");
             passed += 1;
         }
         Ok(TestResult::BaselineUpdated(_)) => {
-            println!("✓ error_message_wrapping: Baselines updated");
+            println!("✓ 错误消息换行: 基线已更新");
             updated += 1;
         }
         Err(e) => {
-            eprintln!("✗ error_message_wrapping: FAILED - {}", e);
+            eprintln!("✗ 错误消息换行: 失败 - {}", e);
             failed += 1;
         }
     }
@@ -500,7 +500,7 @@ fn run_visual_tests(project_path: PathBuf, update_baseline: bool) -> Result<()> 
     // Run Test 5: Agent Thread View tests
     #[cfg(feature = "visual-tests")]
     {
-        println!("\n--- Test 5: agent_thread_with_image (collapsed + expanded) ---");
+        println!("\n--- 测试 5: 代理线程含图片(折叠 + 展开) ---");
         match run_agent_thread_view_test(app_state.clone(), &mut cx, update_baseline) {
             Ok(TestResult::Passed) => {
                 println!("✓ agent_thread_with_image (collapsed + expanded): PASSED");
@@ -518,7 +518,7 @@ fn run_visual_tests(project_path: PathBuf, update_baseline: bool) -> Result<()> 
     }
 
     // Run Test 6: Breakpoint Hover visual tests
-    println!("\n--- Test 6: breakpoint_hover (3 variants) ---");
+    println!("\n--- 测试 6: 断点悬停(3 个变体) ---");
     match run_breakpoint_hover_visual_tests(app_state.clone(), &mut cx, update_baseline) {
         Ok(TestResult::Passed) => {
             println!("✓ breakpoint_hover: PASSED");
@@ -535,7 +535,7 @@ fn run_visual_tests(project_path: PathBuf, update_baseline: bool) -> Result<()> 
     }
 
     // Run Test 7: Diff Review Button visual tests
-    println!("\n--- Test 7: diff_review_button (3 variants) ---");
+    println!("\n--- 测试 7: 差异审查按钮(3 个变体) ---");
     match run_diff_review_visual_tests(app_state.clone(), &mut cx, update_baseline) {
         Ok(TestResult::Passed) => {
             println!("✓ diff_review_button: PASSED");
@@ -556,15 +556,15 @@ fn run_visual_tests(project_path: PathBuf, update_baseline: bool) -> Result<()> 
     match run_thread_item_icon_decorations_visual_tests(app_state.clone(), &mut cx, update_baseline)
     {
         Ok(TestResult::Passed) => {
-            println!("✓ thread_item_icon_decorations: PASSED");
+            println!("✓ thread_item_icon_decorations: 通过");
             passed += 1;
         }
         Ok(TestResult::BaselineUpdated(_)) => {
-            println!("✓ thread_item_icon_decorations: Baseline updated");
+            println!("✓ thread_item_icon_decorations: 基线已更新");
             updated += 1;
         }
         Err(e) => {
-            eprintln!("✗ thread_item_icon_decorations: FAILED - {}", e);
+            eprintln!("✗ thread_item_icon_decorations: 失败 - {}", e);
             failed += 1;
         }
     }
@@ -594,15 +594,15 @@ fn run_visual_tests(project_path: PathBuf, update_baseline: bool) -> Result<()> 
     println!("\n--- Test 9: tool_permissions_settings ---");
     match run_tool_permissions_visual_tests(app_state.clone(), &mut cx, update_baseline) {
         Ok(TestResult::Passed) => {
-            println!("✓ tool_permissions_settings: PASSED");
+            println!("✓ tool_permissions_settings: 通过");
             passed += 1;
         }
         Ok(TestResult::BaselineUpdated(_)) => {
-            println!("✓ tool_permissions_settings: Baselines updated");
+            println!("✓ tool_permissions_settings: 基准已更新");
             updated += 1;
         }
         Err(e) => {
-            eprintln!("✗ tool_permissions_settings: FAILED - {}", e);
+            eprintln!("✗ tool_permissions_settings: 失败 - {}", e);
             failed += 1;
         }
     }
@@ -2077,9 +2077,9 @@ fn run_agent_thread_view_test(
     cx.background_executor.forbid_parking();
     run_result.map_err(|e| match e {
         language_model::LanguageModelToolResultContent::Text(text) => {
-            anyhow::anyhow!("ReadFileTool failed: {text}")
+            anyhow::anyhow!("ReadFileTool 失败: {text}")
         }
-        other => anyhow::anyhow!("ReadFileTool failed: {other:?}"),
+        other => anyhow::anyhow!("ReadFileTool 失败: {other:?}"),
     })?;
 
     cx.run_until_parked();
@@ -2377,7 +2377,7 @@ fn run_tool_permissions_visual_tests(
                 },
             )
         })
-        .context("Failed to open workspace window for settings test")?;
+        .context("为设置测试打开工作区窗口失败")?;
 
     cx.run_until_parked();
 
@@ -2391,7 +2391,7 @@ fn run_tool_permissions_visual_tests(
                 cx,
             );
         })
-        .context("Failed to dispatch OpenSettingsAt action")?;
+        .context("分发 OpenSettingsAt 操作失败")?;
 
     cx.run_until_parked();
 
@@ -2403,7 +2403,7 @@ fn run_tool_permissions_visual_tests(
 
     // Find the settings window - it should be the newest window (last in the list)
     let all_windows = cx.update(|cx| cx.windows());
-    let settings_window = all_windows.last().copied().context("No windows found")?;
+    let settings_window = all_windows.last().copied().context("未找到 Windows")?;
 
     let output_dir = std::env::var("VISUAL_TEST_OUTPUT_DIR")
         .unwrap_or_else(|_| "target/visual_tests".to_string());
@@ -2412,13 +2412,13 @@ fn run_tool_permissions_visual_tests(
     // Navigate to the tool permissions sub-page using the public API
     let settings_window_handle = settings_window
         .downcast::<settings_ui::SettingsWindow>()
-        .context("Failed to downcast to SettingsWindow")?;
+        .context("向下转型为 SettingsWindow 失败")?;
 
     settings_window_handle
         .update(cx, |settings_window, window, cx| {
             settings_window.navigate_to_sub_page("agent.tool_permissions", window, cx);
         })
-        .context("Failed to navigate to tool permissions sub-page")?;
+        .context("导航到工具权限子页面失败")?;
 
     cx.run_until_parked();
 
@@ -2432,15 +2432,15 @@ fn run_tool_permissions_visual_tests(
     settings_window_handle
         .update(cx, |settings_window, window, cx| {
             settings_window.push_dynamic_sub_page(
-                "Terminal",
-                "Configure Tool Rules",
+                "终端",
+                "配置工具规则",
                 None,
                 settings_ui::pages::render_terminal_tool_config,
                 window,
                 cx,
             );
         })
-        .context("Failed to navigate to Terminal tool config")?;
+        .context("导航到终端工具配置失败")?;
 
     cx.run_until_parked();
 
@@ -2450,7 +2450,7 @@ fn run_tool_permissions_visual_tests(
         cx.run_until_parked();
     }
 
-    // Refresh and redraw so the "Test Your Rules" input is present
+    // Refresh and redraw so the "测试您的规则" input is present
     cx.update_window(settings_window, |_, window, cx| {
         window.draw(cx).clear();
     })
@@ -2463,7 +2463,7 @@ fn run_tool_permissions_visual_tests(
     .log_err();
     cx.run_until_parked();
 
-    // Focus the first tab stop in the window (the "Test Your Rules" editor
+    // Focus the first tab stop in the window (the "测试您的规则" editor
     // has tab_index(0) and tab_stop(true)) and type "hi" into it.
     cx.update_window(settings_window, |_, window, cx| {
         window.focus_next(cx);
@@ -2499,7 +2499,7 @@ fn run_tool_permissions_visual_tests(
     if let Ok(screenshot) = cx.capture_screenshot(settings_window) {
         screenshot.save(&tool_config_output_path).log_err();
         println!(
-            "Screenshot (test rules) saved to: {}",
+            "截图(测试规则)已保存至: {}",
             tool_config_output_path.display()
         );
     }
@@ -2611,7 +2611,7 @@ fn run_multi_workspace_sidebar_visual_tests(
                 },
             )
         })
-        .context("Failed to open MultiWorkspace window")?;
+        .context("打开多工作区窗口失败")?;
 
     cx.run_until_parked();
 
@@ -2624,12 +2624,12 @@ fn run_multi_workspace_sidebar_visual_tests(
                 project.find_or_create_worktree(&workspace1_dir, true, cx)
             })
         })
-        .context("Failed to start adding worktree 1")?;
+        .context("开始添加工作树 1 失败")?;
 
     cx.background_executor.allow_parking();
     cx.foreground_executor
         .block_test(add_worktree1_task)
-        .context("Failed to add worktree 1")?;
+        .context("添加工作树 1 失败")?;
     cx.background_executor.forbid_parking();
 
     cx.run_until_parked();
@@ -2643,12 +2643,12 @@ fn run_multi_workspace_sidebar_visual_tests(
                 project.find_or_create_worktree(&workspace2_dir, true, cx)
             })
         })
-        .context("Failed to start adding worktree 2")?;
+        .context("开始添加工作树 2 失败")?;
 
     cx.background_executor.allow_parking();
     cx.foreground_executor
         .block_test(add_worktree2_task)
-        .context("Failed to add worktree 2")?;
+        .context("添加工作树 2 失败")?;
     cx.background_executor.forbid_parking();
 
     cx.run_until_parked();
@@ -2659,7 +2659,7 @@ fn run_multi_workspace_sidebar_visual_tests(
             let workspace = multi_workspace.workspaces().next().unwrap().clone();
             multi_workspace.activate(workspace, None, window, cx);
         })
-        .context("Failed to activate workspace 1")?;
+        .context("激活工作区 1 失败")?;
 
     cx.run_until_parked();
 
@@ -2670,13 +2670,13 @@ fn run_multi_workspace_sidebar_visual_tests(
             let multi_workspace_handle: Entity<MultiWorkspace> = root_view.downcast().unwrap();
             cx.new(|cx| sidebar::Sidebar::new(multi_workspace_handle, window, cx))
         })
-        .context("Failed to create sidebar")?;
+        .context("创建侧边栏失败")?;
 
     multi_workspace_window
         .update(cx, |multi_workspace, _window, cx| {
             multi_workspace.register_sidebar(sidebar.clone(), cx);
         })
-        .context("Failed to register sidebar")?;
+        .context("注册侧边栏失败")?;
 
     cx.run_until_parked();
 
@@ -2701,13 +2701,13 @@ fn run_multi_workspace_sidebar_visual_tests(
                 let (session_id, title, updated_at) = match index {
                     0 => (
                         "visual-test-thread-0",
-                        "Refine thread view scrolling behavior",
+                        "优化对话线程视图滚动行为",
                         chrono::TimeZone::with_ymd_and_hms(&chrono::Utc, 2024, 6, 15, 10, 30, 0)
                             .unwrap(),
                     ),
                     1 => (
                         "visual-test-thread-1",
-                        "Add line numbers option to FileEditBlock",
+                        "为 FileEditBlock 添加行号选项",
                         chrono::TimeZone::with_ymd_and_hms(&chrono::Utc, 2024, 6, 15, 11, 0, 0)
                             .unwrap(),
                     ),
@@ -2743,13 +2743,13 @@ fn run_multi_workspace_sidebar_visual_tests(
             }
             tasks
         })
-        .context("Failed to create test threads")?;
+        .context("创建测试线程失败")?;
 
     cx.background_executor.allow_parking();
     for task in save_tasks {
         cx.foreground_executor
             .block_test(task)
-            .context("Failed to save test thread")?;
+            .context("保存测试线程失败")?;
     }
     cx.background_executor.forbid_parking();
 
@@ -2760,7 +2760,7 @@ fn run_multi_workspace_sidebar_visual_tests(
         .update(cx, |multi_workspace, window, cx| {
             multi_workspace.toggle_sidebar(window, cx);
         })
-        .context("Failed to toggle sidebar")?;
+        .context("切换侧边栏失败")?;
 
     // Let rendering settle
     for _ in 0..10 {
@@ -2834,7 +2834,7 @@ impl gpui::Render for ErrorWrappingTestView {
             Requested 59724. Please try again in 264ms. Visit \
             https://platform.openai.com/account/rate-limits to learn more.";
 
-        let retry_description = "Retrying. Next attempt in 4 seconds (Attempt 1 of 2).";
+        let retry_description = "正在重试。下次尝试在 4 秒后(第 1 次,共 2 次)。";
 
         v_flex()
             .size_full()
@@ -2852,16 +2852,16 @@ impl gpui::Render for ErrorWrappingTestView {
                 Callout::new()
                     .severity(Severity::Error)
                     .icon(IconName::XCircle)
-                    .title("An Error Happened")
+                    .title("发生错误")
                     .description(long_error_message)
-                    .actions_slot(Button::new("dismiss", "Dismiss").label_size(LabelSize::Small)),
+                    .actions_slot(Button::new("dismiss", "关闭").label_size(LabelSize::Small)),
             )
             .child(
                 Callout::new()
                     .severity(Severity::Error)
                     .icon(IconName::XCircle)
                     .title(long_error_message)
-                    .actions_slot(Button::new("retry", "Retry").label_size(LabelSize::Small)),
+                    .actions_slot(Button::new("retry", "重试").label_size(LabelSize::Small)),
             )
     }
 }
@@ -2939,7 +2939,7 @@ impl gpui::Render for ThreadItemBranchNameTestView {
                         }]),
                 ),
             )
-            .child(section_label("Main worktree with branch (nothing shown)"))
+            .child(section_label("主工作树含分支 (不显示任何内容)"))
             .child(
                 container().child(
                     ThreadItem::new("ti-main-branch", "Request for Long Classic Poem")
@@ -3042,7 +3042,7 @@ impl gpui::Render for ThreadItemBranchNameTestView {
                 ),
             )
             .child(section_label(
-                "Main worktree with branch + diff stats + timestamp (branch hidden)",
+                "主工作树含分支 + 差异统计 + 时间戳 (分支已隐藏)",
             ))
             .child(
                 container().child(
@@ -3151,54 +3151,54 @@ impl gpui::Render for ThreadItemIconDecorationsTestView {
             .p_4()
             .gap_3()
             .child(
-                Label::new("ThreadItem Icon Decorations")
+                Label::new("ThreadItem 图标装饰")
                     .size(LabelSize::Large)
                     .color(Color::Default),
             )
-            .child(section_label("No decoration (default idle)"))
+            .child(section_label("无装饰(默认空闲)"))
             .child(
                 container()
-                    .child(ThreadItem::new("ti-none", "Default idle thread").timestamp("1:00 AM")),
+                    .child(ThreadItem::new("ti-none", "默认空闲线程").timestamp("1:00 AM")),
             )
-            .child(section_label("Blue dot (notified)"))
+            .child(section_label("蓝点(已通知)"))
             .child(
                 container().child(
-                    ThreadItem::new("ti-done", "Generation completed successfully")
+                    ThreadItem::new("ti-done", "生成成功完成")
                         .timestamp("1:05 AM")
                         .notified(true),
                 ),
             )
-            .child(section_label("Yellow triangle (waiting for confirmation)"))
+            .child(section_label("黄色三角形(等待确认)"))
             .child(
                 container().child(
-                    ThreadItem::new("ti-waiting", "Waiting for user confirmation")
+                    ThreadItem::new("ti-waiting", "等待用户确认")
                         .timestamp("1:10 AM")
                         .status(ui::AgentThreadStatus::WaitingForConfirmation),
                 ),
             )
-            .child(section_label("Red X (error)"))
+            .child(section_label("红色 X(错误)"))
             .child(
                 container().child(
-                    ThreadItem::new("ti-error", "Failed to connect to server")
+                    ThreadItem::new("ti-error", "无法连接服务器")
                         .timestamp("1:15 AM")
                         .status(ui::AgentThreadStatus::Error),
                 ),
             )
-            .child(section_label("Spinner (running)"))
+            .child(section_label("旋转图标(运行中)"))
             .child(
                 container().child(
-                    ThreadItem::new("ti-running", "Generating response...")
+                    ThreadItem::new("ti-running", "正在生成响应...")
                         .icon(IconName::AiClaude)
                         .timestamp("1:20 AM")
                         .status(ui::AgentThreadStatus::Running),
                 ),
             )
             .child(section_label(
-                "Spinner + yellow triangle (waiting for confirmation)",
+                "旋转图标 + 黄色三角形(等待确认)",
             ))
             .child(
                 container().child(
-                    ThreadItem::new("ti-running-waiting", "Running but needs confirmation")
+                    ThreadItem::new("ti-running-waiting", "运行中但需要确认")
                         .icon(IconName::AiClaude)
                         .timestamp("1:25 AM")
                         .status(ui::AgentThreadStatus::WaitingForConfirmation),
@@ -3231,7 +3231,7 @@ fn run_thread_item_icon_decorations_visual_tests(
                 |_window, cx| cx.new(|_| ThreadItemIconDecorationsTestView),
             )
         })
-        .context("Failed to open thread item icon decorations test window")?;
+        .context("无法打开线程项图标装饰测试窗口")?;
 
     cx.run_until_parked();
 
@@ -3287,7 +3287,7 @@ fn run_error_wrapping_visual_tests(
                 |_window, cx| cx.new(|_| ErrorWrappingTestView),
             )
         })
-        .context("Failed to open error wrapping test window")?;
+        .context("打开错误换行测试窗口失败")?;
 
     cx.run_until_parked();
 
@@ -3360,7 +3360,7 @@ fn open_sidebar_test_window(
     app_state: &Arc<AppState>,
     cx: &mut VisualTestAppContext,
 ) -> Result<WindowHandle<MultiWorkspace>> {
-    anyhow::ensure!(!projects.is_empty(), "need at least one project");
+    anyhow::ensure!(!projects.is_empty(), "至少需要一个项目");
 
     let window_size = size(px(400.0), px(600.0));
     let bounds = Bounds {
@@ -3371,7 +3371,7 @@ fn open_sidebar_test_window(
     let mut projects_iter = projects.into_iter();
     let first_project = projects_iter
         .next()
-        .ok_or_else(|| anyhow::anyhow!("need at least one project"))?;
+        .ok_or_else(|| anyhow::anyhow!("至少需要一个项目"))?;
     let remaining: Vec<_> = projects_iter.collect();
 
     let multi_workspace_window: WindowHandle<MultiWorkspace> = cx
@@ -3400,7 +3400,7 @@ fn open_sidebar_test_window(
                 },
             )
         })
-        .context("Failed to open MultiWorkspace window")?;
+        .context("打开多工作区窗口失败")?;
 
     cx.run_until_parked();
 
@@ -3410,16 +3410,16 @@ fn open_sidebar_test_window(
         .update_window(multi_workspace_window.into(), |root_view, window, cx| {
             let mw_handle: Entity<MultiWorkspace> = root_view
                 .downcast()
-                .map_err(|_| anyhow::anyhow!("Failed to downcast root view to MultiWorkspace"))?;
+                .map_err(|_| anyhow::anyhow!("无法将根视图向下转型为 MultiWorkspace"))?;
             Ok::<_, anyhow::Error>(cx.new(|cx| sidebar::Sidebar::new(mw_handle, window, cx)))
         })
-        .context("Failed to create sidebar")??;
+        .context("创建侧边栏失败")??;
 
     multi_workspace_window
         .update(cx, |mw, _window, cx| {
             mw.register_sidebar(sidebar.clone(), cx);
         })
-        .context("Failed to register sidebar")?;
+        .context("注册侧边栏失败")?;
 
     cx.run_until_parked();
 
@@ -3428,7 +3428,7 @@ fn open_sidebar_test_window(
         .update(cx, |mw, window, cx| {
             mw.toggle_sidebar(window, cx);
         })
-        .context("Failed to toggle sidebar")?;
+        .context("切换侧边栏失败")?;
 
     // Let rendering settle
     for _ in 0..10 {
@@ -3559,7 +3559,7 @@ fn run_sidebar_duplicate_project_names_visual_tests(
         cx.background_executor.allow_parking();
         cx.foreground_executor
             .block_test(add_second_worktree)
-            .context("Failed to add second worktree to project 3")?;
+            .context("无法向项目 3 添加第二个工作树")?;
         cx.background_executor.forbid_parking();
         cx.run_until_parked();
 

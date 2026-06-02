@@ -135,7 +135,7 @@ impl EditFileTool {
                                         {
                                             Ok(created_session) => session = Some(created_session),
                                             Err(error) => {
-                                                log::error!("Failed to create edit session: {}", error);
+                                                log::error!("创建编辑会话失败: {}", error);
                                                 return EditSessionResult::Failed {
                                                     error,
                                                     session: None,
@@ -147,7 +147,7 @@ impl EditFileTool {
                                     if let Some(current_session) = &mut session
                                         && let Err(error) = current_session.process_edit(parsed.edits.as_deref(), event_stream, cx)
                                     {
-                                        log::error!("Failed to process edit: {}", error);
+                                        log::error!("处理编辑失败: {}", error);
                                         return EditSessionResult::Failed { error, session };
                                     }
                                 }
@@ -168,7 +168,7 @@ impl EditFileTool {
                                     {
                                         Ok(created_session) => created_session,
                                         Err(error) => {
-                                            log::error!("Failed to create edit session: {}", error);
+                                            log::error!("创建编辑会话失败: {}", error);
                                             return EditSessionResult::Failed {
                                                 error,
                                                 session: None,
@@ -180,7 +180,7 @@ impl EditFileTool {
                                 return match session.finalize_edit(full_input.edits, event_stream, cx).await {
                                     Ok(()) => EditSessionResult::Completed(session),
                                     Err(error) => {
-                                        log::error!("Failed to finalize edit: {}", error);
+                                        log::error!("完成编辑失败: {}", error);
                                         EditSessionResult::Failed {
                                             error,
                                             session: Some(session),
@@ -189,7 +189,7 @@ impl EditFileTool {
                                 };
                             }
                             ToolInputPayload::InvalidJson { error_message } => {
-                                log::error!("Received invalid JSON: {error_message}");
+                                log::error!("收到无效 JSON:{error_message}");
                                 return EditSessionResult::Failed {
                                     error: error_message,
                                     session,
@@ -312,7 +312,7 @@ mod tests {
             .await;
 
         let EditFileToolOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "line 1\nmodified line 2\nline 3\n");
     }
@@ -347,7 +347,7 @@ mod tests {
             .await;
 
         let EditFileToolOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(
             new_text,
@@ -385,7 +385,7 @@ mod tests {
             .await;
 
         let EditFileToolOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(
             new_text,
@@ -423,7 +423,7 @@ mod tests {
             .await;
 
         let EditFileToolOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(
             new_text,
@@ -456,7 +456,7 @@ mod tests {
             input_path,
         } = result.unwrap_err()
         else {
-            panic!("expected error");
+            panic!("预期错误");
         };
         assert_eq!(error, "Can't edit file: path not found");
         assert!(diff.is_empty());
@@ -484,11 +484,11 @@ mod tests {
             .await;
 
         let EditFileToolOutput::Error { error, .. } = result.unwrap_err() else {
-            panic!("expected error");
+            panic!("预期错误");
         };
         assert!(
-            error.contains("Could not find matching text"),
-            "Expected error containing 'Could not find matching text' but got: {error}"
+            error.contains("找不到匹配的文本"),
+            "预期错误包含 '找不到匹配的文本' 但实际得到: {error}"
         );
     }
 
@@ -523,7 +523,7 @@ mod tests {
 
         let result = task.await;
         let EditFileToolOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "line 1\nmodified line 2\nline 3\n");
     }
@@ -551,11 +551,11 @@ mod tests {
 
         let result = task.await;
         let EditFileToolOutput::Error { error, .. } = result.unwrap_err() else {
-            panic!("expected error");
+            panic!("预期错误");
         };
         assert!(
             error.contains("cancelled"),
-            "Expected cancellation error but got: {error}"
+            "预期取消错误但得到: {error}"
         );
     }
 
@@ -610,7 +610,7 @@ mod tests {
 
         let result = task.await;
         let EditFileToolOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(
             new_text,
@@ -634,7 +634,7 @@ mod tests {
 
         let result = task.await;
         let EditFileToolOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "line 1\nmodified line 2\nline 3\n");
     }
@@ -680,7 +680,7 @@ mod tests {
         assert_eq!(
             buffer_text.as_deref(),
             Some("line 1\nline 2\nline 3\nline 4\nline 5\n"),
-            "Buffer should not be modified while first edit is still in progress"
+            "第一个编辑仍在进行时不应修改缓冲区"
         );
 
         // Second edit appears — this proves the first edit is complete, so it
@@ -706,7 +706,7 @@ mod tests {
         assert_eq!(
             buffer_text.as_deref(),
             Some("MODIFIED 1\nline 2\nline 3\nline 4\nline 5\n"),
-            "First edit should be applied during streaming when second edit appears"
+            "第二个编辑出现时,第一个编辑应在流式处理期间应用"
         );
 
         // Send final complete input
@@ -723,12 +723,12 @@ mod tests {
             new_text, old_text, ..
         } = result.unwrap()
         else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "MODIFIED 1\nline 2\nline 3\nline 4\nMODIFIED 5\n");
         assert_eq!(
             *old_text, "line 1\nline 2\nline 3\nline 4\nline 5\n",
-            "old_text should reflect the original file content before any edits"
+            "old_text 应反映任何编辑前的原始文件内容"
         );
     }
 
@@ -826,7 +826,7 @@ mod tests {
 
         let result = task.await;
         let EditFileToolOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "AAA\nbbb\nCCC\nddd\nEEE\n");
     }
@@ -876,7 +876,7 @@ mod tests {
         let buffer_text = buffer.read_with(cx, |buffer, _cx| buffer.text());
         assert_eq!(
             buffer_text, "MODIFIED\nline 2\nline 3\n",
-            "First edit should be applied even though second edit will fail"
+            "即使第二个编辑失败,第一个编辑也应该被应用"
         );
 
         // Edit 3 appears — this makes edit 2 "complete", triggering its
@@ -902,12 +902,12 @@ mod tests {
             input_path,
         } = result.unwrap_err()
         else {
-            panic!("expected error");
+            panic!("预期错误");
         };
 
         assert!(
-            error.contains("Could not find matching text for edit at index 1"),
-            "Expected error about edit 1 failing, got: {error}"
+            error.contains("找不到索引 1 处编辑的匹配文本"),
+            "预期编辑 1 失败的错误,但得到: {error}"
         );
         // Ensure that first edit was applied successfully and that we saved the buffer
         assert_eq!(input_path, Some(PathBuf::from("root/file.txt")));
@@ -956,7 +956,7 @@ mod tests {
         assert_eq!(
             buffer_text.as_deref(),
             Some("goodbye worldhello world\n"),
-            "In-progress streaming diff: new text inserted, old text not yet removed"
+            "进行中的流式差异: 已插入新文本,旧文本尚未移除"
         );
 
         // Send final — the edit is applied during finalization
@@ -967,7 +967,7 @@ mod tests {
 
         let result = task.await;
         let EditFileToolOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "goodbye world\n");
     }
@@ -1004,7 +1004,7 @@ mod tests {
 
         let result = task.await;
         let EditFileToolOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "line 1\nmodified line 2\nline 3\n");
     }
@@ -1027,7 +1027,7 @@ mod tests {
         let result = task.await;
         assert!(
             result.is_err(),
-            "Tool should error when sender is dropped without sending final input"
+            "发送方在未发送最终输入时被丢弃时工具应该报错"
         );
     }
 
@@ -1095,7 +1095,7 @@ mod tests {
         let event = stream_rx.expect_authorization().await;
         assert_eq!(
             event.tool_call.fields.title,
-            Some("Edit `.zed/settings.json` (local settings)".into())
+            Some("编辑 `.zed/settings.json`(本地设置)".into())
         );
 
         // Test 2: Path outside project should require confirmation
@@ -1106,7 +1106,7 @@ mod tests {
         let event = stream_rx.expect_authorization().await;
         assert_eq!(
             event.tool_call.fields.title,
-            Some("Edit `/etc/hosts`".into())
+            Some("编辑 `/etc/hosts`".into())
         );
 
         // Test 3: Relative path without .zed should not require confirmation
@@ -1124,7 +1124,7 @@ mod tests {
         let event = stream_rx.expect_authorization().await;
         assert_eq!(
             event.tool_call.fields.title,
-            Some("Edit `root/.zed/tasks.json` (local settings)".into())
+            Some("编辑 `root/.zed/tasks.json`(本地设置)".into())
         );
 
         // Test 5: When global default is allow, sensitive and outside-project
@@ -1142,7 +1142,7 @@ mod tests {
         let event = stream_rx.expect_authorization().await;
         assert_eq!(
             event.tool_call.fields.title,
-            Some("Edit `.zed/settings.json` (local settings)".into())
+            Some("编辑 `.zed/settings.json`(本地设置)".into())
         );
 
         // 5.2: /etc/hosts is outside the project, but Allow auto-approves
@@ -1173,13 +1173,13 @@ mod tests {
         let event = stream_rx.expect_authorization().await;
         assert_eq!(
             event.tool_call.fields.title,
-            Some("Edit `/etc/hosts`".into())
+            Some("编辑 `/etc/hosts`".into())
         );
 
         // 5.5: .agents/skills is a sensitive path — still prompts. The
         // sensitive-path classifier runs regardless of the default mode, so
         // it doesn't matter that we're now in Confirm mode — we're checking
-        // that the path is recognized and gets the "(agent skills)" tag.
+        // that the path is recognized and gets the "(代理技能)" tag.
         let (stream_tx, mut stream_rx) = ToolCallEventStream::test();
         let _auth = cx.update(|cx| {
             edit_tool.authorize(
@@ -1191,7 +1191,7 @@ mod tests {
         let event = stream_rx.expect_authorization().await;
         assert_eq!(
             event.tool_call.fields.title,
-            Some("Edit `root/.agents/skills/my-skill/SKILL.md` (agent skills)".into())
+            Some("编辑 `root/.agents/skills/my-skill/SKILL.md`(代理技能)".into())
         );
 
         // 5.6: The global .agents/skills directory is sensitive — still prompts
@@ -1207,7 +1207,7 @@ mod tests {
                 .fields
                 .title
                 .as_deref()
-                .is_some_and(|title| title.ends_with("(agent skills)"))
+                .is_some_and(|title| title.ends_with("(代理技能)"))
         );
     }
 
@@ -1248,8 +1248,8 @@ mod tests {
                 .fields
                 .title
                 .as_deref()
-                .is_some_and(|title| title.ends_with("(agent skills)")),
-            "`..` traversal into .agents/skills must still prompt: {:?}",
+                .is_some_and(|title| title.ends_with("(代理技能)")),
+            "`.` 遍历进入 .agents/skills 仍需提示:{:?}",
             event.tool_call.fields.title,
         );
     }
@@ -1287,8 +1287,8 @@ mod tests {
                 .fields
                 .title
                 .as_deref()
-                .is_some_and(|title| title.ends_with("(local settings)")),
-            "`..` traversal into .zed must still prompt: {:?}",
+                .is_some_and(|title| title.ends_with("(本地设置)")),
+            "`.` 遍历进入 .zed 仍需提示:{:?}",
             event.tool_call.fields.title,
         );
     }
@@ -1330,8 +1330,8 @@ mod tests {
                 .fields
                 .title
                 .as_deref()
-                .is_some_and(|title| title.ends_with("(local settings)")),
-            "Intra-project symlink to .zed must still prompt: {:?}",
+                .is_some_and(|title| title.ends_with("(本地设置)")),
+            "项目内符号链接指向 .zed 仍需提示:{:?}",
             event.tool_call.fields.title,
         );
     }
@@ -1373,8 +1373,8 @@ mod tests {
                 .fields
                 .title
                 .as_deref()
-                .is_some_and(|title| title.ends_with("(agent skills)")),
-            "Intra-project symlink to .agents/skills must still prompt: {:?}",
+                .is_some_and(|title| title.ends_with("(代理技能)")),
+            "项目内符号链接指向 .agents/skills 仍需提示:{:?}",
             event.tool_call.fields.title,
         );
     }
@@ -1408,7 +1408,7 @@ mod tests {
                 .fields
                 .title
                 .as_deref()
-                .is_some_and(|title| title.contains("points outside the project")),
+                .is_some_and(|title| title.contains("指向项目外部")),
             "Expected symlink escape authorization for create under external symlink"
         );
 
@@ -1464,7 +1464,7 @@ mod tests {
         let auth = stream_rx.expect_authorization().await;
         let title = auth.tool_call.fields.title.as_deref().unwrap_or("");
         assert!(
-            title.contains("points outside the project"),
+            title.contains("指向项目外部"),
             "title should mention symlink escape, got: {title}"
         );
     }
@@ -1980,7 +1980,7 @@ mod tests {
             ..
         } = result
         else {
-            panic!("expected success");
+            panic!("预期成功");
         };
 
         assert_eq!(new_text, "new content");
@@ -2061,22 +2061,22 @@ mod tests {
             input_path,
         } = result.unwrap_err()
         else {
-            panic!("expected error");
+            panic!("预期错误");
         };
 
         assert!(
-            error.contains("Could not find matching text for edit at index 0"),
-            "Error should mention failed match, got: {error}"
+            error.contains("找不到索引 0 的编辑匹配的文本"),
+            "错误应提及匹配失败,但得到: {error}"
         );
         assert!(
-            error.contains("has changed on disk since you last read it"),
-            "Error should mention possible disk change, got: {error}"
+            error.contains("自上次读取后已更改"),
+            "错误应提及可能的磁盘更改,但得到: {error}"
         );
         assert!(diff.is_empty());
         assert_eq!(input_path, Some(PathBuf::from("root/test.txt")));
     }
 
-    /// When the buffer has unsaved changes and the user picks "Save", the
+    /// When the buffer has unsaved changes and the user picks "保存", the
     /// pending edits are flushed to disk and the agent's edit then proceeds
     /// against the just-saved content.
     #[gpui::test]
@@ -2137,18 +2137,18 @@ mod tests {
         let _update = stream_rx.expect_update_fields().await;
         let auth = stream_rx.expect_authorization().await;
         let content = auth.tool_call.fields.content.as_deref().unwrap_or(&[]);
-        let acp::ToolCallContent::Content(text) = content.first().expect("expected message body")
+        let acp::ToolCallContent::Content(text) = content.first().expect("预期消息体")
         else {
-            panic!("expected text body, got: {:?}", content.first());
+            panic!("预期文本体,得到:{:?}", content.first());
         };
         let acp::ContentBlock::Text(text) = &text.content else {
-            panic!("expected text body, got: {:?}", text.content);
+            panic!("预期文本体,得到:{:?}", text.content);
         };
         assert!(
-            text.text.contains("unsaved changes")
+            text.text.contains("未保存的更改")
                 && text.text.contains("save")
                 && text.text.contains("discard"),
-            "unexpected message body: {:?}",
+            "意外的消息体:{:?}",
             text.text,
         );
         auth.response
@@ -2159,7 +2159,7 @@ mod tests {
             .unwrap();
 
         let EditFileToolOutput::Success { new_text, .. } = task.await.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "replaced content");
         assert!(!buffer.read_with(cx, |buffer, _| buffer.is_dirty()));
@@ -2167,7 +2167,7 @@ mod tests {
         assert_eq!(on_disk, "replaced content");
     }
 
-    /// When the buffer has unsaved changes and the user picks "Discard", the
+    /// When the buffer has unsaved changes and the user picks "放弃", the
     /// pending edits are reverted to match disk and the agent's edit then
     /// proceeds against the on-disk content.
     #[gpui::test]
@@ -2236,7 +2236,7 @@ mod tests {
             .unwrap();
 
         let EditFileToolOutput::Success { new_text, .. } = task.await.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "replaced content");
         assert!(!buffer.read_with(cx, |buffer, _| buffer.is_dirty()));
@@ -2322,7 +2322,7 @@ mod tests {
         drop(auth);
 
         let EditFileToolOutput::Success { new_text, .. } = task.await.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "replaced content");
         assert!(!buffer.read_with(cx, |buffer, _| buffer.is_dirty()));
@@ -2375,7 +2375,7 @@ mod tests {
 
         let result = task.await;
         let EditFileToolOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "aaa\nXXX\nZZZ\nddd\nDUMMY\n");
     }
@@ -2419,7 +2419,7 @@ mod tests {
 
         let result = task.await;
         let EditFileToolOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "HELLO\nWORLD\nfoo\n");
     }
@@ -2444,7 +2444,7 @@ mod tests {
 
         let result = task.await;
         let EditFileToolOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "HELLO\nWORLD\n");
     }
@@ -2477,7 +2477,7 @@ mod tests {
         });
 
         let result = task.await;
-        assert!(result.is_ok(), "edit should succeed: {:?}", result.err());
+        assert!(result.is_ok(), "编辑应该成功: {:?}", result.err());
 
         cx.run_until_parked();
 
@@ -2526,7 +2526,7 @@ mod tests {
 
         let result = task.await;
         let EditFileToolOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "new_content");
     }
@@ -2570,7 +2570,7 @@ mod tests {
 
         let result = task.await;
         let EditFileToolOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "new_content");
     }
@@ -2619,7 +2619,7 @@ mod tests {
 
         let result = task.await;
         let EditFileToolOutput::Success { new_text, .. } = result.unwrap() else {
-            panic!("expected success");
+            panic!("预期成功");
         };
         assert_eq!(new_text, "new_content");
     }
@@ -2661,7 +2661,7 @@ mod tests {
             ..
         } = result.unwrap()
         else {
-            panic!("expected success");
+            panic!("预期成功");
         };
 
         // The edit should reduce 3 blank lines to 1 blank line before
@@ -2670,7 +2670,7 @@ mod tests {
         pretty_assertions::assert_eq!(
             final_text,
             expected,
-            "Edit should only remove blank lines before render_search"
+            "编辑应该只删除 render_search 前的空行"
         );
     }
 
@@ -2701,13 +2701,13 @@ mod tests {
             ..
         } = result.unwrap()
         else {
-            panic!("expected success");
+            panic!("预期成功");
         };
 
         pretty_assertions::assert_eq!(
             final_text,
             expected,
-            "Edit should preserve a single blank line before test_after"
+            "编辑应该保留 test_after 前的单个空行"
         );
     }
 
@@ -2717,7 +2717,7 @@ mod tests {
             "path": "root/file.txt",
             "edits": "[{\"old_text\": \"hello\\nworld\", \"new_text\": \"HELLO\\nWORLD\"}]"
         }))
-        .expect("input should deserialize");
+        .expect("输入应该能反序列化");
 
         assert_eq!(input.edits.len(), 1);
         assert_eq!(input.edits[0].old_text, "hello\nworld");
@@ -2727,9 +2727,9 @@ mod tests {
             "path": "root/file.txt",
             "edits": "[{\"old_text\": \"hello\\nworld\", \"new_text\": \"HELLO\\nWORLD\"}]"
         }))
-        .expect("input should deserialize");
+        .expect("输入应该能反序列化");
 
-        let edits = input.edits.expect("edits should deserialize");
+        let edits = input.edits.expect("edits 应该能反序列化");
         assert_eq!(edits.len(), 1);
         assert_eq!(edits[0].old_text.as_deref(), Some("hello\nworld"));
         assert_eq!(edits[0].new_text.as_deref(), Some("HELLO\nWORLD"));
@@ -2737,14 +2737,14 @@ mod tests {
         let input = serde_json::from_value::<EditFileToolPartialInput>(json!({
             "path": "root/file.txt"
         }))
-        .expect("input should deserialize");
+        .expect("输入应该能反序列化");
         assert!(input.edits.is_none());
 
         let input = serde_json::from_value::<EditFileToolPartialInput>(json!({
             "path": "root/file.txt",
             "edits": null
         }))
-        .expect("input should deserialize");
+        .expect("输入应该能反序列化");
         assert!(input.edits.is_none());
     }
 

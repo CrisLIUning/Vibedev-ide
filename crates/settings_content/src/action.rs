@@ -54,7 +54,7 @@ impl ActionName {
             if let Some(message) = deprecation_messages.get(action_name) {
                 add_deprecation(&mut entry, message.to_string());
             } else if let Some(new_name) = deprecations.get(action_name) {
-                add_deprecation(&mut entry, format!("Deprecated, use {new_name}"));
+                add_deprecation(&mut entry, format!("已弃用, 请使用 {new_name}"));
             }
 
             if let Some(description) = action_documentation.get(action_name) {
@@ -142,9 +142,9 @@ mod tests {
         let mut action_documentation = HashMap::default();
         let mut deprecations = HashMap::default();
         let mut deprecation_messages = HashMap::default();
-        action_documentation.insert("editor::Cancel", "Cancel the current operation.");
+        action_documentation.insert("editor::Cancel", "取消当前操作。");
         deprecations.insert("workspace::CloseCurrentItem", "workspace::CloseActiveItem");
-        deprecation_messages.insert("editor::Explode", "DO NOT USE!");
+        deprecation_messages.insert("editor::Explode", "请勿使用!");
 
         let schema = ActionName::build_schema(
             [
@@ -172,7 +172,7 @@ mod tests {
         );
         assert_eq!(name, Some("editor::Cancel"));
         assert_eq!(schema_type, Some("string"));
-        assert_eq!(description, Some("Cancel the current operation."));
+        assert_eq!(description, Some("取消当前操作。"));
 
         let (name, schema_type, message) = (
             values[1].get("const").and_then(Value::as_str),
@@ -181,7 +181,7 @@ mod tests {
         );
         assert_eq!(name, Some("editor::Explode"));
         assert_eq!(schema_type, Some("string"));
-        assert_eq!(message, Some("DO NOT USE!"));
+        assert_eq!(message, Some("请勿使用!"));
 
         let (name, schema_type, message) = (
             values[2].get("const").and_then(Value::as_str),
@@ -190,7 +190,7 @@ mod tests {
         );
         assert_eq!(name, Some("workspace::CloseCurrentItem"));
         assert_eq!(schema_type, Some("string"));
-        assert_eq!(message, Some("Deprecated, use workspace::CloseActiveItem"));
+        assert_eq!(message, Some("已弃用, 请使用 工作区::CloseActiveItem"));
 
         let (name, schema_type) = (
             values[3].get("const").and_then(Value::as_str),

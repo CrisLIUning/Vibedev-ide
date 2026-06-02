@@ -87,7 +87,7 @@ impl PlatformAtlas for DirectXAtlas {
             };
             let tile = lock
                 .allocate(size, key.texture_kind())
-                .ok_or_else(|| anyhow::anyhow!("failed to allocate"))?;
+                .ok_or_else(|| anyhow::anyhow!("分配失败"))?;
             let texture = lock.texture(tile.texture_id);
             texture.upload(&lock.device_context, tile.bounds, &bytes);
             lock.tiles_by_key.insert(key.clone(), tile);

@@ -170,12 +170,12 @@ impl MentionSet {
                 ..
             } => self.confirm_mention_for_symbol(abs_path, line_range, cx),
             MentionUri::Selection { abs_path: None, .. } => Task::ready(Err(anyhow!(
-                "Untitled buffer selection mentions are not supported for paste"
+                "不支持粘贴未保存缓冲区选区的提及"
             ))),
             MentionUri::PastedImage { .. }
             | MentionUri::TerminalSelection { .. }
             | MentionUri::MergeConflict { .. } => {
-                Task::ready(Err(anyhow!("Unsupported mention URI type for paste")))
+                Task::ready(Err(anyhow!("不支持的粘贴提及 URI 类型")))
             }
         }
     }
@@ -503,7 +503,7 @@ impl MentionSet {
         cx.background_spawn(async move {
             let content = std::fs::read_to_string(&skill_file_path).map_err(|e| {
                 anyhow!(
-                    "Failed to read skill file {}: {}",
+                    "无法读取 skill 文件 {}: {}",
                     skill_file_path.display(),
                     e
                 )
@@ -674,7 +674,7 @@ impl MentionSet {
         cx.spawn(async move |_, _| {
             let content = diagnostics_task
                 .await?
-                .unwrap_or_else(|| "No diagnostics found.".into());
+                .unwrap_or_else(|| "未找到诊断信息。".into());
             Ok(Mention::Text {
                 content,
                 tracked_buffers: Vec::new(),
@@ -692,7 +692,7 @@ impl MentionSet {
         };
 
         let Some(repo) = project.read(cx).active_repository(cx) else {
-            return Task::ready(Err(anyhow!("no active repository")));
+            return Task::ready(Err(anyhow!("没有活动仓库")));
         };
 
         let diff_receiver = repo.update(cx, |repo, cx| {
@@ -706,7 +706,7 @@ impl MentionSet {
             let diff_text = diff_receiver.await??;
             if diff_text.is_empty() {
                 Ok(Mention::Text {
-                    content: "No changes found in branch diff.".into(),
+                    content: "分支差异中未发现更改。".into(),
                     tracked_buffers: Vec::new(),
                 })
             } else {
@@ -824,7 +824,7 @@ mod tests {
                 assert_eq!(content, "line 2\nline 3\n");
                 assert_eq!(tracked_buffers.len(), 1);
             }
-            other => panic!("Expected selection mention to resolve as text, got {other:?}"),
+            other => panic!("预期选区提及解析为文本,但得到 {other:?}"),
         }
     }
 
@@ -1023,7 +1023,7 @@ pub(crate) fn paste_images_as_context(
 
     Some(window.spawn(cx, async move |mut cx| {
         use itertools::Itertools;
-        let default_name: SharedString = "Image".into();
+        let default_name: SharedString = "图片".into();
         let (mut images, paths): (Vec<(gpui::Image, SharedString)>, Vec<_>) = clipboard
             .into_entries()
             .filter_map(|entry| match entry {
@@ -1424,7 +1424,7 @@ async fn fetch_url_content(http_client: Arc<HttpClientWithUrl>, url: String) -> 
     if response.status().is_client_error() {
         let text = String::from_utf8_lossy(body.as_slice());
         anyhow::bail!(
-            "status error {}, response: {text:?}",
+            "状态错误 {}, 响应: {text:?}",
             response.status().as_u16()
         );
     }

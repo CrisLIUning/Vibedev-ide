@@ -417,7 +417,7 @@ pub fn apply_diff_to_string_with_hunk_offset(
     let mut first_hunk_offset = None;
     let mut line_delta = 0i64;
 
-    while let Some(event) = diff.next().context("Failed to parse diff")? {
+    while let Some(event) = diff.next().context("解析差异失败")? {
         match event {
             DiffEvent::Hunk {
                 mut hunk,
@@ -433,7 +433,7 @@ pub fn apply_diff_to_string_with_hunk_offset(
                     disambiguate_by_line_number(&candidates, adjusted_start_line, &|offset| {
                         text[..offset].matches('\n').count() as u32
                     })
-                    .ok_or_else(|| anyhow!("couldn't resolve hunk"))?;
+                    .ok_or_else(|| anyhow!("无法解析代码块"))?;
 
                 if first_hunk_offset.is_none() {
                     first_hunk_offset = Some(hunk_offset);
@@ -670,7 +670,7 @@ impl<'a> DiffParser<'a> {
 
                 anyhow::Ok(())
             })()
-            .with_context(|| format!("on line:\n\n```\n{}```", line))?;
+            .with_context(|| format!("在行:\n\n```\n{}```", line))?;
 
             self.current_line = self.diff.next().map(|line| (line, DiffLine::parse(line)));
         }

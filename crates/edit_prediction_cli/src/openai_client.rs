@@ -239,7 +239,7 @@ impl BatchingOpenAiClient {
 
             if batch_status.status != "completed" {
                 log::warn!(
-                    "Batch {} is not completed (status: {}), skipping",
+                    "批次 {} 未完成 (状态: {}), 跳过",
                     batch_id,
                     batch_status.status
                 );
@@ -282,7 +282,7 @@ impl BatchingOpenAiClient {
                         success_count += 1;
                     } else {
                         log::error!(
-                            "Batch request {} failed with status {}",
+                            "批次请求 {} 失败, 状态码 {}",
                             request_hash,
                             response_body.status_code
                         );
@@ -298,7 +298,7 @@ impl BatchingOpenAiClient {
                     }
                 } else if let Some(error) = result.error {
                     log::error!(
-                        "Batch request {} failed: {}: {}",
+                        "批次请求 {} 失败: {}: {}",
                         request_hash,
                         error.code,
                         error.message
@@ -334,7 +334,7 @@ impl BatchingOpenAiClient {
             })?;
 
             log::info!(
-                "Imported batch {}: {} successful, {} errors",
+                "已导入批次 {}: {} 个成功, {} 个错误",
                 batch_id,
                 success_count,
                 error_count
@@ -401,7 +401,7 @@ impl BatchingOpenAiClient {
                             success_count += 1;
                         } else {
                             log::error!(
-                                "Batch request {} failed with status {}",
+                                "批次请求 {} 失败, 状态码 {}",
                                 request_hash,
                                 response_body.status_code
                             );
@@ -416,7 +416,7 @@ impl BatchingOpenAiClient {
                         }
                     } else if let Some(error) = result.error {
                         log::error!(
-                            "Batch request {} failed: {}: {}",
+                            "批次请求 {} 失败: {}: {}",
                             request_hash,
                             error.code,
                             error.message
@@ -555,7 +555,7 @@ impl BatchingOpenAiClient {
             let batch_len = rows.len();
             total_uploaded += batch_len;
             log::info!(
-                "Uploaded batch {} with {} requests ({} total)",
+                "已上传批次 {} 包含 {} 个请求 (共 {} 个)",
                 batch.id,
                 batch_len,
                 total_uploaded
@@ -566,7 +566,7 @@ impl BatchingOpenAiClient {
 
         if !all_batch_ids.is_empty() {
             log::info!(
-                "Finished uploading {} batches with {} total requests",
+                "已完成上传 {} 个批次共 {} 个请求",
                 all_batch_ids.len(),
                 total_uploaded
             );

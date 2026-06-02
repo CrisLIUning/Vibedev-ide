@@ -922,12 +922,12 @@ mod tests {
                 workspace.open_path(toml_file, None, true, window, cx)
             })
             .await
-            .expect("Could not open test file");
+            .expect("无法打开测试文件");
 
         let editor = cx.update(|_, cx| {
             toml_item
                 .act_as::<Editor>(cx)
-                .expect("Opened test file wasn't an editor")
+                .expect("打开的测试文件不是编辑器")
         });
 
         editor.update_in(cx, |editor, window, cx| {
@@ -1143,17 +1143,17 @@ mod tests {
                 workspace.open_path(rust_file, None, true, window, cx),
             )
         });
-        let toml_item = toml_item.await.expect("Could not open test file");
-        let rust_item = rust_item.await.expect("Could not open test file");
+        let toml_item = toml_item.await.expect("无法打开测试文件");
+        let rust_item = rust_item.await.expect("无法打开测试文件");
 
         let (toml_editor, rust_editor) = cx.update(|_, cx| {
             (
                 toml_item
                     .act_as::<Editor>(cx)
-                    .expect("Opened test file wasn't an editor"),
+                    .expect("打开的测试文件不是编辑器"),
                 rust_item
                     .act_as::<Editor>(cx)
-                    .expect("Opened test file wasn't an editor"),
+                    .expect("打开的测试文件不是编辑器"),
             )
         });
         let toml_buffer = cx.read(|cx| {
@@ -1382,7 +1382,7 @@ mod tests {
         let bar_editor = cx.update(|_, cx| {
             bar_item
                 .act_as::<Editor>(cx)
-                .expect("Opened test file wasn't an editor")
+                .expect("打开的测试文件不是编辑器")
         });
         let bar_buffer = cx.read(|cx| {
             bar_editor
@@ -1601,10 +1601,10 @@ mod tests {
         assert_eq!(
             initial_ranges,
             vec![MultiBufferOffset(3)..MultiBufferOffset(7)],
-            "Should have initial semantic token highlights"
+            "应具有初始语义令牌高亮"
         );
         let initial_styles = extract_semantic_highlight_styles(&cx.editor, &cx);
-        assert_eq!(initial_styles.len(), 1, "Should have one highlight style");
+        assert_eq!(initial_styles.len(), 1, "应具有一种高亮样式");
         // Initial color should be None or theme default (not red or blue)
         let initial_color = initial_styles[0].color;
 
@@ -1642,16 +1642,16 @@ mod tests {
         assert_eq!(
             styles_after_settings_change.len(),
             1,
-            "Should still have one highlight"
+            "应仍具有一种高亮"
         );
         assert_eq!(
             styles_after_settings_change[0].color,
             Some(Hsla::from(red_color)),
-            "Highlight should have the custom red color from settings.json"
+            "高亮应具有来自 设置.json 的自定义红色"
         );
         assert_ne!(
             styles_after_settings_change[0].color, initial_color,
-            "Color should have changed from initial"
+            "颜色应已从初始值更改"
         );
     }
 
@@ -1716,7 +1716,7 @@ mod tests {
         cx.run_until_parked();
 
         let initial_styles = extract_semantic_highlight_styles(&cx.editor, &cx);
-        assert_eq!(initial_styles.len(), 1, "Should have one highlight style");
+        assert_eq!(initial_styles.len(), 1, "应具有一种高亮样式");
         let initial_color = initial_styles[0].color;
 
         // Changing experimental_theme_overrides triggers GlobalTheme reload,
@@ -1755,11 +1755,11 @@ mod tests {
         assert_eq!(
             styles_after_override[0].color,
             Some(red_color),
-            "Highlight should have red color from theme override"
+            "高亮应具有来自主题覆盖的红色"
         );
         assert_ne!(
             styles_after_override[0].color, initial_color,
-            "Color should have changed from initial"
+            "颜色应已从初始值更改"
         );
 
         // Changing the override to a different color also restyles.
@@ -1797,7 +1797,7 @@ mod tests {
         assert_eq!(
             styles_after_second_override[0].color,
             Some(blue_color),
-            "Highlight should have blue color from updated theme override"
+            "高亮应具有来自更新后主题覆盖的蓝色"
         );
 
         // Removing overrides reverts to the original theme color.
@@ -1816,7 +1816,7 @@ mod tests {
         assert_eq!(styles_after_clear.len(), 1);
         assert_eq!(
             styles_after_clear[0].color, initial_color,
-            "Highlight should revert to initial color after clearing overrides"
+            "清除覆盖后高亮应恢复为初始颜色"
         );
     }
 
@@ -1882,7 +1882,7 @@ mod tests {
         cx.run_until_parked();
 
         let initial_styles = extract_semantic_highlight_styles(&cx.editor, &cx);
-        assert_eq!(initial_styles.len(), 1, "Should have one highlight style");
+        assert_eq!(initial_styles.len(), 1, "应具有一种高亮样式");
         let initial_color = initial_styles[0].color;
 
         // Per-theme overrides (theme_overrides keyed by theme name) also go through
@@ -1925,11 +1925,11 @@ mod tests {
         assert_eq!(
             styles_after_override[0].color,
             Some(green_color),
-            "Highlight should have green color from per-theme override"
+            "高亮应具有来自单主题覆盖的绿色"
         );
         assert_ne!(
             styles_after_override[0].color, initial_color,
-            "Color should have changed from initial"
+            "颜色应已从初始值更改"
         );
     }
 
@@ -1992,7 +1992,7 @@ mod tests {
         assert_eq!(
             extract_semantic_highlights(&cx.editor, &cx),
             vec![MultiBufferOffset(3)..MultiBufferOffset(7)],
-            "Semantic tokens should be present before stopping the server"
+            "停止服务器前应存在语义令牌"
         );
 
         cx.update_editor(|editor, _, cx| {
@@ -2007,7 +2007,7 @@ mod tests {
         assert_eq!(
             extract_semantic_highlights(&cx.editor, &cx),
             Vec::new(),
-            "Semantic tokens should be cleared after stopping the server"
+            "停止服务器后应清除语义令牌"
         );
     }
 
@@ -2070,7 +2070,7 @@ mod tests {
         assert_eq!(
             extract_semantic_highlights(&cx.editor, &cx),
             vec![MultiBufferOffset(3)..MultiBufferOffset(7)],
-            "Semantic tokens should be present before disabling the setting"
+            "禁用该设置前应存在语义令牌"
         );
 
         update_test_language_settings(&mut cx, &|language_settings| {
@@ -2088,7 +2088,7 @@ mod tests {
         assert_eq!(
             extract_semantic_highlights(&cx.editor, &cx),
             Vec::new(),
-            "Semantic tokens should be cleared after disabling the setting"
+            "禁用该设置后应清除语义令牌"
         );
     }
 

@@ -108,7 +108,7 @@ impl Display for SystemSpecs {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let os_information = format!("OS: {} {}", self.os_name, self.os_version);
         let app_version_information = format!(
-            "Zed: v{} ({}) {}{}",
+            "VibeDev: v{} ({}) {}{}",
             self.app_version,
             match &self.commit_sha {
                 Some(commit_sha) => format!("{} {}", self.release_channel, commit_sha),
@@ -157,7 +157,7 @@ fn try_determine_available_gpus() -> Option<String> {
             .ok()
             .map(|output| {
                 [
-                    "<details><summary>`vulkaninfo --summary` output</summary>",
+                    "<details><summary>`vulkaninfo --summary` 输出</summary>",
                     "",
                     "```",
                     String::from_utf8_lossy(&output.stdout).as_ref(),
@@ -166,7 +166,7 @@ fn try_determine_available_gpus() -> Option<String> {
                 ]
                 .join("\n")
             })
-            .or(Some("Failed to run `vulkaninfo --summary`".to_string()))
+            .or(Some("运行 `vulkaninfo --summary` 失败".to_string()))
     }
     #[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
     {

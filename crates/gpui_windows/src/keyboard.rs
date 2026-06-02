@@ -47,7 +47,7 @@ impl PlatformKeyboardMapper for WindowsKeyboardMapper {
         };
         if shifted_key && keystroke.modifiers.shift {
             log::warn!(
-                "Keystroke '{}' has both shift and a shifted key, this is likely a bug",
+                "按键 '{}' 同时包含 shift 和 shifted key,这可能是一个 bug",
                 keystroke.key
             );
         }
@@ -57,7 +57,7 @@ impl PlatformKeyboardMapper for WindowsKeyboardMapper {
 
         let Some(key) = self.vkey_to_key.get(&vkey).cloned() else {
             log::error!(
-                "Failed to map key equivalent '{:?}' to a valid key",
+                "无法将等效键 '{:?}' 映射到有效按键",
                 keystroke
             );
             return KeybindingKeystroke::from_keystroke(keystroke);
@@ -66,7 +66,7 @@ impl PlatformKeyboardMapper for WindowsKeyboardMapper {
         keystroke.key = if shift {
             let Some(shifted_key) = self.vkey_to_shifted.get(&vkey).cloned() else {
                 log::error!(
-                    "Failed to map keystroke {:?} with virtual key '{:?}' to a shifted key",
+                    "无法将虚拟键为 '{:?}' 的按键 {:?} 映射到 shifted key",
                     keystroke,
                     vkey
                 );

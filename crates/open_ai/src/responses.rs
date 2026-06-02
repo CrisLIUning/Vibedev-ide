@@ -436,7 +436,7 @@ pub async fn stream_response(
                                     Ok(event) => Some(Ok(event)),
                                     Err(error) => {
                                         log::error!(
-                                            "Failed to parse OpenAI responses stream event: `{}`\nResponse: `{}`",
+                                            "解析 OpenAI 响应流事件失败: `{}`\n响应: `{}`",
                                             error,
                                             line,
                                         );
@@ -545,7 +545,7 @@ pub async fn stream_response(
                 }
                 Err(error) => {
                     log::error!(
-                        "Failed to parse OpenAI non-streaming response: `{}`\nResponse: `{}`",
+                        "解析 OpenAI 非流式响应失败: `{}`\n响应: `{}`",
                         error,
                         body,
                     );

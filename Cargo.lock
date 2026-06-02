@@ -312,6 +312,7 @@ dependencies = [
  "ui",
  "util",
  "uuid",
+ "vibedev_account",
  "watch",
  "zed_credentials_provider",
 ]
@@ -457,6 +458,7 @@ dependencies = [
  "url",
  "util",
  "uuid",
+ "vibedev_account",
  "vim",
  "watch",
  "workspace",
@@ -1269,6 +1271,7 @@ dependencies = [
  "semver",
  "serde",
  "serde_json",
+ "serde_urlencoded",
  "settings",
  "smol",
  "tempfile",
@@ -11813,6 +11816,7 @@ dependencies = [
  "theme_settings",
  "ui",
  "util",
+ "vibedev_account",
  "vim_mode_setting",
  "workspace",
  "zed_actions",
@@ -19582,6 +19586,60 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
+name = "vibedev_account"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "dirs",
+ "edit_prediction",
+ "futures 0.3.32",
+ "gpui",
+ "http_client",
+ "language_model",
+ "language_models",
+ "log",
+ "release_channel",
+ "semver",
+ "serde",
+ "serde_json",
+ "settings",
+ "smol",
+ "tempfile",
+ "url",
+ "urlencoding",
+ "util",
+ "zed_credentials_provider",
+]
+
+[[package]]
+name = "vibedev_ui"
+version = "0.1.0"
+dependencies = [
+ "agent_skills",
+ "anyhow",
+ "auto_update",
+ "command_palette_hooks",
+ "feedback",
+ "fs",
+ "gpui",
+ "http_client",
+ "install_cli",
+ "log",
+ "project",
+ "semver",
+ "serde",
+ "serde_json",
+ "settings",
+ "theme",
+ "theme_settings",
+ "ui",
+ "ui_input",
+ "vibedev_account",
+ "workspace",
+ "zed_actions",
+]
+
+[[package]]
 name = "vim"
 version = "0.1.0"
 dependencies = [
@@ -22479,7 +22537,7 @@ dependencies = [
 
 [[package]]
 name = "zed"
-version = "1.5.0"
+version = "1.6.1"
 dependencies = [
  "acp_thread",
  "acp_tools",
@@ -22633,6 +22691,8 @@ dependencies = [
  "urlencoding",
  "util",
  "uuid",
+ "vibedev_account",
+ "vibedev_ui",
  "vim",
  "vim_mode_setting",
  "watch",

@@ -77,14 +77,14 @@ impl ContextProvider for JsonTaskProvider {
                     .scripts
                     .into_iter()
                     .map(|(_, key)| TaskTemplate {
-                        label: format!("run {key}"),
+                        label: format!("运行 {key}"),
                         command: command.clone(),
                         args: vec!["run".into(), key],
                         cwd: Some(VariableName::Dirname.template_value()),
                         ..TaskTemplate::default()
                     })
                     .chain([TaskTemplate {
-                        label: "package script $ZED_CUSTOM_script".to_owned(),
+                        label: "包脚本 $ZED_CUSTOM_script".to_owned(),
                         command: command.clone(),
                         args: vec![
                             "run".into(),
@@ -102,13 +102,13 @@ impl ContextProvider for JsonTaskProvider {
                     .as_object()?
                     .keys()
                     .map(|key| TaskTemplate {
-                        label: format!("run {key}"),
+                        label: format!("运行 {key}"),
                         command: "composer".to_owned(),
                         args: vec!["-d".into(), "$ZED_DIRNAME".into(), key.into()],
                         ..TaskTemplate::default()
                     })
                     .chain([TaskTemplate {
-                        label: "composer script $ZED_CUSTOM_script".to_owned(),
+                        label: "Composer 脚本 $ZED_CUSTOM_script".to_owned(),
                         command: "composer".to_owned(),
                         args: vec![
                             "-d".into(),
@@ -386,7 +386,7 @@ async fn get_cached_server_binary(
         let server_path = container_dir.join(SERVER_PATH);
         anyhow::ensure!(
             server_path.exists(),
-            "missing executable in directory {server_path:?}"
+            "目录 {server_path:?} 中缺少可执行文件"
         );
         Ok(LanguageServerBinary {
             path: node.binary_path().await?,

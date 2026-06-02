@@ -50,7 +50,7 @@ impl Blame {
         let shas = unique_shas.into_iter().collect::<Vec<_>>();
         let messages = get_messages(working_directory, &shas)
             .await
-            .context("failed to get commit messages")?;
+            .context("获取提交消息失败")?;
 
         Ok(Self {
             entries,
@@ -80,19 +80,19 @@ async fn run_git_blame(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .context("starting git blame process")?;
+        .context("启动 git 追溯进程")?;
 
     let stdin = child
         .stdin
         .as_mut()
-        .context("failed to get pipe to stdin of git blame command")?;
+        .context("获取 git 追溯命令的标准输入管道失败")?;
 
     for chunk in contents.chunks() {
         stdin.write_all(chunk.as_bytes()).await?;
     }
     stdin.flush().await?;
 
-    let output = child.output().await.context("reading git blame output")?;
+    let output = child.output().await.context("读取 git 追溯输出")?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -100,7 +100,7 @@ async fn run_git_blame(
         if trimmed == GIT_BLAME_NO_COMMIT_ERROR || trimmed.contains(GIT_BLAME_NO_PATH) {
             return Ok(String::new());
         }
-        anyhow::bail!("git blame process failed: {stderr}");
+        anyhow::bail!("git 追溯进程失败: {stderr}");
     }
 
     Ok(String::from_utf8(output.stdout)?)
@@ -141,21 +141,21 @@ impl BlameEntry {
         let sha = parts
             .next()
             .and_then(|line| line.parse::<Oid>().ok())
-            .with_context(|| format!("parsing sha from {line}"))?;
+            .with_context(|| format!("从 {line} 解析 SHA"))?;
 
         let original_line_number = parts
             .next()
             .and_then(|line| line.parse::<u32>().ok())
-            .with_context(|| format!("parsing original line number from {line}"))?;
+            .with_context(|| format!("从 {line} 解析原始行号"))?;
         let final_line_number = parts
             .next()
             .and_then(|line| line.parse::<u32>().ok())
-            .with_context(|| format!("parsing final line number from {line}"))?;
+            .with_context(|| format!("从 {line} 解析最终行号"))?;
 
         let line_count = parts
             .next()
             .and_then(|line| line.parse::<u32>().ok())
-            .with_context(|| format!("parsing line count from {line}"))?;
+            .with_context(|| format!("从 {line} 解析行数"))?;
 
         let start_line = final_line_number.saturating_sub(1);
         let end_line = start_line + line_count;
@@ -316,7 +316,7 @@ mod tests {
         path.push(filename);
 
         std::fs::read_to_string(&path)
-            .unwrap_or_else(|_| panic!("Could not read test data at {:?}. Is it generated?", path))
+            .unwrap_or_else(|_| panic!("无法读取 {:?} 处的测试数据。是否已生成?", path))
     }
 
     fn assert_eq_golden(entries: &Vec<BlameEntry>, golden_filename: &str) {
@@ -326,7 +326,7 @@ mod tests {
         path.push(format!("{}.json", golden_filename));
 
         let mut have_json =
-            serde_json::to_string_pretty(&entries).expect("could not serialize entries to JSON");
+            serde_json::to_string_pretty(&entries).expect("无法将条目序列化为 JSON");
         // We always want to save with a trailing newline.
         have_json.push('\n');
 
@@ -336,15 +336,15 @@ mod tests {
 
         if update {
             std::fs::create_dir_all(path.parent().unwrap())
-                .expect("could not create golden test data directory");
-            std::fs::write(&path, have_json).expect("could not write out golden data");
+                .expect("无法创建 golden 测试数据目录");
+            std::fs::write(&path, have_json).expect("无法写入 golden 数据");
         } else {
             let want_json =
                 std::fs::read_to_string(&path).unwrap_or_else(|_| {
-                    panic!("could not read golden test data file at {:?}. Did you run the test with UPDATE_GOLDEN=true before?", path);
+                    panic!("无法读取 {:?} 处的 golden 测试数据文件。之前是否使用 UPDATE_GOLDEN=true 运行过测试?", path);
                 }).replace("\r\n", "\n");
 
-            pretty_assertions::assert_eq!(have_json, want_json, "wrong blame entries");
+            pretty_assertions::assert_eq!(have_json, want_json, "错误的追溯条目");
         }
     }
 

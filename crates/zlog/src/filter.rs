@@ -121,12 +121,12 @@ fn level_filter_from_str(level_str: &str) -> Option<log::LevelFilter> {
         "off" => Off,
         "disable" | "no" | "none" | "disabled" => {
             crate::warn!(
-                "Invalid log level \"{level_str}\", to disable logging set to \"off\". Defaulting to \"off\"."
+                "无效的日志级别 \"{level_str}\",如需禁用日志请设置为 \"off\"。默认设置为 \"off\"。"
             );
             Off
         }
         _ => {
-            crate::warn!("Invalid log level \"{level_str}\", ignoring");
+            crate::warn!("无效的日志级别 \"{level_str}\",已忽略");
             return None;
         }
     };
@@ -152,7 +152,7 @@ fn scope_alloc_from_scope_str(scope_str: &str) -> Option<ScopeAlloc> {
     }
     if scope_iter.next().is_some() {
         crate::warn!(
-            "Invalid scope key, too many nested scopes: '{scope_str}'. Max depth is {SCOPE_DEPTH_MAX}",
+            "无效的作用域键,嵌套作用域过多:'{scope_str}'。最大深度为 {SCOPE_DEPTH_MAX}",
         );
         return None;
     }

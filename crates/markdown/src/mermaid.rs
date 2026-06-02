@@ -369,7 +369,7 @@ pub(crate) fn render_mermaid_diagram(
                             .max_w_full()
                             .with_fallback(|| {
                                 div()
-                                    .child(Label::new("Failed to load mermaid diagram"))
+                                    .child(Label::new("加载 Mermaid 图表失败"))
                                     .into_any_element()
                             }),
                     )
@@ -419,7 +419,7 @@ pub(crate) fn render_mermaid_diagram(
                                     .max_w_full()
                                     .with_fallback(|| {
                                         div()
-                                            .child(Label::new("Failed to load mermaid diagram"))
+                                            .child(Label::new("加载 Mermaid 图表失败"))
                                             .into_any_element()
                                     }),
                             )
@@ -445,7 +445,7 @@ pub(crate) fn render_mermaid_diagram(
                     .child(render_mermaid_code_view(&parsed.contents.contents))
                     .child(
                         div().absolute().top_1().right_2().child(
-                            Label::new("Rendering...")
+                            Label::new("渲染中...")
                                 .size(LabelSize::XSmall)
                                 .color(Color::Muted)
                                 .with_animation(
@@ -483,7 +483,7 @@ fn render_mermaid_tab_header(
         .p_0p5()
         .mb_1()
         .child(render_mermaid_tab_button(
-            "Preview",
+            "预览",
             source_offset,
             !showing_code,
             move |_event, _window, cx| {
@@ -496,7 +496,7 @@ fn render_mermaid_tab_header(
             },
         ))
         .child(render_mermaid_tab_button(
-            "Code",
+            "代码",
             source_offset,
             showing_code,
             move |_event, _window, cx| {

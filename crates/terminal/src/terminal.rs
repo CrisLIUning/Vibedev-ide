@@ -3356,7 +3356,7 @@ mod tests {
                 .timer(Duration::from_millis(10))
                 .await;
         }
-        panic!("Expected terminal content to contain {expected:?}, got: {content}");
+        panic!("终端内容应包含 {expected:?},实际为 {content}");
     }
 
     /// Test that kill_active_task properly terminates both the foreground process
@@ -3550,7 +3550,7 @@ mod tests {
                     assert_eq!(
                         bounds.num_lines(),
                         n,
-                        "num_lines() should be {n} for height={height}, line_height={line_height}"
+                        "当 height={height}, line_height={line_height} 时,num_lines() 应为 {n}"
                     );
                 }
             }
@@ -3576,7 +3576,7 @@ mod tests {
                     assert_eq!(
                         bounds.num_columns(),
                         n,
-                        "num_columns() should be {n} for width={width}, cell_width={cell_width}"
+                        "当 width={width}, cell_width={cell_width} 时,num_columns() 应为 {n}"
                     );
                 }
             }

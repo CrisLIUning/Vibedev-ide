@@ -91,7 +91,7 @@ impl MacKeyboardMapper {
 // The way macOS solves this problem is to move shortcuts around so that they are all reachable,
 // even if the mnemonic changes. https://developer.apple.com/documentation/swiftui/keyboardshortcut/localization-swift.struct
 //
-// For example, cmd-> is the "switch window" shortcut because the > key is right above tab.
+// For example, cmd-> is the "切换窗口" shortcut because the > key is right above tab.
 // To ensure this doesn't cause problems for shortcuts defined for a QWERTY layout, apple moves
 // any shortcuts defined as cmd-> to cmd-:. Coincidentally this s also the same keyboard position
 // as cmd-> on a QWERTY layout.

@@ -34,13 +34,13 @@ pub(crate) fn sockaddr_un<P: AsRef<Path>>(path: P) -> Result<(SOCKADDR_UN, usize
     if bytes.contains(&0) {
         return Err(Error::new(
             ErrorKind::InvalidInput,
-            "paths may not contain interior null bytes",
+            "路径不能包含内部空字节",
         ));
     }
     if bytes.len() >= addr.sun_path.len() {
         return Err(Error::new(
             ErrorKind::InvalidInput,
-            "path must be shorter than SUN_LEN",
+            "路径长度必须小于 SUN_LEN",
         ));
     }
 

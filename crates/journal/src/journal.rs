@@ -256,7 +256,7 @@ mod tests {
             assert!(result.is_some());
             let path = result.unwrap();
 
-            assert!(path.is_absolute(), "Tilde should expand to absolute path");
+            assert!(path.is_absolute(), "波浪号应展开为绝对路径");
 
             if let Some(home) = std::env::home_dir() {
                 assert_eq!(path, home.join("documents").join("journal"));
@@ -267,12 +267,12 @@ mod tests {
         fn test_relative_path_falls_back_to_home() {
             for relative_path in ["relative/path", "NONEXT/some/path", "../some/path"] {
                 let result = journal_dir(relative_path);
-                assert!(result.is_some(), "Failed for path: {}", relative_path);
+                assert!(result.is_some(), "路径失败: {}", relative_path);
                 let path = result.unwrap();
 
                 assert!(
                     path.is_absolute(),
-                    "Path should be absolute for input '{}', got: {:?}",
+                    "输入 '{}' 的路径应为绝对路径,但得到: {:?}",
                     relative_path,
                     path
                 );
@@ -281,7 +281,7 @@ mod tests {
                     assert_eq!(
                         path,
                         home.join("journal"),
-                        "Should fall back to home directory for input '{}'",
+                        "输入 '{}' 应回退到主目录",
                         relative_path
                     );
                 }

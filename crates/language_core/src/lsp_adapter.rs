@@ -8,7 +8,7 @@ pub trait ToLspPosition {
 }
 
 /// Context provided to LSP adapters when a user responds to a ShowMessageRequest prompt.
-/// This allows adapters to intercept preference selections (like "Always" or "Never")
+/// This allows adapters to intercept preference selections (like "始终" or "从不")
 /// and potentially persist them to Zed's settings.
 #[derive(Debug, Clone)]
 pub struct PromptResponseContext {

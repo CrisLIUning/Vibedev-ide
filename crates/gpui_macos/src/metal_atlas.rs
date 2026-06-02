@@ -51,7 +51,7 @@ impl PlatformAtlas for MetalAtlas {
             };
             let tile = lock
                 .allocate(size, key.texture_kind())
-                .context("failed to allocate")?;
+                .context("分配失败")?;
             let texture = lock.texture(tile.texture_id);
             texture.upload(tile.bounds, &bytes);
             lock.tiles_by_key.insert(key.clone(), tile);
@@ -294,8 +294,8 @@ mod tests {
                 let byte_count = (size.width.0 as usize) * (size.height.0 as usize) * 4;
                 Ok(Some((size, Cow::Owned(vec![0u8; byte_count]))))
             })
-            .expect("allocation should succeed")
-            .expect("callback returns Some")
+            .expect("分配应该成功")
+            .expect("回调返回 Some")
     }
 
     #[test]

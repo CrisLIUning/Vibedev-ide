@@ -52,12 +52,12 @@ impl AgentTool for RenameTool {
     ) -> SharedString {
         if let Ok(input) = input {
             format!(
-                "Rename `{}` to `{}`",
+                "将 `{}` 重命名为 `{}`",
                 input.symbol.symbol_name, input.new_name
             )
             .into()
         } else {
-            "Rename symbol".into()
+            "重命名符号".into()
         }
     }
 
@@ -72,7 +72,7 @@ impl AgentTool for RenameTool {
             let input = input
                 .recv()
                 .await
-                .map_err(|e| format!("Failed to receive tool input: {e}"))?;
+                .map_err(|e| format!("接收工具输入失败: {e}"))?;
 
             let resolved = input.symbol.resolve(&project, cx).await?;
 
@@ -87,11 +87,11 @@ impl AgentTool for RenameTool {
 
             let transaction = rename_task
                 .await
-                .map_err(|e| format!("Rename failed: {e}"))?;
+                .map_err(|e| format!("重命名失败: {e}"))?;
 
             if transaction.0.is_empty() {
                 return Ok(format!(
-                    "No changes were made. The language server could not rename '{}'.",
+                    "未做任何更改。语言服务器无法重命名 '{}'。",
                     input.symbol.symbol_name
                 ));
             }
@@ -100,10 +100,10 @@ impl AgentTool for RenameTool {
             project
                 .update(cx, |project, cx| project.save_buffers(buffers, cx))
                 .await
-                .map_err(|e| format!("Rename succeeded, but failed to save renamed files: {e}"))?;
+                .map_err(|e| format!("重命名成功,但无法保存重命名后的文件:{e}"))?;
 
             let mut output = format!(
-                "Renamed `{}` to `{}` in {} file(s):\n",
+                "已在 {} 个文件中将 `{}` 重命名为 `{}`:\n",
                 input.symbol.symbol_name,
                 input.new_name,
                 transaction.0.len()
@@ -114,7 +114,7 @@ impl AgentTool for RenameTool {
                     let path = buffer
                         .file()
                         .map(|f| f.full_path(cx).display().to_string())
-                        .unwrap_or_else(|| "<untitled>".to_string());
+                        .unwrap_or_else(|| "<无标题>".to_string());
                     writeln!(output, "- {path}").ok();
                 });
             }

@@ -187,7 +187,7 @@ impl Component for Tab {
 
     fn description() -> Option<&'static str> {
         Some(
-            "A tab component that can be used in a tabbed interface, supporting different positions and states.",
+            "可用于标签页界面的标签页组件,支持不同的位置和状态。",
         )
     }
 
@@ -196,38 +196,38 @@ impl Component for Tab {
             v_flex()
                 .gap_6()
                 .children(vec![example_group_with_title(
-                    "Variations",
+                    "变体",
                     vec![
                         single_example(
-                            "Default",
-                            Tab::new("default").child("Default Tab").into_any_element(),
+                            "默认",
+                            Tab::new("default").child("默认标签页").into_any_element(),
                         ),
                         single_example(
-                            "Selected",
+                            "已选中",
                             Tab::new("selected")
                                 .toggle_state(true)
-                                .child("Selected Tab")
+                                .child("已选中标签页")
                                 .into_any_element(),
                         ),
                         single_example(
-                            "First",
+                            "第一",
                             Tab::new("first")
                                 .position(TabPosition::First)
-                                .child("First Tab")
+                                .child("首个标签页")
                                 .into_any_element(),
                         ),
                         single_example(
-                            "Middle",
+                            "中间",
                             Tab::new("middle")
                                 .position(TabPosition::Middle(Ordering::Equal))
-                                .child("Middle Tab")
+                                .child("中间标签页")
                                 .into_any_element(),
                         ),
                         single_example(
-                            "Last",
+                            "末尾",
                             Tab::new("last")
                                 .position(TabPosition::Last)
-                                .child("Last Tab")
+                                .child("末尾标签页")
                                 .into_any_element(),
                         ),
                     ],

@@ -800,7 +800,7 @@ impl Markdown {
 
     /// Returns the URL of the link that was most recently right-clicked, if any.
     /// This is set during a right-click mouse-down event and can be read by parent
-    /// views to include a "Copy Link" item in their context menus.
+    /// views to include a "复制链接" item in their context menus.
     pub fn context_menu_link(&self) -> Option<&SharedString> {
         self.context_menu_link.as_ref()
     }
@@ -1348,11 +1348,11 @@ impl MarkdownElement {
 
         let header = kind.map(|kind| {
             let (icon_name, label) = match kind {
-                BlockQuoteKind::Note => (IconName::Info, "Note"),
-                BlockQuoteKind::Tip => (IconName::Sparkle, "Tip"),
-                BlockQuoteKind::Important => (IconName::Chat, "Important"),
-                BlockQuoteKind::Warning => (IconName::Warning, "Warning"),
-                BlockQuoteKind::Caution => (IconName::Stop, "Caution"),
+                BlockQuoteKind::Note => (IconName::Info, "注意"),
+                BlockQuoteKind::Tip => (IconName::Sparkle, "提示"),
+                BlockQuoteKind::Important => (IconName::Chat, "重要"),
+                BlockQuoteKind::Warning => (IconName::Warning, "警告"),
+                BlockQuoteKind::Caution => (IconName::Stop, "注意"),
             };
             h_flex()
                 .gap_1()
@@ -2523,7 +2523,7 @@ fn image_fallback_element(dest_url: SharedString, alt_text: Option<SharedString>
         .filter(|alt| !alt.is_empty())
         .unwrap_or_else(|| dest_url.clone());
 
-    let label = format!("Failed to Load: {link_label}");
+    let label = format!("加载失败:{link_label}");
 
     div()
         .id("image-fallback")
@@ -2531,7 +2531,7 @@ fn image_fallback_element(dest_url: SharedString, alt_text: Option<SharedString>
         .min_w_0()
         .child(Label::new(label).color(Color::Warning).underline())
         .tooltip(Tooltip::text(
-            "Image failed to load. Open `zed: log` for more details.",
+            "图片加载失败。打开 `zed: log` 查看更多详情。",
         ))
         .on_click(move |_, _, cx| cx.open_url(&dest_url))
         .into_any_element()
@@ -3018,7 +3018,7 @@ impl MarkdownElementBuilder {
         let marker_rendered = leading_ws..leading_ws + trimmed.len();
         let marker_source = self
             .source_range_for_rendered(&marker_rendered)
-            .expect("pending checkbox text must have source mappings");
+            .expect("待处理复选框文本必须具有源映射");
 
         self.pending_line = PendingLine::default();
 
@@ -3894,7 +3894,7 @@ mod tests {
         assert_eq!(
             checkbox_cells.len(),
             2,
-            "Expected 2 checkbox cells, got: {cell_texts:?}"
+            "预期 2 个复选框单元格,实际得到: {cell_texts:?}"
         );
         assert_eq!(checkbox_cells[0].trim(), "[x]");
         assert_eq!(checkbox_cells[1].trim(), "[ ]");
@@ -3924,7 +3924,7 @@ mod tests {
                             let leading = pending_text.len() - pending_text.trim_start().len();
                             let rendered = leading..leading + trimmed.len();
                             let marker_source = source_range_for_rendered(&mappings, &rendered)
-                                .expect("marker source range");
+                                .expect("标记源范围");
                             cell_ranges.push(marker_source);
                         }
                     }
@@ -3946,7 +3946,7 @@ mod tests {
             let slice = &md[marker_range.clone()];
             assert!(
                 slice == "[x]" || slice == "[X]" || slice == "[ ]",
-                "expected `[x]`/`[X]`/`[ ]`, got {slice:?} at {marker_range:?}"
+                "期望 `[x]`/`[X]`/`[ ]`,但在 {marker_range:?} 处得到 {slice:?}"
             );
         }
     }
@@ -4453,7 +4453,7 @@ mod tests {
             assert_eq!(row_bounds.bottom(), row_top + line_height);
             assert!(
                 row_bounds.size.width > Pixels::ZERO,
-                "row {row_index} should have a non-empty highlight"
+                "行 {row_index} 应该有非空高亮"
             );
             row_top += line_height;
         }

@@ -24,7 +24,7 @@ fn restore_code_actions_on_format_inner(value: &mut Value, path: &[&str]) -> Res
 
     let Some(mut code_actions_map) = code_actions_on_format.as_object().cloned() else {
         anyhow::bail!(
-            r#"The `code_actions_on_format` is in an invalid state and cannot be migrated at {}. Please ensure the code_actions_on_format setting is a Map<String, bool>"#,
+            r#"`code_actions_on_format` 处于无效状态,无法在 {} 处迁移。请确保 code_actions_on_format 设置为 Map<String, bool>"#,
             fmt_path(path, "code_actions_on_format"),
         );
     };
@@ -47,7 +47,7 @@ fn restore_code_actions_on_format_inner(value: &mut Value, path: &[&str]) -> Res
         };
         let Some(code_action_name) = code_action.as_str() else {
             anyhow::bail!(
-                r#"The `code_action` is in an invalid state and cannot be migrated at {}. Please ensure the code_action setting is a String"#,
+                r#"`code_action` 处于无效状态,无法在 {} 处迁移。请确保 code_action 设置为 String"#,
                 fmt_path(path, "formatter"),
             );
         };

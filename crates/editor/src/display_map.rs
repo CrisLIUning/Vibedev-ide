@@ -28,7 +28,7 @@
 //!     - `Inlay`, representing a location where an inlay hint is to be inserted.
 //! - a `TransformSummary` type, which is usually a struct with two fields:
 //!   [`input: TextSummary`][`TextSummary`] and [`output: TextSummary`][`TextSummary`]. Here,
-//!   `input` corresponds to "text in the layer below", and `output` corresponds to the text
+//!   `input` corresponds to "下层文本", and `output` corresponds to the text
 //!   exposed to the layer above. So in the inlay map case, a `Transform::Isomorphic`'s summary is
 //!   just `input = output = summary`, where `summary` is the [`TextSummary`] stored in that
 //!   variant. Conversely, a `Transform::Inlay` always has an empty `input` summary, because it's
@@ -49,7 +49,7 @@
 //!     parameter on `Edit` changes, since these methods take in edits in the co-ordinate space of
 //!     the lower layer, and return edits in their own co-ordinate space. The term "edit" is
 //!     slightly misleading, since an [`Edit<T>`] doesn't tell you what changed - rather it can be
-//!     thought of as a "region to invalidate". In theory, it would be correct to always use a
+//!     thought of as a "失效区域". In theory, it would be correct to always use a
 //!     single edit that covers the entire range. However, this would lead to lots of unnecessary
 //!     recalculation.
 //!
@@ -301,7 +301,7 @@ impl Companion {
             if cfg!(any(test, debug_assertions)) {
                 assert!(
                     our_snapshot.max_point() == Point::zero(),
-                    "`patches_for_*_in_range` is only allowed to return an empty vec if the multibuffer is empty"
+                    "`patches_for_*_in_range` 仅在多缓冲区为空时允许返回空 vec"
                 );
             }
             return Point::zero()..our_snapshot.max_point();
@@ -2627,7 +2627,7 @@ pub mod tests {
     async fn test_random_display_map(cx: &mut gpui::TestAppContext, mut rng: StdRng) {
         cx.background_executor.set_block_on_ticks(0..=50);
         let operations = env::var("OPERATIONS")
-            .map(|i| i.parse().expect("invalid `OPERATIONS` variable"))
+            .map(|i| i.parse().expect("无效的 `OPERATIONS` 变量"))
             .unwrap_or(10);
 
         let mut tab_size = rng.random_range(1..=4);
@@ -2732,7 +2732,7 @@ pub mod tests {
                                     };
                                     let height = rng.random_range(1..5);
                                     log::info!(
-                                        "inserting block {:?} with height {}",
+                                        "正在插入块 {:?},高度为 {}",
                                         placement.as_ref().map(|p| p.to_point(&buffer)),
                                         height
                                     );
@@ -2830,28 +2830,28 @@ pub mod tests {
                 assert_eq!(
                     prev_display_bound,
                     prev_buffer_bound.to_display_point(&snapshot),
-                    "row boundary before {:?}. reported buffer row boundary: {:?}",
+                    "{:?} 之前的行边界。报告的缓冲区行边界: {:?}",
                     point,
                     prev_buffer_bound
                 );
                 assert_eq!(
                     next_display_bound,
                     next_buffer_bound.to_display_point(&snapshot),
-                    "display row boundary after {:?}. reported buffer row boundary: {:?}",
+                    "{:?} 之后的显示行边界。报告的缓冲区行边界: {:?}",
                     point,
                     next_buffer_bound
                 );
                 assert_eq!(
                     prev_buffer_bound,
                     prev_display_bound.to_point(&snapshot),
-                    "row boundary before {:?}. reported display row boundary: {:?}",
+                    "{:?} 之前的行边界。报告的显示行边界: {:?}",
                     point,
                     prev_display_bound
                 );
                 assert_eq!(
                     next_buffer_bound,
                     next_display_bound.to_point(&snapshot),
-                    "row boundary after {:?}. reported display row boundary: {:?}",
+                    "{:?} 之后的行边界。报告的显示行边界: {:?}",
                     point,
                     next_display_bound
                 );
@@ -4091,7 +4091,7 @@ pub mod tests {
         assert_eq!(
             ranges.len(),
             2,
-            "expected the range to be split around the inlay, got: {:?}",
+            "预期范围应围绕内嵌提示拆分,但得到: {:?}",
             ranges,
         );
         // First sub-range: buffer [4, 5) → "x" at display columns 4..5

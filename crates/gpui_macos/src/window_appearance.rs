@@ -20,7 +20,7 @@ pub(crate) unsafe fn window_appearance_from_native(appearance: id) -> WindowAppe
             WindowAppearance::Dark
         } else {
             println!(
-                "unknown appearance: {:?}",
+                "未知外观: {:?}",
                 CStr::from_ptr(name.UTF8String())
             );
             WindowAppearance::Light

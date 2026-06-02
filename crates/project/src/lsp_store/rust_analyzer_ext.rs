@@ -37,7 +37,7 @@ pub fn register_notifications(lsp_store: WeakEntity<LspStore>, language_server: 
             move |params, cx| {
                 let message = params.message;
                 let log_message = message.as_ref().map(|message| {
-                    format!("Language server {name} (id {server_id}) status update: {message}")
+                    format!("语言服务器 {name} (id {server_id}) 状态更新: {message}")
                 });
                 let status = match &params.health {
                     ServerHealth::Ok => {

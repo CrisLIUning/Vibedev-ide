@@ -101,7 +101,7 @@ struct Specimen {
 
 impl Specimen {
     pub fn new(id: usize) -> Self {
-        let string = SharedString::new_static("The quick brown fox jumps over the lazy dog");
+        let string = SharedString::new_static("敏捷的棕色狐狸跳过了懒狗");
         let id_string = format!("specimen-{}", id);
         let id = ElementId::Name(id_string.into());
         Self {
@@ -349,7 +349,7 @@ impl Render for TextExample {
 fn run_example() {
     application().run(|cx: &mut App| {
         cx.set_menus(vec![Menu {
-            name: "GPUI Typography".into(),
+            name: "GPUI 排版".into(),
             disabled: false,
             items: vec![],
         }]);
@@ -370,7 +370,7 @@ fn run_example() {
             .open_window(
                 WindowOptions {
                     titlebar: Some(TitlebarOptions {
-                        title: Some("GPUI Typography".into()),
+                        title: Some("GPUI 排版".into()),
                         ..Default::default()
                     }),
                     window_bounds: Some(WindowBounds::Windowed(bounds(

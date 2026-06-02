@@ -87,8 +87,8 @@ impl HttpRequestBuilder {
 
     /// Builds the [`HttpRequest`].
     pub fn build(self) -> Result<HttpRequest, String> {
-        let method = self.method.ok_or_else(|| "Method not set".to_string())?;
-        let url = self.url.ok_or_else(|| "URL not set".to_string())?;
+        let method = self.method.ok_or_else(|| "未设置方法".to_string())?;
+        let url = self.url.ok_or_else(|| "未设置 URL".to_string())?;
 
         Ok(HttpRequest {
             method,

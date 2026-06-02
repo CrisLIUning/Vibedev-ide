@@ -189,7 +189,7 @@ impl StyledText {
     ) -> Self {
         debug_assert!(
             self.delayed_highlights.is_none(),
-            "Can't use `with_default_highlights` and `with_highlights`"
+            "无法同时使用 `with_default_highlights` 和 `with_highlights`"
         );
         let runs = Self::compute_runs(&self.text, default_style, highlights);
         self.with_runs(runs)
@@ -203,7 +203,7 @@ impl StyledText {
     ) -> Self {
         debug_assert!(
             self.runs.is_none(),
-            "Can't use `with_highlights` and `with_default_highlights`"
+            "无法同时使用 `with_highlights` 和 `with_default_highlights`"
         );
         self.delayed_highlights = Some(
             highlights
@@ -295,7 +295,7 @@ impl StyledText {
         for run in &runs {
             text = text.get(run.len..).unwrap_or_else(|| {
                 #[cfg(debug_assertions)]
-                panic!("invalid text run. Text: '{text}', run: {run:?}");
+                panic!("无效的文本运行。文本: '{text}', 运行: {run:?}");
                 #[cfg(not(debug_assertions))]
                 panic!("invalid text run");
             });

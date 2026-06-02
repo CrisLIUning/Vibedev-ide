@@ -885,13 +885,13 @@ impl Editor {
                 // No folds - delete any persisted folds for this file
                 db.delete_file_folds(workspace_id, file_path)
                     .await
-                    .with_context(|| format!("deleting file folds for workspace {workspace_id:?}"))
+                    .with_context(|| format!("正在删除工作区 {workspace_id:?} 的文件折叠"))
                     .log_err();
             } else {
                 db.save_file_folds(workspace_id, file_path, db_folds)
                     .await
                     .with_context(|| {
-                        format!("persisting file folds for workspace {workspace_id:?}")
+                        format!("正在保存工作区 {workspace_id:?} 的文件折叠")
                     })
                     .log_err();
             }

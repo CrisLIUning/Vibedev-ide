@@ -29,11 +29,17 @@ pub static RELEASE_CHANNEL: LazyLock<ReleaseChannel> =
 /// The app identifier for the current release channel, Windows only.
 #[cfg(target_os = "windows")]
 pub fn app_identifier() -> &'static str {
+    // VIBEDEV: single-instance mutex + named-pipe id (Windows). Rebranded off
+    // "Zed-Editor-*" so VibeDev never shares a mutex/pipe with a real Zed
+    // install — otherwise launching VibeDev while Zed is running would forward
+    // args into Zed (shared `{id}-Instance-Mutex` / `\\.\pipe\{id}-Named-Pipe`).
+    // The installer's AppMutex ($appMutex in script/bundle-windows.ps1) MUST
+    // stay "<this>-Instance-Mutex" for the "close the app first" check to work.
     match *RELEASE_CHANNEL {
-        ReleaseChannel::Dev => "Zed-Editor-Dev",
-        ReleaseChannel::Nightly => "Zed-Editor-Nightly",
-        ReleaseChannel::Preview => "Zed-Editor-Preview",
-        ReleaseChannel::Stable => "Zed-Editor-Stable",
+        ReleaseChannel::Dev => "VibeDev-Dev",
+        ReleaseChannel::Nightly => "VibeDev-Nightly",
+        ReleaseChannel::Preview => "VibeDev-Preview",
+        ReleaseChannel::Stable => "VibeDev-Stable",
     }
 }
 
@@ -191,10 +197,11 @@ impl ReleaseChannel {
     /// Returns the display name for this [`ReleaseChannel`].
     pub fn display_name(&self) -> &'static str {
         match self {
-            ReleaseChannel::Dev => "Zed Dev",
-            ReleaseChannel::Nightly => "Zed Nightly",
-            ReleaseChannel::Preview => "Zed Preview",
-            ReleaseChannel::Stable => "Zed",
+            // VIBEDEV: branded product name (upstream returned "Zed*").
+            ReleaseChannel::Dev => "VibeDev Dev",
+            ReleaseChannel::Nightly => "VibeDev Nightly",
+            ReleaseChannel::Preview => "VibeDev Preview",
+            ReleaseChannel::Stable => "VibeDev",
         }
     }
 
@@ -212,11 +219,17 @@ impl ReleaseChannel {
     /// and WM_CLASS on X11.
     /// This also has to match the bundle identifier for Zed on macOS.
     pub fn app_id(&self) -> &'static str {
+        // VIBEDEV: AppUserModelID / WM_CLASS / macOS bundle id. Moved off the
+        // "dev.zed.Zed-*" ids so the Windows taskbar / jump-list name resolves
+        // fresh to "VibeDev Dev" (Windows caches the jump-list name per
+        // AppUserModelID; the old id kept showing "VibeDev Dev"). This is NOT the
+        // settings/data dir — that is keyed by `paths::APP_NAME` ("VibeDev"), changed
+        // separately (with migration) in the Phase 5 data-dir step.
         match self {
-            ReleaseChannel::Dev => "dev.zed.Zed-Dev",
-            ReleaseChannel::Nightly => "dev.zed.Zed-Nightly",
-            ReleaseChannel::Preview => "dev.zed.Zed-Preview",
-            ReleaseChannel::Stable => "dev.zed.Zed",
+            ReleaseChannel::Dev => "ai.vibedev.VibeDev-Dev",
+            ReleaseChannel::Nightly => "ai.vibedev.VibeDev-Nightly",
+            ReleaseChannel::Preview => "ai.vibedev.VibeDev-Preview",
+            ReleaseChannel::Stable => "ai.vibedev.VibeDev",
         }
     }
 

@@ -153,7 +153,7 @@ impl AgentTool for CreateDirectoryTool {
 
             futures::select! {
                 result = create_entry.fuse() => {
-                    result.map_err(|e| format!("Creating directory {destination_path}: {e}"))?;
+                    result.map_err(|e| format!("创建目录 {destination_path}: {e}"))?;
                 }
                 _ = event_stream.cancelled_by_user().fuse() => {
                     return Err("Create directory cancelled by user".to_string());
@@ -234,8 +234,8 @@ mod tests {
         let auth = event_rx.expect_authorization().await;
         let title = auth.tool_call.fields.title.as_deref().unwrap_or("");
         assert!(
-            title.contains("points outside the project") || title.contains("symlink"),
-            "Authorization title should mention symlink escape, got: {title}",
+            title.contains("指向项目外部") || title.contains("symlink"),
+            "授权标题应提及符号链接逃逸,实际得到: {title}",
         );
 
         auth.response
@@ -248,7 +248,7 @@ mod tests {
         let result = task.await;
         assert!(
             result.is_ok(),
-            "Tool should succeed after authorization: {result:?}"
+            "授权后工具应成功: {result:?}"
         );
     }
 
@@ -300,7 +300,7 @@ mod tests {
         let result = task.await;
         assert!(
             result.is_err(),
-            "Tool should fail when authorization is denied"
+            "授权被拒绝时工具应失败"
         );
     }
 
@@ -355,8 +355,8 @@ mod tests {
         let auth = event_rx.expect_authorization().await;
         let title = auth.tool_call.fields.title.as_deref().unwrap_or("");
         assert!(
-            title.contains("points outside the project") || title.contains("symlink"),
-            "Authorization title should mention symlink escape, got: {title}",
+            title.contains("指向项目外部") || title.contains("symlink"),
+            "授权标题应提及符号链接逃逸,实际得到: {title}",
         );
 
         auth.response
@@ -371,13 +371,13 @@ mod tests {
                 event_rx.try_recv(),
                 Ok(Ok(crate::ThreadEvent::ToolCallAuthorization(_)))
             ),
-            "Expected a single authorization prompt",
+            "预期只有一个授权提示",
         );
 
         let result = task.await;
         assert!(
             result.is_ok(),
-            "Tool should succeed after one authorization: {result:?}"
+            "一次授权后工具应成功: {result:?}"
         );
     }
 
@@ -435,13 +435,13 @@ mod tests {
             })
             .await;
 
-        assert!(result.is_err(), "Tool should fail when policy denies");
+        assert!(result.is_err(), "策略拒绝时工具应失败");
         assert!(
             !matches!(
                 event_rx.try_recv(),
                 Ok(Ok(crate::ThreadEvent::ToolCallAuthorization(_)))
             ),
-            "Deny policy should not emit symlink authorization prompt",
+            "拒绝策略不应发出符号链接授权提示",
         );
     }
 }

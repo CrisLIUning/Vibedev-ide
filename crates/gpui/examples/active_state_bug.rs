@@ -23,7 +23,7 @@ impl Render for Example {
                 .hover(|s| s.bg(hover))
                 .active(|s| s.bg(active))
                 .on_click(|_, _, _| {})
-                .child("Click me"),
+                .child("点击我"),
         )
     }
 }

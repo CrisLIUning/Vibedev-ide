@@ -25,13 +25,13 @@ fn parse_resize_behavior(
         } else if col.starts_with('*') {
             resize_behavior.push(TableResizeBehavior::MinSize(col.len() as f32 / total_size));
         } else {
-            panic!("invalid test input: unrecognized resize behavior: {}", col);
+            panic!("无效测试输入:无法识别的调整大小行为:{}", col);
         }
     }
 
     if resize_behavior.len() != expected_cols {
         panic!(
-            "invalid test input: expected {} columns, got {}",
+            "无效测试输入:预期 {} 列,实际 {} 列",
             expected_cols,
             resize_behavior.len()
         );
@@ -53,7 +53,7 @@ mod reset_column_size {
         }
 
         for w in &widths {
-            assert!(w.is_finite(), "incorrect number of columns");
+            assert!(w.is_finite(), "列数不正确");
         }
         let total = widths.iter().sum::<f32>();
         for width in &mut widths {
@@ -65,21 +65,21 @@ mod reset_column_size {
     #[track_caller]
     fn check_reset_size(initial_sizes: &str, widths: &str, expected: &str, resize_behavior: &str) {
         let (initial_sizes, total_1, None) = parse(initial_sizes) else {
-            panic!("invalid test input: initial sizes should not be marked");
+            panic!("无效测试输入:初始大小不应被标记");
         };
         let (widths, total_2, Some(column_index)) = parse(widths) else {
-            panic!("invalid test input: widths should be marked");
+            panic!("无效测试输入:宽度应被标记");
         };
         assert_eq!(
             total_1, total_2,
-            "invalid test input: total width not the same {total_1}, {total_2}"
+            "无效测试输入:总宽度不一致 {total_1}, {total_2}"
         );
         let (expected, total_3, None) = parse(expected) else {
-            panic!("invalid test input: expected should not be marked: {expected:?}");
+            panic!("无效测试输入:预期值不应被标记:{expected:?}");
         };
         assert_eq!(
             total_2, total_3,
-            "invalid test input: total width not the same"
+            "无效测试输入:总宽度不一致"
         );
         let cols = initial_sizes.len();
         let resize_behavior_vec = parse_resize_behavior(resize_behavior, total_1, cols);
@@ -96,7 +96,7 @@ mod reset_column_size {
             let result_str = cols_to_str(result_slice, total_1);
             let expected_str = cols_to_str(&expected, total_1);
             panic!(
-                "resize failed\ncomputed: {result_str}\nexpected: {expected_str}\n\ncomputed values: {result_slice:?}\nexpected values: {expected:?}\n:minimum widths: {resize_behavior:?}"
+                "调整大小失败\n计算结果:{result_str}\n预期结果:{expected_str}\n\n计算值:{result_slice:?}\n预期值:{expected:?}\n:最小宽度:{resize_behavior:?}"
             );
         }
     }
@@ -233,7 +233,7 @@ mod drag_handle {
         }
 
         for w in &widths {
-            assert!(w.is_finite(), "incorrect number of columns");
+            assert!(w.is_finite(), "列数不正确");
         }
         let total = widths.iter().sum::<f32>();
         for width in &mut widths {
@@ -245,14 +245,14 @@ mod drag_handle {
     #[track_caller]
     fn check(distance: i32, widths: &str, expected: &str, resize_behavior: &str) {
         let (widths, total_1, Some(column_index)) = parse(widths) else {
-            panic!("invalid test input: widths should be marked");
+            panic!("无效测试输入:宽度应被标记");
         };
         let (expected, total_2, None) = parse(expected) else {
-            panic!("invalid test input: expected should not be marked: {expected:?}");
+            panic!("无效测试输入:预期值不应被标记:{expected:?}");
         };
         assert_eq!(
             total_1, total_2,
-            "invalid test input: total width not the same"
+            "无效测试输入:总宽度不一致"
         );
         let cols = widths.len();
         let resize_behavior_vec = parse_resize_behavior(resize_behavior, total_1, cols);
@@ -274,7 +274,7 @@ mod drag_handle {
             let result_str = cols_to_str(result_widths, total_1);
             let expected_str = cols_to_str(&expected, total_1);
             panic!(
-                "resize failed\ncomputed: {result_str}\nexpected: {expected_str}\n\ncomputed values: {result_widths:?}\nexpected values: {expected:?}\n:minimum widths: {resize_behavior:?}"
+                "调整大小失败\n计算结果:{result_str}\n预期结果:{expected_str}\n\n计算值:{result_widths:?}\n预期值:{expected:?}\n:最小宽度:{resize_behavior:?}"
             );
         }
     }

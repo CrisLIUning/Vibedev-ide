@@ -407,7 +407,7 @@ impl Worktree {
                 .await
                 .with_context(|| {
                     format!(
-                        "failed to open local worktree root at {}",
+                        "无法在 {} 打开本地工作树根目录",
                         abs_path.display()
                     )
                 })
@@ -906,7 +906,7 @@ impl Worktree {
             LocalWorktree::restore_entry(trash_entry, worktree, cx).await
         } else {
             // TODO(dino): Add support for restoring entries in remote worktrees.
-            Err(anyhow!("Unsupported"))
+            Err(anyhow!("不支持"))
         }
     }
 
@@ -1005,7 +1005,7 @@ impl Worktree {
                 this.scan_id(),
                 this.create_entry(
                     RelPath::from_proto(&request.path).with_context(|| {
-                        format!("received invalid relative path {:?}", request.path)
+                        format!("接收到无效的相对路径 {:?}", request.path)
                     })?,
                     request.is_directory,
                     request.content,
@@ -1134,7 +1134,7 @@ impl LocalWorktree {
         self.start_background_scanner(scan_requests_rx, path_prefixes_to_scan_rx, cx);
         let always_included_entries = mem::take(&mut self.snapshot.always_included_entries);
         log::debug!(
-            "refreshing entries for the following always included paths: {:?}",
+            "正在刷新以下始终包含路径的条目: {:?}",
             always_included_entries
         );
 
@@ -1228,7 +1228,7 @@ impl LocalWorktree {
                         }
                         ScanState::RootDeleted => {
                             log::info!(
-                                "worktree root {} no longer exists, closing worktree",
+                                "工作树根目录 {} 已不存在, 关闭工作树",
                                 this.abs_path().display()
                             );
                             cx.emit(Event::Deleted);
@@ -1452,10 +1452,10 @@ impl LocalWorktree {
                         .metadata(&abs_path)
                         .await
                         .with_context(|| {
-                            format!("Loading metadata for excluded file {abs_path:?}")
+                            format!("正在加载已排除文件 {abs_path:?} 的元数据")
                         })?
                         .with_context(|| {
-                            format!("Excluded file {abs_path:?} got removed during loading")
+                            format!("已排除文件 {abs_path:?} 在加载期间被移除")
                         })?;
                     Arc::new(File {
                         entry_id: None,
@@ -1509,10 +1509,10 @@ impl LocalWorktree {
                         .metadata(&abs_path)
                         .await
                         .with_context(|| {
-                            format!("Loading metadata for excluded file {abs_path:?}")
+                            format!("正在加载已排除文件 {abs_path:?} 的元数据")
                         })?
                         .with_context(|| {
-                            format!("Excluded file {abs_path:?} got removed during loading")
+                            format!("已排除文件 {abs_path:?} 在加载期间被移除")
                         })?;
                     Arc::new(File {
                         entry_id: None,
@@ -1708,10 +1708,10 @@ impl LocalWorktree {
                     .metadata(&abs_path)
                     .await
                     .with_context(|| {
-                        format!("Fetching metadata after saving the excluded buffer {abs_path:?}")
+                        format!("正在获取保存已排除缓冲区 {abs_path:?} 后的元数据")
                     })?
                     .with_context(|| {
-                        format!("Excluded buffer {path:?} got removed during saving")
+                        format!("已排除缓冲区 {path:?} 在保存期间被移除")
                     })?;
                 Ok(Arc::new(File {
                     worktree,
@@ -1864,7 +1864,7 @@ impl LocalWorktree {
                     )
                     .await
                     .with_context(|| {
-                        format!("Failed to copy file from {source:?} to {target:?}")
+                        format!("无法将文件从 {source:?} 复制到 {target:?}")
                     })?;
                 }
                 anyhow::Ok(())
@@ -1977,7 +1977,7 @@ impl LocalWorktree {
             log::trace!("refreshed entry {path:?} in {:?}", t0.elapsed());
             let new_entry = this.read_with(cx, |this, _| {
                 this.entry_for_path(&path).cloned().with_context(|| {
-                    format!("Could not find entry in worktree for {path:?} after refresh")
+                    format!("刷新后在工作树中找不到 {path:?} 的条目")
                 })
             })??;
             Ok(Some(new_entry))
@@ -2482,7 +2482,7 @@ impl Snapshot {
         always_included_paths: &PathMatcher,
     ) {
         log::debug!(
-            "applying remote worktree update. {} entries updated, {} removed",
+            "正在应用远程工作树更新。已更新 {} 个条目,已移除 {} 个",
             update.updated_entries.len(),
             update.removed_entries.len()
         );
@@ -2788,7 +2788,7 @@ impl LocalSnapshot {
                 }
                 Err(error) => {
                     log::error!(
-                        "error loading .gitignore file {:?} - {:?}",
+                        "加载 .gitignore 文件 {:?} 出错 - {:?}",
                         &entry.path,
                         error
                     );
@@ -2908,7 +2908,7 @@ impl LocalSnapshot {
                 .collect::<collections::BTreeSet<_>>()
                 .into_iter()
                 .collect::<Vec<_>>(),
-            "entries_by_path and entries_by_id are inconsistent"
+            "entries_by_path 和 entries_by_id 不一致"
         );
 
         let mut files = self.files(true, 0);
@@ -3101,7 +3101,7 @@ impl BackgroundScannerState {
             parent_entry.clone()
         } else {
             log::warn!(
-                "populating a directory {:?} that has been removed",
+                "正在填充已被移除的目录 {:?}",
                 parent_path
             );
             return;
@@ -3237,7 +3237,7 @@ impl BackgroundScannerState {
                     .any(|component| component == DOT_GIT)
                 {
                     log::debug!(
-                        "not building git repository for nested `.git` directory, `.git` path in the worktree: {dot_git_path:?}"
+                        "不为嵌套的 `.git` 目录构建 git 仓库,工作树中的 `.git` 路径: {dot_git_path:?}"
                     );
                     return;
                 };
@@ -3248,7 +3248,7 @@ impl BackgroundScannerState {
                 // `dot_git_path.parent().is_none()` means `.git` directory is the opened worktree itself,
                 // no files inside that directory are tracked by git, so no need to build the repo around it
                 log::debug!(
-                    "not building git repository for the worktree itself, `.git` path in the worktree: {dot_git_path:?}"
+                    "不为工作树本身构建 git 仓库,工作树中的 `.git` 路径: {dot_git_path:?}"
                 );
                 return;
             }
@@ -3280,7 +3280,7 @@ impl BackgroundScannerState {
             .entry_for_path(&work_directory.path_key().0)
             .with_context(|| {
                 format!(
-                    "working directory `{}` not indexed",
+                    "工作目录 `{}` 未被索引",
                     work_directory
                         .path_key()
                         .0
@@ -3524,7 +3524,7 @@ impl File {
 
         anyhow::ensure!(
             worktree_id.to_proto() == proto.worktree_id,
-            "worktree id does not match file"
+            "工作树 ID 与文件不匹配"
         );
 
         let disk_state = if proto.is_historic {
@@ -4344,7 +4344,7 @@ impl BackgroundScanner {
 
                 if let Some(new_path) = new_path {
                     log::info!(
-                        "root renamed from {:?} to {:?}",
+                        "根目录从 {:?} 重命名为 {:?}",
                         root_path.as_path(),
                         new_path.as_path(),
                     );
@@ -4358,7 +4358,7 @@ impl BackgroundScanner {
                     // fallback also failed, the file is gone - close the worktree
                     if self.is_single_file {
                         log::info!(
-                            "single-file worktree root {:?} no longer exists, marking as deleted",
+                            "单文件工作树根目录 {:?} 已不存在, 标记为已删除",
                             root_path.as_path()
                         );
                         self.status_updates_tx
@@ -4375,7 +4375,7 @@ impl BackgroundScanner {
             events = Self::normalized_events_for_worktree(&state, &root_canonical_path, events);
         }
 
-        log::debug!("raw events for process_events: {events:?}");
+        log::debug!("process_events 的原始事件: {events:?}");
 
         fn skip_ix(ranges: &mut SmallVec<[Range<usize>; 4]>, ix: usize) {
             if let Some(last_range) = ranges.last_mut()
@@ -4431,14 +4431,14 @@ impl BackgroundScanner {
                         && self.fs.is_dir(&dot_git_abs_path).await;
                     if is_ignored {
                         log::debug!(
-                            "ignoring event {abs_path:?} as it's in the .git directory among skipped files or directories"
+                            "忽略事件 {abs_path:?},因为它位于 .git 目录中被跳过的文件或目录中"
                         );
                         skip_ix(&mut ranges_to_drop, ix);
                         continue;
                     }
                     if is_dot_git {
                         log::debug!(
-                            "ignoring event {abs_path:?} for .git directory itself (kind: {:?})",
+                            "忽略 .git 目录本身的事件 {abs_path:?} (类型: {:?})",
                             event.kind
                         );
                         skip_ix(&mut ranges_to_drop, ix);
@@ -4870,7 +4870,7 @@ impl BackgroundScanner {
                         }
                         Err(error) => {
                             log::error!(
-                                "error loading .gitignore file {:?} - {:?}",
+                                "加载 .gitignore 文件 {:?} 出错 - {:?}",
                                 child_name,
                                 error
                             );
@@ -4892,7 +4892,7 @@ impl BackgroundScanner {
                 Ok(Some(metadata)) => metadata,
                 Ok(None) => continue,
                 Err(err) => {
-                    log::error!("error processing {:?}: {err:#}", child_abs_path.display());
+                    log::error!("处理 {:?} 时出错: {err:#}", child_abs_path.display());
                     continue;
                 }
             };
@@ -5389,7 +5389,7 @@ impl BackgroundScanner {
             .strip_prefix(snapshot.abs_path.as_path())
             .map_err(|_| {
                 anyhow::anyhow!(
-                    "Failed to strip prefix '{}' from path '{}'",
+                    "无法从路径 '{}' 中去除前缀 '{}'",
                     snapshot.abs_path.as_path().display(),
                     job.abs_path.display()
                 )
@@ -6615,7 +6615,7 @@ mod tests {
         assert_eq!(
             result,
             ByteContent::Binary,
-            "PCM 16-bit WAV should be detected as Binary via RIFF header"
+            "16位 PCM WAV 应通过 RIFF 头被检测为二进制"
         );
     }
 
@@ -6633,7 +6633,7 @@ mod tests {
         assert_eq!(
             result,
             ByteContent::Binary,
-            "LE 16-bit binary with control characters should be detected as Binary"
+            "包含控制字符的 LE 16位二进制数据应被检测为二进制"
         );
     }
 
@@ -6651,7 +6651,7 @@ mod tests {
         assert_eq!(
             result,
             ByteContent::Binary,
-            "BE 16-bit binary with control characters should be detected as Binary"
+            "包含控制字符的 BE 16位二进制数据应被检测为二进制"
         );
     }
 
@@ -6697,7 +6697,7 @@ mod tests {
             assert_eq!(
                 analyze_byte_content(&bytes),
                 ByteContent::Binary,
-                "{label} should be detected as Binary"
+                "{label} 应被检测为二进制"
             );
         }
     }

@@ -61,7 +61,7 @@ impl LinuxDispatcher {
                             profiler::add_task_timing(timing);
 
                             log::trace!(
-                                "background thread {}: ran runnable. took: {:?}",
+                                "后台线程 {}: 已运行任务。耗时: {:?}",
                                 i,
                                 start.elapsed()
                             );
@@ -76,7 +76,7 @@ impl LinuxDispatcher {
             .name("Timer".to_owned())
             .spawn(move || {
                 let mut event_loop: EventLoop<()> =
-                    EventLoop::try_new().expect("Failed to initialize timer loop!");
+                    EventLoop::try_new().expect("初始化计时器循环失败!");
 
                 let handle = event_loop.handle();
                 let timer_handle = event_loop.handle();
@@ -107,10 +107,10 @@ impl LinuxDispatcher {
                                         TimeoutAction::Drop
                                     },
                                 )
-                                .expect("Failed to start timer");
+                                .expect("启动计时器失败");
                         }
                     })
-                    .expect("Failed to start timer thread");
+                    .expect("启动计时器线程失败");
 
                 event_loop.run(None, &mut (), |_| {}).log_err();
             })
@@ -145,7 +145,7 @@ impl PlatformDispatcher for LinuxDispatcher {
     fn dispatch(&self, runnable: RunnableVariant, priority: Priority) {
         self.background_sender
             .send(priority, runnable)
-            .unwrap_or_else(|_| panic!("blocking sender returned without value"));
+            .unwrap_or_else(|_| panic!("阻塞发送器返回时无值"));
     }
 
     fn dispatch_on_main_thread(&self, runnable: RunnableVariant, priority: Priority) {
@@ -185,7 +185,7 @@ impl PlatformDispatcher for LinuxDispatcher {
             // SAFETY: sched_param is a valid initialized structure
             let result = unsafe { libc::pthread_setschedparam(thread_id, policy, &sched_param) };
             if result != 0 {
-                log::warn!("failed to set realtime thread priority");
+                log::warn!("设置实时线程优先级失败");
             }
 
             f();
@@ -226,7 +226,7 @@ pub struct PriorityQueueCalloopReceiver<T> {
 
 impl<T> PriorityQueueCalloopReceiver<T> {
     pub fn new() -> (PriorityQueueCalloopSender<T>, Self) {
-        let (ping, source) = calloop::ping::make_ping().expect("Failed to create a Ping.");
+        let (ping, source) = calloop::ping::make_ping().expect("创建 Ping 失败。");
 
         let (tx, rx) = PriorityQueueReceiver::new();
 

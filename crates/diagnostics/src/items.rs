@@ -70,7 +70,7 @@ impl Render for DiagnosticIndicator {
                     .truncate(true)
                     .tooltip(|_window, cx| {
                         Tooltip::for_action(
-                            "Next Diagnostic",
+                            "下一个诊断",
                             &editor::actions::GoToDiagnostic::default(),
                             cx,
                         )
@@ -88,7 +88,7 @@ impl Render for DiagnosticIndicator {
                 ButtonLike::new("diagnostic-indicator")
                     .child(diagnostic_indicator)
                     .tooltip(move |_window, cx| {
-                        Tooltip::for_action("Project Diagnostics", &Deploy, cx)
+                        Tooltip::for_action("项目诊断", &Deploy, cx)
                     })
                     .on_click(cx.listener(|this, _, window, cx| {
                         if let Some(workspace) = this.workspace.upgrade() {

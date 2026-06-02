@@ -9,14 +9,14 @@ pub fn derive_visual_context(input: TokenStream) -> TokenStream {
 
     let Some(window_variable) = get_simple_attribute_field(&ast, "window") else {
         return quote! {
-            compile_error!("Derive must have a #[window] attribute to detect the &mut Window field");
+            compile_error!("派生宏必须具有 #[window] 属性以检测 &mut Window 字段");
         }
         .into();
     };
 
     let Some(app_variable) = get_simple_attribute_field(&ast, "app") else {
         return quote! {
-            compile_error!("Derive must have a #[app] attribute to detect the &mut App field");
+            compile_error!("派生宏必须具有 #[app] 属性以检测 &mut App 字段");
         }
         .into();
     };

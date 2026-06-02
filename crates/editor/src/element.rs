@@ -3489,7 +3489,7 @@ impl EditorElement {
                         });
                     })
                     .tooltip(Tooltip::for_action_title(
-                        "Expand Excerpt",
+                        "展开摘录",
                         &crate::actions::ExpandExcerpts::default(),
                     ))
                     .into_any_element();
@@ -8238,7 +8238,7 @@ pub fn render_breadcrumb_text(
                                     h_flex()
                                         .gap_1()
                                         .justify_between()
-                                        .child(Label::new("Show Symbol Outline"))
+                                        .child(Label::new("显示符号大纲"))
                                         .child(ui::KeyBinding::for_action_in(
                                             &zed_actions::outline::ToggleOutline,
                                             &focus_handle,
@@ -8253,7 +8253,7 @@ pub fn render_breadcrumb_text(
                                             .pt_1()
                                             .border_t_1()
                                             .border_color(cx.theme().colors().border_variant)
-                                            .child(Label::new("Right-Click to Copy Path")),
+                                            .child(Label::new("右键点击复制路径")),
                                     )
                                 })
                                 .into_any_element()
@@ -8522,13 +8522,13 @@ pub(crate) fn render_buffer_header(
                                         move |_window, cx| {
                                             Tooltip::with_meta_in(
                                                 if is_folded_for_tooltip {
-                                                    "Unfold Excerpt"
+                                                    "展开摘录"
                                                 } else {
-                                                    "Fold Excerpt"
+                                                    "折叠摘录"
                                                 },
                                                 Some(&ToggleFold),
                                                 format!(
-                                                    "{} to toggle all",
+                                                    "{} 切换全部",
                                                     text_for_keystroke(
                                                         &Modifiers::alt(),
                                                         "click",
@@ -8624,7 +8624,7 @@ pub(crate) fn render_buffer_header(
                                             )
                                             .tooltip(move |_, cx| {
                                                 Tooltip::with_meta(
-                                                    "Open File",
+                                                    "打开文件",
                                                     None,
                                                     full_path.clone(),
                                                     cx,
@@ -8684,7 +8684,7 @@ pub(crate) fn render_buffer_header(
                                         this.visible_on_hover("buffer-header-group")
                                     })
                                     .child(
-                                        Button::new("open-file-button", "Open File")
+                                        Button::new("open-file-button", "打开文件")
                                             .style(ButtonStyle::OutlinedGhost)
                                             .when(is_selected, |this| {
                                                 this.key_binding(KeyBinding::for_action_in(
@@ -8773,7 +8773,7 @@ pub(crate) fn render_buffer_header(
                     menu = menu
                         .when_some(abs_path, |menu, abs_path| {
                             menu.entry(
-                                "Copy Path",
+                                "复制路径",
                                 Some(Box::new(zed_actions::workspace::CopyPath)),
                                 window.handler_for(&editor, move |_, _, cx| {
                                     cx.write_to_clipboard(ClipboardItem::new_string(
@@ -8784,7 +8784,7 @@ pub(crate) fn render_buffer_header(
                         })
                         .when_some(relative_path, |menu, relative_path| {
                             menu.entry(
-                                "Copy Relative Path",
+                                "复制相对路径",
                                 Some(Box::new(zed_actions::workspace::CopyRelativePath)),
                                 window.handler_for(&editor, move |_, _, cx| {
                                     cx.write_to_clipboard(ClipboardItem::new_string(
@@ -8799,7 +8799,7 @@ pub(crate) fn render_buffer_header(
                         )
                         .when_some(reveal_in_project_panel, |menu, entry_id| {
                             menu.entry(
-                                "Reveal In Project Panel",
+                                "在项目面板中显示",
                                 Some(Box::new(RevealInProjectPanel::default())),
                                 window.handler_for(&editor, move |editor, _, cx| {
                                     if let Some(project) = &mut editor.project {
@@ -8812,7 +8812,7 @@ pub(crate) fn render_buffer_header(
                         })
                         .when_some(parent_abs_path, |menu, parent_abs_path| {
                             menu.entry(
-                                "Open in Terminal",
+                                "在终端中打开",
                                 Some(Box::new(OpenInTerminal)),
                                 window.handler_for(&editor, move |_, window, cx| {
                                     window.dispatch_action(
@@ -13072,11 +13072,11 @@ mod tests {
 
         assert!(
             narrow_label_origin.y > wide_label_origin.y,
-            "expected inline label to move to a later wrapped row when the editor narrows"
+            "预期内联标签在编辑器变窄时移动到后续的换行行"
         );
         assert!(
             narrow_label_origin.x < wide_label_origin.x,
-            "expected inline label to recompute its horizontal position for the wrapped row"
+            "预期内联标签为换行行重新计算其水平位置"
         );
     }
 

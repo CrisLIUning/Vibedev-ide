@@ -834,7 +834,7 @@ pub fn embed<'a>(
 
         anyhow::ensure!(
             response.status().is_success(),
-            "error during embedding, status: {:?}, body: {:?}",
+            "嵌入过程中发生错误, 状态: {:?}, 主体: {:?}",
             response.status(),
             body
         );

@@ -173,7 +173,7 @@ impl ExtensionManifest {
 
         if !is_allowed {
             bail!(
-                "capability for process:exec {desired_command} {desired_args:?} was not listed in the extension manifest",
+                "process:exec {desired_command} {desired_args:?} 权限未在扩展清单中列出",
             );
         }
 
@@ -373,7 +373,7 @@ impl ExtensionManifest {
         let extension_manifest_path = extension_dir.join("extension.toml");
         if fs.is_file(&extension_manifest_path).await {
             let manifest_content = fs.load(&extension_manifest_path).await.with_context(|| {
-                format!("loading {extension_name} extension.toml, {extension_manifest_path:?}")
+                format!("正在加载 {extension_name} 扩展.toml, {extension_manifest_path:?}")
             })?;
             toml::from_str(&manifest_content).map_err(|err| {
                 anyhow!("Invalid extension.toml for extension {extension_name}:\n{err}")
@@ -382,7 +382,7 @@ impl ExtensionManifest {
             && fs.is_file(&extension_manifest_path).await
         {
             let manifest_content = fs.load(&extension_manifest_path).await.with_context(|| {
-                format!("loading {extension_name} extension.json, {extension_manifest_path:?}")
+                format!("正在加载 {extension_name} 扩展.json, {extension_manifest_path:?}")
             })?;
 
             serde_json::from_str::<OldExtensionManifest>(&manifest_content)

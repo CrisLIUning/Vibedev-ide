@@ -15,7 +15,12 @@ pub const EDITORCONFIG_NAME: &str = ".editorconfig";
 /// and state directory paths.
 ///
 /// Forks should change this to avoid colliding with Zed's user data.
-pub const APP_NAME: &str = "Zed";
+// VIBEDEV: isolates user data dirs (%APPDATA%\VibeDev, %LOCALAPPDATA%\VibeDev,
+// ~/.config/vibedev, ...) from a real Zed install. Paired with renaming the
+// binary to "vibedev" (crates/zed/Cargo.toml) — main.rs asserts
+// APP_NAME_LOWERCASE == CARGO_BIN_NAME. No auto-migration (the old "Zed" dir is
+// shared with real Zed); the sub2api login (~/.vibedev) is separate/unaffected.
+pub const APP_NAME: &str = "VibeDev";
 
 /// Lowercased form of [`APP_NAME`], for use in XDG-style paths on
 /// Linux/FreeBSD and the macOS `~/.config` fallback.
@@ -65,18 +70,18 @@ static CURRENT_DATA_DIR: OnceLock<PathBuf> = OnceLock::new();
 /// On Windows, this is `%APPDATA%\Zed`.
 static CONFIG_DIR: OnceLock<PathBuf> = OnceLock::new();
 
-/// Returns the relative path to the zed_server directory on the ssh host.
+/// Returns the relative path to the vibedev_server directory on the ssh host.
 pub fn remote_server_dir_relative() -> &'static RelPath {
     static CACHED: LazyLock<&'static RelPath> =
-        LazyLock::new(|| RelPath::unix(".zed_server").unwrap());
+        LazyLock::new(|| RelPath::unix(".vibedev_server").unwrap());
     *CACHED
 }
 
 // Remove this once 223 goes stable
-/// Returns the relative path to the zed_wsl_server directory on the wsl host.
+/// Returns the relative path to the vibedev_wsl_server directory on the wsl host.
 pub fn remote_wsl_server_dir_relative() -> &'static RelPath {
     static CACHED: LazyLock<&'static RelPath> =
-        LazyLock::new(|| RelPath::unix(".zed_wsl_server").unwrap());
+        LazyLock::new(|| RelPath::unix(".vibedev_wsl_server").unwrap());
     *CACHED
 }
 
@@ -177,7 +182,7 @@ pub fn state_dir() -> &'static PathBuf {
             return if let Ok(flatpak_xdg_state) = std::env::var("FLATPAK_XDG_STATE_HOME") {
                 flatpak_xdg_state.into()
             } else {
-                dirs::state_dir().expect("failed to determine XDG_STATE_HOME directory")
+                dirs::state_dir().expect("无法确定 XDG_STATE_HOME 目录")
             }
             .join(APP_NAME_LOWERCASE);
         } else {

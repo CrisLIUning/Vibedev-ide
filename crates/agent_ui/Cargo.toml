@@ -110,6 +110,7 @@ ui_input.workspace = true
 url.workspace = true
 util.workspace = true
 uuid.workspace = true
+vibedev_account.workspace = true
 watch.workspace = true
 workspace.workspace = true
 zed_actions.workspace = true

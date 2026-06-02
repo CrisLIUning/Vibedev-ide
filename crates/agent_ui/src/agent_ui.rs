@@ -151,7 +151,7 @@ pub(crate) fn open_abs_path_at_point(
     true
 }
 
-pub const DEFAULT_THREAD_TITLE: &str = "New Agent Thread";
+pub const DEFAULT_THREAD_TITLE: &str = "新建助手对话线程";
 const PARALLEL_AGENT_LAYOUT_BACKFILL_KEY: &str = "parallel_agent_layout_backfilled";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -243,7 +243,7 @@ actions!(
         ResetTrialUpsell,
         /// Resets the trial end upsell notification.
         ResetTrialEndUpsell,
-        /// Opens the "Add Context" menu in the message editor.
+        /// Opens the "添加上下文" menu in the message editor.
         OpenAddContextMenu,
         /// Interrupts the current generation and sends the message immediately.
         SendImmediately,
@@ -423,7 +423,7 @@ impl Agent {
 
     pub fn label(&self) -> SharedString {
         match self {
-            Self::NativeAgent => "Zed Agent".into(),
+            Self::NativeAgent => "VibeDev Agent".into(),
             Self::Custom { id, .. } => id.0.clone(),
             #[cfg(any(test, feature = "test-support"))]
             Self::Stub => "Stub Agent".into(),
@@ -694,6 +694,24 @@ fn update_command_palette_filter(cx: &mut App) {
         let open_rules_library_action = [TypeId::of::<zed_actions::assistant::OpenRulesLibrary>()];
         let open_skill_creator_action = [TypeId::of::<zed_actions::assistant::OpenSkillCreator>()];
 
+        // VIBEDEV: unconditionally hide command-palette entries that route
+        // through Zed's onboarding / pro / trial flows. These surface as
+        // confusing entries like "onboarding: finish", "onboarding: reset
+        // hints", "agent: reset onboarding", "zed predict onboarding: open
+        // zed predict onboarding" which have no product meaning on a VibeDev
+        // install. UI callers (e.g. the "Finish Setup" button in onboarding,
+        // or any keybind) still dispatch the actions directly — only the
+        // command-palette listing is suppressed. `zed::OpenOnboarding` (the
+        // "vibedev: open onboarding" entry) is preserved on purpose since
+        // VibeDev's own onboarding view is the recommended entry point.
+        filter.hide_namespace("onboarding");
+        filter.hide_namespace("zed_predict_onboarding");
+        filter.hide_action_types(&[
+            TypeId::of::<zed_actions::agent::ResetOnboarding>(),
+            TypeId::of::<zed_actions::agent::OpenOnboardingModal>(),
+            TypeId::of::<zed_actions::OpenZedPredictOnboarding>(),
+        ]);
+
         if disable_ai {
             filter.hide_namespace("agent");
             filter.hide_namespace("agents");
@@ -737,8 +755,17 @@ fn update_command_palette_filter(cx: &mut App) {
                 }
             }
 
-            filter.show_namespace("zed_predict_onboarding");
-            filter.show_action_types(&[TypeId::of::<zed_actions::OpenZedPredictOnboarding>()]);
+            // VIBEDEV: upstream un-hides zed_predict_onboarding namespace +
+            // its OpenZedPredictOnboarding action whenever disable_ai is
+            // false (i.e. normal install). That overrode our unconditional
+            // hide block at the top of this closure (added in d6bb7b85b9),
+            // so "zed predict onboarding: open zed predict onboarding"
+            // still showed up in the command palette. Drop those two
+            // show_* calls so our hide stays effective. If we ever want a
+            // VibeDev-branded "open onboarding" flow we'll wire it via
+            // zed::OpenOnboarding instead.
+            // filter.show_namespace("zed_predict_onboarding");
+            // filter.show_action_types(&[TypeId::of::<zed_actions::OpenZedPredictOnboarding>()]);
 
             filter.show_namespace("multi_workspace");
         }
@@ -893,7 +920,7 @@ mod tests {
             );
             assert!(
                 !filter.is_hidden(&NewTerminalThread),
-                "NewTerminalThread should be visible by default"
+                "NewTerminalThread 默认应该可见"
             );
         });
 
@@ -916,7 +943,7 @@ mod tests {
             );
             assert!(
                 filter.is_hidden(&NewTerminalThread),
-                "NewTerminalThread should be hidden when agent is disabled"
+                "NewTerminalThread 在 agent 禁用时应该隐藏"
             );
         });
 
@@ -1078,17 +1105,17 @@ mod tests {
     #[test]
     fn test_deserialize_new_external_agent_thread() {
         let action = serde_json::from_str::<NewExternalAgentThread>(r#"{"agent":"gemini"}"#)
-            .expect("should deserialize agent id");
+            .expect("应该能反序列化 agent id");
         assert_eq!(action.agent, AgentId::from("gemini"));
 
         let action = serde_json::from_str::<NewExternalAgentThread>(
             r#"{"agent":{"custom":{"name":"gemini"}}}"#,
         )
-        .expect("should deserialize legacy custom agent payload");
+        .expect("应该能反序列化旧版自定义 agent 负载");
         assert_eq!(action.agent, AgentId::from("gemini"));
 
         let action = serde_json::from_str::<NewExternalAgentThread>(r#"{"agent":"NativeAgent"}"#)
-            .expect("should deserialize legacy native agent payload");
+            .expect("应该能反序列化旧版原生 agent 负载");
         assert_eq!(action.agent, Agent::NativeAgent.id());
 
         assert!(serde_json::from_str::<NewExternalAgentThread>(r#"{}"#).is_err());

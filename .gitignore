@@ -55,3 +55,12 @@ crates/docs_preprocessor/actions.json
 # Local documentation audit files
 /december-2025-releases.md
 /docs/december-2025-documentation-gaps.md
+
+# VibeDev: Windows bundler (script/bundle-windows.ps1) build artifacts
+/inno/
+/conpty/
+/AGS_SDK-*/
+/AGS_SDK_*.zip
+*.nupkg
+# VibeDev: local build / test logs
+*.log

@@ -583,7 +583,7 @@ impl Interactivity {
     {
         debug_assert!(
             self.drag_listener.is_none(),
-            "calling on_drag more than once on the same element is not supported"
+            "不支持在同一个元素上多次调用 on_drag"
         );
         self.drag_listener = Some((
             Arc::new(value),
@@ -604,7 +604,7 @@ impl Interactivity {
     {
         debug_assert!(
             self.hover_listener.is_none(),
-            "calling on_hover more than once on the same element is not supported"
+            "不支持在同一个元素上多次调用 on_hover"
         );
         self.hover_listener = Some(Box::new(listener));
     }
@@ -617,7 +617,7 @@ impl Interactivity {
     {
         debug_assert!(
             self.tooltip_builder.is_none(),
-            "calling tooltip more than once on the same element is not supported"
+            "不支持在同一个元素上多次调用 tooltip"
         );
         self.tooltip_builder = Some(TooltipBuilder {
             build: Rc::new(build_tooltip),
@@ -636,7 +636,7 @@ impl Interactivity {
     {
         debug_assert!(
             self.tooltip_builder.is_none(),
-            "calling tooltip more than once on the same element is not supported"
+            "不支持在同一个元素上多次调用 tooltip"
         );
         self.tooltip_builder = Some(TooltipBuilder {
             build: Rc::new(build_tooltip),
@@ -750,7 +750,7 @@ pub trait InteractiveElement: Sized {
     fn hover(mut self, f: impl FnOnce(StyleRefinement) -> StyleRefinement) -> Self {
         debug_assert!(
             self.interactivity().hover_style.is_none(),
-            "hover style already set"
+            "悬停样式已设置"
         );
         self.interactivity().hover_style = Some(Box::new(f(StyleRefinement::default())));
         self
@@ -2161,7 +2161,7 @@ impl Interactivity {
                                     };
 
                                     eprintln!(
-                                        "This element was created at:\n{}:{}:{}",
+                                        "此元素创建于:\n{}:{}:{}",
                                         dir.join(source_location.file()).to_string_lossy(),
                                         source_location.line(),
                                         source_location.column()

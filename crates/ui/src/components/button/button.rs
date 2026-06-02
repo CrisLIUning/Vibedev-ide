@@ -26,7 +26,7 @@ use crate::{
 /// ```
 /// use ui::prelude::*;
 ///
-/// Button::new("button_id", "Click me!")
+/// Button::new("button_id", "点击我!")
 ///     .on_click(|event, window, cx| {
 ///         // Handle click event
 ///     });
@@ -39,7 +39,7 @@ use crate::{
 /// ```
 /// use ui::prelude::*;
 ///
-/// Button::new("button_id", "Click me!")
+/// Button::new("button_id", "点击我!")
 ///     .start_icon(Icon::new(IconName::Check))
 ///     .toggle_state(true)
 ///     .on_click(|event, window, cx| {
@@ -53,7 +53,7 @@ use crate::{
 /// use ui::prelude::*;
 /// use ui::TintColor;
 ///
-/// Button::new("button_id", "Click me!")
+/// Button::new("button_id", "点击我!")
 ///     .toggle_state(true)
 ///     .selected_style(ButtonStyle::Tinted(TintColor::Accent))
 ///     .on_click(|event, window, cx| {
@@ -68,7 +68,7 @@ use crate::{
 /// ```
 /// use ui::prelude::*;
 ///
-/// let button = Button::new("button_id", "Click me!")
+/// let button = Button::new("button_id", "点击我!")
 ///     .full_width()
 ///     .on_click(|event, window, cx| {
 ///         // Handle click event
@@ -210,7 +210,7 @@ impl Toggleable for Button {
     ///
     /// let selected = true;
     ///
-    /// Button::new("toggle_button", "Toggle Me")
+    /// Button::new("toggle_button", "切换我")
     ///     .start_icon(Icon::new(IconName::Check))
     ///     .toggle_state(selected)
     ///     .selected_style(ButtonStyle::Tinted(TintColor::Accent))
@@ -235,7 +235,7 @@ impl SelectableButton for Button {
     /// use ui::prelude::*;
     /// use ui::TintColor;
     ///
-    /// Button::new("styled_button", "Styled Button")
+    /// Button::new("styled_button", "样式化按钮")
     ///     .toggle_state(true)
     ///     .selected_style(ButtonStyle::Tinted(TintColor::Accent));
     /// ```
@@ -257,7 +257,7 @@ impl Disableable for Button {
     /// ```
     /// use ui::prelude::*;
     ///
-    /// Button::new("disabled_button", "Can't Click Me")
+    /// Button::new("disabled_button", "无法点击我")
     ///     .disabled(true);
     /// ```
     fn disabled(mut self, disabled: bool) -> Self {
@@ -291,7 +291,7 @@ impl FixedWidth for Button {
     /// ```
     /// use ui::prelude::*;
     ///
-    /// Button::new("fixed_width_button", "Fixed Width")
+    /// Button::new("fixed_width_button", "固定宽度")
     ///     .width(px(100.0));
     /// ```
     fn width(mut self, width: impl Into<DefiniteLength>) -> Self {
@@ -308,7 +308,7 @@ impl FixedWidth for Button {
     /// ```
     /// use ui::prelude::*;
     ///
-    /// Button::new("full_width_button", "Full Width")
+    /// Button::new("full_width_button", "全宽")
     ///     .full_width();
     /// ```
     fn full_width(mut self) -> Self {
@@ -343,8 +343,8 @@ impl ButtonCommon for Button {
     /// ```
     /// use ui::{Tooltip, prelude::*};
     ///
-    /// Button::new("tooltip_button", "Hover Me")
-    ///     .tooltip(Tooltip::text("This is a tooltip"));
+    /// Button::new("tooltip_button", "悬停在我上")
+    ///     .tooltip(Tooltip::text("这是一个工具提示"));
     /// ```
     fn tooltip(mut self, tooltip: impl Fn(&mut Window, &mut App) -> AnyView + 'static) -> Self {
         self.base = self.base.tooltip(tooltip);
@@ -449,7 +449,7 @@ impl Component for Button {
     }
 
     fn description() -> Option<&'static str> {
-        Some("A button triggers an event or action.")
+        Some("按钮用于触发事件或操作。")
     }
 
     fn preview(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
@@ -458,113 +458,113 @@ impl Component for Button {
                 .gap_6()
                 .children(vec![
                     example_group_with_title(
-                        "Button Styles",
+                        "按钮样式",
                         vec![
                             single_example(
-                                "Default",
-                                Button::new("default", "Default").into_any_element(),
+                                "默认",
+                                Button::new("default", "默认").into_any_element(),
                             ),
                             single_example(
-                                "Filled",
-                                Button::new("filled", "Filled")
+                                "填充",
+                                Button::new("filled", "填充")
                                     .style(ButtonStyle::Filled)
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Subtle",
-                                Button::new("outline", "Subtle")
+                                "淡雅",
+                                Button::new("outline", "淡雅")
                                     .style(ButtonStyle::Subtle)
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Tinted",
-                                Button::new("tinted_accent_style", "Accent")
+                                "着色",
+                                Button::new("tinted_accent_style", "强调")
                                     .style(ButtonStyle::Tinted(TintColor::Accent))
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Transparent",
-                                Button::new("transparent", "Transparent")
+                                "透明",
+                                Button::new("transparent", "透明")
                                     .style(ButtonStyle::Transparent)
                                     .into_any_element(),
                             ),
                         ],
                     ),
                     example_group_with_title(
-                        "Tint Styles",
+                        "色调样式",
                         vec![
                             single_example(
-                                "Accent",
-                                Button::new("tinted_accent", "Accent")
+                                "强调",
+                                Button::new("tinted_accent", "强调")
                                     .style(ButtonStyle::Tinted(TintColor::Accent))
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Error",
-                                Button::new("tinted_negative", "Error")
+                                "错误",
+                                Button::new("tinted_negative", "错误")
                                     .style(ButtonStyle::Tinted(TintColor::Error))
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Warning",
-                                Button::new("tinted_warning", "Warning")
+                                "警告",
+                                Button::new("tinted_warning", "警告")
                                     .style(ButtonStyle::Tinted(TintColor::Warning))
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Success",
-                                Button::new("tinted_positive", "Success")
+                                "成功",
+                                Button::new("tinted_positive", "成功")
                                     .style(ButtonStyle::Tinted(TintColor::Success))
                                     .into_any_element(),
                             ),
                         ],
                     ),
                     example_group_with_title(
-                        "Special States",
+                        "特殊状态",
                         vec![
                             single_example(
-                                "Default",
-                                Button::new("default_state", "Default").into_any_element(),
+                                "默认",
+                                Button::new("default_state", "默认").into_any_element(),
                             ),
                             single_example(
-                                "Disabled",
-                                Button::new("disabled", "Disabled")
+                                "已禁用",
+                                Button::new("disabled", "已禁用")
                                     .disabled(true)
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Selected",
-                                Button::new("selected", "Selected")
+                                "已选中",
+                                Button::new("selected", "已选中")
                                     .toggle_state(true)
                                     .into_any_element(),
                             ),
                         ],
                     ),
                     example_group_with_title(
-                        "Buttons with Icons",
+                        "带图标的按钮",
                         vec![
                             single_example(
-                                "Start Icon",
-                                Button::new("icon_start", "Start Icon")
+                                "起始图标",
+                                Button::new("icon_start", "起始图标")
                                     .start_icon(Icon::new(IconName::Check))
                                     .into_any_element(),
                             ),
                             single_example(
-                                "End Icon",
-                                Button::new("icon_end", "End Icon")
+                                "结束图标",
+                                Button::new("icon_end", "结束图标")
                                     .end_icon(Icon::new(IconName::Check))
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Both Icons",
-                                Button::new("both_icons", "Both Icons")
+                                "双图标",
+                                Button::new("both_icons", "双图标")
                                     .start_icon(Icon::new(IconName::Check))
                                     .end_icon(Icon::new(IconName::ChevronDown))
                                     .into_any_element(),
                             ),
                             single_example(
-                                "Icon Color",
-                                Button::new("icon_color", "Icon Color")
+                                "图标颜色",
+                                Button::new("icon_color", "图标颜色")
                                     .start_icon(Icon::new(IconName::Check).color(Color::Accent))
                                     .into_any_element(),
                             ),

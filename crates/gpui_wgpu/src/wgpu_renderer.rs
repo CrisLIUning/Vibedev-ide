@@ -164,13 +164,13 @@ impl WgpuRenderer {
     fn resources(&self) -> &WgpuResources {
         self.resources
             .as_ref()
-            .expect("GPU resources not available")
+            .expect("GPU 资源不可用")
     }
 
     fn resources_mut(&mut self) -> &mut WgpuResources {
         self.resources
             .as_mut()
-            .expect("GPU resources not available")
+            .expect("GPU 资源不可用")
     }
 
     /// Creates a new WgpuRenderer from raw window handles.
@@ -194,7 +194,7 @@ impl WgpuRenderer {
     {
         let window_handle = window
             .window_handle()
-            .map_err(|e| anyhow::anyhow!("Failed to get window handle: {e}"))?;
+            .map_err(|e| anyhow::anyhow!("获取窗口句柄失败: {e}"))?;
 
         let target = wgpu::SurfaceTargetUnsafe::RawHandle {
             // Fall back to the display handle already provided via InstanceDescriptor::display.
@@ -217,7 +217,7 @@ impl WgpuRenderer {
         let surface = unsafe {
             instance
                 .create_surface_unsafe(target)
-                .map_err(|e| anyhow::anyhow!("Failed to create surface: {e}"))?
+                .map_err(|e| anyhow::anyhow!("创建 Surface 失败: {e}"))?
         };
 
         let mut ctx_ref = gpu_context.borrow_mut();
@@ -250,7 +250,7 @@ impl WgpuRenderer {
         let surface = context
             .instance
             .create_surface(wgpu::SurfaceTarget::Canvas(canvas.clone()))
-            .map_err(|e| anyhow::anyhow!("Failed to create surface: {e}"))?;
+            .map_err(|e| anyhow::anyhow!("创建 Surface 失败: {e}"))?;
 
         let atlas = Arc::new(WgpuAtlas::from_context(context));
 
@@ -278,7 +278,7 @@ impl WgpuRenderer {
             .or_else(|| surface_caps.formats.first().copied())
             .ok_or_else(|| {
                 anyhow::anyhow!(
-                    "Surface reports no supported texture formats for adapter {:?}",
+                    "Surface 报告适配器 {:?} 不支持任何纹理格式",
                     context.adapter.get_info().name
                 )
             })?;
@@ -292,7 +292,7 @@ impl WgpuRenderer {
                     .or_else(|| surface_caps.alpha_modes.first().copied())
                     .ok_or_else(|| {
                         anyhow::anyhow!(
-                            "Surface reports no supported alpha modes for adapter {:?}",
+                            "Surface 报告适配器 {:?} 不支持任何 Alpha 模式",
                             context.adapter.get_info().name
                         )
                     })
@@ -969,7 +969,7 @@ impl WgpuRenderer {
                 submission_index: None,
                 timeout: None,
             }) {
-                warn!("Failed to poll device during resize: {e:?}");
+                warn!("调整大小时轮询设备失败: {e:?}");
             }
 
             // Destroy old textures before allocating new ones to avoid GPU memory spikes
@@ -1092,13 +1092,13 @@ impl WgpuRenderer {
         if let Some(error) = last_error {
             self.failed_frame_count += 1;
             log::error!(
-                "GPU error during frame (failure {} of 10): {error}",
+                "帧渲染期间发生 GPU 错误 (10 次中的第 {} 次): {error}",
                 self.failed_frame_count
             );
 
             // TBD. Does retrying more actually help?
             if self.failed_frame_count > 10 {
-                panic!("Too many consecutive GPU errors. Last error: {error}");
+                panic!("连续 GPU 错误过多。最后错误: {error}");
             } else if self.failed_frame_count > 5 {
                 if let Some(res) = self.resources.as_mut() {
                     res.invalidate_intermediate_textures();
@@ -1139,7 +1139,7 @@ impl WgpuRenderer {
             }
             wgpu::CurrentSurfaceTexture::Validation => {
                 *self.last_error.lock().unwrap() =
-                    Some("Surface texture validation error".to_string());
+                    Some("表面纹理验证错误".to_string());
                 return false;
             }
         };
@@ -1317,7 +1317,7 @@ impl WgpuRenderer {
                 drop(encoder);
                 if self.instance_buffer_capacity >= self.max_buffer_size {
                     log::error!(
-                        "instance buffer size grew too large: {}",
+                        "实例缓冲区大小增长过大: {}",
                         self.instance_buffer_capacity
                     );
                     frame.present();
@@ -1646,7 +1646,7 @@ impl WgpuRenderer {
 
     fn grow_instance_buffer(&mut self) {
         let new_capacity = (self.instance_buffer_capacity * 2).min(self.max_buffer_size);
-        log::info!("increased instance buffer size to {}", new_capacity);
+        log::info!("已将实例缓冲区大小增加到 {}", new_capacity);
         let resources = self.resources_mut();
         resources.instance_buffer = resources.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("instance_buffer"),
@@ -1715,7 +1715,7 @@ impl WgpuRenderer {
     ) -> anyhow::Result<()> {
         let window_handle = window
             .window_handle()
-            .map_err(|e| anyhow::anyhow!("Failed to get window handle: {e}"))?;
+            .map_err(|e| anyhow::anyhow!("获取窗口句柄失败: {e}"))?;
 
         let surface = create_surface(instance, window_handle.as_raw())?;
 
@@ -1739,7 +1739,7 @@ impl WgpuRenderer {
             let res = self
                 .resources
                 .as_mut()
-                .expect("GPU resources not available");
+                .expect("GPU 资源不可用");
             surface.configure(&res.device, &self.surface_config);
             res.surface = surface;
 
@@ -1781,7 +1781,7 @@ impl WgpuRenderer {
     where
         W: HasWindowHandle + HasDisplayHandle + std::fmt::Debug + Send + Sync + Clone + 'static,
     {
-        let gpu_context = self.context.as_ref().expect("recover requires gpu_context");
+        let gpu_context = self.context.as_ref().expect("recover 需要 gpu_context");
 
         // Check if another window already recovered the context
         let needs_new_context = gpu_context
@@ -1791,10 +1791,10 @@ impl WgpuRenderer {
 
         let window_handle = window
             .window_handle()
-            .map_err(|e| anyhow::anyhow!("Failed to get window handle: {e}"))?;
+            .map_err(|e| anyhow::anyhow!("获取窗口句柄失败: {e}"))?;
 
         let surface = if needs_new_context {
-            log::warn!("GPU device lost, recreating context...");
+            log::warn!("GPU 设备丢失,正在重建上下文...");
 
             // Drop old resources to release Arc<Device>/Arc<Queue> and GPU resources
             self.resources = None;
@@ -1828,7 +1828,7 @@ impl WgpuRenderer {
         };
         let gpu_context = Rc::clone(gpu_context);
         let ctx_ref = gpu_context.borrow();
-        let context = ctx_ref.as_ref().expect("context should exist");
+        let context = ctx_ref.as_ref().expect("上下文应存在");
 
         self.resources = None;
         self.atlas.handle_device_lost(context);
@@ -1842,7 +1842,7 @@ impl WgpuRenderer {
             self.atlas.clone(),
         )?;
 
-        log::info!("GPU recovery complete");
+        log::info!("GPU 恢复完成");
         Ok(())
     }
 }

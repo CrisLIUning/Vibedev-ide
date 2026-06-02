@@ -121,7 +121,7 @@ impl LspInstaller for CLspAdapter {
                         }
                     } else {
                         log::info!(
-                            "SHA-256 mismatch for {binary_path:?} asset, downloading new asset. Expected: {expected_digest}, Got: {actual_digest}"
+                            "{binary_path:?} 资源的 SHA-256 校验和不匹配,正在下载新资源。期望: {expected_digest}, 实际: {actual_digest}"
                         );
                     }
                 } else if validity_check().await.is_ok() {
@@ -163,7 +163,7 @@ fn ensure_arch_compatibility() -> Result<()> {
     let arch = consts::ARCH;
     if consts::OS == "linux" && !["x86_64", "x86"].contains(&arch) {
         anyhow::bail!(
-            "Clangd does not provide prebuilt binaries for {arch} to fetch from GitHub. Consider installing the binary manually."
+            "Clangd 未提供用于 {arch} 架构的预编译二进制文件,无法从 GitHub 获取。请考虑手动安装。"
         )
     }
     Ok(())
@@ -401,7 +401,7 @@ async fn get_cached_server_binary(container_dir: PathBuf) -> Option<LanguageServ
             .join(format!("clangd{}", consts::EXE_SUFFIX));
         anyhow::ensure!(
             clangd_bin.exists(),
-            "missing clangd binary in directory {clangd_dir:?}"
+            "目录 {clangd_dir:?} 中缺少 clangd 二进制文件"
         );
         Ok(LanguageServerBinary {
             path: clangd_bin,
@@ -444,7 +444,7 @@ mod tests {
             assert_eq!(
                 buffer.text(),
                 "int main() {\n  \n}",
-                "content inside braces should be indented"
+                "大括号内的内容应该缩进"
             );
 
             buffer
@@ -490,7 +490,7 @@ mod tests {
                 }
                 "#
                 .unindent(),
-                "body of if-statement without braces should be indented"
+                "不带大括号的 if 语句体应该缩进"
             );
 
             let ix = buffer.len() - 4;
@@ -505,7 +505,7 @@ mod tests {
                 }
                 "#
                 .unindent(),
-                "field expression (.c) should be indented further than the statement body"
+                "字段表达式 (.c) 的缩进应该比语句体更深"
             );
 
             buffer.edit([(0..buffer.len(), "")], Some(AutoindentMode::EachLine), cx);
@@ -532,7 +532,7 @@ mod tests {
                 }
                 "#
                 .unindent(),
-                "single-line if/else without braces should align at the same level"
+                "不带大括号的单行 if/else 应该在同一层级对齐"
             );
 
             buffer.edit([(0..buffer.len(), "")], Some(AutoindentMode::EachLine), cx);
@@ -563,7 +563,7 @@ mod tests {
                 }
                 "#
                 .unindent(),
-                "multi-line if/else without braces should indent statement bodies"
+                "不带大括号的多行 if/else 应该缩进语句体"
             );
 
             buffer.edit([(0..buffer.len(), "")], Some(AutoindentMode::EachLine), cx);
@@ -592,7 +592,7 @@ mod tests {
                 }
                 "#
                 .unindent(),
-                "nested if statements without braces should indent properly"
+                "不带大括号的嵌套 if 语句应该正确缩进"
             );
 
             buffer.edit([(0..buffer.len(), "")], Some(AutoindentMode::EachLine), cx);
@@ -627,7 +627,7 @@ mod tests {
                 }
                 "#
                 .unindent(),
-                "else-if chains should align all conditions at same level with indented bodies"
+                "else-if 链应该将所有条件在同一层级对齐,并缩进语句体"
             );
 
             buffer.edit([(0..buffer.len(), "")], Some(AutoindentMode::EachLine), cx);
@@ -658,7 +658,7 @@ mod tests {
                 }
                 "#
                 .unindent(),
-                "mixed braces should indent properly"
+                "混合使用大括号时应该正确缩进"
             );
 
             buffer

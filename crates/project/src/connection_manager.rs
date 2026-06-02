@@ -177,7 +177,7 @@ impl Manager {
                             }
 
                             log::info!(
-                                "waiting for client status change, remaining attempts {}",
+                                "等待客户端状态变更,剩余尝试次数 {}",
                                 remaining_attempts
                             );
                             client_status.next().await;

@@ -1,5 +1,7 @@
-// Folder-specific settings
+// VibeDev folder-specific settings
 //
-// For a full list of overridable settings, and general information on folder-specific settings,
-// see the documentation: https://zed.dev/docs/configuring-zed#settings-files
+// For a full list of overridable settings, and general information on
+// folder-specific settings, see the upstream documentation at
+// https://zed.dev/docs/configuring-zed#settings-files — VibeDev shares
+// the editor configuration surface.
 {}

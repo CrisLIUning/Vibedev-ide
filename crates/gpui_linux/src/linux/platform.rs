@@ -45,7 +45,7 @@ pub(crate) const KEYRING_LABEL: &str = "zed-github-account";
 
 #[cfg(any(feature = "wayland", feature = "x11"))]
 const FILE_PICKER_PORTAL_MISSING: &str =
-    "Couldn't open file picker due to missing xdg-desktop-portal implementation.";
+    "无法打开文件选择器,缺少 xdg-desktop-portal 实现。";
 
 pub(crate) trait LinuxClient {
     fn compositor_name(&self) -> &'static str;
@@ -68,7 +68,7 @@ pub(crate) trait LinuxClient {
         let (sources_tx, sources_rx) = oneshot::channel();
         sources_tx
             .send(Err(anyhow::anyhow!(
-                "gpui_linux was compiled without the screen-capture feature"
+                "gpui_linux 编译时未包含屏幕捕获功能"
             )))
             .ok();
         sources_rx
@@ -227,13 +227,13 @@ impl<P: LinuxClient + 'static> Platform for LinuxPlatform<P> {
             match self.app_path() {
                 Ok(path) => path,
                 Err(err) => {
-                    log::error!("Failed to get app path: {:?}", err);
+                    log::error!("获取应用路径失败: {:?}", err);
                     return;
                 }
             }
         };
 
-        log::info!("Restarting process, using app path: {:?}", app_path);
+        log::info!("正在重启进程,使用应用路径: {:?}", app_path);
 
         // Script to wait for the current process to exit and then restart the app.
         // Pass dynamic values as positional parameters to avoid shell interpolation issues.
@@ -260,7 +260,7 @@ impl<P: LinuxClient + 'static> Platform for LinuxPlatform<P> {
 
         match restart_process {
             Ok(_) => self.quit(),
-            Err(e) => log::error!("failed to spawn restart script: {:?}", e),
+            Err(e) => log::error!("无法启动重启脚本: {:?}", e),
         }
     }
 
@@ -341,9 +341,9 @@ impl<P: LinuxClient + 'static> Platform for LinuxPlatform<P> {
         self.foreground_executor()
             .spawn(async move {
                 let title = if options.directories {
-                    "Open Folder"
+                    "打开文件夹"
                 } else {
-                    "Open File"
+                    "打开文件"
                 };
 
                 let request = match ashpd::desktop::file_chooser::OpenFileRequest::default()
@@ -409,7 +409,7 @@ impl<P: LinuxClient + 'static> Platform for LinuxPlatform<P> {
                         ashpd::desktop::file_chooser::SaveFileRequest::default()
                             .identifier(identifier.await)
                             .modal(true)
-                            .title("Save File")
+                            .title("保存文件")
                             .current_folder(directory)
                             .expect("pathbuf should not be nul terminated");
 
@@ -578,7 +578,7 @@ impl<P: LinuxClient + 'static> Platform for LinuxPlatform<P> {
                     let attributes = item.attributes().await?;
                     let username = attributes
                         .get("username")
-                        .context("Cannot find username in stored credentials")?;
+                        .context("无法在存储的凭据中找到用户名")?;
                     item.unlock().await?;
                     let secret = item.secret().await?;
 
@@ -662,16 +662,16 @@ pub(super) fn open_uri_internal(
                         Ok(mut cmd) => match cmd.status().await {
                             Ok(status) if status.success() => return,
                             Ok(status) => {
-                                log::error!("Command {} exited with status: {}", program, status);
+                                log::error!("命令 {} 已退出,状态: {}", program, status);
                                 xdg_open_failed = true;
                             }
                             Err(e) => {
-                                log::error!("Failed to get status from {}: {}", program, e);
+                                log::error!("无法从 {} 获取状态: {}", program, e);
                                 xdg_open_failed = true;
                             }
                         },
                         Err(e) => {
-                            log::error!("Failed to open with {}: {}", program, e);
+                            log::error!("通过 {} 打开失败: {}", program, e);
                             xdg_open_failed = true;
                         }
                     }
@@ -687,7 +687,7 @@ pub(super) fn open_uri_internal(
                         Ok(()) => {}
                         Err(ashpd::Error::Response(ashpd::desktop::ResponseError::Cancelled)) => {}
                         Err(e) => {
-                            log::error!("Failed to open with dbus: {}", e);
+                            log::error!("通过 dbus 打开失败: {}", e);
                         }
                     }
                 }
@@ -711,7 +711,7 @@ pub(super) fn reveal_path_internal(
                     .await
                 {
                     Ok(_) => return,
-                    Err(e) => log::error!("Failed to open with dbus: {}", e),
+                    Err(e) => log::error!("通过 dbus 打开失败: {}", e),
                 }
                 if path.is_dir() {
                     open::that_detached(path).log_err();

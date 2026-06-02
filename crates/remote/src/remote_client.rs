@@ -443,7 +443,7 @@ impl RemoteClient {
                 match ready {
                     Ok(Some(_)) => {}
                     Ok(None) => {
-                        let mut error = "remote client exited before becoming ready".to_owned();
+                        let mut error = "远程客户端在就绪前已退出".to_owned();
                         if let Some(status) = io_task.now_or_never() {
                             match status {
                                 Ok(exit_code) => {
@@ -459,7 +459,7 @@ impl RemoteClient {
                     Err(_) => {
                         let mut error = String::new();
                         if let Some(status) = io_task.now_or_never() {
-                            error.push_str("Client exited with ");
+                            error.push_str("客户端退出,");
                             match status {
                                 Ok(exit_code) => {
                                     error.push_str(&format!("exit_code {exit_code:?}"))
@@ -467,7 +467,7 @@ impl RemoteClient {
                                 Err(e) => error.push_str(&format!("error {e:?}")),
                             }
                         } else {
-                            error.push_str("client did not become ready within the timeout");
+                            error.push_str("客户端未在超时时间内就绪");
                         }
                         let error = anyhow::anyhow!("{error}");
                         log::error!("failed to establish connection: {error}");
@@ -606,7 +606,7 @@ impl RemoteClient {
         let attempts = attempts + 1;
         if attempts > MAX_RECONNECT_ATTEMPTS {
             log::error!(
-                "Failed to reconnect to after {} attempts, giving up",
+                "重连失败,已尝试 {} 次,放弃重连",
                 MAX_RECONNECT_ATTEMPTS
             );
             self.set_state(State::ReconnectExhausted, cx);
@@ -616,7 +616,7 @@ impl RemoteClient {
         self.set_state(State::Reconnecting, cx);
 
         log::info!(
-            "Trying to reconnect to remote server... Attempt {}",
+            "正在尝试重连到远程服务器... 第 {} 次尝试",
             attempts
         );
 
@@ -708,7 +708,7 @@ impl RemoteClient {
                                 error, attempts, ..
                             } => {
                                 log::error!(
-                                    "Reconnect attempt {} failed: {:?}. Starting new attempt...",
+                                    "第 {} 次重连尝试失败: {:?}。正在开始新的尝试...",
                                     attempts,
                                     error
                                 );
@@ -824,7 +824,7 @@ impl RemoteClient {
 
         if missed_heartbeats >= MAX_MISSED_HEARTBEATS {
             log::error!(
-                "Missed last {} heartbeats. Reconnecting...",
+                "已连续丢失 {} 次心跳。正在重连...",
                 missed_heartbeats
             );
 
@@ -865,7 +865,7 @@ impl RemoteClient {
                 }
                 Err(error) => {
                     log::warn!(
-                        "remote io task died with error: {:?}. reconnecting...",
+                        "远程 IO 任务因错误终止: {:?}。正在重连...",
                         error
                     );
                     this.update(cx, |this, cx| {
@@ -1133,7 +1133,7 @@ impl RemoteClient {
         use crate::transport::mock::MockConnection;
         let mock_opts = match opts {
             RemoteConnectionOptions::Mock(mock_opts) => mock_opts.clone(),
-            _ => panic!("fake_server_with_opts requires Mock connection options"),
+            _ => panic!("fake_server_with_opts 需要 Mock 连接选项"),
         };
         MockConnection::new_with_opts(mock_opts, client_cx, server_cx)
     }
@@ -1202,7 +1202,7 @@ impl ConnectionPool {
                 if let Some(task) = task.upgrade() {
                     log::debug!("Connecting task is still alive");
                     cx.spawn(async move |cx| {
-                        delegate.set_status(Some("Waiting for existing connection attempt"), cx)
+                        delegate.set_status(Some("正在等待现有的连接尝试"), cx)
                     })
                     .detach();
                     return task;

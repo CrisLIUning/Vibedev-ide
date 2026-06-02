@@ -60,8 +60,8 @@ impl Display for BaseKeymap {
             BaseKeymap::SublimeText => write!(f, "Sublime Text"),
             BaseKeymap::Atom => write!(f, "Atom"),
             BaseKeymap::TextMate => write!(f, "TextMate"),
-            BaseKeymap::Emacs => write!(f, "Emacs (beta)"),
-            BaseKeymap::Cursor => write!(f, "Cursor (beta)"),
+            BaseKeymap::Emacs => write!(f, "Emacs (测试版)"),
+            BaseKeymap::Cursor => write!(f, "Cursor (测试版)"),
             BaseKeymap::None => write!(f, "None"),
         }
     }
@@ -70,23 +70,23 @@ impl Display for BaseKeymap {
 impl BaseKeymap {
     #[cfg(target_os = "macos")]
     pub const OPTIONS: [(&'static str, Self); 7] = [
-        ("VS Code (Default)", Self::VSCode),
+        ("VS Code (默认)", Self::VSCode),
         ("Atom", Self::Atom),
         ("JetBrains", Self::JetBrains),
         ("Sublime Text", Self::SublimeText),
-        ("Emacs (beta)", Self::Emacs),
+        ("Emacs (测试版)", Self::Emacs),
         ("TextMate", Self::TextMate),
-        ("Cursor", Self::Cursor),
+        ("光标", Self::Cursor),
     ];
 
     #[cfg(not(target_os = "macos"))]
     pub const OPTIONS: [(&'static str, Self); 6] = [
-        ("VS Code (Default)", Self::VSCode),
+        ("VS Code (默认)", Self::VSCode),
         ("Atom", Self::Atom),
         ("JetBrains", Self::JetBrains),
         ("Sublime Text", Self::SublimeText),
-        ("Emacs (beta)", Self::Emacs),
-        ("Cursor", Self::Cursor),
+        ("Emacs (测试版)", Self::Emacs),
+        ("光标", Self::Cursor),
     ];
 
     pub fn asset_path(&self) -> Option<&'static str> {

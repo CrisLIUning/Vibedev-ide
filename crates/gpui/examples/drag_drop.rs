@@ -46,7 +46,7 @@ impl Render for DragInfo {
                     .text_color(gpui::white())
                     .text_xs()
                     .shadow_md()
-                    .child(format!("Item {}", self.ix)),
+                    .child(format!("项目 {}", self.ix)),
             )
     }
 }
@@ -74,7 +74,7 @@ impl Render for DragDrop {
             .justify_center()
             .items_center()
             .text_color(rgb(0x333333))
-            .child(div().text_xl().text_center().child("Drop & Drop"))
+            .child(div().text_xl().text_center().child("拖放"))
             .child(
                 div()
                     .w_full()
@@ -98,7 +98,7 @@ impl Render for DragDrop {
                             .text_color(color)
                             .cursor_move()
                             .hover(|this| this.bg(color.opacity(0.2)))
-                            .child(format!("Item ({})", ix))
+                            .child(format!("项目 ({})", ix))
                             .on_drag(drag_info, |info: &DragInfo, position, _, cx| {
                                 cx.new(|_| info.position(position))
                             })
@@ -118,7 +118,7 @@ impl Render for DragDrop {
                     .on_drop(cx.listener(|this, info: &DragInfo, _, _| {
                         this.drop_on = Some(*info);
                     }))
-                    .child("Drop items here"),
+                    .child("将项目拖放到此处"),
             )
     }
 }

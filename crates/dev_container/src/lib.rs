@@ -368,7 +368,7 @@ impl PickerDelegate for TemplatePickerDelegate {
                     .get(self.selected_index)
                     .and_then(|ix| self.candidate_templates.get(*ix))
                 else {
-                    log::error!("Selected index not in range of known matches");
+                    log::error!("所选索引不在已知匹配项范围内");
                     return;
                 };
                 fun(confirmed_entry.clone(), modal, window, cx);
@@ -419,7 +419,7 @@ impl PickerDelegate for TemplatePickerDelegate {
                 .border_t_1()
                 .border_color(cx.theme().colors().border_variant)
                 .child(
-                    Button::new("run-action", "Continue")
+                    Button::new("run-action", "继续")
                         .key_binding(
                             KeyBinding::for_action(&menu::Confirm, cx)
                                 .map(|kb| kb.size(rems_from_px(12.))),
@@ -548,7 +548,7 @@ impl PickerDelegate for FeaturePickerDelegate {
                 .get(self.selected_index)
                 .and_then(|ix| self.candidate_features.get_mut(*ix))
             else {
-                log::error!("Selected index not in range of matches");
+                log::error!("所选索引不在匹配项范围内");
                 return;
             };
             current.toggle_state = match current.toggle_state {
@@ -612,7 +612,7 @@ impl PickerDelegate for FeaturePickerDelegate {
                 .border_t_1()
                 .border_color(cx.theme().colors().border_variant)
                 .child(
-                    Button::new("run-action", "Select Feature")
+                    Button::new("run-action", "选择特性")
                         .key_binding(
                             KeyBinding::for_action(&menu::Confirm, cx)
                                 .map(|kb| kb.size(rems_from_px(12.))),
@@ -622,7 +622,7 @@ impl PickerDelegate for FeaturePickerDelegate {
                         }),
                 )
                 .child(
-                    Button::new("run-action-secondary", "Confirm Selections")
+                    Button::new("run-action-secondary", "确认选择")
                         .key_binding(
                             KeyBinding::for_action(&menu::SecondaryConfirm, cx)
                                 .map(|kb| kb.size(rems_from_px(12.))),
@@ -656,7 +656,7 @@ impl DevContainerModal {
                 .child(
                     div().track_focus(&self.focus_handle).child(
                         ModalHeader::new().child(
-                            Headline::new("Create Dev Container").size(HeadlineSize::XSmall),
+                            Headline::new("创建开发容器").size(HeadlineSize::XSmall),
                         ),
                     ),
                 )
@@ -685,7 +685,7 @@ impl DevContainerModal {
                                     );
                                     cx.notify();
                                 }))
-                                .child(Label::new("Search for Dev Container Templates")),
+                                .child(Label::new("搜索开发容器模板")),
                         ),
                 )
                 .into_any_element(),
@@ -751,7 +751,7 @@ impl DevContainerModal {
                         .child(
                             ModalHeader::new()
                                 .child(
-                                    Headline::new("Template Option: ").size(HeadlineSize::XSmall),
+                                    Headline::new("模板选项: ").size(HeadlineSize::XSmall),
                                 )
                                 .child(
                                     Headline::new(&next_option_entries.option_name)
@@ -831,7 +831,7 @@ impl DevContainerModal {
                                     this.accept_message(DevContainerMessage::GoBack, window, cx);
                                     cx.notify();
                                 }))
-                                .child(Label::new("Go Back")),
+                                .child(Label::new("返回")),
                         ),
                 )
                 .into_any_element(),
@@ -873,7 +873,7 @@ impl DevContainerModal {
                         ModalHeader::new()
                             .icon(Icon::new(IconName::Warning).color(Color::Warning))
                             .child(
-                                Headline::new("Overwrite Existing Configuration?")
+                                Headline::new("覆盖现有配置?")
                                     .size(HeadlineSize::XSmall),
                             ),
                     ),
@@ -909,7 +909,7 @@ impl DevContainerModal {
                                     );
                                     cx.notify();
                                 }))
-                                .child(Label::new("Overwrite")),
+                                .child(Label::new("覆盖")),
                         ),
                 )
                 .child(
@@ -930,7 +930,7 @@ impl DevContainerModal {
                                     this.dismiss(&menu::Cancel, window, cx);
                                     cx.notify();
                                 }))
-                                .child(Label::new("Cancel")),
+                                .child(Label::new("取消")),
                         ),
                 )
                 .into_any_element(),
@@ -947,7 +947,7 @@ impl DevContainerModal {
                 .child(
                     div().track_focus(&self.focus_handle).child(
                         ModalHeader::new().child(
-                            Headline::new("Create Dev Container").size(HeadlineSize::XSmall),
+                            Headline::new("创建开发容器").size(HeadlineSize::XSmall),
                         ),
                     ),
                 )
@@ -962,7 +962,7 @@ impl DevContainerModal {
                                     .color(Color::Muted)
                                     .with_rotate_animation(2),
                             )
-                            .child(Label::new("Querying template registry...")),
+                            .child(Label::new("正在查询模板注册表...")),
                     ),
                 )
                 .child(ListSeparator)
@@ -984,7 +984,7 @@ impl DevContainerModal {
                                     this.accept_message(DevContainerMessage::GoBack, window, cx);
                                     cx.notify();
                                 }))
-                                .child(Label::new("Go Back")),
+                                .child(Label::new("返回")),
                         ),
                 )
                 .into_any_element(),
@@ -999,7 +999,7 @@ impl DevContainerModal {
                 .child(
                     div().track_focus(&self.focus_handle).child(
                         ModalHeader::new().child(
-                            Headline::new("Create Dev Container").size(HeadlineSize::XSmall),
+                            Headline::new("创建开发容器").size(HeadlineSize::XSmall),
                         ),
                     ),
                 )
@@ -1014,7 +1014,7 @@ impl DevContainerModal {
                                     .color(Color::Muted)
                                     .with_rotate_animation(2),
                             )
-                            .child(Label::new("Querying features...")),
+                            .child(Label::new("正在查询特性...")),
                     ),
                 )
                 .child(ListSeparator)
@@ -1036,7 +1036,7 @@ impl DevContainerModal {
                                     this.accept_message(DevContainerMessage::GoBack, window, cx);
                                     cx.notify();
                                 }))
-                                .child(Label::new("Go Back")),
+                                .child(Label::new("返回")),
                         ),
                 )
                 .into_any_element(),
@@ -1078,13 +1078,13 @@ impl StatefulModal for DevContainerModal {
                 self.render_confirming_write_dev_container(template_entry, window, cx)
             }
             DevContainerState::TemplateWriteFailed(dev_container_error) => self.render_error(
-                "Error Creating Dev Container Definition".to_string(),
+                "创建开发容器定义时出错".to_string(),
                 dev_container_error,
                 window,
                 cx,
             ),
             DevContainerState::TemplateQueryReturned(Err(e)) => {
-                self.render_error("Error Retrieving Templates".to_string(), e, window, cx)
+                self.render_error("获取模板时出错".to_string(), e, window, cx)
             }
         }
     }
@@ -1158,7 +1158,7 @@ impl StatefulModal for DevContainerModal {
                     .collect::<Vec<TemplateEntry>>();
                 if self.state == DevContainerState::QueryingTemplates {
                     let delegate = TemplatePickerDelegate::new(
-                        "Select a template".to_string(),
+                        "选择模板".to_string(),
                         cx.weak_entity(),
                         items.clone(),
                         Box::new(|entry, this, window, cx| {
@@ -1289,7 +1289,7 @@ impl StatefulModal for DevContainerModal {
                         })
                         .collect::<Vec<FeatureEntry>>();
                     let delegate = FeaturePickerDelegate::new(
-                        "Select features to add".to_string(),
+                        "选择要添加的特性".to_string(),
                         cx.weak_entity(),
                         features,
                         template_entry.clone(),
@@ -1573,7 +1573,7 @@ fn dispatch_apply_templates(
                     .update_in(cx, |workspace, window, cx| {
                         let Ok(path) = RelPath::unix(".devcontainer/devcontainer.json") else {
                             return Task::ready(Err(anyhow!(
-                                "Couldn't create path for .devcontainer/devcontainer.json"
+                                "无法为 .devcontainer/devcontainer.json 创建路径"
                             )));
                         };
                         workspace.open_path((tree_id, path), None, true, window, cx)

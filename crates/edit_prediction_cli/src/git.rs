@@ -35,7 +35,7 @@ pub async fn run_git(repo_path: &Path, args: &[&str]) -> Result<String> {
 
     anyhow::ensure!(
         output.status.success(),
-        "`git {}` within `{}` failed with status: {}\nstderr:\n{}\nstdout:\n{}",
+        "`git {}` 在 `{}` 中失败,状态: {}\nstderr:\n{}\nstdout:\n{}",
         args.join(" "),
         repo_path.display(),
         output.status,

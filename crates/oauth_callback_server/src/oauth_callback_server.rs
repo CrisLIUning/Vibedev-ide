@@ -204,15 +204,15 @@ mod server {
 
             if let Some(error_code) = error {
                 anyhow::bail!(
-                    "OAuth authorization failed: {} ({})",
+                    "OAuth 授权失败:{} ({})",
                     error_code,
-                    error_description.as_deref().unwrap_or("no description")
+                    error_description.as_deref().unwrap_or("无描述")
                 );
             }
 
-            let code = code.ok_or_else(|| anyhow!("missing 'code' parameter in OAuth callback"))?;
+            let code = code.ok_or_else(|| anyhow!("OAuth 回调中缺少 'code' 参数"))?;
             let state =
-                state.ok_or_else(|| anyhow!("missing 'state' parameter in OAuth callback"))?;
+                state.ok_or_else(|| anyhow!("OAuth 回调中缺少 'state' 参数"))?;
 
             Ok(Self { code, state })
         }
@@ -248,7 +248,7 @@ mod server {
         let port = server
             .server_addr()
             .to_ip()
-            .ok_or_else(|| anyhow!("server not bound to a TCP address"))?
+            .ok_or_else(|| anyhow!("服务器未绑定到 TCP 地址"))?
             .port();
 
         let redirect_uri = format!("http://{}:{}{}", config.host, port, config.path);
@@ -272,7 +272,7 @@ mod server {
                 let Some(request) = (match server.recv_timeout(timeout) {
                     Ok(req) => req,
                     Err(_) => {
-                        let _ = tx.send(Err(anyhow!("OAuth callback server I/O error")));
+                        let _ = tx.send(Err(anyhow!("OAuth 回调服务器 I/O 错误")));
                         return;
                     }
                 }) else {
@@ -282,21 +282,21 @@ mod server {
                 let raw_url = request.url().to_string();
                 let raw_path = raw_url.split('?').next().unwrap_or(&raw_url);
                 if raw_path == CANCEL_PATH {
-                    let response = tiny_http::Response::from_string("Cancelled")
+                    let response = tiny_http::Response::from_string("已取消")
                         .with_status_code(200)
                         .with_header(
                             tiny_http::Header::from_str("Content-Type: text/plain")
-                                .expect("failed to construct response header"),
+                                .expect("构造响应头失败"),
                         )
                         .with_header(
                             tiny_http::Header::from_str("Connection: close")
-                                .expect("failed to construct response header"),
+                                .expect("构造响应头失败"),
                         );
                     if let Err(err) = request.respond(response) {
-                        log::error!("Failed to send OAuth cancel response: {}", err);
+                        log::error!("发送 OAuth 取消响应失败:{}", err);
                     }
                     let _ = tx.send(Err(anyhow!(
-                        "OAuth callback server was cancelled by another sign-in attempt"
+                        "OAuth 回调服务器已被其他登录尝试取消"
                     )));
                     return;
                 }
@@ -307,18 +307,18 @@ mod server {
                     Ok(_) => (
                         200,
                         oauth_callback_page(
-                            "Authorization Successful",
-                            "You can close this tab and return to Zed.",
+                            "授权成功",
+                            "您可以关闭此标签页并返回 VibeDev。",
                             false,
                         ),
                     ),
                     Err(err) => {
-                        log::error!("OAuth callback error: {}", err);
+                        log::error!("OAuth 回调错误:{}", err);
                         (
                             400,
                             oauth_callback_page(
-                                "Authorization Failed",
-                                "Something went wrong. Please try again from Zed.",
+                                "授权失败",
+                                "出现问题,请从 VibeDev 重试。",
                                 true,
                             ),
                         )
@@ -329,14 +329,14 @@ mod server {
                     .with_status_code(status_code)
                     .with_header(
                         tiny_http::Header::from_str("Content-Type: text/html")
-                            .expect("failed to construct response header"),
+                            .expect("构造响应头失败"),
                     )
                     .with_header(
                         tiny_http::Header::from_str("Keep-Alive: timeout=0,max=0")
-                            .expect("failed to construct response header"),
+                            .expect("构造响应头失败"),
                     );
                 if let Err(err) = request.respond(response) {
-                    log::error!("Failed to send OAuth callback response: {}", err);
+                    log::error!("发送 OAuth 回调响应失败:{}", err);
                 }
 
                 let _ = tx.send(result);
@@ -352,15 +352,15 @@ mod server {
         expected_path: &str,
     ) -> Result<OAuthCallbackParams> {
         let url = Url::parse(&format!("http://localhost{}", request.url()))
-            .context("malformed callback request URL")?;
+            .context("回调请求 URL 格式错误")?;
 
         if url.path() != expected_path {
-            anyhow::bail!("unexpected path in OAuth callback: {}", url.path());
+            anyhow::bail!("OAuth 回调中出现意外路径:{}", url.path());
         }
 
         let query = url
             .query()
-            .ok_or_else(|| anyhow!("OAuth callback has no query string"))?;
+            .ok_or_else(|| anyhow!("OAuth 回调没有查询字符串"))?;
         OAuthCallbackParams::parse_query(query)
     }
 
@@ -378,7 +378,7 @@ mod server {
             let addr = format!("{}:0", config.host);
             return tiny_http::Server::http(&addr).map_err(|err| {
                 anyhow!(err).context(format!(
-                    "Failed to bind loopback listener for OAuth callback on {addr}"
+                    "绑定环回监听器失败(OAuth 回调):{addr}"
                 ))
             });
         }
@@ -388,19 +388,19 @@ mod server {
             Err(primary_err) => {
                 let Some(fallback_port) = config.fallback_port else {
                     return Err(primary_err.context(format!(
-                        "Failed to bind loopback listener for OAuth callback on {}:{}",
+                        "绑定环回监听器失败(OAuth 回调):{}:{}",
                         config.host, config.preferred_port,
                     )));
                 };
                 log::warn!(
-                    "OAuth callback port {}:{} unavailable; falling back to port {}",
+                    "OAuth 回调端口 {}:{} 不可用,回退到端口 {}",
                     config.host,
                     config.preferred_port,
                     fallback_port,
                 );
                 try_bind_with_cancel(config.host, fallback_port).map_err(|fallback_err| {
                     fallback_err.context(format!(
-                        "Failed to bind loopback listener for OAuth callback on {}:{} or {}:{}",
+                        "绑定环回监听器失败(OAuth 回调):{}:{} 或 {}:{}",
                         config.host, config.preferred_port, config.host, fallback_port,
                     ))
                 })
@@ -427,7 +427,7 @@ mod server {
 
                     if !is_addr_in_use {
                         return Err(anyhow!(err).context(format!(
-                            "Failed to bind loopback listener for OAuth callback on {addr}"
+                            "绑定环回监听器失败(OAuth 回调):{addr}"
                         )));
                     }
 
@@ -435,7 +435,7 @@ mod server {
                         cancel_attempted = true;
                         if let Err(cancel_err) = send_cancel_request(host, port) {
                             log::warn!(
-                                "Failed to cancel previous OAuth callback server on {addr}: {cancel_err}"
+                                "取消之前的 OAuth 回调服务器失败:{addr}:{cancel_err}"
                             );
                         }
                     }
@@ -447,7 +447,7 @@ mod server {
         }
 
         Err(last_err
-            .unwrap_or_else(|| anyhow!("unknown bind error"))
+            .unwrap_or_else(|| anyhow!("未知绑定错误"))
             .context(format!(
                 "OAuth callback port {addr} remained in use after {BIND_MAX_ATTEMPTS} attempts"
             )))
@@ -467,7 +467,7 @@ mod server {
             .ok_or_else(|| {
                 std::io::Error::new(
                     std::io::ErrorKind::InvalidInput,
-                    format!("could not resolve {host}:{port}"),
+                    format!("无法解析 {host}:{port}"),
                 )
             })?;
         let mut stream = TcpStream::connect_timeout(&addr, CANCEL_REQUEST_TIMEOUT)?;

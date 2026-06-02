@@ -29,8 +29,8 @@ async fn registry_refresh_times_out_when_fetch_never_completes(cx: &mut TestAppC
         assert!(
             store
                 .fetch_error()
-                .is_some_and(|error| error.contains("timed out after 30s")),
-            "expected registry fetch timeout error, got {:?}",
+                .is_some_and(|error| error.contains("获取注册表超时(30秒)")),
+            "期望获取注册表超时错误,实际得到 {:?}",
             store.fetch_error()
         );
     });
@@ -53,9 +53,9 @@ async fn registry_refresh_does_not_block_sequentially_on_hung_icon_downloads(
                         "agents": [
                             {
                                 "id": "slow-icon-a",
-                                "name": "Slow Icon A",
+                                "name": "慢速图标 A",
                                 "version": "1.0.0",
-                                "description": "An agent with a slow icon.",
+                                "description": "一个带有慢速图标的助手。",
                                 "icon": "https://example.test/slow-icon-a.svg",
                                 "distribution": {
                                     "npx": {
@@ -65,9 +65,9 @@ async fn registry_refresh_does_not_block_sequentially_on_hung_icon_downloads(
                             },
                             {
                                 "id": "slow-icon-b",
-                                "name": "Slow Icon B",
+                                "name": "慢速图标 B",
                                 "version": "1.0.0",
-                                "description": "Another agent with a slow icon.",
+                                "description": "另一个带有慢速图标的助手。",
                                 "icon": "https://example.test/slow-icon-b.svg",
                                 "distribution": {
                                     "npx": {
@@ -77,9 +77,9 @@ async fn registry_refresh_does_not_block_sequentially_on_hung_icon_downloads(
                             },
                             {
                                 "id": "slow-icon-c",
-                                "name": "Slow Icon C",
+                                "name": "慢速图标 C",
                                 "version": "1.0.0",
-                                "description": "A third agent with a slow icon.",
+                                "description": "第三个带有慢速图标的助手。",
                                 "icon": "https://example.test/slow-icon-c.svg",
                                 "distribution": {
                                     "npx": {

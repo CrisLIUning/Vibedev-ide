@@ -6,15 +6,15 @@ pub use telemetry_events::FlexibleEvent as Event;
 
 /// Macro to create telemetry events and send them to the telemetry queue.
 ///
-/// By convention, the name should be "Noun Verbed", e.g. "Keymap Changed"
-/// or "Project Diagnostics Opened".
+/// By convention, the name should be "名词 动词", e.g. "键位映射已更改"
+/// or "项目诊断已打开".
 ///
 /// The properties can be any value that implements serde::Serialize.
 ///
 /// ```
 /// # let url = "https://example.com";
-/// telemetry::event!("Keymap Changed", version = "1.0.0");
-/// telemetry::event!("Documentation Viewed", url, source = "Extension Upsell");
+/// telemetry::event!("键位映射已更改", version = "1.0.0");
+/// telemetry::event!("文档已查看", url, source = "扩展推广");
 /// ```
 ///
 /// If you want to debug logging in development, export `RUST_LOG=telemetry=trace`

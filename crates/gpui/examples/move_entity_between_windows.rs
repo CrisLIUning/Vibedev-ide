@@ -73,7 +73,7 @@ impl HelloWorld {
                         },
                         move |_, _| entity,
                     )
-                    .expect("failed to open new window");
+                    .expect("无法打开新窗口");
                     old_window
                         .update(cx, |_, window, _| window.remove_window())
                         .ok();
@@ -82,7 +82,7 @@ impl HelloWorld {
         );
 
         Self {
-            text: "World".into(),
+            text: "世界".into(),
             tick_count: 0,
             move_count: 0,
             _tasks: vec![task],
@@ -105,17 +105,17 @@ impl Render for HelloWorld {
             .items_center()
             .text_xl()
             .text_color(rgb(0xffffff))
-            .child(format!("Hello, {}!", &self.text))
-            .child(format!("Rendering in window: {window_id}"))
-            .child(format!("Ticks observed by entity: {}", self.tick_count))
-            .child(format!("Moves observed by entity: {}", self.move_count))
+            .child(format!("你好,{}!", &self.text))
+            .child(format!("正在窗口 {window_id} 中渲染"))
+            .child(format!("实体观察到的 tick 次数:{}", self.tick_count))
+            .child(format!("实体观察到的移动次数:{}", self.move_count))
             .child(
                 div()
                     .px_4()
                     .py_2()
                     .bg(rgb(0x4040ff))
                     .rounded_md()
-                    .child("Move me to a new window")
+                    .child("移动到新窗口")
                     .on_mouse_down(
                         MouseButton::Left,
                         cx.listener(|_this, _, _window, cx| {

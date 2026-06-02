@@ -317,14 +317,14 @@ impl BatchingLlmClient {
             .map_err(|e| anyhow::anyhow!("Failed to retrieve batch {}: {:?}", batch_id, e))?;
 
             log::info!(
-                "Batch {} status: {}",
+                "批次 {} 状态: {}",
                 batch_id,
                 batch_status.processing_status
             );
 
             if batch_status.processing_status != "ended" {
                 log::warn!(
-                    "Batch {} is not finished (status: {}), skipping",
+                    "批次 {} 未完成 (状态: {}), 跳过",
                     batch_id,
                     batch_status.processing_status
                 );
@@ -361,7 +361,7 @@ impl BatchingLlmClient {
                     }
                     anthropic::batches::BatchResult::Errored { error } => {
                         log::error!(
-                            "Batch request {} failed: {}: {}",
+                            "批次请求 {} 失败: {}: {}",
                             request_hash,
                             error.error.error_type,
                             error.error.message
@@ -407,7 +407,7 @@ impl BatchingLlmClient {
             })?;
 
             log::info!(
-                "Imported batch {}: {} successful, {} errors",
+                "已导入批次 {}: {} 个成功, {} 个错误",
                 batch_id,
                 success_count,
                 error_count
@@ -435,7 +435,7 @@ impl BatchingLlmClient {
             .map_err(|e| anyhow::anyhow!("{:?}", e))?;
 
             log::info!(
-                "Batch {} status: {}",
+                "批次 {} 状态: {}",
                 batch_id,
                 batch_status.processing_status
             );
@@ -467,7 +467,7 @@ impl BatchingLlmClient {
                         }
                         anthropic::batches::BatchResult::Errored { error } => {
                             log::error!(
-                                "Batch request {} failed: {}: {}",
+                                "批次请求 {} 失败: {}: {}",
                                 request_hash,
                                 error.error.error_type,
                                 error.error.message
@@ -486,7 +486,7 @@ impl BatchingLlmClient {
                             let error_json = serde_json::json!({
                                 "error": {
                                     "type": "canceled",
-                                    "message": "Batch request was canceled"
+                                    "message": "批次请求已取消"
                                 }
                             })
                             .to_string();
@@ -497,7 +497,7 @@ impl BatchingLlmClient {
                             let error_json = serde_json::json!({
                                 "error": {
                                     "type": "expired",
-                                    "message": "Batch request expired"
+                                    "message": "批次请求已过期"
                                 }
                             })
                             .to_string();
@@ -636,7 +636,7 @@ impl BatchingLlmClient {
 
                 let batch_len = batch_requests.len();
                 log::info!(
-                    "Uploading batch with {} requests (~{:.2} MB)",
+                    "正在上传包含 {} 个请求的批次 (~{:.2} MB)",
                     batch_len,
                     batch_size as f64 / (1024.0 * 1024.0)
                 );
@@ -666,7 +666,7 @@ impl BatchingLlmClient {
 
                 total_uploaded += batch_len;
                 log::info!(
-                    "Uploaded batch {} with {} requests ({} total)",
+                    "已上传批次 {} 包含 {} 个请求 (共 {} 个)",
                     batch.id,
                     batch_len,
                     total_uploaded
@@ -687,7 +687,7 @@ impl BatchingLlmClient {
 
             let batch_len = batch_requests.len();
             log::info!(
-                "Uploading final batch with {} requests (~{:.2} MB)",
+                "正在上传包含 {} 个请求的最终批次 (~{:.2} MB)",
                 batch_len,
                 current_batch_size as f64 / (1024.0 * 1024.0)
             );
@@ -717,7 +717,7 @@ impl BatchingLlmClient {
 
             total_uploaded += batch_len;
             log::info!(
-                "Uploaded batch {} with {} requests ({} total)",
+                "已上传批次 {} 包含 {} 个请求 (共 {} 个)",
                 batch.id,
                 batch_len,
                 total_uploaded
@@ -728,7 +728,7 @@ impl BatchingLlmClient {
 
         if !all_batch_ids.is_empty() {
             log::info!(
-                "Finished uploading {} batches with {} total requests",
+                "已完成上传 {} 个批次共 {} 个请求",
                 all_batch_ids.len(),
                 total_uploaded
             );

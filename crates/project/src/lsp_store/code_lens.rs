@@ -91,7 +91,7 @@ impl LspStore {
         cx.spawn(async move |lsp_store, cx| {
             fetch_task
                 .await
-                .map_err(|e| anyhow::anyhow!("code lens fetch failed: {e:#}"))?;
+                .map_err(|e| anyhow::anyhow!("获取代码透镜失败: {e:#}"))?;
 
             let actions = lsp_store.read_with(cx, |lsp_store, _| {
                 lsp_store
@@ -153,7 +153,7 @@ impl LspStore {
                     })
                     .map_err(Arc::new)?
                     .await
-                    .context("fetching code lens")
+                    .context("获取代码透镜")
                     .map_err(Arc::new);
                 let fetched_lens = match fetched_lens {
                     Ok(fetched_lens) => fetched_lens,
@@ -268,7 +268,7 @@ impl LspStore {
                     .collect::<HashMap<_, _>>();
                 anyhow::ensure!(
                     !has_errors || !code_lens_actions.is_empty(),
-                    "Failed to fetch code lens"
+                    "获取代码透镜失败"
                 );
                 Ok(Some(code_lens_actions))
             })
@@ -356,7 +356,7 @@ impl LspStore {
                             let resolved_lens = match response {
                                 Ok(resolved_lens) => resolved_lens,
                                 Err(e) => {
-                                    log::warn!("Failed to resolve code lens: {e:#}");
+                                    log::warn!("解析代码透镜失败: {e:#}");
                                     return None;
                                 }
                             };

@@ -528,7 +528,7 @@ impl ExtensionImports for WasmState {
 
             anyhow::ensure!(
                 response.status().is_success(),
-                "download failed with status {}",
+                "下载失败,状态码为 {}",
                 response.status()
             );
             let mut body = BufReader::new(response.body_mut());

@@ -34,7 +34,7 @@ pub static TRAILING_WHITESPACE_REGEX: LazyLock<regex::Regex> = LazyLock::new(|| 
     RegexBuilder::new(r"[ \t]+$")
         .multi_line(true)
         .build()
-        .expect("Failed to create TRAILING_WHITESPACE_REGEX")
+        .expect("创建 TRAILING_WHITESPACE_REGEX 失败")
 });
 
 #[cfg(test)]

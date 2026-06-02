@@ -14,8 +14,8 @@ use settings::WorktreeId;
 
 use crate::{LanguageServerLogType, LspStore, Project, ProjectItem as _};
 
-const SEND_LINE: &str = "\n// Send:";
-const RECEIVE_LINE: &str = "\n// Receive:";
+const SEND_LINE: &str = "\n// 发送:";
+const RECEIVE_LINE: &str = "\n// 接收:";
 const MAX_STORED_LOG_ENTRIES: usize = 2000;
 
 pub fn init(on_headless_host: bool, cx: &mut App) -> Entity<LogStore> {

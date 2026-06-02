@@ -92,7 +92,7 @@ impl TaskStore {
 
         let buffer_id = BufferId::new(location.buffer_id).with_context(|| {
             format!(
-                "cannot handle task context request for invalid buffer id: {}",
+                "无法处理无效缓冲区 ID 的任务上下文请求: {}",
                 location.buffer_id
             )
         })?;

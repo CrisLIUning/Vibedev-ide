@@ -66,7 +66,7 @@ fn test_case_sensitive_pattern_items() {
     assert_eq!(
         search_query.case_sensitive(),
         true,
-        "Case sensitivity should be enabled when \\C pattern item is present in the query."
+        "当查询中存在 \\C 模式项时,应启用区分大小写。"
     );
 
     let case_sensitive = true;
@@ -86,7 +86,7 @@ fn test_case_sensitive_pattern_items() {
     assert_eq!(
         search_query.case_sensitive(),
         false,
-        "Case sensitivity should be disabled when \\c pattern item is present, even if initially set to true."
+        "当查询中存在 \\c 模式项时,应禁用区分大小写,即使初始设置为 true。"
     );
 
     let case_sensitive = false;
@@ -106,7 +106,7 @@ fn test_case_sensitive_pattern_items() {
     assert_eq!(
         search_query.case_sensitive(),
         true,
-        "Case sensitivity should be enabled when \\C is the last pattern item, even after a \\c."
+        "当 \\C 是最后一个模式项时,应启用区分大小写,即使前面有 \\c。"
     );
 
     let case_sensitive = false;
@@ -126,7 +126,7 @@ fn test_case_sensitive_pattern_items() {
     assert_eq!(
         search_query.case_sensitive(),
         false,
-        "Case sensitivity should not be enabled when \\C pattern item is preceded by a backslash."
+        "当 \\C 模式项前有反斜杠时,不应启用区分大小写。"
     );
 }
 

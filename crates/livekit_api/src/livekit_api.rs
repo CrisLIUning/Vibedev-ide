@@ -80,7 +80,7 @@ impl LiveKitClient {
             } else {
                 log::error!("Response {}: {:?}", url, response.status());
                 anyhow::bail!(
-                    "POST {} failed with status code {:?}, {:?}",
+                    "POST {} 失败, 状态码 {:?}, {:?}",
                     url,
                     response.status(),
                     response.text().await

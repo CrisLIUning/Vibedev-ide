@@ -259,7 +259,7 @@ impl ShellKind {
     /// Returns whether this shell's command chaining syntax can be parsed by brush-parser.
     ///
     /// This is used to determine if we can safely parse shell commands to extract sub-commands
-    /// for security purposes (e.g., preventing shell injection in "always allow" patterns).
+    /// for security purposes (e.g., preventing shell injection in "始终允许" patterns).
     ///
     /// The brush-parser handles `;` (sequential execution) and `|` (piping), which are
     /// supported by all common shells. It also handles `&&` and `||` for conditional
@@ -806,7 +806,7 @@ mod tests {
     // WSL
     // wsl.exe --distribution NixOS --cd /home/user -- /usr/bin/zsh -c "echo hello"
     // wsl.exe --distribution NixOS --cd /home/user -- /usr/bin/zsh -c "\"echo hello\"" | grep hello"
-    // wsl.exe --distribution NixOS --cd ~ env RUST_LOG=info,remote=debug .zed_wsl_server/zed-remote-server-dev-build proxy --identifier dev-workspace-53
+    // wsl.exe --distribution NixOS --cd ~ env RUST_LOG=info,remote=debug .vibedev_wsl_server/vibedev-remote-server-dev-build proxy --identifier dev-workspace-53
     // PowerShell from Nushell
     // nu -c overlay use "C:\Users\kubko\dev\python\39007\tests\.venv\Scripts\activate.nu"; ^"C:\Program Files\PowerShell\7\pwsh.exe" -C "C:\Users\kubko\dev\python\39007\tests\.venv\Scripts\python.exe -m pytest \"test_foo.py::test_foo\""
     // PowerShell from CMD

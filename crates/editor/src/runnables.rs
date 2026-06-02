@@ -743,14 +743,14 @@ mod tests {
         ) -> Task<Option<TaskTemplates>> {
             Task::ready(Some(TaskTemplates(vec![
                 TaskTemplate {
-                    label: "Run main".into(),
+                    label: "运行 main".into(),
                     command: "cargo".into(),
                     args: vec!["run".into()],
                     tags: vec!["rust-main".into()],
                     ..TaskTemplate::default()
                 },
                 TaskTemplate {
-                    label: "Run test".into(),
+                    label: "运行测试".into(),
                     command: "cargo".into(),
                     args: vec!["test".into()],
                     tags: vec!["rust-test".into()],
@@ -769,7 +769,7 @@ mod tests {
             _: &gpui::App,
         ) -> Task<Option<TaskTemplates>> {
             Task::ready(Some(TaskTemplates(vec![TaskTemplate {
-                label: "Run test".into(),
+                label: "运行测试".into(),
                 command: "cargo".into(),
                 args: vec!["test".into()],
                 tags: vec!["rust-test".into()],
@@ -913,8 +913,8 @@ mod tests {
             editor
                 .update(cx, |editor, _, _| collect_runnable_labels(editor))
                 .unwrap(),
-            vec![(buffer_1_id, 0, vec!["Run main".to_string()])],
-            "Only fn main from first.rs should be visible before scrolling"
+            vec![(buffer_1_id, 0, vec!["运行 main".to_string()])],
+            "滚动前应只显示 first.rs 中的 fn main"
         );
 
         // Scroll down to bring second.rs excerpts into view.
@@ -932,12 +932,12 @@ mod tests {
         assert_eq!(
             after_scroll,
             vec![
-                (buffer_1_id, 0, vec!["Run main".to_string()]),
-                (buffer_1_id, test_one_row, vec!["Run test".to_string()]),
-                (buffer_2_id, 1, vec!["Run test".to_string()]),
-                (buffer_2_id, 6, vec!["Run test".to_string()]),
+                (buffer_1_id, 0, vec!["运行 main".to_string()]),
+                (buffer_1_id, test_one_row, vec!["运行测试".to_string()]),
+                (buffer_2_id, 1, vec!["运行测试".to_string()]),
+                (buffer_2_id, 6, vec!["运行测试".to_string()]),
             ],
-            "Tree-sitter should detect both #[test] fns in second.rs after scroll"
+            "滚动后 Tree-sitter 应检测到 second.rs 中的两个 #[test] 函数"
         );
 
         // Edit second.rs to invalidate its cache; first.rs data should persist.
@@ -957,10 +957,10 @@ mod tests {
                 .update(cx, |editor, _, _| collect_runnable_labels(editor))
                 .unwrap(),
             vec![
-                (buffer_1_id, 0, vec!["Run main".to_string()]),
-                (buffer_1_id, test_one_row, vec!["Run test".to_string()]),
+                (buffer_1_id, 0, vec!["运行 main".to_string()]),
+                (buffer_1_id, test_one_row, vec!["运行测试".to_string()]),
             ],
-            "first.rs runnables should survive an edit to second.rs"
+            "编辑 second.rs 后 first.rs 的可运行项应保留"
         );
     }
 
@@ -1060,7 +1060,7 @@ mod tests {
         assert_eq!(
             labels,
             vec![(buffer_id, 0, vec!["LSP test_one".to_string()]),],
-            "LSP runnables should appear for #[test] fn"
+            "LSP 可运行项应出现在 #[test] 函数处"
         );
 
         // Remove `#[test]` attribute so the function is no longer a test.
@@ -1082,7 +1082,7 @@ mod tests {
         assert_eq!(
             labels,
             Vec::<(text::BufferId, language::BufferRow, Vec<String>)>::new(),
-            "Runnables should be removed after #[test] is deleted and LSP returns empty"
+            "删除 #[test] 且 LSP 返回空后,可运行项应被移除"
         );
     }
 
@@ -1279,7 +1279,7 @@ mod tests {
         assert_eq!(
             labels,
             vec![(buffer_id, 0, vec!["nextest test_one".to_string()])],
-            "shell runnable should appear for #[test] fn"
+            "Shell runnable 应该出现在 #[test] fn 中"
         );
 
         let templates = editor
@@ -1310,7 +1310,7 @@ mod tests {
         let (label, command, args) = templates
             .iter()
             .find(|(label, _, _)| label == "nextest test_one")
-            .expect("shell runnable task template should exist");
+            .expect("Shell runnable 任务模板应该存在");
         assert_eq!(label, "nextest test_one");
         assert_eq!(command, "cargo");
         assert_eq!(
@@ -1325,7 +1325,7 @@ mod tests {
                 "test_one",
                 "--exact",
             ],
-            "shell runnable should preserve program args"
+            "Shell runnable 应该保留程序参数"
         );
     }
 }

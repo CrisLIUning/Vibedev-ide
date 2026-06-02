@@ -89,19 +89,19 @@ impl SshRunningKernel {
 
             let remote_shell_port = connection_info["shell_port"]
                 .as_u64()
-                .context("missing shell_port")? as u16;
+                .context("缺少 shell_port")? as u16;
             let remote_iopub_port = connection_info["iopub_port"]
                 .as_u64()
-                .context("missing iopub_port")? as u16;
+                .context("缺少 iopub_port")? as u16;
             let remote_stdin_port = connection_info["stdin_port"]
                 .as_u64()
-                .context("missing stdin_port")? as u16;
+                .context("缺少 stdin_port")? as u16;
             let remote_control_port = connection_info["control_port"]
                 .as_u64()
-                .context("missing control_port")? as u16;
+                .context("缺少 control_port")? as u16;
             let remote_hb_port = connection_info["hb_port"]
                 .as_u64()
-                .context("missing hb_port")? as u16;
+                .context("缺少 hb_port")? as u16;
 
             let forwards = vec![
                 (local_ports[0], "127.0.0.1".to_string(), remote_shell_port),
@@ -111,7 +111,7 @@ impl SshRunningKernel {
                 (local_ports[4], "127.0.0.1".to_string(), remote_hb_port),
             ];
 
-            let remote_client = remote_client.ok_or_else(|| anyhow::anyhow!("no remote client"))?;
+            let remote_client = remote_client.ok_or_else(|| anyhow::anyhow!("无远程客户端"))?;
             let command_template = cx.update(|_window, cx| {
                 remote_client.read(cx).build_forward_ports_command(forwards)
             })??;
@@ -120,7 +120,7 @@ impl SshRunningKernel {
             command.args(&command_template.args);
             command.envs(&command_template.env);
 
-            let mut ssh_tunnel_process = command.spawn().context("failed to spawn ssh tunnel")?;
+            let mut ssh_tunnel_process = command.spawn().context("无法启动 SSH 隧道")?;
 
             let stderr = ssh_tunnel_process.stderr.take();
             cx.spawn(async move |_cx| {
@@ -128,7 +128,7 @@ impl SshRunningKernel {
                     let reader = BufReader::new(stderr);
                     let mut lines = reader.lines();
                     while let Some(Ok(line)) = lines.next().await {
-                        log::warn!("ssh tunnel stderr: {}", line);
+                        log::warn!("SSH 隧道标准错误: {}", line);
                     }
                 }
             })
@@ -140,7 +140,7 @@ impl SshRunningKernel {
                     let reader = BufReader::new(stdout);
                     let mut lines = reader.lines();
                     while let Some(Ok(line)) = lines.next().await {
-                        log::debug!("ssh tunnel stdout: {}", line);
+                        log::debug!("SSH 隧道标准输出: {}", line);
                     }
                 }
             })
@@ -155,7 +155,7 @@ impl SshRunningKernel {
                     Ok(_) => {
                         connected = true;
                         log::info!(
-                            "SSH tunnel established for kernel {} on attempt {}",
+                            "内核 {} 的 SSH 隧道已在第 {} 次尝试时建立",
                             kernel_id,
                             attempt + 1
                         );
@@ -168,7 +168,7 @@ impl SshRunningKernel {
                     Err(err) => {
                         if attempt % 10 == 0 {
                             log::debug!(
-                                "Waiting for SSH tunnel (attempt {}/{}): {}",
+                                "等待 SSH 隧道 (尝试 {}/{}): {}",
                                 attempt + 1,
                                 max_attempts,
                                 err
@@ -184,7 +184,7 @@ impl SshRunningKernel {
             }
             if !connected {
                 anyhow::bail!(
-                    "SSH tunnel failed to establish after {} attempts",
+                    "SSH 隧道在 {} 次尝试后仍无法建立",
                     max_attempts
                 );
             }
@@ -215,7 +215,7 @@ impl SshRunningKernel {
                 &session_id,
             )
             .await
-            .context("Failed to create iopub connection. Is `ipykernel` installed in the remote environment? Try running `pip install ipykernel` on the remote host.")?;
+            .context("创建 iopub 连接失败。远程环境中是否安装了 `ipykernel`?请尝试在远程主机上运行 `pip install ipykernel`。")?;
 
             let peer_identity = runtimelib::peer_identity_for_session(&session_id)?;
             let shell_socket = runtimelib::create_client_shell_connection_with_identity(
@@ -224,18 +224,18 @@ impl SshRunningKernel {
                 peer_identity.clone(),
             )
             .await
-            .context("failed to create shell connection")?;
+            .context("无法创建 Shell 连接")?;
             let control_socket =
                 runtimelib::create_client_control_connection(&connection_info_struct, &session_id)
                     .await
-                    .context("failed to create control connection")?;
+                    .context("无法创建 control 连接")?;
             let stdin_socket = runtimelib::create_client_stdin_connection_with_identity(
                 &connection_info_struct,
                 &session_id,
                 peer_identity,
             )
             .await
-            .context("failed to create stdin connection")?;
+            .context("无法创建 stdin 连接")?;
 
             let (request_tx, stdin_tx) = start_kernel_tasks(
                 session.clone(),

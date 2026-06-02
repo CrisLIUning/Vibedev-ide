@@ -125,7 +125,7 @@ impl Connection {
 
         if !foreign_key_info.is_empty() {
             log::info!(
-                "Found {} foreign key relationships to check",
+                "发现 {} 个需要检查的外键关系",
                 foreign_key_info.len()
             );
         }

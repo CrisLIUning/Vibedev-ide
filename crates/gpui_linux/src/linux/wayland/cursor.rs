@@ -62,7 +62,7 @@ impl Cursor {
             CursorTheme::load(&self.connection, self.shm.clone(), self.scaled_size)
         };
         if let Some(theme) = result
-            .context("Wayland: Failed to load cursor theme")
+            .context("Wayland: 无法加载光标主题")
             .log_err()
         {
             self.loaded_theme = Some(LoadedTheme {
@@ -101,7 +101,7 @@ impl Cursor {
         self.set_scaled_size(self.size * scale as u32);
 
         let Some(loaded_theme) = &mut self.loaded_theme else {
-            log::warn!("Wayland: Unable to load cursor themes");
+            log::warn!("Wayland: 无法加载光标主题");
             return;
         };
         let theme = &mut loaded_theme.theme;
@@ -125,7 +125,7 @@ impl Cursor {
                 ));
             } else {
                 log_cursor_icon_warning(anyhow!(
-                    "wayland: Unable to fallback on default cursor icon '{}' for theme '{}'",
+                    "wayland: 无法回退到主题 '{}' 的默认光标图标 '{}'",
                     DEFAULT_CURSOR_ICON_NAME,
                     loaded_theme.name.as_deref().unwrap_or("default")
                 ));

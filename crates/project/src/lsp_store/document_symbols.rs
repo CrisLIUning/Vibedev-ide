@@ -111,7 +111,7 @@ impl LspStore {
                     })
                     .map_err(Arc::new)?
                     .await
-                    .context("fetching document symbols")
+                    .context("获取文档符号")
                     .map_err(Arc::new);
 
                 let fetched = match fetched {
@@ -223,14 +223,14 @@ impl LspStore {
                         Ok(symbols) => Some((server_id, symbols)),
                         Err(e) => {
                             has_errors = true;
-                            log::error!("Failed to fetch document symbols: {e:#}");
+                            log::error!("获取文档符号失败: {e:#}");
                             None
                         }
                     })
                     .collect::<HashMap<_, _>>();
                 anyhow::ensure!(
                     !has_errors || !result.is_empty(),
-                    "Failed to fetch document symbols"
+                    "获取文档符号失败"
                 );
                 Ok(Some(result))
             })

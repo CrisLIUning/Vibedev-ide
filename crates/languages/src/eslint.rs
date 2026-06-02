@@ -573,7 +573,7 @@ fn match_glob_pattern(pattern: &str, file_path: &Path) -> Option<String> {
 async fn handle_symlink(src_dir: PathBuf, dest_dir: PathBuf) -> Result<()> {
     anyhow::ensure!(
         fs::metadata(&src_dir).await.is_ok(),
-        "Directory {src_dir:?} is not present"
+        "目录 {src_dir:?} 不存在"
     );
     if fs::metadata(&dest_dir).await.is_ok() {
         fs::remove_file(&dest_dir).await?;

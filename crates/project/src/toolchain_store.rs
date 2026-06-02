@@ -590,7 +590,7 @@ impl LocalToolchainStore {
                 .await
                 .with_context(|| format!("Language {} not found", language_name.0))?;
             let toolchain_lister = language.toolchain_lister().with_context(|| {
-                format!("Language {} does not support toolchains", language_name.0)
+                format!("语言 {} 不支持工具链", language_name.0)
             })?;
 
             let project_env = environment

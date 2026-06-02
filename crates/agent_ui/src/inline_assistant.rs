@@ -39,7 +39,10 @@ use gpui::{
     UpdateGlobal, WeakEntity, Window, point,
 };
 use language::{Buffer, Point, Selection, TransactionId};
-use language_model::{ConfigurationError, ConfiguredModel, LanguageModelRegistry};
+use language_model::{
+    ConfigurationError, ConfiguredModel, LanguageModelId, LanguageModelProviderId,
+    LanguageModelRegistry, SelectedModel,
+};
 use multi_buffer::MultiBufferRow;
 use parking_lot::Mutex;
 use project::{DisableAiSettings, Project};
@@ -218,6 +221,13 @@ impl InlineAssistant {
             return;
         };
 
+        // VIBEDEV: the user can point the inline assistant at their own provider
+        // (e.g. a BYOK DeepSeek key). If that provider later loses its key, the
+        // stored selection dangles and the prompt would silently refuse to open.
+        // Re-resolve a usable model first — the user's choice when it's still
+        // authenticated, otherwise the always-available VibeDev gateway.
+        Self::ensure_inline_assistant_model_usable(cx);
+
         let configuration_error = |cx| {
             let model_registry = LanguageModelRegistry::read_global(cx);
             model_registry.configuration_error(model_registry.inline_assistant_model(), cx)
@@ -281,7 +291,7 @@ impl InlineAssistant {
                             gpui::PromptLevel::Warning,
                             &error.to_string(),
                             None,
-                            &["Configure", "Cancel"],
+                            &["配置", "取消"],
                         )
                         .await
                         .ok();
@@ -298,6 +308,61 @@ impl InlineAssistant {
         } else {
             handle_assist(window, cx);
         }
+    }
+
+    /// VIBEDEV: keep the inline assistant always-openable. Its model can be
+    /// pointed at any provider the user picks (including a BYOK key they later
+    /// delete); when the selected model's provider is no longer authenticated the
+    /// selection dangles and [`Self::inline_assist`] silently no-ops on
+    /// `ProviderNotAuthenticated`. Re-resolve, every invocation, to a usable
+    /// model: the user's stored choice when its provider is authenticated (so
+    /// re-adding the key auto-restores it), otherwise the always-available VibeDev
+    /// gateway provider (or any other authenticated provider) as a fallback.
+    fn ensure_inline_assistant_model_usable(cx: &mut App) {
+        let stored = AgentSettings::get_global(cx)
+            .inline_assistant_model
+            .as_ref()
+            .map(|sel| SelectedModel {
+                provider: LanguageModelProviderId::from(sel.provider.0.clone()),
+                model: LanguageModelId::from(sel.model.clone()),
+            });
+        LanguageModelRegistry::global(cx).update(cx, |registry, cx| {
+            // 1. Prefer the user's stored selection when its provider is authed.
+            let preferred = stored
+                .and_then(|selected| registry.select_model(&selected, cx))
+                .filter(|model| model.provider.is_authenticated(cx));
+            if let Some(preferred) = preferred {
+                registry.set_inline_assistant_model(Some(preferred), cx);
+                return;
+            }
+            // 2. Otherwise, if the current model is already usable, keep it.
+            if registry
+                .configuration_error(registry.inline_assistant_model(), cx)
+                .is_none()
+            {
+                return;
+            }
+            // 3. Fall back to the VibeDev gateway (always available via the
+            //    sidecar token), else any authenticated provider's first model.
+            let vibedev_id = LanguageModelProviderId::from("vibedev".to_string());
+            let fallback = registry
+                .provider(&vibedev_id)
+                .filter(|provider| provider.is_authenticated(cx))
+                .into_iter()
+                .chain(
+                    registry
+                        .providers()
+                        .into_iter()
+                        .filter(|provider| provider.is_authenticated(cx)),
+                )
+                .find_map(|provider| {
+                    let model = provider.provided_models(cx).into_iter().next()?;
+                    Some(ConfiguredModel { provider, model })
+                });
+            if fallback.is_some() {
+                registry.set_inline_assistant_model(fallback, cx);
+            }
+        });
     }
 
     fn codegen_ranges(
@@ -1721,13 +1786,13 @@ impl InlineAssist {
                                 if let Some(sender) = &mut this._inline_assistant_completions {
                                     sender
                                         .unbounded_send(Err(anyhow::anyhow!(
-                                            "Inline assistant error: {}",
+                                            "内联助手错误: {}",
                                             error
                                         )))
                                         .ok();
                                 }
 
-                                let error = format!("Inline assistant error: {}", error);
+                                let error = format!("内联助手错误: {}", error);
                                 workspace.update(cx, |workspace, cx| {
                                     struct InlineAssistantError;
 

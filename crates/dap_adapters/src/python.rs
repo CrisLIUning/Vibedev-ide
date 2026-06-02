@@ -50,7 +50,7 @@ impl PythonDebugAdapter {
     ) -> Result<Vec<String>> {
         let mut args = if let Some(user_installed_path) = user_installed_path {
             log::debug!(
-                "Using user-installed debugpy adapter from: {}",
+                "使用用户安装的 debugpy 适配器,路径:{}",
                 user_installed_path.display()
             );
             vec![user_installed_path.to_string_lossy().into_owned()]
@@ -237,7 +237,7 @@ impl PythonDebugAdapter {
                         .is_ok_and(|m| m.is_some())
                     {
                         log::warn!(
-                            "Failed to fetch latest debugpy, using cached version: {error:#}"
+                            "获取最新 debugpy 失败,使用缓存版本: {error:#}"
                         );
                     } else {
                         return Err(format!("{error}"));
@@ -261,9 +261,9 @@ impl PythonDebugAdapter {
                     toolchain.path.to_string()
                 } else {
                     Self::system_python_name(delegate).await.ok_or_else(|| {
-                        let mut message = "Could not find a Python installation".to_owned();
+                        let mut message = "未找到 Python 安装".to_owned();
                         if cfg!(windows){
-                            message.push_str(". Install Python from the Microsoft Store, or manually from https://www.python.org/downloads/windows.")
+                            message.push_str("。请从 Microsoft Store 安装 Python,或手动从 https://www.python.org/downloads/windows/ 安装。")
                         }
                         message
                     })?
@@ -285,7 +285,7 @@ impl PythonDebugAdapter {
                     let stderr = String::from_utf8_lossy(&output.stderr);
                     let stdout = String::from_utf8_lossy(&output.stdout);
                     let debug_adapter_path = debug_adapter_path.display();
-                    return Err(format!("Failed to create base virtual environment with {base_python} in:\n{debug_adapter_path}\nstderr:\n{stderr}\nstdout:\n{stdout}\n"));
+                    return Err(format!("无法在以下位置使用 {base_python} 创建基础虚拟环境:\n{debug_adapter_path}\n标准错误:\n{stderr}\n标准输出:\n{stdout}\n"));
                 }
 
                 const PYTHON_PATH: &str = if cfg!(target_os = "windows") {
@@ -380,7 +380,7 @@ impl PythonDebugAdapter {
             }
 
             if let Some(hostname) = config_host {
-                tcp_connection.host = Some(hostname.parse().context("invalid IP address")?);
+                tcp_connection.host = Some(hostname.parse().context("无效的 IP 地址")?);
             }
             tcp_connection.port = config_port;
             DebugpyLaunchMode::AttachWithConnect { host: config_host }
@@ -409,7 +409,7 @@ impl PythonDebugAdapter {
         .await?;
 
         log::debug!(
-            "Starting debugpy adapter with command: {} {}",
+            "正在使用命令启动 debugpy 适配器:{} {}",
             python_command,
             arguments.join(" ")
         );
@@ -485,15 +485,15 @@ impl DebugAdapter for PythonDebugAdapter {
                 "request": {
                     "type": "string",
                     "enum": ["attach", "launch"],
-                    "description": "Debug adapter request type"
+                    "description": "调试适配器请求类型"
                 },
                 "autoReload": {
                     "default": {},
-                    "description": "Configures automatic reload of code on edit.",
+                    "description": "配置编辑代码时自动重载。",
                     "properties": {
                         "enable": {
                             "default": false,
-                            "description": "Automatically reload code on edit.",
+                            "description": "编辑代码时自动重载。",
                             "type": "boolean"
                         },
                         "exclude": {
@@ -504,7 +504,7 @@ impl DebugAdapter for PythonDebugAdapter {
                                 "**/node_modules/**",
                                 "**/site-packages/**"
                             ],
-                            "description": "Glob patterns of paths to exclude from auto reload.",
+                            "description": "排除自动重载的路径 Glob 模式。",
                             "items": {
                                 "type": "string"
                             },
@@ -515,7 +515,7 @@ impl DebugAdapter for PythonDebugAdapter {
                                 "**/*.py",
                                 "**/*.pyw"
                             ],
-                            "description": "Glob patterns of paths to include in auto reload.",
+                            "description": "包含自动重载的路径 Glob 模式。",
                             "items": {
                                 "type": "string"
                             },
@@ -525,17 +525,17 @@ impl DebugAdapter for PythonDebugAdapter {
                     "type": "object"
                 },
                 "debugAdapterPath": {
-                    "description": "Path (fully qualified) to the python debug adapter executable.",
+                    "description": "Python 调试适配器可执行文件的(完整)路径。",
                     "type": "string"
                 },
                 "django": {
                     "default": false,
-                    "description": "Django debugging.",
+                    "description": "Django 调试。",
                     "type": "boolean"
                 },
                 "jinja": {
                     "default": null,
-                    "description": "Jinja template debugging (e.g. Flask).",
+                    "description": "Jinja 模板调试(例如 Flask)。",
                     "enum": [
                         false,
                         null,
@@ -544,27 +544,27 @@ impl DebugAdapter for PythonDebugAdapter {
                 },
                 "justMyCode": {
                     "default": true,
-                    "description": "If true, show and debug only user-written code. If false, show and debug all code, including library calls.",
+                    "description": "如果为 true,则仅显示和调试用户编写的代码。如果为 false,则显示和调试所有代码,包括库调用。",
                     "type": "boolean"
                 },
                 "logToFile": {
                     "default": false,
-                    "description": "Enable logging of debugger events to a log file. This file can be found in the debugpy extension install folder.",
+                    "description": "启用将调试器事件记录到日志文件。此文件可在 debugpy 扩展安装文件夹中找到。",
                     "type": "boolean"
                 },
                 "pathMappings": {
                     "default": [],
                     "items": {
-                        "label": "Path mapping",
+                        "label": "路径映射",
                         "properties": {
                             "localRoot": {
                                 "default": "${ZED_WORKTREE_ROOT}",
-                                "label": "Local source root.",
+                                "label": "本地源码根目录。",
                                 "type": "string"
                             },
                             "remoteRoot": {
                                 "default": "",
-                                "label": "Remote source root.",
+                                "label": "远程源码根目录。",
                                 "type": "string"
                             }
                         },
@@ -574,32 +574,32 @@ impl DebugAdapter for PythonDebugAdapter {
                         ],
                         "type": "object"
                     },
-                    "label": "Path mappings.",
+                    "label": "路径映射。",
                     "type": "array"
                 },
                 "redirectOutput": {
                     "default": true,
-                    "description": "Redirect output.",
+                    "description": "重定向输出。",
                     "type": "boolean"
                 },
                 "showReturnValue": {
                     "default": true,
-                    "description": "Show return value of functions when stepping.",
+                    "description": "单步执行时显示函数的返回值。",
                     "type": "boolean"
                 },
                 "subProcess": {
                     "default": false,
-                    "description": "Whether to enable Sub Process debugging",
+                    "description": "是否启用子进程调试",
                     "type": "boolean"
                 },
                 "consoleName": {
-                    "default": "Python Debug Console",
-                    "description": "Display name of the debug console or terminal",
+                    "default": "Python 调试控制台",
+                    "description": "调试控制台或终端的显示名称",
                     "type": "string"
                 },
                 "clientOS": {
                     "default": null,
-                    "description": "OS that VS code is using.",
+                    "description": "VS Code 使用的操作系统。",
                     "enum": [
                         "windows",
                         null,
@@ -620,15 +620,15 @@ impl DebugAdapter for PythonDebugAdapter {
                     "then": {
                         "properties": {
                             "connect": {
-                                "label": "Attach by connecting to debugpy over a socket.",
+                                "label": "通过套接字连接到 debugpy 进行附加。",
                                 "properties": {
                                     "host": {
                                         "default": "127.0.0.1",
-                                        "description": "Hostname or IP address to connect to.",
+                                        "description": "要连接的主机名或 IP 地址。",
                                         "type": "string"
                                     },
                                     "port": {
-                                        "description": "Port to connect to.",
+                                        "description": "要连接的端口。",
                                         "type": [
                                             "number",
                                             "string"
@@ -641,15 +641,15 @@ impl DebugAdapter for PythonDebugAdapter {
                                 "type": "object"
                             },
                             "listen": {
-                                "label": "Attach by listening for incoming socket connection from debugpy",
+                                "label": "通过监听来自 debugpy 的传入套接字连接进行附加",
                                 "properties": {
                                     "host": {
                                         "default": "127.0.0.1",
-                                        "description": "Hostname or IP address of the interface to listen on.",
+                                        "description": "要监听的接口的主机名或 IP 地址。",
                                         "type": "string"
                                     },
                                     "port": {
-                                        "description": "Port to listen on.",
+                                        "description": "要监听的端口。",
                                         "type": [
                                             "number",
                                             "string"
@@ -665,13 +665,13 @@ impl DebugAdapter for PythonDebugAdapter {
                                 "anyOf": [
                                     {
                                         "default": "${command:pickProcess}",
-                                        "description": "Use process picker to select a process to attach, or Process ID as integer.",
+                                        "description": "使用进程选择器选择要附加的进程,或输入整数形式的进程 ID。",
                                         "enum": [
                                             "${command:pickProcess}"
                                         ]
                                     },
                                     {
-                                        "description": "ID of the local process to attach to.",
+                                        "description": "要附加到的本地进程的 ID。",
                                         "type": "integer"
                                     }
                                 ]
@@ -691,7 +691,7 @@ impl DebugAdapter for PythonDebugAdapter {
                         "properties": {
                             "args": {
                                 "default": [],
-                                "description": "Command line arguments passed to the program. For string type arguments, it will pass through the shell as is, and therefore all shell variable expansions will apply. But for the array type, the values will be shell-escaped.",
+                                "description": "传递给程序的命令行参数。对于字符串类型参数,它将按原样通过 Shell 传递,因此所有 Shell 变量扩展都将适用。但对于数组类型,值将被 Shell 转义。",
                                 "items": {
                                     "type": "string"
                                 },
@@ -712,7 +712,7 @@ impl DebugAdapter for PythonDebugAdapter {
                             },
                             "console": {
                                 "default": "integratedTerminal",
-                                "description": "Where to launch the debug target: internal console, integrated terminal, or external terminal.",
+                                "description": "在何处启动调试目标:内部控制台、集成终端或外部终端。",
                                 "enum": [
                                     "externalTerminal",
                                     "integratedTerminal",
@@ -721,12 +721,12 @@ impl DebugAdapter for PythonDebugAdapter {
                             },
                             "cwd": {
                                 "default": "${ZED_WORKTREE_ROOT}",
-                                "description": "Absolute path to the working directory of the program being debugged. Default is the root directory of the file (leave empty).",
+                                "description": "正在调试的程序的工作目录的绝对路径。默认为文件的根目录(留空)。",
                                 "type": "string"
                             },
                             "autoStartBrowser": {
                                 "default": false,
-                                "description": "Open external browser to launch the application",
+                                "description": "打开外部浏览器以启动应用程序",
                                 "type": "boolean"
                             },
                             "env": {
@@ -734,57 +734,57 @@ impl DebugAdapter for PythonDebugAdapter {
                                     "type": "string"
                                 },
                                 "default": {},
-                                "description": "Environment variables defined as a key value pair. Property ends up being the Environment Variable and the value of the property ends up being the value of the Env Variable.",
+                                "description": "定义为键值对的环境变量。属性名将成为环境变量名,属性值将成为环境变量的值。",
                                 "type": "object"
                             },
                             "envFile": {
                                 "default": "${ZED_WORKTREE_ROOT}/.env",
-                                "description": "Absolute path to a file containing environment variable definitions.",
+                                "description": "包含环境变量定义的文件的绝对路径。",
                                 "type": "string"
                             },
                             "gevent": {
                                 "default": false,
-                                "description": "Enable debugging of gevent monkey-patched code.",
+                                "description": "启用 gevent monkey-patched 代码的调试。",
                                 "type": "boolean"
                             },
                             "module": {
                                 "default": "",
-                                "description": "Name of the module to be debugged.",
+                                "description": "要调试的模块的名称。",
                                 "type": "string"
                             },
                             "program": {
                                 "default": "${ZED_FILE}",
-                                "description": "Absolute path to the program.",
+                                "description": "程序的绝对路径。",
                                 "type": "string"
                             },
                             "purpose": {
                                 "default": [],
-                                "description": "Tells extension to use this configuration for test debugging, or when using debug-in-terminal command.",
+                                "description": "告知扩展使用此配置进行测试调试,或在使用“在终端中调试”命令时使用。",
                                 "items": {
                                     "enum": [
                                         "debug-test",
                                         "debug-in-terminal"
                                     ],
                                     "enumDescriptions": [
-                                        "Use this configuration while debugging tests using test view or test debug commands.",
-                                        "Use this configuration while debugging a file using debug in terminal button in the editor."
+                                        "在使用测试视图或测试调试命令调试测试时使用此配置。",
+                                        "在编辑器中使用“在终端中调试”按钮调试文件时使用此配置。"
                                     ]
                                 },
                                 "type": "array"
                             },
                             "pyramid": {
                                 "default": false,
-                                "description": "Whether debugging Pyramid applications.",
+                                "description": "是否调试 Pyramid 应用程序。",
                                 "type": "boolean"
                             },
                             "python": {
                                 "default": "${command:python.interpreterPath}",
-                                "description": "Absolute path to the Python interpreter executable; overrides workspace configuration if set.",
+                                "description": "Python 解释器可执行文件的绝对路径;如果设置,则覆盖工作区配置。",
                                 "type": "string"
                             },
                             "pythonArgs": {
                                 "default": [],
-                                "description": "Command-line arguments passed to the Python interpreter. To pass arguments to the debug target, use \"args\".",
+                                "description": "传递给 Python 解释器的命令行参数。若要向调试目标传递参数,请使用 \"args\"。",
                                 "items": {
                                     "type": "string"
                                 },
@@ -792,17 +792,17 @@ impl DebugAdapter for PythonDebugAdapter {
                             },
                             "stopOnEntry": {
                                 "default": false,
-                                "description": "Automatically stop after launch.",
+                                "description": "启动后自动停止。",
                                 "type": "boolean"
                             },
                             "sudo": {
                                 "default": false,
-                                "description": "Running debug program under elevated permissions (on Unix).",
+                                "description": "以提升的权限运行调试程序(在 Unix 上)。",
                                 "type": "boolean"
                             },
                             "guiEventLoop": {
                                 "default": "matplotlib",
-                                "description": "The GUI event loop that's going to run. Possible values: \"matplotlib\", \"wx\", \"qt\", \"none\", or a custom function that'll be imported and run.",
+                                "description": "将要运行的 GUI 事件循环。可能的值:\"matplotlib\"、\"wx\"、\"qt\"、\"none\",或将被导入并运行的自定义函数。",
                                 "type": "string"
                             }
                         }
@@ -823,7 +823,7 @@ impl DebugAdapter for PythonDebugAdapter {
     ) -> Result<DebugAdapterBinary> {
         if let Some(local_path) = &user_installed_path {
             log::debug!(
-                "Using user-installed debugpy adapter from: {}",
+                "使用用户安装的 debugpy 适配器,路径:{}",
                 local_path.display()
             );
             return self

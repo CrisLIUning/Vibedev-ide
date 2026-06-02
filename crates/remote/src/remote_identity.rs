@@ -22,7 +22,16 @@ pub enum RemoteConnectionIdentity {
         name: String,
         remote_user: String,
     },
-    #[cfg(any(test, feature = "test-support"))]
+    // NOTE: Intentionally NOT cfg-gated, unlike the `RemoteConnectionOptions::Mock`
+    // variant it mirrors. `#[cfg(feature = "test-support")]` is evaluated per-crate,
+    // but this enum is matched exhaustively in `workspace` (persistence.rs), and a
+    // downstream crate (e.g. `agent_servers --tests`) can enable `remote/test-support`
+    // — making this variant exist — without enabling `workspace/test-support` — leaving
+    // workspace's match arm cfg'd out → non-exhaustive E0004. Since the field is a plain
+    // `u64` with no dependency on the test-only `mock` module, making the variant
+    // unconditional is the cheap, robust fix for cross-crate cfg divergence. The
+    // test-only *constructors* (`From<&RemoteConnectionOptions>` Mock arm below, mock
+    // connection factories) stay test-gated; only the variant declaration is always-on.
     Mock { id: u64 },
 }
 

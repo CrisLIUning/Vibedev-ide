@@ -6,6 +6,9 @@ mod model_selector_components;
 mod undo_reject_toast;
 
 pub use agent_notification::*;
+// VIBEDEV: re-export kept for upstream-rebase ease — `EndTrialUpsell` was the only public symbol
+// here and the panel-side import is gated out (see `agent_panel.rs::should_render_trial_end_upsell`).
+#[allow(unused_imports)]
 pub use end_trial_upsell::*;
 pub use hold_for_default::*;
 pub use mention_crease::*;

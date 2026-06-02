@@ -451,7 +451,7 @@ fn push_response_image_part(
 ) {
     match role {
         Role::Assistant => parts.push(ResponseInputContent::OutputText {
-            text: "[image omitted]".to_string(),
+            text: "[图片已省略]".to_string(),
             annotations: Vec::new(),
         }),
         _ => parts.push(ResponseInputContent::Image {
@@ -654,7 +654,7 @@ impl OpenAiEventMapper {
                 events.push(Ok(LanguageModelCompletionEvent::Stop(StopReason::ToolUse)));
             }
             Some(stop_reason) => {
-                log::error!("Unexpected OpenAI stop_reason: {stop_reason:?}",);
+                log::error!("意外的 OpenAI stop_reason: {stop_reason:?}",);
                 events.push(Ok(LanguageModelCompletionEvent::Stop(StopReason::EndTurn)));
             }
             None => {}
@@ -939,7 +939,7 @@ impl OpenAiResponseEventMapper {
                     .or_else(|| function_call.id.clone())
                 else {
                     log::error!(
-                        "Function call item missing both call_id and id: {:?}",
+                        "函数调用项缺少 call_id 和 id: {:?}",
                         function_call
                     );
                     continue;
@@ -1094,7 +1094,7 @@ fn response_error_message(error: &ResponseError) -> String {
         (Some(code), false) => format!("{code}: {message}"),
         (Some(code), true) => code.to_string(),
         (None, false) => message.to_string(),
-        (None, true) => "response error".to_string(),
+        (None, true) => "响应错误".to_string(),
     }
 }
 
@@ -2081,7 +2081,7 @@ mod tests {
                 status: Some("failed".into()),
                 error: Some(ResponseError {
                     code: Some("server_error".into()),
-                    message: "The model failed to generate a response.".into(),
+                    message: "模型无法生成响应".into(),
                     param: None,
                 }),
                 ..Default::default()
@@ -2121,7 +2121,7 @@ mod tests {
             "type": "response.error",
             "error": {
                 "code": "invalid_request_error",
-                "message": "Invalid request."
+                "message": "无效请求"
             }
         }))
         .expect("response error event");

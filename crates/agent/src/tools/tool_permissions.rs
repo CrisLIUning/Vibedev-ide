@@ -257,11 +257,11 @@ pub fn resolve_project_path(
     let path = path.as_ref();
     let project_path = project
         .find_project_path(path, cx)
-        .ok_or_else(|| anyhow!("Path {} is not in the project", path.display()))?;
+        .ok_or_else(|| anyhow!("路径 {} 不在项目中", path.display()))?;
 
     let worktree = project
         .worktree_for_id(project_path.worktree_id, cx)
-        .ok_or_else(|| anyhow!("Could not resolve path {}", path.display()))?;
+        .ok_or_else(|| anyhow!("无法解析路径 {}", path.display()))?;
     let snapshot = worktree.read(cx);
 
     // Fast path: if the entry exists in the snapshot and is not marked
@@ -306,7 +306,7 @@ pub fn resolve_project_path(
 
         let suffix = project_path.path.strip_prefix(ancestor).map_err(|_| {
             anyhow!(
-                "Path {} could not be resolved in the project",
+                "路径 {} 无法在项目中解析",
                 path.display()
             )
         })?;
@@ -342,7 +342,7 @@ pub fn authorize_symlink_access(
     cx: &mut App,
 ) -> Task<Result<()>> {
     let title = format!(
-        "`{}` points outside the project (symlink to `{}`)",
+        "`{}` 指向项目外部(符号链接至 `{}`)",
         display_path,
         canonical_target.display(),
     );
@@ -364,13 +364,13 @@ pub fn authorize_with_sensitive_settings(
 ) -> Task<Result<()>> {
     match kind {
         Some(SensitiveSettingsKind::Local) => {
-            event_stream.authorize_always_prompt(format!("{title} (local settings)"), context, cx)
+            event_stream.authorize_always_prompt(format!("{title}(本地设置)"), context, cx)
         }
         Some(SensitiveSettingsKind::Global) => {
-            event_stream.authorize_always_prompt(format!("{title} (settings)"), context, cx)
+            event_stream.authorize_always_prompt(format!("{title}(设置)"), context, cx)
         }
         Some(SensitiveSettingsKind::AgentSkills) => {
-            event_stream.authorize_always_prompt(format!("{title} (agent skills)"), context, cx)
+            event_stream.authorize_always_prompt(format!("{title} (代理技能)"), context, cx)
         }
         None => event_stream.authorize(title, context, cx),
     }
@@ -398,8 +398,8 @@ pub fn authorize_symlink_escapes(
         .iter()
         .map(|(path, target)| format!("`{}` → `{}`", path, target.display()))
         .collect::<Vec<_>>()
-        .join(" and ");
-    let title = format!("{} (symlinks outside project)", targets);
+        .join(" 和 ");
+    let title = format!("{}(指向项目外部的符号链接)", targets);
 
     let context = ToolPermissionContext::symlink_target(
         tool_name,
@@ -499,7 +499,7 @@ pub fn authorize_file_edit(
     }
 
     let path_owned = path.to_path_buf();
-    let title = format!("Edit {}", util::markdown::MarkdownInlineCode(&path_str));
+    let title = format!("编辑 {}", util::markdown::MarkdownInlineCode(&path_str));
     let tool_name = tool_name.to_string();
     let thread = thread.clone();
     let event_stream = event_stream.clone();
@@ -599,7 +599,7 @@ pub fn authorize_file_edit(
                         vec![path_owned.to_string_lossy().to_string()],
                     );
                     event_stream.authorize_always_prompt(
-                        format!("{title} (local settings)"),
+                        format!("{title}(本地设置)"),
                         context,
                         cx,
                     )
@@ -612,7 +612,7 @@ pub fn authorize_file_edit(
                         &tool_name,
                         vec![path_owned.to_string_lossy().to_string()],
                     );
-                    event_stream.authorize_always_prompt(format!("{title} (settings)"), context, cx)
+                    event_stream.authorize_always_prompt(format!("{title}(设置)"), context, cx)
                 });
                 return authorize.await;
             }
@@ -623,7 +623,7 @@ pub fn authorize_file_edit(
                         vec![path_owned.to_string_lossy().to_string()],
                     );
                     event_stream.authorize_always_prompt(
-                        format!("{title} (agent skills)"),
+                        format!("{title} (代理技能)"),
                         context,
                         cx,
                     )
@@ -693,27 +693,27 @@ pub fn authorize_dirty_buffer(
             vec![
                 acp::PermissionOption::new(
                     acp::PermissionOptionId::new("save"),
-                    "Save",
+                    "保存",
                     acp::PermissionOptionKind::AllowOnce,
                 ),
                 acp::PermissionOption::new(
                     acp::PermissionOptionId::new("discard"),
-                    "Discard",
+                    "放弃",
                     acp::PermissionOptionKind::RejectOnce,
                 ),
             ],
         ),
         DirtyBufferPromptKind::Overwrite => (
-            "This file has unsaved changes and the agent wants to overwrite it.".to_string(),
+            "此文件有未保存的更改,代理想要覆盖它。".to_string(),
             vec![
                 acp::PermissionOption::new(
                     acp::PermissionOptionId::new("discard"),
-                    "Overwrite",
+                    "覆盖",
                     acp::PermissionOptionKind::AllowOnce,
                 ),
                 acp::PermissionOption::new(
                     acp::PermissionOptionId::new("keep"),
-                    "Cancel",
+                    "取消",
                     acp::PermissionOptionKind::RejectOnce,
                 ),
             ],
@@ -728,7 +728,7 @@ pub fn authorize_dirty_buffer(
             "discard" => Ok(DirtyBufferDecision::Discard),
             "keep" => Ok(DirtyBufferDecision::Keep),
             other => Err(anyhow!(
-                "Unexpected dirty-buffer decision option_id: {other}"
+                "意外的脏缓冲区决策 option_id: {other}"
             )),
         }
     })

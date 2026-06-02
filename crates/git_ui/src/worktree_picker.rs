@@ -295,7 +295,7 @@ fn remove_worktree_command(path: &Path, force: bool) -> String {
     if force {
         format!("worktree remove --force {}", path.display())
     } else {
-        format!("worktree remove {}", path.display())
+        format!("工作树移除 {}", path.display())
     }
 }
 
@@ -322,7 +322,7 @@ const WORKTREE_REMOVE_FORCE_DELETE_PROMPTS: &[WorktreeRemoveForceDeletePrompt] =
     }];
 
 fn dirty_worktree_force_delete_prompt(display_name: &str) -> String {
-    format!("Worktree \"{display_name}\" contains modified or untracked files. Force delete it?")
+    format!("工作区 \"{display_name}\" 包含已修改或未跟踪的文件。是否强制删除?")
 }
 
 fn force_delete_prompt_for_worktree_remove_error(
@@ -373,7 +373,7 @@ impl Render for DeleteWorktreeTooltip {
 
         if force_delete {
             Tooltip::for_action_in(
-                "Force Delete Worktree",
+                "强制删除工作区",
                 &ForceDeleteWorktree,
                 &self.focus_handle,
                 cx,
@@ -381,9 +381,9 @@ impl Render for DeleteWorktreeTooltip {
             .into_any_element()
         } else {
             Tooltip::with_meta_in(
-                "Delete Worktree",
+                "删除工作树",
                 Some(&DeleteWorktree),
-                "Hold alt to force delete",
+                "按住 Alt 强制删除",
                 &self.focus_handle,
                 cx,
             )
@@ -422,9 +422,9 @@ impl WorktreePickerDelegate {
     fn creation_blocked_reason(&self, cx: &App) -> Option<SharedString> {
         let project = self.project.read(cx);
         if project.is_via_collab() {
-            Some("Worktree creation is not supported in collaborative projects".into())
+            Some("协作项目中不支持创建工作树".into())
         } else if project.repositories(cx).is_empty() {
-            Some("Requires a Git repository in the project".into())
+            Some("项目中需要包含 Git 仓库".into())
         } else {
             None
         }
@@ -476,7 +476,7 @@ impl WorktreePickerDelegate {
             let (result, attempted_force) = match initial_result {
                 Ok(()) => (Ok(()), force),
                 Err(error) => {
-                    log::error!("Failed to remove worktree: {}", error);
+                    log::error!("无法移除工作树: {}", error);
 
                     let force_delete_prompt = (!force)
                         .then(|| {
@@ -490,7 +490,7 @@ impl WorktreePickerDelegate {
                                 PromptLevel::Warning,
                                 &prompt_message,
                                 None,
-                                &["Force Delete", "Cancel"],
+                                &["强制删除", "取消"],
                                 cx,
                             )
                         })?;
@@ -504,7 +504,7 @@ impl WorktreePickerDelegate {
                             .await?;
 
                         if let Err(error) = &retry {
-                            log::error!("Failed to force remove worktree: {error}");
+                            log::error!("强制删除工作区失败:{error}");
                         }
 
                         (retry, true)
@@ -575,7 +575,7 @@ impl PickerDelegate for WorktreePickerDelegate {
     type ListItem = AnyElement;
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
-        "Select a worktree…".into()
+        "选择工作树…".into()
     }
 
     fn editor_position(&self) -> PickerEditorPosition {
@@ -621,9 +621,9 @@ impl PickerDelegate for WorktreePickerDelegate {
             worktree.directory_name(main_worktree_path.as_deref()) == normalized_query
         });
         let create_named_disabled_reason: Option<String> = if self.has_multiple_repositories {
-            Some("Cannot create a named worktree in a project with multiple repositories".into())
+            Some("无法在包含多个仓库的项目中创建命名工作树".into())
         } else if has_named_worktree {
-            Some("A worktree with this name already exists".into())
+            Some("已存在同名工作树".into())
         } else {
             None
         };
@@ -883,14 +883,14 @@ impl PickerDelegate for WorktreePickerDelegate {
             ),
             WorktreeEntry::CreateFromCurrentBranch => {
                 let branch_label = if self.has_multiple_repositories {
-                    "current branches".to_string()
+                    "当前分支".to_string()
                 } else {
                     self.current_branch_name
                         .clone()
                         .unwrap_or_else(|| "HEAD".to_string())
                 };
 
-                let label = format!("Create new worktree based on {branch_label}");
+                let label = format!("基于 {branch_label} 创建新工作树");
 
                 let item = create_new_list_item(
                     "create-from-current".to_string().into(),
@@ -904,7 +904,7 @@ impl PickerDelegate for WorktreePickerDelegate {
             WorktreeEntry::CreateFromDefaultBranch {
                 default_branch_name,
             } => {
-                let label = format!("Create new worktree based on {default_branch_name}");
+                let label = format!("基于 {default_branch_name} 创建新工作树");
 
                 let item = create_new_list_item(
                     "create-from-main".to_string().into(),
@@ -1018,7 +1018,7 @@ impl PickerDelegate for WorktreePickerDelegate {
                             let open_in_new_window_button =
                                 IconButton::new(("open-new-window", ix), IconName::ArrowUpRight)
                                     .icon_size(IconSize::Small)
-                                    .tooltip(Tooltip::text("Open in New Window"))
+                                    .tooltip(Tooltip::text("在新窗口中打开"))
                                     .on_click(cx.listener(move |picker, _, window, cx| {
                                         let Some(entry) = picker.delegate.matches.get(ix) else {
                                             return;
@@ -1090,7 +1090,7 @@ impl PickerDelegate for WorktreePickerDelegate {
                 let branch_label = from_branch
                     .as_deref()
                     .unwrap_or(self.current_branch_name.as_deref().unwrap_or("HEAD"));
-                let label = format!("Create \"{name}\" based on {branch_label}");
+                let label = format!("基于 {branch_label} 创建 \"{name}\"");
                 let element_id = match from_branch {
                     Some(branch) => format!("create-named-from-{branch}"),
                     None => "create-named-from-current".to_string(),
@@ -1148,7 +1148,7 @@ impl PickerDelegate for WorktreePickerDelegate {
             Some(
                 footer
                     .child(
-                        Button::new("create-worktree", "Create")
+                        Button::new("create-worktree", "创建")
                             .key_binding(
                                 KeyBinding::for_action_in(&menu::Confirm, &focus_handle, cx)
                                     .map(|kb| kb.size(rems_from_px(12.))),
@@ -1165,7 +1165,7 @@ impl PickerDelegate for WorktreePickerDelegate {
                     .when(can_delete, |this| {
                         let focus_handle = focus_handle.clone();
                         this.child(
-                            Button::new("delete-worktree", "Delete")
+                            Button::new("delete-worktree", "删除")
                                 .key_binding(
                                     KeyBinding::for_action_in(&DeleteWorktree, &focus_handle, cx)
                                         .map(|kb| kb.size(rems_from_px(12.))),
@@ -1178,7 +1178,7 @@ impl PickerDelegate for WorktreePickerDelegate {
                     .when(!is_current, |this| {
                         let focus_handle = focus_handle.clone();
                         this.child(
-                            Button::new("open-in-new-window", "Open in New Window")
+                            Button::new("open-in-new-window", "在新窗口中打开")
                                 .key_binding(
                                     KeyBinding::for_action_in(
                                         &menu::SecondaryConfirm,
@@ -1193,7 +1193,7 @@ impl PickerDelegate for WorktreePickerDelegate {
                         )
                     })
                     .child(
-                        Button::new("open-worktree", "Open")
+                        Button::new("open-worktree", "打开")
                             .key_binding(
                                 KeyBinding::for_action_in(&menu::Confirm, &focus_handle, cx)
                                     .map(|kb| kb.size(rems_from_px(12.))),
@@ -1276,7 +1276,7 @@ pub async fn open_remote_worktree(
             window,
             cx,
         )
-        .prompt_err("Failed to connect", window, cx, |_, _, _| None)
+        .prompt_err("连接失败", window, cx, |_, _, _| None)
     })?;
 
     let session = connect_task.await;
@@ -1492,7 +1492,7 @@ mod tests {
         cx.run_until_parked();
         assert!(cx.has_pending_prompt());
 
-        cx.simulate_prompt_answer("Force Delete");
+        cx.simulate_prompt_answer("强制删除");
         cx.run_until_parked();
 
         assert!(!cx.has_pending_prompt());

@@ -305,7 +305,7 @@ mod tests {
         });
 
         let Some(result) = result else {
-            panic!("expected max width for columns {columns}");
+            panic!("预期列 {columns} 的最大宽度");
         };
         let result_f32: f32 = result.into();
         let expected_f32: f32 = expected.into();

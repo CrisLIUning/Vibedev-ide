@@ -342,7 +342,7 @@ impl Editor {
             .stream_find_iter(buffer.bytes_in_range(MultiBufferOffset(0)..buffer.len()));
 
         for query_match in query_matches.into_iter() {
-            let query_match = query_match.context("query match for select all action")?; // can only fail due to I/O
+            let query_match = query_match.context("全选操作的查询匹配")?; // can only fail due to I/O
             let offset_range = if reversed {
                 MultiBufferOffset(query_match.end())..MultiBufferOffset(query_match.start())
             } else {
@@ -415,11 +415,11 @@ impl Editor {
                 let first_selection = selections
                     .iter()
                     .min_by_key(|s| s.id)
-                    .context("missing selection for select previous action")?;
+                    .context("选择上一项操作缺少选区")?;
                 let last_selection = selections
                     .iter()
                     .max_by_key(|s| s.id)
-                    .context("missing selection for select previous action")?;
+                    .context("选择上一项操作缺少选区")?;
                 let mut next_selected_range = None;
                 // When we're iterating matches backwards, the oldest match will actually be the furthest one in the buffer.
                 let bytes_before_last_selection =
@@ -436,7 +436,7 @@ impl Editor {
                     );
                 for (end_offset, query_match) in query_matches {
                     let query_match =
-                        query_match.context("query match for select previous action")?;
+                        query_match.context("选择上一项操作的查询匹配")?;
                     let offset_range =
                         end_offset - query_match.end()..end_offset - query_match.start();
 
@@ -517,7 +517,7 @@ impl Editor {
                 if selections.len() == 1 {
                     let selection = selections
                         .last()
-                        .expect("ensured that there's only one selection");
+                        .expect("确保只有一个选区");
                     let query = buffer
                         .text_for_range(selection.start..selection.end)
                         .collect::<String>();
@@ -728,11 +728,11 @@ impl Editor {
         let (last_old, last_new) = old_selections
             .last()
             .zip(new_selections.last().cloned())
-            .expect("old_selections isn't empty");
+            .expect("old_selections 不为空");
 
         let is_selection_reversed = if new_selections.len() == 1 {
             let should_be_reversed = last_old.start != last_new.start;
-            new_selections.last_mut().expect("checked above").reversed = should_be_reversed;
+            new_selections.last_mut().expect("已在上面检查").reversed = should_be_reversed;
             should_be_reversed
         } else {
             last_new.reversed
@@ -1134,7 +1134,7 @@ impl Editor {
 
         let Some((mut pending_selection, mut pending_mode)) = self.pending_selection_and_mode()
         else {
-            log::error!("extend_selection dispatched with no pending selection");
+            log::error!("没有待处理的选区");
             return;
         };
 
@@ -1365,7 +1365,7 @@ impl Editor {
                 s.set_pending(pending.clone(), mode);
             });
         } else {
-            log::error!("update_selection dispatched with no pending selection");
+            log::error!("没有待处理的选区");
             return;
         }
 
@@ -1998,11 +1998,11 @@ impl Editor {
                 let first_selection = selections
                     .iter()
                     .min_by_key(|s| s.id)
-                    .context("missing selection for select next action")?;
+                    .context("选择下一项操作缺少选区")?;
                 let last_selection = selections
                     .iter()
                     .max_by_key(|s| s.id)
-                    .context("missing selection for select next action")?;
+                    .context("选择下一项操作缺少选区")?;
                 let mut next_selected_range = None;
 
                 let bytes_after_last_selection =
@@ -2019,7 +2019,7 @@ impl Editor {
                     );
 
                 for (start_offset, query_match) in query_matches {
-                    let query_match = query_match.context("query match for select next action")?;
+                    let query_match = query_match.context("选择下一项操作的查询匹配")?;
                     let offset_range =
                         start_offset + query_match.start()..start_offset + query_match.end();
 
@@ -2109,7 +2109,7 @@ impl Editor {
                 if selections.len() == 1 {
                     let selection = selections
                         .last()
-                        .expect("ensured that there's only one selection");
+                        .expect("确保只有一个选区");
                     let query = buffer
                         .text_for_range(selection.start..selection.end)
                         .collect::<String>();

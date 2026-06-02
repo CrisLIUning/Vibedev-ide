@@ -194,10 +194,10 @@ impl MetalRenderer {
             // For some reason `all()` can return an empty list, see https://github.com/zed-industries/zed/issues/37689
             // In that case, we fall back to the system default device.
             log::error!(
-                "Unable to enumerate Metal devices; attempting to use system default device"
+                "无法枚举 Metal 设备;尝试使用系统默认设备"
             );
             metal::Device::system_default().unwrap_or_else(|| {
-                log::error!("unable to access a compatible graphics device");
+                log::error!("无法访问兼容的图形设备");
                 std::process::exit(1);
             })
         }
@@ -212,11 +212,11 @@ impl MetalRenderer {
         #[cfg(feature = "runtime_shaders")]
         let library = device
             .new_library_with_source(&SHADERS_SOURCE_FILE, &metal::CompileOptions::new())
-            .expect("error building metal library");
+            .expect("构建 Metal 库时出错");
         #[cfg(not(feature = "runtime_shaders"))]
         let library = device
             .new_library_with_data(SHADERS_METALLIB)
-            .expect("error building metal library");
+            .expect("构建 Metal 库时出错");
 
         fn to_float2_bits(point: PointF) -> u64 {
             let mut output = point.y.to_bits() as u64;
@@ -442,7 +442,7 @@ impl MetalRenderer {
             Some(l) => l.clone(),
             None => {
                 log::error!(
-                    "draw() called on headless renderer - use render_scene_to_image() instead"
+                    "在无头渲染器上调用了 draw() - 请改用 render_scene_to_image()"
                 );
                 return;
             }
@@ -456,7 +456,7 @@ impl MetalRenderer {
             drawable
         } else {
             log::error!(
-                "failed to retrieve next drawable, drawable size: {:?}",
+                "获取下一个 drawable 失败,drawable 大小: {:?}",
                 viewport_size
             );
             return;
@@ -495,18 +495,18 @@ impl MetalRenderer {
                 }
                 Err(err) => {
                     log::error!(
-                        "failed to render: {}. retrying with larger instance buffer size",
+                        "渲染失败: {}。正在尝试使用更大的实例缓冲区大小重试",
                         err
                     );
                     let mut instance_buffer_pool = self.instance_buffer_pool.lock();
                     let buffer_size = instance_buffer_pool.buffer_size;
                     if buffer_size >= 256 * 1024 * 1024 {
-                        log::error!("instance buffer size grew too large: {}", buffer_size);
+                        log::error!("实例缓冲区大小增长过大: {}", buffer_size);
                         break;
                     }
                     instance_buffer_pool.reset(buffer_size * 2);
                     log::info!(
-                        "increased instance buffer size to {}",
+                        "已将实例缓冲区大小增加到 {}",
                         instance_buffer_pool.buffer_size
                     );
                 }
@@ -525,7 +525,7 @@ impl MetalRenderer {
         let layer = self
             .layer
             .clone()
-            .ok_or_else(|| anyhow::anyhow!("render_to_image requires a layer-backed renderer"))?;
+            .ok_or_else(|| anyhow::anyhow!("render_to_image 需要基于图层的渲染器"))?;
         let viewport_size = layer.drawable_size();
         let viewport_size: Size<DevicePixels> = size(
             (viewport_size.width.ceil() as i32).into(),
@@ -533,7 +533,7 @@ impl MetalRenderer {
         );
         let drawable = layer
             .next_drawable()
-            .ok_or_else(|| anyhow::anyhow!("Failed to get drawable for render_to_image"))?;
+            .ok_or_else(|| anyhow::anyhow!("无法为 render_to_image 获取 drawable"))?;
 
         loop {
             let mut instance_buffer = self
@@ -591,22 +591,22 @@ impl MetalRenderer {
                     }
 
                     return RgbaImage::from_raw(width, height, pixels).ok_or_else(|| {
-                        anyhow::anyhow!("Failed to create RgbaImage from pixel data")
+                        anyhow::anyhow!("无法从像素数据创建 RgbaImage")
                     });
                 }
                 Err(err) => {
                     log::error!(
-                        "failed to render: {}. retrying with larger instance buffer size",
+                        "渲染失败: {}。正在尝试使用更大的实例缓冲区大小重试",
                         err
                     );
                     let mut instance_buffer_pool = self.instance_buffer_pool.lock();
                     let buffer_size = instance_buffer_pool.buffer_size;
                     if buffer_size >= 256 * 1024 * 1024 {
-                        anyhow::bail!("instance buffer size grew too large: {}", buffer_size);
+                        anyhow::bail!("实例缓冲区大小增长过大: {}", buffer_size);
                     }
                     instance_buffer_pool.reset(buffer_size * 2);
                     log::info!(
-                        "increased instance buffer size to {}",
+                        "已将实例缓冲区大小增加到 {}",
                         instance_buffer_pool.buffer_size
                     );
                 }
@@ -625,7 +625,7 @@ impl MetalRenderer {
         size: Size<DevicePixels>,
     ) -> Result<RgbaImage> {
         if size.width.0 <= 0 || size.height.0 <= 0 {
-            anyhow::bail!("Invalid size for render_scene_to_image: {:?}", size);
+            anyhow::bail!("render_scene_to_image 的尺寸无效: {:?}", size);
         }
 
         // Update path intermediate textures for this size
@@ -706,22 +706,22 @@ impl MetalRenderer {
                     }
 
                     return RgbaImage::from_raw(width, height, pixels).ok_or_else(|| {
-                        anyhow::anyhow!("Failed to create RgbaImage from pixel data")
+                        anyhow::anyhow!("无法从像素数据创建 RgbaImage")
                     });
                 }
                 Err(err) => {
                     log::error!(
-                        "failed to render: {}. retrying with larger instance buffer size",
+                        "渲染失败: {}。正在尝试使用更大的实例缓冲区大小重试",
                         err
                     );
                     let mut instance_buffer_pool = self.instance_buffer_pool.lock();
                     let buffer_size = instance_buffer_pool.buffer_size;
                     if buffer_size >= 256 * 1024 * 1024 {
-                        anyhow::bail!("instance buffer size grew too large: {}", buffer_size);
+                        anyhow::bail!("实例缓冲区大小增长过大: {}", buffer_size);
                     }
                     instance_buffer_pool.reset(buffer_size * 2);
                     log::info!(
-                        "increased instance buffer size to {}",
+                        "已将实例缓冲区大小增加到 {}",
                         instance_buffer_pool.buffer_size
                     );
                 }
@@ -847,7 +847,7 @@ impl MetalRenderer {
             if !ok {
                 command_encoder.end_encoding();
                 anyhow::bail!(
-                    "scene too large: {} paths, {} shadows, {} quads, {} underlines, {} mono, {} poly, {} surfaces",
+                    "场景过大: {} 个路径, {} 个阴影, {} 个四边形, {} 个下划线, {} 个单色, {} 个彩色, {} 个表面",
                     scene.paths.len(),
                     scene.shadows.len(),
                     scene.quads.len(),
@@ -1518,10 +1518,10 @@ fn build_pipeline_state(
 ) -> metal::RenderPipelineState {
     let vertex_fn = library
         .get_function(vertex_fn_name, None)
-        .expect("error locating vertex function");
+        .expect("定位顶点函数时出错");
     let fragment_fn = library
         .get_function(fragment_fn_name, None)
-        .expect("error locating fragment function");
+        .expect("定位片段函数时出错");
 
     let descriptor = metal::RenderPipelineDescriptor::new();
     descriptor.set_label(label);
@@ -1539,7 +1539,7 @@ fn build_pipeline_state(
 
     device
         .new_render_pipeline_state(&descriptor)
-        .expect("could not create render pipeline state")
+        .expect("无法创建渲染管线状态")
 }
 
 fn build_path_sprite_pipeline_state(
@@ -1552,10 +1552,10 @@ fn build_path_sprite_pipeline_state(
 ) -> metal::RenderPipelineState {
     let vertex_fn = library
         .get_function(vertex_fn_name, None)
-        .expect("error locating vertex function");
+        .expect("定位顶点函数时出错");
     let fragment_fn = library
         .get_function(fragment_fn_name, None)
-        .expect("error locating fragment function");
+        .expect("定位片段函数时出错");
 
     let descriptor = metal::RenderPipelineDescriptor::new();
     descriptor.set_label(label);
@@ -1573,7 +1573,7 @@ fn build_path_sprite_pipeline_state(
 
     device
         .new_render_pipeline_state(&descriptor)
-        .expect("could not create render pipeline state")
+        .expect("无法创建渲染管线状态")
 }
 
 fn build_path_rasterization_pipeline_state(
@@ -1587,10 +1587,10 @@ fn build_path_rasterization_pipeline_state(
 ) -> metal::RenderPipelineState {
     let vertex_fn = library
         .get_function(vertex_fn_name, None)
-        .expect("error locating vertex function");
+        .expect("定位顶点函数时出错");
     let fragment_fn = library
         .get_function(fragment_fn_name, None)
-        .expect("error locating fragment function");
+        .expect("定位片段函数时出错");
 
     let descriptor = metal::RenderPipelineDescriptor::new();
     descriptor.set_label(label);
@@ -1612,7 +1612,7 @@ fn build_path_rasterization_pipeline_state(
 
     device
         .new_render_pipeline_state(&descriptor)
-        .expect("could not create render pipeline state")
+        .expect("无法创建渲染管线状态")
 }
 
 // Align to multiples of 256 make Metal happy.

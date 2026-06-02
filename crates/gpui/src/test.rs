@@ -147,11 +147,11 @@ fn calculate_seeds(
 ) -> (impl Iterator<Item = u64> + '_, bool) {
     let iterations = env::var("ITERATIONS")
         .ok()
-        .map(|var| var.parse().expect("invalid ITERATIONS variable"))
+        .map(|var| var.parse().expect("无效的 ITERATIONS 变量"))
         .unwrap_or(iterations);
 
     let env_num = env::var("SEED")
-        .map(|seed| seed.parse().expect("invalid SEED variable as integer"))
+        .map(|seed| seed.parse().expect("无效的 SEED 变量,需要整数"))
         .ok();
 
     let empty_range = || 0..0;

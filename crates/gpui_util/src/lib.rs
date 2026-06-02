@@ -54,7 +54,7 @@ macro_rules! debug_panic {
 pub fn some_or_debug_panic<T>(option: Option<T>) -> Option<T> {
     #[cfg(debug_assertions)]
     if option.is_none() {
-        panic!("Unexpected None");
+        panic!("意外的 None 值");
     }
     option
 }

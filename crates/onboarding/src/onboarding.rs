@@ -1,5 +1,7 @@
 use crate::multibuffer_hint::MultibufferHint;
-use client::{Client, UserStore, zed_urls};
+// VIBEDEV: zed_urls import removed — its callers (handle_sign_in,
+// handle_open_account) are gone; Client + UserStore are still used.
+use client::{Client, UserStore};
 use cloud_api_types::Plan;
 use db::kvp::KeyValueStore;
 use fs::Fs;
@@ -25,7 +27,6 @@ use workspace::{
     AppState, Workspace, WorkspaceId,
     dock::DockPosition,
     item::{Item, ItemEvent},
-    notifications::NotifyResultExt as _,
     open_new, register_serializable_item, with_active_or_new_workspace,
 };
 use zed_actions::OpenOnboarding;
@@ -55,15 +56,16 @@ pub struct ImportCursorSettings {
 
 pub const FIRST_OPEN: &str = "first_open";
 
+// VIBEDEV: removed SignIn / OpenAccount from the `onboarding` action
+// namespace. They surfaced as "onboarding: sign in" / "onboarding: open
+// account" in the command palette and triggered Zed Cloud OAuth + a jump to
+// zed.dev/account. VibeDev's onboarding uses render_vibedev_agent_button in
+// basics_page (vibedev_account::start_login → sub2 gateway) instead.
 actions!(
     onboarding,
     [
         /// Finish the onboarding process.
         Finish,
-        /// Sign in while in the onboarding flow.
-        SignIn,
-        /// Open the user account in zed.dev while in the onboarding flow.
-        OpenAccount,
         /// Resets the welcome screen hints to their initial state.
         ResetHints
     ]
@@ -273,27 +275,13 @@ impl Onboarding {
     }
 
     fn on_finish(_: &Finish, _: &mut Window, cx: &mut App) {
-        telemetry::event!("Finish Setup");
+        telemetry::event!("完成设置");
         go_to_welcome_page(cx);
     }
 
-    fn handle_sign_in(&mut self, _: &SignIn, window: &mut Window, cx: &mut Context<Self>) {
-        let client = Client::global(cx);
-        let workspace = self.workspace.clone();
-
-        window
-            .spawn(cx, async move |mut cx| {
-                client
-                    .sign_in_with_optional_connect(true, &cx)
-                    .await
-                    .notify_workspace_async_err(workspace, &mut cx);
-            })
-            .detach();
-    }
-
-    fn handle_open_account(_: &OpenAccount, _: &mut Window, cx: &mut App) {
-        cx.open_url(&zed_urls::account_url(cx))
-    }
+    // VIBEDEV: removed handle_sign_in / handle_open_account. The actions they
+    // serviced (onboarding::SignIn / onboarding::OpenAccount) were deleted from
+    // the actions! list above; the on_action registrations below also gone.
 
     fn render_page(&mut self, cx: &mut Context<Self>) -> AnyElement {
         crate::basics_page::render_basics_page(&self.user_store, cx).into_any_element()
@@ -306,7 +294,7 @@ impl Render for Onboarding {
             .image_cache(gpui::retain_all("onboarding-page"))
             .key_context({
                 let mut ctx = KeyContext::new_with_defaults();
-                ctx.add("Onboarding");
+                ctx.add("新手引导");
                 ctx.add("menu");
                 ctx
             })
@@ -314,8 +302,8 @@ impl Render for Onboarding {
             .size_full()
             .bg(cx.theme().colors().editor_background)
             .on_action(Self::on_finish)
-            .on_action(cx.listener(Self::handle_sign_in))
-            .on_action(Self::handle_open_account)
+            // VIBEDEV: handle_sign_in / handle_open_account on_actions removed —
+            // those actions no longer exist in `onboarding::*`.
             .on_action(cx.listener(|_, _: &menu::SelectNext, window, cx| {
                 window.focus_next(cx);
                 cx.notify();
@@ -350,19 +338,14 @@ impl Render for Onboarding {
                                             .child(
                                                 v_flex()
                                                     .child(
-                                                        Headline::new("Welcome to Zed")
+                                                        // VIBEDEV: product branding.
+                                                        Headline::new("欢迎使用 VibeDev")
                                                             .size(HeadlineSize::Small),
-                                                    )
-                                                    .child(
-                                                        Label::new("The editor for what's next")
-                                                            .color(Color::Muted)
-                                                            .size(LabelSize::Small)
-                                                            .italic(),
                                                     ),
                                             ),
                                     )
                                     .child({
-                                        Button::new("finish_setup", "Finish Setup")
+                                        Button::new("finish_setup", "完成设置")
                                             .style(ButtonStyle::Filled)
                                             .size(ButtonSize::Medium)
                                             .width(rems_from_px(200.))
@@ -396,7 +379,7 @@ impl Item for Onboarding {
     type Event = ItemEvent;
 
     fn tab_content_text(&self, _detail: usize, _cx: &App) -> SharedString {
-        "Onboarding".into()
+        "新手引导".into()
     }
 
     fn telemetry_event_text(&self) -> Option<&'static str> {
@@ -483,7 +466,7 @@ pub async fn handle_import_vscode_settings(
                 zlog::error!("{err:?}");
                 let _ = cx.prompt(
                     gpui::PromptLevel::Info,
-                    &format!("Could not find or load a {source} settings file"),
+                    &format!("无法找到或加载 {source} 设置文件"),
                     None,
                     &["Ok"],
                 );
@@ -501,7 +484,7 @@ pub async fn handle_import_vscode_settings(
                 truncate_and_remove_front(&vscode_settings.path.to_string_lossy(), 128),
             ),
             None,
-            &["Ok", "Cancel"],
+            &["Ok", "取消"],
         );
         let result = cx.spawn(async move |_| prompt.await.ok()).await;
         if result != Some(0) {
@@ -526,7 +509,7 @@ pub async fn handle_import_vscode_settings(
         .update_in(cx, |workspace, _, cx| match result {
             Ok(_) => {
                 let confirmation_toast = StatusToast::new(
-                    format!("Your {} settings were successfully imported.", source),
+                    format!("您的 {} 设置已成功导入。", source),
                     cx,
                     |this, _| {
                         this.icon(
@@ -549,7 +532,7 @@ pub async fn handle_import_vscode_settings(
             }
             Err(_) => {
                 let error_toast = StatusToast::new(
-                    "Failed to import settings. See log for details",
+                    "导入设置失败。详情请查看日志",
                     cx,
                     |this, _| {
                         this.icon(
@@ -557,7 +540,7 @@ pub async fn handle_import_vscode_settings(
                                 .size(IconSize::Small)
                                 .color(Color::Error),
                         )
-                        .action("Open Log", |window, cx| {
+                        .action("打开日志", |window, cx| {
                             window.dispatch_action(workspace::OpenLog.boxed_clone(), cx)
                         })
                         .dismiss_button(true)

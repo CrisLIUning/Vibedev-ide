@@ -115,7 +115,7 @@ fn start_worktree_creations(
             let new_path =
                 repo.path_for_new_linked_worktree(&worktree_name, worktree_directory_setting)?;
             if existing_worktree_paths.contains(&new_path) {
-                anyhow::bail!("A worktree already exists at {}", new_path.display());
+                anyhow::bail!("工作树已存在于 {}", new_path.display());
             }
             let target = git::repository::CreateWorktreeTarget::Detached {
                 base_sha: base_ref.clone(),
@@ -160,7 +160,7 @@ pub async fn await_and_rollback_on_failure(
             }
             Err(_canceled) => {
                 if first_error.is_none() {
-                    first_error = Some(anyhow!("Worktree creation was canceled"));
+                    first_error = Some(anyhow!("工作树创建已取消"));
                 }
             }
         }
@@ -225,15 +225,15 @@ pub async fn await_and_rollback_on_failure(
                 )
                 .await
             {
-                let msg = format!("{}: failed to remove directory: {fs_err}", path.display());
+                let msg = format!("{}: 无法删除目录: {fs_err}", path.display());
                 log::error!("{}", msg);
                 rollback_failures.push(msg);
             }
         }
     }
-    let mut error_message = format!("Failed to create worktree: {err}");
+    let mut error_message = format!("创建工作树失败:{err}");
     if !rollback_failures.is_empty() {
-        error_message.push_str("\n\nFailed to clean up: ");
+        error_message.push_str("\n\n清理失败:");
         error_message.push_str(&rollback_failures.join(", "));
     }
     Err(anyhow!(error_message))
@@ -330,7 +330,7 @@ pub fn handle_create_worktree(
         show_error_toast(
             cx.entity(),
             "worktree create",
-            anyhow!("No git repositories found in the project"),
+            anyhow!("项目中未找到 Git 仓库"),
             cx,
         );
         return;
@@ -345,7 +345,7 @@ pub fn handle_create_worktree(
             show_error_toast(
                 cx.entity(),
                 "worktree create",
-                anyhow!("Cannot create worktree: remote connection is not active"),
+                anyhow!("无法创建工作树: 远程连接未激活"),
                 cx,
             );
             return;
@@ -377,7 +377,7 @@ pub fn handle_create_worktree(
         .await;
 
         if let Err(err) = &result {
-            log::error!("Failed to create worktree: {err}");
+            log::error!("创建工作树失败:{err}");
             workspace_handle
                 .update(cx, |workspace, cx| {
                     workspace.set_active_worktree_creation(None, false, cx);
@@ -447,7 +447,7 @@ pub fn handle_switch_worktree(
         .await;
 
         if let Err(err) = &result {
-            log::error!("Failed to switch worktree: {err}");
+            log::error!("切换工作树失败: {err}");
             workspace_handle
                 .update(cx, |workspace, cx| {
                     workspace.set_active_worktree_creation(None, false, cx);
@@ -1057,11 +1057,11 @@ mod tests {
                 .worktrees()
                 .next()
                 .map(|wt| wt.read(cx).id())
-                .expect("should have a worktree")
+                .expect("应该有一个工作树")
         });
         let trusted_store = cx
             .read(|cx| project::trusted_worktrees::TrustedWorktrees::try_get_global(cx))
-            .expect("trust store should exist");
+            .expect("信任存储应该存在");
         trusted_store.update(cx, |store, cx| {
             store.trust(
                 &worktree_store,
@@ -1081,7 +1081,7 @@ mod tests {
         });
         assert!(
             !has_restricted,
-            "main worktree should be trusted after explicit trust"
+            "显式信任后主工作树应该被信任"
         );
 
         let (multi_workspace, cx) =
@@ -1118,7 +1118,7 @@ mod tests {
         });
         assert!(
             !new_has_restricted,
-            "linked worktree should inherit trust from the main worktree"
+            "链接工作树应该从主工作树继承信任"
         );
 
         // The security modal should not be showing
@@ -1128,7 +1128,7 @@ mod tests {
         });
         assert!(
             !has_modal,
-            "security modal should not show for a linked worktree created from a trusted main worktree"
+            "对于从受信任主工作树创建的链接工作树,安全模态框不应该显示"
         );
     }
 }

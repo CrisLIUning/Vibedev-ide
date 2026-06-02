@@ -86,7 +86,7 @@ use crate::zed::{CrashHandler, OpenRequestKind, eager_load_active_theme_and_icon
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 fn files_not_created_on_launch(errors: HashMap<io::ErrorKind, Vec<&Path>>) {
-    let message = "Zed failed to launch";
+    let message = "VibeDev failed to launch";
     let error_details = errors
         .into_iter()
         .flat_map(|(kind, paths)| {
@@ -94,10 +94,10 @@ fn files_not_created_on_launch(errors: HashMap<io::ErrorKind, Vec<&Path>>) {
             let mut error_kind_details = match paths.len() {
                 0 => return None,
                 1 => format!(
-                    "{kind} when creating directory {:?}",
+                    "创建目录 {:?} 时发生 {kind}",
                     paths.first().expect("match arm checks for a single entry")
                 ),
-                _many => format!("{kind} when creating directories {paths:?}"),
+                _many => format!("创建目录 {paths:?} 时发生 {kind}"),
             };
 
             #[cfg(unix)]
@@ -148,7 +148,7 @@ fn fail_to_open_window_async(e: anyhow::Error, cx: &mut AsyncApp) {
 
 fn fail_to_open_window(e: anyhow::Error, _cx: &mut App) {
     eprintln!(
-        "Zed failed to open a window: {e:?}. See https://zed.dev/docs/linux for troubleshooting steps."
+        "VibeDev failed to open a window: {e:?}. See https://zed.dev/docs/linux for upstream troubleshooting steps (VibeDev shares the editor windowing layer)."
     );
     #[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
     {
@@ -168,10 +168,10 @@ fn fail_to_open_window(e: anyhow::Error, _cx: &mut App) {
             proxy
                 .add_notification(
                     notification_id,
-                    Notification::new("Zed failed to launch")
+                    Notification::new("VibeDev failed to launch")
                         .body(Some(
                             format!(
-                                "{e:?}. See https://zed.dev/docs/linux for troubleshooting steps."
+                                "{e:?}。请参阅 https://zed.dev/docs/linux 获取故障排除步骤。"
                             )
                             .as_str(),
                         ))
@@ -217,19 +217,19 @@ fn main() {
             .etw_zed_pid
             .and_then(|pid| if pid >= 0 { Some(pid as u32) } else { None });
         let Some(output_path) = args.etw_output else {
-            eprintln!("--etw-output is required for --record-etw-trace");
+            eprintln!("--record-etw-trace 需要 --etw-output");
             process::exit(1);
         };
 
         let Some(etw_socket) = args.etw_socket else {
-            eprintln!("--etw-socket is required for --record-etw-trace");
+            eprintln!("--record-etw-trace 需要 --etw-socket");
             process::exit(1);
         };
 
         if let Err(error) =
             etw_tracing::record_etw_trace(zed_pid, &output_path, etw_socket.as_str())
         {
-            eprintln!("ETW trace recording failed: {error:#}");
+            eprintln!("ETW 跟踪记录失败: {error:#}");
             process::exit(1);
         }
         return;
@@ -314,7 +314,7 @@ fn main() {
             client::telemetry::os_name(),
             client::telemetry::os_version(),
         );
-        println!("Zed System Specs (from CLI):\n{}", system_specs);
+        println!("VibeDev System Specs (from CLI):\n{}", system_specs);
         return;
     }
 
@@ -326,7 +326,7 @@ fn main() {
         .unwrap();
 
     log::info!(
-        "========== starting zed version {}, sha {} ==========",
+        "========== 正在启动 VibeDev 版本 {}, sha {} ==========",
         app_version,
         app_commit_sha
             .as_ref()
@@ -377,7 +377,7 @@ fn main() {
         }
     };
     if failed_single_instance_check {
-        println!("zed is already running");
+        println!("zed 已在运行");
         return;
     }
 
@@ -630,14 +630,14 @@ fn main() {
         if let (Some(system_id), Some(installation_id)) = (&system_id, &installation_id) {
             match (&system_id, &installation_id) {
                 (IdType::New(_), IdType::New(_)) => {
-                    telemetry::event!("App First Opened");
-                    telemetry::event!("App First Opened For Release Channel");
+                    telemetry::event!("应用首次打开");
+                    telemetry::event!("应用首次在发布通道中打开");
                 }
                 (IdType::Existing(_), IdType::New(_)) => {
-                    telemetry::event!("App First Opened For Release Channel");
+                    telemetry::event!("应用首次在发布通道中打开");
                 }
                 (_, IdType::Existing(_)) => {
-                    telemetry::event!("App Opened");
+                    telemetry::event!("应用已打开");
                 }
             }
         }
@@ -655,7 +655,26 @@ fn main() {
         });
         AppState::set_global(app_state.clone(), cx);
 
+        // VIBEDEV: auto_update::init is RE-ENABLED. It registers the
+        // GlobalAutoUpdate that BOTH SSH remote-server provisioning
+        // (download_remote_server_release / get_remote_server_release_url) AND
+        // (future) app self-update require — they share get_release_asset, which
+        // we've repointed at VibeDev's own server (aitoken.bigopen.cn/vibedev),
+        // never zed.dev. App self-update POLLING stays OFF: the "auto_update"
+        // setting in assets/settings/default.json is false, and init() only
+        // starts the polling loop when AutoUpdateSetting::get_global(cx).0 is
+        // true. So this sets the global (enabling remote-server download) without
+        // ever pulling/installing an app update.
         auto_update::init(client.clone(), cx);
+        // VIBEDEV: in lieu of the upstream auto-updater we ship a passive
+        // "new version available" signal - a background task polls
+        // `aitoken.bigopen.cn/vibedev/latest.json` every 24h and populates an
+        // `UpdateStatus` global the account panel renders as a download banner.
+        // No bytes are pulled, no install runs; the click handler just opens
+        // the download URL in the user's browser. Wired here because this is
+        // the architectural slot the (now-disabled) updater used to occupy.
+        vibedev_account::init(cx);
+        let _ = &client; // keep client borrow live for following inits
         dap_adapters::init(cx);
         auto_update_ui::init(cx);
         reliability::init(client.clone(), cx);
@@ -742,6 +761,7 @@ fn main() {
         outline::init(cx);
         project_symbols::init(cx);
         project_panel::init(cx);
+        vibedev_ui::init(cx);
         outline_panel::init(cx);
         tasks_ui::init(cx);
         snippets_ui::init(cx);
@@ -831,12 +851,12 @@ fn main() {
         })
         .detach();
         telemetry::event!(
-            "Settings Changed",
+            "设置已更改",
             setting = "theme",
             value = cx.theme().name.to_string()
         );
         telemetry::event!(
-            "Settings Changed",
+            "设置已更改",
             setting = "keymap",
             value = BaseKeymap::get_global(cx).to_string()
         );
@@ -1067,7 +1087,7 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
                                 workspace.show_toast(
                                     Toast::new(
                                         NotificationId::unique::<OpenProjectForSharedThreadToast>(),
-                                        "Open a project to import shared threads",
+                                        "打开项目以导入共享线程",
                                     )
                                     .autohide(),
                                     cx,
@@ -1137,7 +1157,7 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
                             workspace.show_toast(
                                 Toast::new(
                                     NotificationId::unique::<ImportedThreadToast>(),
-                                    format!("Imported shared thread from {}", sharer_username),
+                                    format!("已从 {} 导入共享对话线程", sharer_username),
                                 )
                                 .autohide(),
                                 cx,
@@ -1314,6 +1334,14 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
                 })
                 .detach_and_log_err(cx);
             }
+            #[cfg(target_os = "windows")]
+            OpenRequestKind::VibedevAuthCallback { payload } => {
+                // VIBEDEV: relay the OAuth payload to the local sidecar and
+                // bring the VibeDev window forward. The handler spawns its own
+                // HTTP task and brings the window forward synchronously, so we
+                // don't need to wrap this in `cx.spawn`.
+                vibedev_account::url_handler::handle(payload, cx);
+            }
         }
 
         return;
@@ -1357,7 +1385,7 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
             .await?;
             for result in results.into_iter().flatten() {
                 if let Err(err) = result {
-                    log::error!("Error opening path: {err:#}");
+                    log::error!("打开路径时出错: {err:#}");
                 }
             }
             anyhow::Ok(())
@@ -1530,17 +1558,17 @@ pub(crate) async fn restore_or_create_workspace(
             };
 
             if let Err(error) = result {
-                log::error!("Failed to restore workspace: {error:#}");
+                log::error!("恢复工作区失败: {error:#}");
                 error_count += 1;
             }
         }
 
         if error_count > 0 {
             let message = if error_count == 1 {
-                "Failed to restore 1 workspace. Check logs for details.".to_string()
+                "恢复 1 个工作区失败。请查看日志了解详情。".to_string()
             } else {
                 format!(
-                    "Failed to restore {} workspaces. Check logs for details.",
+                    "恢复 {} 个工作区失败。请查看日志了解详情。",
                     error_count
                 )
             };
@@ -1568,7 +1596,7 @@ pub(crate) async fn restore_or_create_workspace(
             // If we couldn't show a toast (no windows opened successfully),
             // open a fallback empty workspace and show the error there
             if !toast_shown {
-                log::error!("All workspace restorations failed. Opening fallback empty workspace.");
+                log::error!("所有工作区恢复失败。正在打开备用空工作区。");
                 cx.update(|cx| {
                     workspace::open_new(
                         Default::default(),
@@ -1784,7 +1812,7 @@ struct Args {
 
     /// Open the project in a dev container.
     ///
-    /// Automatically triggers "Reopen in Dev Container" if a `.devcontainer/`
+    /// Automatically triggers "在 Dev Container 中重新打开" if a `.devcontainer/`
     /// configuration is found in the project directory.
     #[arg(long)]
     dev_container: bool,
@@ -1880,6 +1908,13 @@ fn parse_url_arg(arg: &str, cx: &App) -> String {
                 || arg.starts_with("zed://")
                 || arg.starts_with("zed-cli://")
                 || arg.starts_with("ssh://")
+                // VIBEDEV: vibedev://auth-callback?payload=... arrives as argv[1]
+                // when the OS hands the custom scheme to our exe (Windows: HKCU
+                // Software\Classes\vibedev, see crates/zed/resources/windows/zed.iss;
+                // macOS: Info.plist URL types). Without this guard the URL would
+                // fall through to format!("file://{arg}") and be misinterpreted
+                // as a local path.
+                || arg.starts_with("vibedev://")
                 || parse_zed_link(arg, cx).is_some()
             {
                 arg.into()
@@ -1933,7 +1968,7 @@ fn load_user_themes_in_background(fs: Arc<dyn fs::Fs>, cx: &mut App) {
                 }
                 None => {
                     fs.create_dir(themes_dir).await.with_context(|| {
-                        format!("Failed to create themes dir at path {themes_dir:?}")
+                        format!("在路径 {themes_dir:?} 创建主题目录失败")
                     })?;
                 }
             }
@@ -1941,7 +1976,7 @@ fn load_user_themes_in_background(fs: Arc<dyn fs::Fs>, cx: &mut App) {
             let mut theme_paths = fs
                 .read_dir(themes_dir)
                 .await
-                .with_context(|| format!("reading themes from {themes_dir:?}"))?;
+                .with_context(|| format!("从 {themes_dir:?} 读取主题"))?;
 
             while let Some(theme_path) = theme_paths.next().await {
                 let Some(theme_path) = theme_path.log_err() else {

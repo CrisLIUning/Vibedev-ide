@@ -187,7 +187,7 @@ impl AgentTool for CopyPathTool {
             };
             result.map_err(|e| {
                 format!(
-                    "Copying {} to {}: {e}",
+                    "复制 {} 到 {}: {e}",
                     input.source_path, input.destination_path
                 )
             })?;

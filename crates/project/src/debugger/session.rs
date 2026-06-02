@@ -109,11 +109,11 @@ pub enum ThreadStatus {
 impl ThreadStatus {
     pub fn label(&self) -> &'static str {
         match self {
-            ThreadStatus::Running => "Running",
-            ThreadStatus::Stopped => "Stopped",
-            ThreadStatus::Stepping => "Stepping",
-            ThreadStatus::Exited => "Exited",
-            ThreadStatus::Ended => "Ended",
+            ThreadStatus::Running => "运行中",
+            ThreadStatus::Stopped => "已停止",
+            ThreadStatus::Stepping => "单步执行中",
+            ThreadStatus::Exited => "已退出",
+            ThreadStatus::Ended => "已结束",
         }
     }
 }
@@ -483,12 +483,12 @@ impl RunningMode {
                             .unwrap_or(failed_path)
                             .display();
                         let message = format!(
-                            "Failed to set breakpoints for {failed_path}{}",
+                            "无法为 {failed_path} 设置断点{}",
                             match errors_by_path.len() {
                                 0 => unreachable!(),
                                 1 => "".into(),
-                                2 => " and 1 other path".into(),
-                                n => format!(" and {} other paths", n - 1),
+                                2 => " 和 1 个其他路径".into(),
+                                n => format!(" 和 {} 个其他路径", n - 1),
                             }
                         );
                         cx.emit(super::dap_store::DapStoreEvent::Notification(message));
@@ -588,7 +588,7 @@ impl SessionState {
         match self {
             SessionState::Running(debug_adapter_client) => debug_adapter_client.request(request),
             SessionState::Booting(_) => Task::ready(Err(anyhow!(
-                "no adapter running to send request: {request:?}"
+                "没有运行中的适配器可发送请求: {request:?}"
             ))),
         }
     }
@@ -990,7 +990,7 @@ impl Session {
 
                 console
                     .send(format!(
-                        "Tried to launch debugger with: {}",
+                        "尝试使用以下配置启动调试器: {}",
                         serde_json::to_string_pretty(&binary.request_args.configuration)
                             .unwrap_or_default(),
                     ))
@@ -1151,7 +1151,7 @@ impl Session {
             cx.emit(SessionStateEvent::SpawnChildSession { request });
         } else {
             log::error!(
-                "Failed to parse launch request arguments: {:?}",
+                "解析启动请求参数失败: {:?}",
                 request.arguments
             );
             success = false;
@@ -1274,7 +1274,7 @@ impl Session {
 
         let SessionState::Running(running) = &self.state else {
             return Task::ready(Err(anyhow!(
-                "Cannot send initialize request, task still building"
+                "无法发送初始化请求,任务仍在构建中"
             )));
         };
         let mut response = running.request(request.clone());
@@ -1522,7 +1522,7 @@ impl Session {
             Events::Initialized(_) => {
                 debug_assert!(
                     false,
-                    "Initialized event should have been handled in LocalMode"
+                    "Initialized 事件本应在 LocalMode 中处理"
                 );
             }
             Events::Stopped(event) => self.handle_stopped_event(event, cx),
@@ -1668,7 +1668,7 @@ impl Session {
         const {
             assert!(
                 T::CACHEABLE,
-                "Only requests marked as cacheable should invoke `fetch`"
+                "只有标记为可缓存的请求才能调用 `fetch`"
             );
         }
 
@@ -1725,11 +1725,11 @@ impl Session {
     ) -> Task<Option<T::Response>> {
         if !T::is_supported(capabilities) {
             log::warn!(
-                "Attempted to send a DAP request that isn't supported: {:?}",
+                "尝试发送不支持的 DAP 请求: {:?}",
                 request
             );
             let error = Err(anyhow::Error::msg(
-                "Couldn't complete request because it's not supported",
+                "无法完成请求,因为不支持该请求",
             ));
             return cx.spawn(async move |this, cx| {
                 this.update(cx, |this, cx| process_result(this, error, cx))
@@ -2481,7 +2481,7 @@ impl Session {
                             });
                     debug_assert!(
                         matches!(entry, indexmap::map::Entry::Occupied(_)),
-                        "Sent request for thread_id that doesn't exist"
+                        "向不存在的 thread_id 发送了请求"
                     );
                     if let Ok(stack_frames) = stack_frames {
                         this.active_snapshot.stack_frames.extend(
@@ -2550,7 +2550,7 @@ impl Session {
 
                     debug_assert!(
                         matches!(entry, indexmap::map::Entry::Occupied(_)),
-                        "Sent scopes request for stack_frame_id that doesn't exist or hasn't been fetched"
+                        "向不存在或尚未获取的 stack_frame_id 发送了作用域请求"
                     );
                 },
                 cx,
@@ -2942,7 +2942,7 @@ impl Session {
                         }
                         Err(e) => {
                             console_output
-                                .send(format!("Failed to launch browser companion process: {e}"))
+                                .send(format!("启动浏览器 companion 进程失败: {e}"))
                                 .await
                                 .ok();
                             return Err(e);
@@ -2966,7 +2966,7 @@ impl Session {
                             && n > 0
                         {
                             console_output
-                                .send(format!("companion stderr: {line}"))
+                                .send(format!("companion 标准错误: {line}"))
                                 .await
                                 .ok();
                             line.clear();
@@ -2979,13 +2979,13 @@ impl Session {
                         Ok(status) => {
                             if status.success() {
                                 console_output
-                                    .send("Companion process exited normally".into())
+                                    .send("Companion 进程正常退出".into())
                                     .await
                                     .ok();
                             } else {
                                 console_output
                                     .send(format!(
-                                        "Companion process exited abnormally with {status:?}"
+                                        "Companion 进程异常退出,状态: {status:?}"
                                     ))
                                     .await
                                     .ok();
@@ -2993,7 +2993,7 @@ impl Session {
                         }
                         Err(e) => {
                             console_output
-                                .send(format!("Failed to join companion process: {e}"))
+                                .send(format!("等待 companion 进程失败: {e}"))
                                 .await
                                 .ok();
                         }
@@ -3034,7 +3034,7 @@ impl Session {
                 Ok(response) => {
                     if !response.status().is_success() {
                         console_output
-                            .send("Launch request to companion failed".into())
+                            .send("向 companion 发起的启动请求失败".into())
                             .await
                             .ok();
                         return Err(anyhow!("launch request failed"));
@@ -3042,7 +3042,7 @@ impl Session {
                 }
                 Err(e) => {
                     console_output
-                        .send("Failed to read response from companion".into())
+                        .send("读取 companion 响应失败".into())
                         .await
                         .ok();
                     return Err(e);

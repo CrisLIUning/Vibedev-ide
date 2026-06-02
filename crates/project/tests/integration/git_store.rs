@@ -1208,30 +1208,30 @@ mod git_worktrees {
 
         // Invalid: just ".." would resolve back to the working directory itself
         let err = worktrees_directory_for_repo(work_dir, "..", PathStyle::Posix).unwrap_err();
-        assert!(err.to_string().contains("must not be \"..\""));
+        assert!(err.to_string().contains("不能是 \"..\""));
 
         // Invalid: ".." with trailing separators
         let err = worktrees_directory_for_repo(work_dir, "..\\", PathStyle::Posix).unwrap_err();
-        assert!(err.to_string().contains("must not be \"..\""));
+        assert!(err.to_string().contains("不能是 \"..\""));
         let err = worktrees_directory_for_repo(work_dir, "../", PathStyle::Posix).unwrap_err();
-        assert!(err.to_string().contains("must not be \"..\""));
+        assert!(err.to_string().contains("不能是 \"..\""));
 
         // Invalid: empty string would resolve to the working directory itself
         let err = worktrees_directory_for_repo(work_dir, "", PathStyle::Posix).unwrap_err();
-        assert!(err.to_string().contains("must not be empty"));
+        assert!(err.to_string().contains("不能为空"));
 
         // Invalid: absolute path
         let err =
             worktrees_directory_for_repo(work_dir, "/tmp/worktrees", PathStyle::Posix).unwrap_err();
-        assert!(err.to_string().contains("relative path"));
+        assert!(err.to_string().contains("相对路径"));
 
         // Invalid: "/" is absolute on Unix
         let err = worktrees_directory_for_repo(work_dir, "/", PathStyle::Posix).unwrap_err();
-        assert!(err.to_string().contains("relative path"));
+        assert!(err.to_string().contains("相对路径"));
 
         // Invalid: "///" is absolute
         let err = worktrees_directory_for_repo(work_dir, "///", PathStyle::Posix).unwrap_err();
-        assert!(err.to_string().contains("relative path"));
+        assert!(err.to_string().contains("相对路径"));
 
         // Invalid: escapes too far up
         let err =
@@ -1753,7 +1753,7 @@ mod resolve_worktree_tests {
             assert_eq!(
                 repo_identity_path(Path::new(common_dir)),
                 Path::new(expected),
-                "identity path for common_dir {common_dir:?} should be {expected:?}"
+                "common_dir {common_dir:?} 的身份路径应该是 {expected:?}"
             );
         }
     }
@@ -1781,7 +1781,7 @@ mod resolve_worktree_tests {
             );
             assert_eq!(
                 short_name, expected,
-                "short name for {linked_worktree_path:?}, linked worktree of {main_worktree_path:?}, should be {expected:?}"
+                "{linked_worktree_path:?} 的短名称({main_worktree_path:?} 的链接工作树)应为 {expected:?}"
             );
         }
     }

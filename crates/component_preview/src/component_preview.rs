@@ -122,7 +122,7 @@ impl ComponentPreview {
         let sorted_components = component_registry.sorted_components();
         let selected_index = selected_index.into().unwrap_or(0);
         let active_page = active_page.unwrap_or(PreviewPage::AllComponents);
-        let filter_editor = cx.new(|cx| InputField::new(window, cx, "Find components or usages…"));
+        let filter_editor = cx.new(|cx| InputField::new(window, cx, "查找组件或用法…"));
 
         let component_list = ListState::new(
             sorted_components.len(),
@@ -310,7 +310,7 @@ impl ComponentPreview {
             && !components.is_empty()
         {
             entries.push(PreviewEntry::Separator);
-            entries.push(PreviewEntry::SectionHeader("Uncategorized".into()));
+            entries.push(PreviewEntry::SectionHeader("未分类".into()));
             let mut sorted_components = components.clone();
             sorted_components.sort_by_key(|(c, _)| c.sort_name());
 
@@ -403,7 +403,7 @@ impl ComponentPreview {
                 let selected = self.active_page == PreviewPage::AllComponents;
 
                 ListItem::new(ix)
-                    .child(Label::new("All Components"))
+                    .child(Label::new("所有组件"))
                     .selectable(true)
                     .toggle_state(selected)
                     .inset(true)
@@ -551,7 +551,7 @@ impl ComponentPreview {
                 .size_full()
                 .items_center()
                 .justify_center()
-                .child("Component not found")
+                .child("未找到组件")
                 .into_any_element()
         }
     }
@@ -560,13 +560,13 @@ impl ComponentPreview {
         if let Some(workspace) = self.workspace.upgrade() {
             workspace.update(cx, |workspace, cx| {
                 let status_toast =
-                    StatusToast::new("`zed/new-notification-system` created!", cx, |this, _cx| {
+                    StatusToast::new("`zed/new-notification-system` 已创建!", cx, |this, _cx| {
                         this.icon(
                             Icon::new(IconName::GitBranch)
                                 .size(IconSize::Small)
                                 .color(Color::Muted),
                         )
-                        .action("Open Pull Request", |_, cx| {
+                        .action("打开 Pull Request", |_, cx| {
                             cx.open_url("https://github.com/")
                         })
                     });
@@ -629,7 +629,7 @@ impl Render for ComponentPreview {
                         )
                         .track_scroll(&self.nav_scroll_handle)
                         .p_2p5()
-                        .w(px(231.)) // Matches perfectly with the size of the "Component Preview" tab, if that's the first one in the pane
+                        .w(px(231.)) // Matches perfectly with the size of the "组件预览" tab, if that's the first one in the pane
                         .h_full()
                         .flex_1(),
                     )
@@ -640,7 +640,7 @@ impl Render for ComponentPreview {
                             .border_t_1()
                             .border_color(cx.theme().colors().border)
                             .child(
-                                Button::new("toast-test", "Launch Toast")
+                                Button::new("toast-test", "启动 Toast")
                                     .full_width()
                                     .on_click(cx.listener({
                                         move |this, _, _window, cx| {
@@ -706,7 +706,7 @@ impl Item for ComponentPreview {
     type Event = ItemEvent;
 
     fn tab_content_text(&self, _detail: usize, _cx: &App) -> SharedString {
-        "Component Preview".into()
+        "组件预览".into()
     }
 
     fn telemetry_event_text(&self) -> Option<&'static str> {
@@ -971,11 +971,11 @@ impl ComponentPreviewPage {
             // Fall back to component preview
             preview(window, cx).unwrap_or_else(|| {
                 div()
-                    .child("Failed to load preview. This path should be unreachable")
+                    .child("加载预览失败。此路径不应可达")
                     .into_any_element()
             })
         } else {
-            div().child("No preview available").into_any_element()
+            div().child("无可用预览").into_any_element()
         };
 
         v_flex()

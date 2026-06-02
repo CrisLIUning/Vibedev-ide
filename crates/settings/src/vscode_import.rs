@@ -22,7 +22,7 @@ impl std::fmt::Display for VsCodeSettingsSource {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             VsCodeSettingsSource::VsCode => write!(f, "VS Code"),
-            VsCodeSettingsSource::Cursor => write!(f, "Cursor"),
+            VsCodeSettingsSource::Cursor => write!(f, "光标"),
         }
     }
 }
@@ -56,7 +56,7 @@ impl VsCodeSettings {
         }
         let Some(path) = path else {
             return Err(anyhow!(
-                "No settings file found, expected to find it in one of the following paths:\n{}",
+                "未找到设置文件,预期在以下路径之一找到:\n{}",
                 candidate_paths
                     .into_iter()
                     .map(|path| path.to_string_lossy().into_owned())

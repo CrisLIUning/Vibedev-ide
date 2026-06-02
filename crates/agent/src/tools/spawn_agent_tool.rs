@@ -37,7 +37,7 @@ use crate::{AgentTool, ThreadEnvironment, ToolCallEventStream, ToolInput};
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct SpawnAgentToolInput {
-    /// Short label displayed in the UI while the agent runs (e.g., "Researching alternatives")
+    /// Short label displayed in the UI while the agent runs (e.g., "研究备选方案")
     pub label: String,
     /// The prompt for the agent. For new sessions, include full context needed for the task. For follow-ups (with session_id), you can rely on the agent already having the previous message.
     pub message: String,
@@ -74,7 +74,7 @@ impl From<SpawnAgentToolOutput> for LanguageModelToolResultContent {
             } => serde_json::to_string(
                 &serde_json::json!({ "session_id": session_id, "output": output }),
             )
-            .unwrap_or_else(|e| format!("Failed to serialize spawn_agent output: {e}"))
+            .unwrap_or_else(|e| format!("序列化 spawn_agent 输出失败: {e}"))
             .into(),
             SpawnAgentToolOutput::Error {
                 session_id,
@@ -83,7 +83,7 @@ impl From<SpawnAgentToolOutput> for LanguageModelToolResultContent {
             } => serde_json::to_string(
                 &serde_json::json!({ "session_id": session_id, "error": error }),
             )
-            .unwrap_or_else(|e| format!("Failed to serialize spawn_agent output: {e}"))
+            .unwrap_or_else(|e| format!("序列化 spawn_agent 输出失败: {e}"))
             .into(),
         }
     }
@@ -121,7 +121,7 @@ impl AgentTool for SpawnAgentTool {
                 .get("label")
                 .and_then(|v| v.as_str())
                 .map(|s| SharedString::from(s.to_owned()))
-                .unwrap_or_else(|| "Spawning agent".into()),
+                .unwrap_or_else(|| "正在生成智能体".into()),
         }
     }
 

@@ -33,14 +33,14 @@ impl Render for WindowContent {
                     .items_center()
                     .size_full()
                     .child(format!(
-                        "origin: {}, {} size: {}, {}",
+                        "原点: {}, {} 大小: {}, {}",
                         self.bounds.origin.x,
                         self.bounds.origin.y,
                         self.bounds.size.width,
                         self.bounds.size.height
                     ))
                     .child(format!(
-                        "cx.bounds() origin: {}, {} size {}, {}",
+                        "cx.bounds() 原点: {}, {} 大小 {}, {}",
                         window_bounds.origin.x,
                         window_bounds.origin.y,
                         window_bounds.size.width,
@@ -87,7 +87,7 @@ fn run_example() {
 
             cx.open_window(build_window_options(screen.id(), bounds), |_, cx| {
                 cx.new(|_| WindowContent {
-                    text: format!("Top Left {:?}", screen.id()).into(),
+                    text: format!("左上 {:?}", screen.id()).into(),
                     bg: gpui::red(),
                     bounds,
                 })
@@ -102,7 +102,7 @@ fn run_example() {
 
             cx.open_window(build_window_options(screen.id(), bounds), |_, cx| {
                 cx.new(|_| WindowContent {
-                    text: format!("Top Right {:?}", screen.id()).into(),
+                    text: format!("右上 {:?}", screen.id()).into(),
                     bg: gpui::red(),
                     bounds,
                 })
@@ -117,7 +117,7 @@ fn run_example() {
 
             cx.open_window(build_window_options(screen.id(), bounds), |_, cx| {
                 cx.new(|_| WindowContent {
-                    text: format!("Bottom Left {:?}", screen.id()).into(),
+                    text: format!("左下 {:?}", screen.id()).into(),
                     bg: gpui::blue(),
                     bounds,
                 })
@@ -132,7 +132,7 @@ fn run_example() {
 
             cx.open_window(build_window_options(screen.id(), bounds), |_, cx| {
                 cx.new(|_| WindowContent {
-                    text: format!("Bottom Right {:?}", screen.id()).into(),
+                    text: format!("右下 {:?}", screen.id()).into(),
                     bg: gpui::blue(),
                     bounds,
                 })
@@ -146,7 +146,7 @@ fn run_example() {
 
             cx.open_window(build_window_options(screen.id(), bounds), |_, cx| {
                 cx.new(|_| WindowContent {
-                    text: format!("Top Center {:?}", screen.id()).into(),
+                    text: format!("顶部居中 {:?}", screen.id()).into(),
                     bg: gpui::black(),
                     bounds,
                 })
@@ -160,7 +160,7 @@ fn run_example() {
 
             cx.open_window(build_window_options(screen.id(), bounds), |_, cx| {
                 cx.new(|_| WindowContent {
-                    text: format!("Left Center {:?}", screen.id()).into(),
+                    text: format!("左侧居中 {:?}", screen.id()).into(),
                     bg: gpui::black(),
                     bounds,
                 })
@@ -177,7 +177,7 @@ fn run_example() {
 
             cx.open_window(build_window_options(screen.id(), bounds), |_, cx| {
                 cx.new(|_| WindowContent {
-                    text: format!("Center {:?}", screen.id()).into(),
+                    text: format!("居中 {:?}", screen.id()).into(),
                     bg: gpui::black(),
                     bounds,
                 })
@@ -194,7 +194,7 @@ fn run_example() {
 
             cx.open_window(build_window_options(screen.id(), bounds), |_, cx| {
                 cx.new(|_| WindowContent {
-                    text: format!("Right Center {:?}", screen.id()).into(),
+                    text: format!("右侧居中 {:?}", screen.id()).into(),
                     bg: gpui::black(),
                     bounds,
                 })
@@ -211,7 +211,7 @@ fn run_example() {
 
             cx.open_window(build_window_options(screen.id(), bounds), |_, cx| {
                 cx.new(|_| WindowContent {
-                    text: format!("Bottom Center {:?}", screen.id()).into(),
+                    text: format!("底部居中 {:?}", screen.id()).into(),
                     bg: gpui::black(),
                     bounds,
                 })

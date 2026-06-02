@@ -144,13 +144,13 @@ impl ZetaFormat {
         });
         let Some(result) = results.next() else {
             anyhow::bail!(
-                "`{format_name}` did not match any of:\n{}",
+                "`{format_name}` 未匹配以下任何一项:\n{}",
                 Self::options_as_string()
             );
         };
         if results.next().is_some() {
             anyhow::bail!(
-                "`{format_name}` matched more than one of:\n{}",
+                "`{format_name}` 匹配了以下不止一项:\n{}",
                 Self::options_as_string()
             );
         }
@@ -812,7 +812,7 @@ pub fn format_prompt_with_budget_for_format(
             let edit_history_section = format_edit_history_within_budget(
                 &input.events,
                 "<|file_sep|>",
-                "edit history",
+                "编辑历史",
                 remaining_budget,
                 max_edit_event_count_for_format(&format),
             );
@@ -858,7 +858,7 @@ pub fn format_active_buffer_diagnostics_with_budget(
         });
     }
 
-    let mut output = format!("{}diagnostics\n", seed_coder::FILE_MARKER);
+    let mut output = format!("{}诊断\n", seed_coder::FILE_MARKER);
     let header_tokens = estimate_tokens(output.len());
     if header_tokens > budget {
         return String::new();
@@ -2655,7 +2655,7 @@ pub mod hashline {
                     &case.editable_range,
                     case.cursor_offset,
                 );
-                assert_eq!(prompt, case.expected, "failed case: {}", case.name);
+                assert_eq!(prompt, case.expected, "用例失败: {}", case.name);
             }
         }
 
@@ -3026,7 +3026,7 @@ pub mod hashline {
 
             for case in &cases {
                 let result = hashline::apply_edit_commands(case.original, &case.model_output);
-                assert_eq!(result, case.expected, "failed case: {}", case.name);
+                assert_eq!(result, case.expected, "用例失败: {}", case.name);
             }
         }
 
@@ -3337,11 +3337,11 @@ pub mod hashline {
 
                 let commands =
                     hashline::patch_to_edit_commands(case.old, case.patch, cursor_offset)
-                        .unwrap_or_else(|e| panic!("failed case {}: {e}", case.name));
+                        .unwrap_or_else(|e| panic!("用例失败 {}: {e}", case.name));
 
                 assert!(
                     hashline::output_has_edit_commands(&commands),
-                    "case {}: expected edit commands, got: {commands:?}",
+                    "用例 {}: 期望编辑命令,得到: {commands:?}",
                     case.name,
                 );
 
@@ -3636,7 +3636,7 @@ pub mod v0304_variable_edit {
         let (prefix_context, rest) = model_output
             .split_once("<|fim_middle|>\n")
             .or_else(|| model_output.split_once("<|fim_middle|>"))
-            .ok_or_else(|| anyhow::anyhow!("missing <|fim_middle|> in model output"))?;
+            .ok_or_else(|| anyhow::anyhow!("模型输出中缺少 <|fim_middle|>"))?;
 
         let (new_text, suffix_context) = rest
             .split_once("<|fim_suffix|>\n")
@@ -3650,13 +3650,13 @@ pub mod v0304_variable_edit {
         };
 
         let prefix_offset = find_substring_at_line_boundary(context, prefix_context)
-            .ok_or_else(|| anyhow!("could not locate prefix lines"))?
+            .ok_or_else(|| anyhow!("无法定位前缀行"))?
             + prefix_context.len();
         let suffix_offset = if suffix_context.is_empty() {
             context.len()
         } else {
             find_substring_at_line_boundary(&context[prefix_offset..], suffix_context)
-                .ok_or_else(|| anyhow!("could not locate suffix lines"))?
+                .ok_or_else(|| anyhow!("无法定位后缀行"))?
                 + prefix_offset
         };
 
@@ -3706,7 +3706,7 @@ pub mod v0304_variable_edit {
             let context_pos = new_text[search_from..]
                 .find(&hunk.old_context)
                 .map(|pos| pos + search_from)
-                .ok_or_else(|| anyhow::anyhow!("could not locate hunk context in text"))?;
+                .ok_or_else(|| anyhow::anyhow!("无法在文本中定位代码块上下文"))?;
 
             if first_hunk_pos.is_none() {
                 first_hunk_pos = Some(context_pos);
@@ -4507,23 +4507,23 @@ pub mod v0304_variable_edit {
                 let output =
                     patch_to_variable_edit_output(case.old, case.patch, case.cursor_offset)
                         .unwrap_or_else(|error| {
-                            panic!("failed converting patch for {}: {error}", case.name)
+                            panic!("为 {} 转换补丁失败:{error}", case.name)
                         });
                 assert_eq!(
                     output, case.expected_variable_edit,
-                    "patch->variable_edit mismatch for {}",
+                    "{} 的 patch->variable_edit 不匹配",
                     case.name
                 );
 
                 let (edit_range, replacement) = apply_variable_edit(case.old, &output)
                     .unwrap_or_else(|error| {
-                        panic!("failed applying variable_edit for {}: {error}", case.name)
+                        panic!("为 {} 应用 variable_edit 失败:{error}", case.name)
                     });
                 let mut edited_by_variable_edit = case.old.to_string();
                 edited_by_variable_edit.replace_range(edit_range, &replacement);
                 assert_eq!(
                     edited_by_variable_edit, case.expected_after_apply,
-                    "variable_edit apply mismatch for {}",
+                    "{} 的 variable_edit 应用不匹配",
                     case.name
                 );
 
@@ -4531,7 +4531,7 @@ pub mod v0304_variable_edit {
                     apply_variable_edit(case.old, case.expected_variable_edit).unwrap_or_else(
                         |error| {
                             panic!(
-                                "failed applying expected variable_edit for {}: {error}",
+                                "为 {} 应用预期的 variable_edit 失败:{error}",
                                 case.name
                             )
                         },
@@ -4541,7 +4541,7 @@ pub mod v0304_variable_edit {
                     .replace_range(expected_edit_range, &expected_replacement);
                 assert_eq!(
                     edited_by_expected_variable_edit, case.expected_after_apply,
-                    "expected variable_edit apply mismatch for {}",
+                    "{} 的预期 variable_edit 应用不匹配",
                     case.name
                 );
             }
@@ -4645,7 +4645,7 @@ pub mod zeta1 {
                 if old_path != path {
                     writeln!(
                         prompt,
-                        "User renamed {} to {}\n",
+                        "用户将 {} 重命名为 {}\n",
                         old_path.display(),
                         path.display()
                     )
@@ -4654,7 +4654,7 @@ pub mod zeta1 {
                 if !diff.is_empty() {
                     write!(
                         prompt,
-                        "User edited {}:\n```diff\n{}\n```",
+                        "用户编辑了 {}:\n```差异\n{}\n```",
                         path.display(),
                         diff
                     )
@@ -5306,14 +5306,14 @@ mod tests {
         input.active_buffer_diagnostics = vec![
             ActiveBufferDiagnostic {
                 severity: Some(1),
-                message: "missing semicolon".to_string(),
+                message: "缺少分号".to_string(),
                 snippet: "let value = 1".to_string(),
                 snippet_buffer_row_range: 1..2,
                 diagnostic_range_in_snippet: 12..13,
             },
             ActiveBufferDiagnostic {
                 severity: Some(2),
-                message: "file-level warning".to_string(),
+                message: "文件级警告".to_string(),
                 snippet: String::new(),
                 snippet_buffer_row_range: 0..0,
                 diagnostic_range_in_snippet: 0..0,
@@ -5322,7 +5322,7 @@ mod tests {
 
         let prompt =
             format_prompt_with_budget_for_format(&input, ZetaFormat::V0420Diagnostics, 10000)
-                .expect("v0420 prompt formatting should succeed");
+                .expect("v0420 提示词格式化应该成功");
 
         assert_eq!(
             prompt,
@@ -5369,7 +5369,7 @@ mod tests {
             format_prompt_with_budget_for_format(&input, ZetaFormat::V0317SeedMultiRegions, 4096);
 
         assert!(prompt.is_some());
-        let prompt = prompt.expect("v0317 should produce a prompt under high related-file count");
+        let prompt = prompt.expect("v0317 应在关联文件数量较多时生成提示词");
         assert!(prompt.contains("test.rs"));
         assert!(prompt.contains(CURSOR_MARKER));
     }
@@ -5772,7 +5772,7 @@ mod tests {
         let edit_history_section = format_edit_history_within_budget(
             &input.events,
             "<|file_sep|>",
-            "edit history",
+            "编辑历史",
             usize::MAX,
             5,
         );
@@ -5801,7 +5801,7 @@ mod tests {
         let edit_history_section = format_edit_history_within_budget(
             &input.events,
             "<|file_sep|>",
-            "edit history",
+            "编辑历史",
             usize::MAX,
             2,
         );
@@ -5826,7 +5826,7 @@ mod tests {
         let edit_history_section = format_edit_history_within_budget(
             &input.events,
             "<|file_sep|>",
-            "edit history",
+            "编辑历史",
             usize::MAX,
             0,
         );

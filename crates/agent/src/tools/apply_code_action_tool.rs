@@ -63,12 +63,12 @@ impl AgentTool for ApplyCodeActionTool {
                     Some(pending.actions.get(index)?.lsp_action.title().to_string())
                 });
             if let Some(title) = title {
-                format!("Apply code action: {title}").into()
+                format!("应用代码操作: {title}").into()
             } else {
-                format!("Apply code action #{}", input.index).into()
+                format!("应用代码操作 #{}", input.index).into()
             }
         } else {
-            "Apply code action".into()
+            "应用代码操作".into()
         }
     }
 
@@ -84,16 +84,16 @@ impl AgentTool for ApplyCodeActionTool {
             let input = input
                 .recv()
                 .await
-                .map_err(|e| format!("Failed to receive tool input: {e}"))?;
+                .map_err(|e| format!("接收工具输入失败: {e}"))?;
 
             let pending = store.update(cx, |store, _cx| store.take()).ok_or_else(|| {
-                "No code actions available. Call get_code_actions first.".to_string()
+                "没有可用的代码操作。请先调用 get_code_actions。".to_string()
             })?;
 
             let zero_based_index = input
                 .index
                 .checked_sub(1)
-                .ok_or_else(|| "Index must be 1 or greater.".to_string())?;
+                .ok_or_else(|| "索引必须大于或等于 1。".to_string())?;
 
             let action = pending
                 .actions
@@ -101,7 +101,7 @@ impl AgentTool for ApplyCodeActionTool {
                 .cloned()
                 .ok_or_else(|| {
                     format!(
-                        "Index {} is out of range. There were {} code action(s) available.",
+                        "索引 {} 超出范围。可用的代码操作有 {} 个。",
                         input.index,
                         pending.actions.len()
                     )
@@ -116,16 +116,16 @@ impl AgentTool for ApplyCodeActionTool {
 
             let transaction = apply_task
                 .await
-                .map_err(|e| format!("Failed to apply code action '{title}': {e}"))?;
+                .map_err(|e| format!("应用代码操作 '{title}' 失败: {e}"))?;
 
             if transaction.0.is_empty() {
                 return Ok(format!(
-                    "Code action '{title}' was applied but made no changes.",
+                    "代码操作 '{title}' 已应用但未产生任何更改。",
                 ));
             }
 
             let mut output = format!(
-                "Applied code action '{title}'. Modified {} file(s):\n",
+                "已应用代码操作 '{title}'。修改了 {} 个文件:\n",
                 transaction.0.len()
             );
 
@@ -134,7 +134,7 @@ impl AgentTool for ApplyCodeActionTool {
                     let path = buffer
                         .file()
                         .map(|f| f.full_path(cx).display().to_string())
-                        .unwrap_or_else(|| "<untitled>".to_string());
+                        .unwrap_or_else(|| "<无标题>".to_string());
                     writeln!(output, "- {path}").ok();
                 });
             }

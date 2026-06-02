@@ -200,7 +200,7 @@ impl PickerDelegate for ScopeSelectorDelegate {
     type ListItem = ListItem;
 
     fn placeholder_text(&self, _window: &mut Window, _: &mut App) -> Arc<str> {
-        "Select snippet scope...".into()
+        "选择代码片段作用域...".into()
     }
 
     fn match_count(&self) -> usize {

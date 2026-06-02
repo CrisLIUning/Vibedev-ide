@@ -56,7 +56,7 @@ pub(crate) fn init(language_registry: Arc<LanguageRegistry>, fs: Arc<dyn Fs>, cx
             .detach();
         } else {
             log::info!(
-                "No extension events global found. Skipping context server configuration wizard"
+                "未找到扩展事件全局对象。跳过上下文服务器配置向导"
             );
         }
     })

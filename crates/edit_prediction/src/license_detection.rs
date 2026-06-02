@@ -225,7 +225,7 @@ fn check_pattern(pattern: &[PatternPart], input: &str) -> bool {
             match_any_chars = part.match_any_chars.clone();
         } else if !part.optional {
             log::trace!(
-                "Failed to match pattern\n`...{}`\nagainst input\n`...{}`",
+                "模式匹配失败\n`...{}`\n针对输入\n`...{}`",
                 &part.text[n_chars_before_offset(128, part.text.len(), &part.text)..],
                 &input[n_chars_before_offset(128, search_range_end, input)..search_range_end],
             );
@@ -355,7 +355,7 @@ impl LicenseDetectionWatcher {
         // resolve symlinks so that the file size from metadata is correct
         let Some(abs_path) = fs.canonicalize(&abs_path).await.ok() else {
             log::debug!(
-                "`{abs_path:?}` license file probably deleted (error canonicalizing the path)"
+                "`{abs_path:?}` 许可证文件可能已被删除(规范化路径时出错)"
             );
             return None;
         };
@@ -376,11 +376,11 @@ impl LicenseDetectionWatcher {
         let is_eligible = detect_license(&text).is_some();
         if is_eligible {
             log::debug!(
-                "`{abs_path:?}` matches a license that is eligible for data collection (if enabled)"
+                "`{abs_path:?}` 匹配符合数据收集条件的许可证(如果已启用)"
             );
         } else {
             log::debug!(
-                "`{abs_path:?}` does not match a license that is eligible for data collection"
+                "`{abs_path:?}` 不匹配符合数据收集条件的许可证"
             );
         }
         Some(is_eligible)
@@ -436,7 +436,7 @@ mod tests {
             walked_entries += 1;
             if walked_entries % 10000 == 0 {
                 println!(
-                    "So far visited {} files in {}",
+                    "目前已访问 {} 个文件,位于 {}",
                     walked_entries,
                     homedir.display()
                 );
@@ -467,7 +467,7 @@ mod tests {
             println!("{}", path);
         }
         panic!(
-            "{} licenses detected, {} unrecognized",
+            "检测到 {} 个许可证,{} 个未识别",
             detected.len(),
             unrecognized.len()
         );

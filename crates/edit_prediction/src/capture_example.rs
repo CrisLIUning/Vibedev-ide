@@ -531,7 +531,7 @@ mod tests {
                     .as_ref(),
                 zeta_prompt::Event::BufferChange { path, .. } if path.as_ref() == "/external/external.rs"
             ),
-            "external file edit should be in events"
+            "外部文件编辑应在事件中"
         );
 
         let worktree_id = buffer.read_with(cx, |buffer, cx| buffer.file().unwrap().worktree_id(cx));

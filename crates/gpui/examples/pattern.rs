@@ -21,7 +21,7 @@ impl Render for PatternExample {
             .shadow_lg()
             .text_xl()
             .text_color(rgb(0x000000))
-            .child("Pattern Example")
+            .child("图案示例")
             .child(
                 div()
                     .flex()
@@ -56,7 +56,7 @@ impl Render for PatternExample {
                     .border_1()
                     .border_color(gpui::blue())
                     .bg(gpui::green().opacity(0.16))
-                    .child("Elements the same height should align")
+                    .child("相同高度的元素应对齐")
                     .child(div().w(px(256.0)).h(px(56.0)).bg(pattern_slash(
                         gpui::red(),
                         56.0 / 6.0,

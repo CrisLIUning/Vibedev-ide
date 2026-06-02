@@ -49,7 +49,7 @@ impl HelloWorld {
     ) -> impl IntoElement {
         button("secondary-btn")
             .mt_2()
-            .child("Child Popover")
+            .child("子级弹出框")
             .on_click(cx.listener(|this, _, _, cx| {
                 this.secondary_open = true;
                 cx.notify();
@@ -63,7 +63,7 @@ impl HelloWorld {
                             .snap_to_window_with_margin(px(8.))
                             .child(
                                 popover()
-                                    .child("This is second level Popover with nested deferred!")
+                                    .child("这是使用嵌套 deferred 的二级弹出框!")
                                     .bg(gpui::white())
                                     .border_color(gpui::blue())
                                     .on_mouse_down_out(cx.listener(|this, _, _, cx| {
@@ -95,7 +95,7 @@ impl Render for HelloWorld {
                     .flex_row()
                     .gap_4()
                     .child(
-                        button("popover0").child("Opened Popover").child(
+                        button("popover0").child("已打开的弹出框").child(
                             deferred(
                                 anchored()
                                     .anchor(Anchor::TopLeft)
@@ -111,7 +111,7 @@ impl Render for HelloWorld {
                     )
                     .child(
                         button("popover1")
-                            .child("Open Popover")
+                            .child("打开弹出框")
                             .on_click(cx.listener(|this, _, _, cx| {
                                 this.open = true;
                                 cx.notify();

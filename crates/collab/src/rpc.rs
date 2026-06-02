@@ -101,7 +101,7 @@ impl ConnectionGuard {
         if current_connections >= MAX_CONCURRENT_CONNECTIONS {
             CONCURRENT_CONNECTIONS.fetch_sub(1, SeqCst);
             tracing::error!(
-                "too many concurrent connections: {}",
+                "并发连接数过多: {}",
                 current_connections + 1
             );
             return Err(());
@@ -525,7 +525,7 @@ impl Server {
         let pool = self.connection_pool.clone();
         let livekit_client = self.app_state.livekit_client.clone();
 
-        let span = info_span!("start server");
+        let span = info_span!("启动服务器");
         self.app_state.executor.spawn_detached(
             async move {
                 tracing::info!("waiting for cleanup timeout");
@@ -547,10 +547,10 @@ impl Server {
                     .await
                     .trace_err()
                 {
-                    tracing::info!(stale_room_count = room_ids.len(), "retrieved stale rooms");
+                    tracing::info!(stale_room_count = room_ids.len(), "已获取过期房间");
                     tracing::info!(
                         stale_channel_buffer_count = channel_ids.len(),
-                        "retrieved stale channel buffers"
+                        "已获取过期频道缓冲区"
                     );
 
                     for channel_id in channel_ids {
@@ -590,7 +590,7 @@ impl Server {
                             tracing::info!(
                                 room_id = room_id.0,
                                 new_participant_count = refreshed_room.room.participants.len(),
-                                "refreshed room"
+                                "已刷新房间"
                             );
                             room_updated(&refreshed_room.room, &peer);
                             if let Some(channel) = refreshed_room.channel.as_ref() {
@@ -737,7 +737,7 @@ impl Server {
                     span.record(QUEUE_DURATION_MS, queue_duration_ms);
                     match result {
                         Err(error) => {
-                            tracing::error!(?error, "error handling message")
+                            tracing::error!(?error, "处理消息出错")
                         }
                         Ok(()) => tracing::info!("finished handling message"),
                     }
@@ -862,7 +862,7 @@ impl Server {
         connection_guard: Option<ConnectionGuard>,
     ) -> impl Future<Output = ()> + use<> {
         let this = self.clone();
-        let span = info_span!("handle connection", %address,
+        let span = info_span!("处理连接", %address,
             connection_id=field::Empty,
             user_id=field::Empty,
             login=field::Empty,
@@ -919,7 +919,7 @@ impl Server {
                 )
                 .await
             {
-                tracing::error!(?error, "failed to send initial client update");
+                tracing::error!(?error, "发送初始客户端更新失败");
                 return;
             }
             drop(connection_guard);
@@ -956,7 +956,7 @@ impl Server {
                     _ = teardown.changed().fuse() => return,
                     result = handle_io => {
                         if let Err(error) = result {
-                            tracing::error!(?error, "error handling I/O");
+                            tracing::error!(?error, "处理 I/O 出错");
                         }
                         break;
                     }
@@ -967,7 +967,7 @@ impl Server {
                             let type_name = message.payload_type_name();
                             // note: we copy all the fields from the parent span so we can query them in the logs.
                             // (https://github.com/tokio-rs/tracing/issues/2670).
-                            let span = tracing::info_span!("receive message",
+                            let span = tracing::info_span!("接收消息",
                                 %connection_id,
                                 %address,
                                 type_name,
@@ -1010,9 +1010,9 @@ impl Server {
 
             drop(foreground_message_handlers);
             let concurrent_handlers = get_concurrent_handlers();
-            tracing::info!(concurrent_handlers, "signing out");
+            tracing::info!(concurrent_handlers, "正在注销");
             if let Err(error) = connection_lost(session, teardown, executor).await {
-                tracing::error!(?error, "error signing out");
+                tracing::error!(?error, "注销出错");
             }
         }
         .instrument(span)
@@ -1219,7 +1219,7 @@ pub async fn handle_websocket_request(
     if protocol_version != rpc::PROTOCOL_VERSION {
         return (
             StatusCode::UPGRADE_REQUIRED,
-            "client must be upgraded".to_string(),
+            "客户端必须升级".to_string(),
         )
             .into_response();
     }
@@ -1227,7 +1227,7 @@ pub async fn handle_websocket_request(
     let Some(version) = app_version_header.map(|header| ZedVersion(header.0.0)) else {
         return (
             StatusCode::UPGRADE_REQUIRED,
-            "no version header found".to_string(),
+            "未找到版本头".to_string(),
         )
             .into_response();
     };
@@ -1237,7 +1237,7 @@ pub async fn handle_websocket_request(
     if !version.can_collaborate() {
         return (
             StatusCode::UPGRADE_REQUIRED,
-            "client must be upgraded".to_string(),
+            "客户端必须升级".to_string(),
         )
             .into_response();
     }
@@ -1250,7 +1250,7 @@ pub async fn handle_websocket_request(
         Err(()) => {
             return (
                 StatusCode::SERVICE_UNAVAILABLE,
-                "Too many concurrent connections",
+                "并发连接数过多",
             )
                 .into_response();
         }
@@ -1285,7 +1285,7 @@ pub async fn handle_websocket_request(
 pub async fn handle_metrics(Extension(server): Extension<Arc<Server>>) -> Result<String> {
     static CONNECTIONS_METRIC: OnceLock<IntGauge> = OnceLock::new();
     let connections_metric = CONNECTIONS_METRIC
-        .get_or_init(|| register_int_gauge!("connections", "number of connections").unwrap());
+        .get_or_init(|| register_int_gauge!("connections", "连接数").unwrap());
 
     let connections = server
         .connection_pool
@@ -1299,7 +1299,7 @@ pub async fn handle_metrics(Extension(server): Extension<Arc<Server>>) -> Result
     let shared_projects_metric = SHARED_PROJECTS_METRIC.get_or_init(|| {
         register_int_gauge!(
             "shared_projects",
-            "number of open projects with one or more guests"
+            "包含一个或多个访客的打开项目数"
         )
         .unwrap()
     });
@@ -1951,7 +1951,7 @@ async fn join_project(
 ) -> Result<()> {
     let project_id = ProjectId::from_proto(request.project_id);
 
-    tracing::info!(%project_id, "join project");
+    tracing::info!(%project_id, "加入项目");
 
     let db = session.db().await;
     let project_model = db.get_project(project_id).await?;
@@ -1970,7 +1970,7 @@ async fn join_project(
             .map(|c| c.zed_version.to_string());
         drop(pool);
         Err(anyhow!(
-            "The host (v{}) and guest (v{}) are using incompatible versions of Zed. The peer with the older version must update to collaborate.",
+            "主机 (v{}) 和访客 (v{}) 使用了不兼容的 VibeDev 版本。版本较旧的一方必须更新才能协作。",
             host_version.as_deref().unwrap_or("unknown"),
             guest_version.as_deref().unwrap_or("unknown"),
         ))?;
@@ -1987,7 +1987,7 @@ async fn join_project(
         .await?;
     drop(db);
 
-    tracing::info!(%project_id, "join remote project");
+    tracing::info!(%project_id, "加入远程项目");
     let collaborators = project
         .collaborators
         .iter()
@@ -2130,7 +2130,7 @@ async fn leave_project(request: proto::LeaveProject, session: MessageContext) ->
     let (room, project) = &*db.leave_project(project_id, sender_id).await?;
     tracing::info!(
         %project_id,
-        "leave project"
+        "离开项目"
     );
 
     project_left(project, &session);
@@ -2424,7 +2424,7 @@ where
     response.peer.respond_with_error(
         response.receipt,
         ErrorCode::Forbidden
-            .message("request is not allowed for guests".to_string())
+            .message("访客不允许此请求".to_string())
             .to_proto(),
     )?;
     response.responded.store(true, SeqCst);
@@ -3394,7 +3394,7 @@ async fn join_channel_internal(
         if let Some(connection) = db.stale_room_connection(session.user_id()).await? {
             tracing::info!(
                 stale_connection_id = %connection,
-                "cleaning up stale connection",
+                "清理过期连接",
             );
             drop(db);
             leave_room_for_session(&session, connection).await?;
@@ -3646,7 +3646,7 @@ fn send_notifications(
                 },
             ) {
                 tracing::error!(
-                    "failed to send notification to {:?} {}",
+                    "发送通知给 {:?} 失败 {}",
                     connection_id,
                     error
                 );

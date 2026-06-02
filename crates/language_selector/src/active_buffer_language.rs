@@ -49,7 +49,7 @@ impl Render for ActiveBufferLanguage {
             let active_language_text = if let Some(active_language_text) = active_language {
                 active_language_text.to_string()
             } else {
-                "Unknown".to_string()
+                "未知".to_string()
             };
 
             el.child(
@@ -62,7 +62,7 @@ impl Render for ActiveBufferLanguage {
                             });
                         }
                     }))
-                    .tooltip(|_window, cx| Tooltip::for_action("Select Language", &Toggle, cx)),
+                    .tooltip(|_window, cx| Tooltip::for_action("选择语言", &Toggle, cx)),
             )
         })
     }

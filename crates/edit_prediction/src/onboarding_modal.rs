@@ -17,10 +17,10 @@ use workspace::{ModalView, Workspace};
 #[macro_export]
 macro_rules! onboarding_event {
     ($name:expr) => {
-        telemetry::event!($name, source = "Edit Prediction Onboarding");
+        telemetry::event!($name, source = "编辑预测引导");
     };
     ($name:expr, $($key:ident $(= $value:expr)?),+ $(,)?) => {
-        telemetry::event!($name, source = "Edit Prediction Onboarding", $($key $(= $value)?),+);
+        telemetry::event!($name, source = "编辑预测引导", $($key $(= $value)?),+);
     };
 }
 
@@ -135,7 +135,7 @@ impl Render for ZedPredictModal {
             .overflow_hidden()
             .on_action(cx.listener(Self::cancel))
             .on_action(cx.listener(|_, _: &menu::Cancel, _window, cx| {
-                onboarding_event!("Cancelled", trigger = "Action");
+                onboarding_event!("已取消", trigger = "操作");
                 cx.emit(DismissEvent);
             }))
             .on_any_mouse_down(cx.listener(|this, _: &MouseDownEvent, window, cx| {
@@ -158,7 +158,7 @@ impl Render for ZedPredictModal {
             .child(h_flex().absolute().top_3().right_3().child(
                 IconButton::new("cancel", IconName::Close).on_click(cx.listener(
                     |_, _: &ClickEvent, _window, cx| {
-                        onboarding_event!("Cancelled", trigger = "X click");
+                        onboarding_event!("已取消", trigger = "点击 X");
                         cx.emit(DismissEvent);
                     },
                 )),

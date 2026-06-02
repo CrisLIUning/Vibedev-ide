@@ -495,7 +495,7 @@ async fn test_system_prompt(cx: &mut TestAppContext) {
 
     let system_message = &pending_completion.messages[0];
     let MessageContent::Text(system_prompt) = &system_message.content[0] else {
-        panic!("Expected text content");
+        panic!("预期文本内容");
     };
     assert!(
         system_prompt.contains("test-shell"),
@@ -533,7 +533,7 @@ async fn test_system_prompt_without_tools(cx: &mut TestAppContext) {
 
     let system_message = &pending_completion.messages[0];
     let MessageContent::Text(system_prompt) = &system_message.content[0] else {
-        panic!("Expected text content");
+        panic!("预期文本内容");
     };
     assert!(
         !system_prompt.contains("## Tool Use"),
@@ -1072,7 +1072,7 @@ fn test_permission_options_terminal_with_pattern() {
         .map(|choice| choice.allow.name.as_ref())
         .collect();
     assert!(labels.contains(&"Always for terminal"));
-    assert!(labels.contains(&"Always for `cargo build` commands"));
+    assert!(labels.contains(&"始终允许 `cargo build` 命令"));
     assert!(labels.contains(&"Only this time"));
 }
 
@@ -1092,7 +1092,7 @@ fn test_permission_options_terminal_command_with_flag_second_token() {
         .map(|choice| choice.allow.name.as_ref())
         .collect();
     assert!(labels.contains(&"Always for terminal"));
-    assert!(labels.contains(&"Always for `ls` commands"));
+    assert!(labels.contains(&"始终允许 `ls` 命令"));
     assert!(labels.contains(&"Only this time"));
 }
 
@@ -1112,7 +1112,7 @@ fn test_permission_options_terminal_single_word_command() {
         .map(|choice| choice.allow.name.as_ref())
         .collect();
     assert!(labels.contains(&"Always for terminal"));
-    assert!(labels.contains(&"Always for `whoami` commands"));
+    assert!(labels.contains(&"始终允许 `whoami` 命令"));
     assert!(labels.contains(&"Only this time"));
 }
 
@@ -1634,7 +1634,7 @@ async fn test_mcp_tool_multi_content_response(cx: &mut TestAppContext) {
 
     let events = thread.update(cx, |thread, cx| {
         thread
-            .send(UserMessageId::new(), ["Take a screenshot"], cx)
+            .send(UserMessageId::new(), ["截取屏幕截图"], cx)
             .unwrap()
     });
     cx.run_until_parked();
@@ -1690,7 +1690,7 @@ async fn test_mcp_tool_multi_content_response(cx: &mut TestAppContext) {
             MessageContent::ToolResult(r) => Some(r.clone()),
             _ => None,
         })
-        .expect("expected a tool result");
+        .expect("预期工具结果");
     assert_eq!(tool_result.tool_use_id, "tool_1".into());
     assert_eq!(tool_result.content.len(), 3);
     assert_eq!(
@@ -1699,8 +1699,8 @@ async fn test_mcp_tool_multi_content_response(cx: &mut TestAppContext) {
     );
     let expected_image =
         language_model::LanguageModelImage::from_base64_image(image_data, "image/png")
-            .expect("image conversion should not error")
-            .expect("image conversion should succeed");
+            .expect("图像转换不应出错")
+            .expect("图像转换应该成功");
     assert_eq!(
         tool_result.content[0],
         language_model::LanguageModelToolResultContent::Text(Arc::from("Some text"))
@@ -4213,7 +4213,7 @@ async fn test_streaming_tool_completes_when_llm_stream_ends_without_final_input(
 
     let _events = thread
         .update(cx, |thread, cx| {
-            thread.send(UserMessageId::new(), ["Use the streaming_echo tool"], cx)
+            thread.send(UserMessageId::new(), ["使用 streaming_echo 工具"], cx)
         })
         .unwrap();
     cx.run_until_parked();
@@ -4254,13 +4254,13 @@ async fn test_streaming_tool_completes_when_llm_stream_ends_without_final_input(
     let completion = fake_model
         .pending_completions()
         .pop()
-        .expect("No running turn");
+        .expect("没有正在运行的轮次");
     assert_eq!(
         completion.messages[1..],
         vec![
             LanguageModelRequestMessage {
                 role: Role::User,
-                content: vec!["Use the streaming_echo tool".into()],
+                content: vec!["使用 streaming_echo 工具".into()],
                 cache: false,
                 reasoning_details: None,
             },
@@ -4295,7 +4295,7 @@ async fn test_streaming_tool_completes_when_llm_stream_ends_without_final_input(
     thread.read_with(cx, |thread, _cx| {
         assert!(
             thread.is_turn_complete(),
-            "Thread should not be stuck; the turn should have completed",
+            "对话线程不应卡住;轮次应该已完成",
         );
     });
 }
@@ -4355,7 +4355,7 @@ async fn test_streaming_tool_json_parse_error_is_forwarded_to_running_tool(
     let completion = fake_model
         .pending_completions()
         .pop()
-        .expect("No running turn");
+        .expect("没有正在运行的轮次");
 
     let tool_results: Vec<_> = completion
         .messages
@@ -4403,7 +4403,7 @@ async fn test_streaming_tool_json_parse_error_is_forwarded_to_running_tool(
     thread.read_with(cx, |thread, _cx| {
         assert!(
             thread.is_turn_complete(),
-            "Thread should not be stuck; the turn should have completed",
+            "对话线程不应卡住;轮次应该已完成",
         );
     });
 }
@@ -5887,12 +5887,12 @@ async fn test_lsp_tools_gated_by_feature_flag(cx: &mut TestAppContext) {
         for name in &lsp_tool_names {
             assert!(
                 thread.has_registered_tool(name),
-                "expected LSP tool {name} to be registered"
+                "预期 LSP 工具 {name} 已注册"
             );
         }
         assert!(
             thread.has_registered_tool(RenameTool::NAME),
-            "expected rename tool to be registered"
+            "预期重命名工具已注册"
         );
     });
 
@@ -5924,7 +5924,7 @@ async fn test_lsp_tools_gated_by_feature_flag(cx: &mut TestAppContext) {
     // Sanity check: a non-LSP default tool should still be exposed.
     assert!(
         tool_names.iter().any(|t| t == ReadFileTool::NAME),
-        "expected non-LSP tools to still be exposed, got: {tool_names:?}"
+        "预期非 LSP 工具仍然可见,实际为: {tool_names:?}"
     );
     model.end_last_completion_stream();
     cx.run_until_parked();
@@ -6961,7 +6961,7 @@ async fn test_fetch_tool_allow_rule_skips_confirmation(cx: &mut TestAppContext) 
     );
 }
 
-/// Approving one pending tool call with "Always for <tool>" auto-resolves
+/// Approving one pending tool call with "始终允许 <tool>" auto-resolves
 /// sibling pending authorizations for the same tool in the same turn.
 #[gpui::test]
 async fn test_always_allow_resolves_pending_authorizations(cx: &mut TestAppContext) {
@@ -6994,7 +6994,7 @@ async fn test_always_allow_resolves_pending_authorizations(cx: &mut TestAppConte
     let tool_call_auth_1 = next_tool_call_authorization(&mut events).await;
     let tool_call_auth_2 = next_tool_call_authorization(&mut events).await;
 
-    // Approve the first with "always allow" — this persists a setting that
+    // Approve the first with "始终允许" — this persists a setting that
     // makes the tool unconditionally allowed. The second pending
     // authorization should resolve without user interaction.
     tool_call_auth_1
@@ -7016,7 +7016,7 @@ async fn test_always_allow_resolves_pending_authorizations(cx: &mut TestAppConte
         ));
     assert!(
         late_send.is_err(),
-        "expected tool 2's response receiver to be dropped after auto-resolve"
+        "预期工具 2 的响应接收器在自动解析后被丢弃"
     );
 
     let completion = fake_model.pending_completions().pop().unwrap();
@@ -7032,11 +7032,11 @@ async fn test_always_allow_resolves_pending_authorizations(cx: &mut TestAppConte
     assert_eq!(
         results.len(),
         2,
-        "both tool calls should have produced results"
+        "两个工具调用都应该产生结果"
     );
     assert!(
         results.iter().all(|r| !r.is_error),
-        "both results should be successful after auto-resolve, got: {:?}",
+        "自动解析后两个结果都应该成功,得到: {:?}",
         results
     );
 }
@@ -7097,7 +7097,7 @@ async fn test_external_settings_edit_resolves_pending_authorization(cx: &mut Tes
         ));
     assert!(
         late_send.is_err(),
-        "response receiver should have been dropped after settings-driven auto-resolve"
+        "设置驱动的自动解析后,响应接收器应该已被丢弃"
     );
 
     let completion = fake_model.pending_completions().pop().unwrap();
@@ -7109,8 +7109,8 @@ async fn test_external_settings_edit_resolves_pending_authorization(cx: &mut Tes
             language_model::MessageContent::ToolResult(r) => Some(r),
             _ => None,
         })
-        .expect("expected a tool result");
-    assert!(!result.is_error, "tool should have been auto-allowed");
+        .expect("预期工具结果");
+    assert!(!result.is_error, "工具应该被自动允许");
 }
 
 /// Externally adding a deny rule to settings dismisses a pending
@@ -7167,7 +7167,7 @@ async fn test_external_deny_rule_resolves_pending_authorization(cx: &mut TestApp
         ));
     assert!(
         late_send.is_err(),
-        "response receiver should have been dropped after deny auto-resolve"
+        "拒绝自动解析后,响应接收器应该已被丢弃"
     );
 
     let completion = fake_model.pending_completions().pop().unwrap();
@@ -7179,10 +7179,10 @@ async fn test_external_deny_rule_resolves_pending_authorization(cx: &mut TestApp
             language_model::MessageContent::ToolResult(r) => Some(r),
             _ => None,
         })
-        .expect("expected a tool result");
+        .expect("预期工具结果");
     assert!(
         result.is_error,
-        "tool should have been auto-denied by the new rule"
+        "工具应该被新规则自动拒绝"
     );
 }
 
@@ -7234,7 +7234,7 @@ async fn test_unrelated_settings_change_does_not_resolve_pending_authorization(
             acp::PermissionOptionId::new("allow"),
             acp::PermissionOptionKind::AllowOnce,
         ))
-        .expect("response receiver should still be alive");
+        .expect("响应接收器应该仍然存活");
     cx.run_until_parked();
 
     let completion = fake_model.pending_completions().pop().unwrap();
@@ -7246,11 +7246,11 @@ async fn test_unrelated_settings_change_does_not_resolve_pending_authorization(
             language_model::MessageContent::ToolResult(r) => Some(r),
             _ => None,
         })
-        .expect("expected a tool result");
+        .expect("预期工具结果");
     assert!(!result.is_error);
 }
 
-/// Approving one pending tool call with "Always for <tool A>" must not
+/// Approving one pending tool call with "始终允许 <tool A>" must not
 /// dismiss a sibling pending authorization for a *different* tool: the
 /// persisted rule is scoped to tool A, so tool B's prompt stays visible
 /// and waits for the user.
@@ -7296,7 +7296,7 @@ async fn test_always_allow_does_not_resolve_unrelated_tool_authorization(cx: &mu
         let a_name = auth_a
             .context
             .as_ref()
-            .expect("settings-driven authorization must carry a context")
+            .expect("设置驱动的授权必须携带上下文")
             .tool_name
             .clone();
         if a_name == ToolRequiringPermission::NAME {
@@ -7306,7 +7306,7 @@ async fn test_always_allow_does_not_resolve_unrelated_tool_authorization(cx: &mu
         }
     };
 
-    // Approve tool 1 with "always allow". Only tool 1's rule is persisted.
+    // Approve tool 1 with "始终允许". Only tool 1's rule is persisted.
     auth_for_tool_1
         .response
         .send(acp_thread::SelectedPermissionOutcome::new(
@@ -7324,7 +7324,7 @@ async fn test_always_allow_does_not_resolve_unrelated_tool_authorization(cx: &mu
             acp::PermissionOptionId::new("allow"),
             acp::PermissionOptionKind::AllowOnce,
         ))
-        .expect("tool 2's response receiver should still be alive");
+        .expect("工具 2 的响应接收器应该仍然存活");
     cx.run_until_parked();
 
     let completion = fake_model.pending_completions().pop().unwrap();
@@ -7340,11 +7340,11 @@ async fn test_always_allow_does_not_resolve_unrelated_tool_authorization(cx: &mu
     assert_eq!(
         results.len(),
         2,
-        "both tool calls should have produced results"
+        "两个工具调用都应该产生结果"
     );
     assert!(
         results.iter().all(|r| !r.is_error),
-        "both results should be successful, got: {:?}",
+        "两个结果都应该成功,得到: {:?}",
         results
     );
 }
@@ -7452,7 +7452,7 @@ async fn test_streaming_tool_error_breaks_stream_loop_immediately(cx: &mut TestA
         .update(cx, |thread, cx| {
             thread.send(
                 UserMessageId::new(),
-                ["Use the streaming_failing_echo tool"],
+                ["使用 streaming_failing_echo 工具"],
                 cx,
             )
         })
@@ -7481,7 +7481,7 @@ async fn test_streaming_tool_error_breaks_stream_loop_immediately(cx: &mut TestA
         vec![
             LanguageModelRequestMessage {
                 role: Role::User,
-                content: vec!["Use the streaming_failing_echo tool".into()],
+                content: vec!["使用 streaming_failing_echo 工具".into()],
                 cache: false,
                 reasoning_details: None,
             },
@@ -7533,7 +7533,7 @@ async fn test_streaming_tool_error_waits_for_prior_tools_to_complete(cx: &mut Te
         .update(cx, |thread, cx| {
             thread.send(
                 UserMessageId::new(),
-                ["Use the streaming_echo tool and the streaming_failing_echo tool"],
+                ["使用 streaming_echo 工具和 streaming_failing_echo 工具"],
                 cx,
             )
         })
@@ -7588,7 +7588,7 @@ async fn test_streaming_tool_error_waits_for_prior_tools_to_complete(cx: &mut Te
             LanguageModelRequestMessage {
                 role: Role::User,
                 content: vec![
-                    "Use the streaming_echo tool and the streaming_failing_echo tool".into()
+                    "使用 streaming_echo 工具和 streaming_failing_echo 工具".into()
                 ],
                 cache: false,
                 reasoning_details: None,
@@ -7646,14 +7646,14 @@ async fn test_mid_turn_model_and_settings_refresh(cx: &mut TestAppContext) {
             "agent": {
                 "profiles": {
                     "profile-a": {
-                        "name": "Profile A",
+                        "name": "配置文件 A",
                         "tools": {
                             EchoTool::NAME: true,
                             DelayTool::NAME: true,
                         }
                     },
                     "profile-b": {
-                        "name": "Profile B",
+                        "name": "配置文件 B",
                         "tools": {
                             DelayTool::NAME: true,
                         }

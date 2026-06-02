@@ -84,7 +84,7 @@ impl WindowsDisplay {
         let monitor = unsafe { MonitorFromPoint(POINT_ZERO, MONITOR_DEFAULTTOPRIMARY) };
         if monitor.is_invalid() {
             log::error!(
-                "can not find the primary monitor: {}",
+                "无法找到主显示器: {}",
                 std::io::Error::last_os_error()
             );
             return None;

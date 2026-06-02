@@ -91,7 +91,7 @@ pub fn init(client: Arc<Client>, user_store: Entity<UserStore>, cx: &mut App) {
 
             if new_provider_config != previous_config {
                 telemetry::event!(
-                    "Edit Prediction Provider Changed",
+                    "编辑预测提供者已更改",
                     from = previous_config.map(|config| config.name()),
                     to = new_provider_config.map(|config| config.name())
                 );
@@ -367,7 +367,7 @@ mod tests {
             .update(cx, |editor, _window, _cx| {
                 assert!(
                     editor.edit_prediction_provider().is_none(),
-                    "editor should start with no provider when settings = None"
+                    "当设置为 None 时,编辑器应以无提供程序启动"
                 );
             })
             .unwrap();
@@ -390,7 +390,7 @@ mod tests {
             .update(cx, |editor, _window, _cx| {
                 assert!(
                     editor.edit_prediction_provider().is_some(),
-                    "editor should have a provider after changing settings to Codestral"
+                    "将设置更改为 Codestral 后,编辑器应有提供程序"
                 );
             })
             .unwrap();
@@ -409,7 +409,7 @@ mod tests {
             .update(cx, |editor, _window, _cx| {
                 assert!(
                     editor.edit_prediction_provider().is_some(),
-                    "BUG: subscribe closure used stale provider_config (None) instead of current (Codestral)"
+                    "BUG:订阅闭包使用了过期的 provider_config (None) 而非当前的 (Codestral)"
                 );
             })
             .unwrap();

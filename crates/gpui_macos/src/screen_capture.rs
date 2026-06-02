@@ -123,7 +123,7 @@ impl ScreenCaptureSource for MacScreenCaptureSource {
                 let message: id = msg_send![error, localizedDescription];
                 let _: () = msg_send![stream, release];
                 let _: () = msg_send![output, release];
-                tx.send(Err(anyhow!("failed to add stream output {message:?}")))
+                tx.send(Err(anyhow!("添加流输出失败 {message:?}")))
                     .ok();
                 return rx;
             }
@@ -142,7 +142,7 @@ impl ScreenCaptureSource for MacScreenCaptureSource {
                         let _: () = msg_send![stream, release];
                         let _: () = msg_send![output, release];
                         let message: id = msg_send![error, localizedDescription];
-                        Err(anyhow!("failed to start screen capture stream {message:?}"))
+                        Err(anyhow!("启动屏幕捕获流失败 {message:?}"))
                     };
                     if let Some(tx) = tx.borrow_mut().take() {
                         tx.send(result).ok();
@@ -177,13 +177,13 @@ impl Drop for MacScreenCaptureStream {
             let _: () = msg_send![self.sc_stream, removeStreamOutput:self.sc_stream_output type:SCStreamOutputTypeScreen error:&mut error as *mut _];
             if error != nil {
                 let message: id = msg_send![error, localizedDescription];
-                log::error!("failed to add stream  output {message:?}");
+                log::error!("添加流输出失败 {message:?}");
             }
 
             let handler = ConcreteBlock::new(move |error: id| {
                 if error != nil {
                     let message: id = msg_send![error, localizedDescription];
-                    log::error!("failed to stop screen capture stream {message:?}");
+                    log::error!("停止屏幕捕获流失败 {message:?}");
                 }
             });
             let block = handler.copy();
@@ -267,7 +267,7 @@ pub(crate) fn get_sources() -> oneshot::Receiver<Result<Vec<Rc<dyn ScreenCapture
             } else {
                 let msg: id = msg_send![error, localizedDescription];
                 Err(anyhow!(
-                    "Screen share failed: {:?}",
+                    "屏幕共享失败: {:?}",
                     NSStringExt::to_str(&msg)
                 ))
             };

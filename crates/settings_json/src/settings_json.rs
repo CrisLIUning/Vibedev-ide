@@ -77,7 +77,7 @@ pub fn replace_value_in_json_text<T: AsRef<str>>(
             &tree_sitter_json::LANGUAGE.into(),
             "(pair key: (string) @key value: (_) @value)",
         )
-        .expect("Failed to create PAIR_QUERY")
+        .expect("创建 PAIR_QUERY 失败")
     });
 
     let mut parser = tree_sitter::Parser::new();
@@ -524,7 +524,7 @@ pub fn append_top_level_array_value_in_json_text(
     let went_to_last_child = cursor.goto_last_child();
     debug_assert!(
         went_to_last_child && cursor.node().kind() == "]",
-        "Malformed JSON syntax tree, expected `]` at end of array"
+        "JSON 语法树格式错误,数组末尾应为 `]`"
     );
     let close_bracket_start = cursor.node().start_byte();
     while cursor.goto_previous_sibling()

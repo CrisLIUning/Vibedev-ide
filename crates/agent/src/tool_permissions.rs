@@ -292,7 +292,7 @@ impl ToolPermissionDecision {
                 return match permissions.default {
                     ToolPermissionMode::Allow => ToolPermissionDecision::Allow,
                     ToolPermissionMode::Deny => {
-                        ToolPermissionDecision::Deny("Blocked by global default: deny".into())
+                        ToolPermissionDecision::Deny("已被全局默认设置阻止: 拒绝".into())
                     }
                     ToolPermissionMode::Confirm => ToolPermissionDecision::Confirm,
                 };
@@ -1185,11 +1185,11 @@ mod tests {
         match decision {
             ToolPermissionDecision::Deny(message) => {
                 assert!(
-                    message.contains("built-in security rule"),
-                    "expected hardcoded denial message, got: {message}"
+                    message.contains("内置安全规则"),
+                    "预期硬编码拒绝消息,得到: {message}"
                 );
             }
-            other => panic!("expected Deny, got {other:?}"),
+            other => panic!("预期 Deny,得到 {other:?}"),
         }
     }
 
@@ -1199,11 +1199,11 @@ mod tests {
         match decision {
             ToolPermissionDecision::Deny(message) => {
                 assert!(
-                    message.contains("built-in security rule"),
-                    "expected hardcoded denial message, got: {message}"
+                    message.contains("内置安全规则"),
+                    "预期硬编码拒绝消息,得到: {message}"
                 );
             }
-            other => panic!("expected Deny, got {other:?}"),
+            other => panic!("预期 Deny,得到 {other:?}"),
         }
     }
 
@@ -1342,7 +1342,7 @@ mod tests {
     fn always_allow_button_works_end_to_end() {
         // This test verifies that the "Always Allow" button behavior works correctly:
         // 1. User runs a command like "cargo build --release"
-        // 2. They click "Always Allow for `cargo build` commands"
+        // 2. They click "始终允许 `cargo build` 命令"
         // 3. The pattern extracted should match future "cargo build" commands
         //    but NOT other cargo subcommands like "cargo test"
         let original_command = "cargo build --release";

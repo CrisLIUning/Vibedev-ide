@@ -6,11 +6,11 @@ pub fn duration_alt_display(duration: Duration) -> String {
     let seconds = duration.as_secs() % 60;
 
     if hours > 0 {
-        format!("{hours}h {minutes}m {seconds}s")
+        format!("{hours}小时 {minutes}分 {seconds}秒")
     } else if minutes > 0 {
-        format!("{minutes}m {seconds}s")
+        format!("{minutes}分 {seconds}秒")
     } else {
-        format!("{seconds}s")
+        format!("{seconds}秒")
     }
 }
 

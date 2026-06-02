@@ -23,7 +23,7 @@ pub fn derive_inspector_reflection(_args: TokenStream, input: TokenStream) -> To
         _ => {
             return syn::Error::new_spanned(
                 quote!(#item),
-                "#[derive_inspector_reflection] can only be applied to traits",
+                "#[derive_inspector_reflection] 只能应用于 trait",
             )
             .to_compile_error()
             .into();

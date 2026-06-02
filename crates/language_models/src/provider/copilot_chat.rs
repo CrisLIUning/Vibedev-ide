@@ -250,10 +250,10 @@ impl LanguageModel for CopilotChatLanguageModel {
             .iter()
             .map(|level| {
                 let name = match level.as_str() {
-                    "low" => "Low".into(),
-                    "medium" => "Medium".into(),
-                    "high" => "High".into(),
-                    "xhigh" => "Extra High".into(),
+                    "low" => "低".into(),
+                    "medium" => "中".into(),
+                    "high" => "高".into(),
+                    "xhigh" => "极高".into(),
                     _ => language_model::SharedString::from(level.clone()),
                 };
                 LanguageModelEffortLevel {
@@ -1448,11 +1448,11 @@ mod tests {
             "is_chat_default": false,
             "is_chat_fallback": false,
             "model_picker_enabled": true,
-            "name": "Test Model",
+            "name": "测试模型",
             "vendor": "OpenAI",
             "supported_endpoints": ["/responses"]
         }))
-        .expect("valid test model")
+        .expect("有效的测试模型")
     }
 
     #[test]
@@ -1593,7 +1593,7 @@ mod tests {
                     ]
                 })
             ),
-            other => panic!("expected reasoning details, got {other:?}"),
+            other => panic!("期望推理详情,但得到 {other:?}"),
         }
     }
 
@@ -1605,7 +1605,7 @@ mod tests {
                 role: Role::Assistant,
                 content: vec![
                     MessageContent::RedactedThinking("legacy-redacted".into()),
-                    MessageContent::Text("Done".into()),
+                    MessageContent::Text("完成".into()),
                 ],
                 cache: false,
                 reasoning_details: Some(json!({
@@ -1627,8 +1627,8 @@ mod tests {
         };
 
         let serialized = serde_json::to_value(into_copilot_responses(&model, request))
-            .expect("serialized request");
-        let input = serialized["input"].as_array().expect("input items");
+            .expect("序列化请求");
+        let input = serialized["input"].as_array().expect("输入项");
 
         assert_eq!(
             input.first(),
@@ -1647,7 +1647,7 @@ mod tests {
                 "content": [
                     {
                         "type": "output_text",
-                        "text": "Done"
+                        "text": "完成"
                     }
                 ],
                 "status": "completed"

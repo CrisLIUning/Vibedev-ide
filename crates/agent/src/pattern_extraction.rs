@@ -297,8 +297,8 @@ mod tests {
     #[test]
     fn test_terminal_pattern_regex_normalizes_whitespace() {
         let pattern = extract_terminal_pattern("PAGER=blah   git   log --oneline")
-            .expect("expected terminal pattern");
-        let regex = regex::Regex::new(&pattern).expect("expected valid regex");
+            .expect("期望终端模式");
+        let regex = regex::Regex::new(&pattern).expect("期望有效的正则表达式");
 
         assert!(regex.is_match("PAGER=blah git log"));
         assert!(regex.is_match("PAGER=blah    git    log --stat"));

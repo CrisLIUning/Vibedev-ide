@@ -436,7 +436,7 @@ impl Search {
                         .read_with(cx, |this, _| {
                             Some((this.snapshot(), this.as_local()?.settings()))
                         })
-                        .context("The worktree is not local")?;
+                        .context("工作树不是本地的")?;
                     if query.include_ignored() {
                         // Pre-fetch all of the ignored directories as they're going to be searched.
                         let mut entries_to_refresh = vec![];

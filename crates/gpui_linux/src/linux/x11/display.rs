@@ -21,7 +21,7 @@ impl X11Display {
             .setup()
             .roots
             .get(x_screen_index)
-            .with_context(|| format!("No screen found with index {x_screen_index}"))?;
+            .with_context(|| format!("未找到索引为 {x_screen_index} 的屏幕"))?;
         Ok(Self {
             x_screen_index,
             bounds: Bounds {

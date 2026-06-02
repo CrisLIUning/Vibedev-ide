@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use agent_skills::GLOBAL_SKILLS_DIR_DISPLAY;
 use auto_update::{AutoUpdater, release_notes_url};
-use client::zed_urls;
 use db::kvp::Dismissable;
 use editor::{Editor, MultiBuffer};
 use gpui::{
@@ -71,9 +70,9 @@ fn notify_release_notes_failed_to_show(
         |cx| {
             cx.new(move |cx| {
                 let url = release_notes_url(cx);
-                let mut prompt = ErrorMessagePrompt::new("Couldn't load release notes", cx);
+                let mut prompt = ErrorMessagePrompt::new("无法加载更新日志", cx);
                 if let Some(url) = url {
-                    prompt = prompt.with_link_button("View in Browser".to_string(), url);
+                    prompt = prompt.with_link_button("在浏览器中查看".to_string(), url);
                 }
                 prompt
             })
@@ -216,26 +215,28 @@ fn announcement_for_version(version: &Version, cx: &App) -> Option<AnnouncementC
 
         let mut bullet_items: Vec<SharedString> = Vec::with_capacity(3);
         bullet_items
-            .push(format!("Skills live in {GLOBAL_SKILLS_DIR_DISPLAY}/<name>/SKILL.md").into());
+            .push(format!("技能位于 {GLOBAL_SKILLS_DIR_DISPLAY}/<name>/SKILL.md").into());
         if migrated_anything {
             bullet_items.push(
-                "Default Rules are converted into your global AGENTS.md; all other rules become skills".into(),
+                "默认规则将转换为您的全局 AGENTS.md;其他规则将转换为技能".into(),
             );
         }
-        bullet_items.push("Type / to manually invoke a skill".into());
+        bullet_items.push("输入 / 手动调用技能".into());
 
         Some(AnnouncementContent {
-            heading: "Introducing Skills Support".into(),
-            description: "Extend the agent with focused instructions and domain knowledge.".into(),
+            heading: "推出技能支持".into(),
+            description: "使用针对性指令和领域知识扩展助手功能。".into(),
             bullet_items,
-            primary_action_label: "Try Now".into(),
-            secondary_action_label: "Read Documentation".into(),
+            primary_action_label: "立即体验".into(),
+            secondary_action_label: "阅读文档".into(),
             primary_action_url: None,
             primary_action_callback: Some(Arc::new(move |window, cx| {
                 window.dispatch_action(Box::new(zed_actions::assistant::FocusAgent), cx);
             })),
             on_dismiss: Some(Arc::new(|cx| SkillsAnnouncement::set_dismissed(true, cx))),
-            secondary_action_url: Some(zed_urls::skills_docs(cx).into()),
+            // VIBEDEV: skills_docs used to link to zed.dev/docs/ai/skills.
+            // No VibeDev replacement yet; hide the secondary action entirely.
+            secondary_action_url: None,
         })
     } else {
         None
@@ -342,8 +343,8 @@ fn show_update_notification(cx: &mut App) {
             move |cx| {
                 let workspace_handle = cx.entity().downgrade();
                 cx.new(|cx| {
-                    MessageNotification::new(format!("Updated to {app_name} {}", version), cx)
-                        .primary_message("View Release Notes")
+                    MessageNotification::new(format!("已更新至 {app_name} {}", version), cx)
+                        .primary_message("查看更新日志")
                         .primary_on_click(move |window, cx| {
                             if let Some(workspace) = workspace_handle.upgrade() {
                                 workspace.update(cx, |workspace, cx| {

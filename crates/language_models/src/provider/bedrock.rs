@@ -656,22 +656,22 @@ impl LanguageModel for BedrockModel {
         if self.model.supports_adaptive_thinking() {
             vec![
                 language_model::LanguageModelEffortLevel {
-                    name: "Low".into(),
+                    name: "低".into(),
                     value: "low".into(),
                     is_default: false,
                 },
                 language_model::LanguageModelEffortLevel {
-                    name: "Medium".into(),
+                    name: "中".into(),
                     value: "medium".into(),
                     is_default: false,
                 },
                 language_model::LanguageModelEffortLevel {
-                    name: "High".into(),
+                    name: "高".into(),
                     value: "high".into(),
                     is_default: true,
                 },
                 language_model::LanguageModelEffortLevel {
-                    name: "Max".into(),
+                    name: "最大".into(),
                     value: "max".into(),
                     is_default: false,
                 },
@@ -808,7 +808,7 @@ fn deny_tool_use_events(
             Ok(LanguageModelCompletionEvent::ToolUse(tool_use)) => {
                 // Convert tool use to an error message if model decided to call it
                 Ok(LanguageModelCompletionEvent::Text(format!(
-                    "\n\n[Error: Tool calls are disabled in this context. Attempted to call '{}']",
+                    "\n\n[错误: 工具调用在此上下文中被禁用。尝试调用 '{}']",
                     tool_use.name
                 )))
             }
@@ -935,7 +935,7 @@ pub fn into_bedrock(
                                                     Err(err) => {
                                                         BedrockToolResultContentBlock::Text(
                                                             format!(
-                                                                "[Failed to build image block: {}]",
+                                                                "[构建图像块失败: {}]",
                                                                 err
                                                             ),
                                                         )
@@ -944,7 +944,7 @@ pub fn into_bedrock(
                                             }
                                             Err(err) => {
                                                 BedrockToolResultContentBlock::Text(format!(
-                                                    "[Failed to decode tool result image: {}]",
+                                                    "[解码工具结果图像失败: {}]",
                                                     err
                                                 ))
                                             }
@@ -971,14 +971,14 @@ pub fn into_bedrock(
 
                             let image_bytes = base64::engine::general_purpose::STANDARD
                                 .decode(image.source.as_bytes())
-                                .context("failed to decode base64 image data")
+                                .context("解码 base64 图像数据失败")
                                 .log_err()?;
 
                             BedrockImageBlock::builder()
                                 .format(BedrockImageFormat::Png)
                                 .source(BedrockImageSource::Bytes(BedrockBlob::new(image_bytes)))
                                 .build()
-                                .context("failed to build Bedrock image block")
+                                .context("构建 Bedrock 图像块失败")
                                 .log_err()
                                 .map(BedrockInnerContent::Image)
                         }
@@ -1220,7 +1220,7 @@ pub fn map_to_language_model_completion_events(
                                 }
                                 ReasoningContentBlockDelta::RedactedContent(redacted) => {
                                     let content = String::from_utf8(redacted.into_inner())
-                                        .unwrap_or("REDACTED".to_string());
+                                        .unwrap_or("已编辑".to_string());
                                     Some(Ok(LanguageModelCompletionEvent::Thinking {
                                         text: content,
                                         signature: None,
@@ -1335,28 +1335,28 @@ impl ConfigurationView {
 
         let access_key_id_editor = cx.new(|cx| {
             InputField::new(window, cx, Self::PLACEHOLDER_ACCESS_KEY_ID_TEXT)
-                .label("Access Key ID")
+                .label("访问密钥 ID")
                 .tab_index(0)
                 .tab_stop(true)
         });
 
         let secret_access_key_editor = cx.new(|cx| {
             InputField::new(window, cx, Self::PLACEHOLDER_SECRET_ACCESS_KEY_TEXT)
-                .label("Secret Access Key")
+                .label("秘密访问密钥")
                 .tab_index(1)
                 .tab_stop(true)
         });
 
         let session_token_editor = cx.new(|cx| {
             InputField::new(window, cx, Self::PLACEHOLDER_SESSION_TOKEN_TEXT)
-                .label("Session Token (Optional)")
+                .label("会话令牌(可选)")
                 .tab_index(2)
                 .tab_stop(true)
         });
 
         let bearer_token_editor = cx.new(|cx| {
             InputField::new(window, cx, Self::PLACEHOLDER_BEARER_TOKEN_TEXT)
-                .label("Bedrock API Key")
+                .label("Bedrock API 密钥")
                 .tab_index(3)
                 .tab_stop(true)
         });
@@ -1490,34 +1490,34 @@ impl Render for ConfigurationView {
             .and_then(|s| s.authentication_method.clone());
 
         if self.load_credentials_task.is_some() {
-            return div().child(Label::new("Loading credentials...")).into_any();
+            return div().child(Label::new("正在加载凭据...")).into_any();
         }
 
         let configured_label = match &auth {
             Some(BedrockAuth::Automatic) => {
-                "Using automatic credentials (AWS default chain)".into()
+                "使用自动凭证(AWS 默认链)".into()
             }
             Some(BedrockAuth::NamedProfile { profile_name }) => {
-                format!("Using AWS profile: {profile_name}")
+                format!("使用 AWS 配置文件: {profile_name}")
             }
             Some(BedrockAuth::SingleSignOn { profile_name }) => {
-                format!("Using AWS SSO profile: {profile_name}")
+                format!("使用 AWS SSO 配置文件: {profile_name}")
             }
             Some(BedrockAuth::IamCredentials { .. }) if env_var_set => {
                 format!(
-                    "Using IAM credentials from {} and {} environment variables",
+                    "使用来自 {} 和 {} 环境变量的 IAM 凭证",
                     ZED_BEDROCK_ACCESS_KEY_ID_VAR.name, ZED_BEDROCK_SECRET_ACCESS_KEY_VAR.name
                 )
             }
-            Some(BedrockAuth::IamCredentials { .. }) => "Using IAM credentials".into(),
+            Some(BedrockAuth::IamCredentials { .. }) => "使用 IAM 凭证".into(),
             Some(BedrockAuth::ApiKey { .. }) if env_var_set => {
                 format!(
-                    "Using Bedrock API Key from {} environment variable",
+                    "使用来自 {} 环境变量的 Bedrock API 密钥",
                     ZED_BEDROCK_BEARER_TOKEN_VAR.name
                 )
             }
-            Some(BedrockAuth::ApiKey { .. }) => "Using Bedrock API Key".into(),
-            None => "Not authenticated".into(),
+            Some(BedrockAuth::ApiKey { .. }) => "使用 Bedrock API 密钥".into(),
+            None => "未认证".into(),
         };
 
         // Determine if credentials can be reset
@@ -1531,7 +1531,7 @@ impl Render for ConfigurationView {
 
         let tooltip_label = if env_var_set {
             Some(format!(
-                "To reset your credentials, unset the {}, {}, and {} or {} environment variables.",
+                "要重置您的凭证,请取消设置 {}、{} 和 {} 或 {} 环境变量。",
                 ZED_BEDROCK_ACCESS_KEY_ID_VAR.name,
                 ZED_BEDROCK_SECRET_ACCESS_KEY_VAR.name,
                 ZED_BEDROCK_SESSION_TOKEN_VAR.name,
@@ -1539,7 +1539,7 @@ impl Render for ConfigurationView {
             ))
         } else if is_settings_derived {
             Some(
-                "Authentication method is configured in settings. Edit settings.json to change."
+                "认证方法在设置中配置。请编辑 settings.json 进行更改。"
                     .to_string(),
             )
         } else {
@@ -1561,25 +1561,25 @@ impl Render for ConfigurationView {
             .on_action(cx.listener(Self::on_tab))
             .on_action(cx.listener(Self::on_tab_prev))
             .on_action(cx.listener(ConfigurationView::save_credentials))
-            .child(Label::new("To use Zed's agent with Bedrock, you can set a custom authentication strategy through your settings file or use static credentials."))
-            .child(Label::new("But first, to access models on AWS, you need to:").mt_1())
+            .child(Label::new("To use VibeDev's agent with Bedrock, you can set a custom authentication strategy through your settings file or use static credentials."))
+            .child(Label::new("但首先,要访问 AWS 上的模型,您需要:").mt_1())
             .child(
                 List::new()
                     .child(
                         ListBulletItem::new("")
                             .child(Label::new(
-                                "Grant permissions to the strategy you'll use according to the:",
+                                "根据以下内容为您将使用的策略授予权限:",
                             ))
                             .child(ButtonLink::new(
-                                "Prerequisites",
+                                "先决条件",
                                 "https://docs.aws.amazon.com/bedrock/latest/userguide/inference-prereq.html",
                             )),
                     )
                     .child(
                         ListBulletItem::new("")
-                            .child(Label::new("Select the models you would like access to:"))
+                            .child(Label::new("选择您想要访问的模型:"))
                             .child(ButtonLink::new(
-                                "Bedrock Model Catalog",
+                                "Bedrock 模型目录",
                                 "https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/model-catalog",
                             )),
                     ),
@@ -1602,40 +1602,40 @@ impl ConfigurationView {
             .child(
                 ListBulletItem::new("")
                     .child(Label::new(
-                        "For access keys: Create an IAM user in the AWS console with programmatic access",
+                        "对于访问密钥:在 AWS 控制台中创建一个具有编程访问权限的 IAM 用户",
                     ))
                     .child(ButtonLink::new(
-                        "IAM Console",
+                        "IAM 控制台",
                         "https://us-east-1.console.aws.amazon.com/iam/home?region=us-east-1#/users",
                     )),
             )
             .child(
                 ListBulletItem::new("")
-                    .child(Label::new("For Bedrock API Keys: Generate an API key from the"))
+                    .child(Label::new("对于 Bedrock API 密钥:从以下位置生成 API 密钥"))
                     .child(ButtonLink::new(
-                        "Bedrock Console",
+                        "Bedrock 控制台",
                         "https://docs.aws.amazon.com/bedrock/latest/userguide/api-keys-use.html",
                     )),
             )
             .child(
                 ListBulletItem::new("")
-                    .child(Label::new("Attach the necessary Bedrock permissions to"))
+                    .child(Label::new("将必要的 Bedrock 权限附加到"))
                     .child(ButtonLink::new(
-                        "this user",
+                        "此用户",
                         "https://docs.aws.amazon.com/bedrock/latest/userguide/inference-prereq.html",
                     )),
             )
             .child(ListBulletItem::new(
-                "Enter either access keys OR a Bedrock API Key below (not both)",
+                "在下方输入访问密钥或 Bedrock API 密钥(不能同时输入两者)",
             ));
 
         v_flex()
             .my_2()
             .tab_group()
             .gap_1p5()
-            .child(section_header("Static Credentials".into()))
+            .child(section_header("静态凭证".into()))
             .child(Label::new(
-                "This method uses your AWS access key ID and secret access key, or a Bedrock API Key.",
+                "此方法使用您的 AWS 访问密钥 ID 和秘密访问密钥,或 Bedrock API 密钥。",
             ))
             .child(list_item)
             .child(self.access_key_id_editor.clone())
@@ -1643,7 +1643,7 @@ impl ConfigurationView {
             .child(self.session_token_editor.clone())
             .child(
                 Label::new(format!(
-                    "You can also set the {}, {} and {} environment variables (or {} for Bedrock API Key authentication) and restart Zed.",
+                    "You can also set the {}, {} and {} environment variables (or {} for Bedrock API Key authentication) and restart VibeDev.",
                     ZED_BEDROCK_ACCESS_KEY_ID_VAR.name,
                     ZED_BEDROCK_SECRET_ACCESS_KEY_VAR.name,
                     ZED_BEDROCK_REGION_VAR.name,
@@ -1654,7 +1654,7 @@ impl ConfigurationView {
             )
             .child(
                 Label::new(format!(
-                    "Optionally, if your environment uses AWS CLI profiles, you can set {}; if it requires a custom endpoint, you can set {}; and if it requires a Session Token, you can set {}.",
+                    "或者,如果您的环境使用 AWS CLI 配置文件,您可以设置 {};如果需要自定义端点,您可以设置 {};如果需要会话令牌,您可以设置 {}。",
                     ZED_AWS_PROFILE_VAR.name,
                     ZED_AWS_ENDPOINT_VAR.name,
                     ZED_BEDROCK_SESSION_TOKEN_VAR.name
@@ -1664,11 +1664,11 @@ impl ConfigurationView {
                 .mt_1()
                 .mb_2p5(),
             )
-            .child(section_header("Using the an API key".into()))
+            .child(section_header("使用 API 密钥".into()))
             .child(self.bearer_token_editor.clone())
             .child(
                 Label::new(format!(
-                    "Region is configured via {} environment variable or settings.json (defaults to us-east-1).",
+                    "区域通过 {} 环境变量或 设置.json 配置(默认为 us-east-1)。",
                     ZED_BEDROCK_REGION_VAR.name
                 ))
                 .size(LabelSize::Small)

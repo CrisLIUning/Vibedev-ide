@@ -314,12 +314,12 @@ mod tests {
         assert_eq!(
             count_max_consecutive_chars("``a```b``", '`'),
             3,
-            "the highest seen consecutive segment of backticks counts"
+            "计算连续出现的最大反引号段长度"
         );
         assert_eq!(
             count_max_consecutive_chars("```a``b`", '`'),
             3,
-            "it can't be downgraded later"
+            "该值之后不会降低"
         );
     }
 

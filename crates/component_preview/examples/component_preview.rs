@@ -32,7 +32,7 @@ fn main() {
         release_channel::init(version, cx);
 
         let http_client =
-            ReqwestClient::user_agent("component_preview").expect("Failed to create HTTP client");
+            ReqwestClient::user_agent("component_preview").expect("无法创建 HTTP 客户端");
         cx.set_http_client(Arc::new(http_client));
 
         let fs = Arc::new(RealFs::new(None, cx.background_executor().clone()));
@@ -123,7 +123,7 @@ fn main() {
                                 window,
                                 cx,
                             )
-                            .expect("Failed to create component preview")
+                            .expect("创建组件预览失败")
                         });
 
                         workspace.add_item_to_active_pane(
@@ -139,7 +139,7 @@ fn main() {
                 }
             },
         )
-        .expect("Failed to open component preview window");
+        .expect("无法打开组件预览窗口");
 
         cx.activate(true);
     });

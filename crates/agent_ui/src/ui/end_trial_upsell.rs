@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use ai_onboarding::{AgentPanelOnboardingCard, PlanDefinitions};
-use client::zed_urls;
 use gpui::{AnyElement, App, IntoElement, RenderOnce, Window};
 use ui::{Divider, Tooltip, prelude::*};
 
@@ -11,6 +10,9 @@ pub struct EndTrialUpsell {
 }
 
 impl EndTrialUpsell {
+    // VIBEDEV: rendering path (`should_render_trial_end_upsell` in agent_panel) was neutered;
+    // kept for upstream-rebase ease.
+    #[allow(dead_code)]
     pub fn new(dismiss_upsell: Arc<dyn Fn(&mut Window, &mut App)>) -> Self {
         Self { dismiss_upsell }
     }
@@ -24,7 +26,7 @@ impl RenderOnce for EndTrialUpsell {
                 h_flex()
                     .gap_2()
                     .child(
-                        Label::new("Pro")
+                        Label::new("专业版")
                             .size(LabelSize::Small)
                             .color(Color::Accent)
                             .buffer_font(cx),
@@ -33,12 +35,12 @@ impl RenderOnce for EndTrialUpsell {
             )
             .child(PlanDefinitions.pro_plan())
             .child(
-                Button::new("cta-button", "Upgrade to Zed Pro")
+                Button::new("cta-button", "升级到 VibeDev Pro")
                     .full_width()
                     .style(ButtonStyle::Tinted(ui::TintColor::Accent))
-                    .on_click(move |_, _window, cx| {
+                    .on_click(move |_, _window, _cx| {
                         telemetry::event!("Upgrade To Pro Clicked", state = "end-of-trial");
-                        cx.open_url(&zed_urls::upgrade_to_zed_pro_url(cx))
+                        { /* VIBEDEV: was zed.dev/account/upgrade; render_trial_end_upsell never mounts this component anyway */ }
                     }),
             );
 
@@ -49,13 +51,13 @@ impl RenderOnce for EndTrialUpsell {
                 h_flex()
                     .gap_2()
                     .child(
-                        Label::new("Free")
+                        Label::new("免费")
                             .size(LabelSize::Small)
                             .color(Color::Muted)
                             .buffer_font(cx),
                     )
                     .child(
-                        Label::new("(Current Plan)")
+                        Label::new("(当前方案)")
                             .size(LabelSize::Small)
                             .color(Color::Custom(cx.theme().colors().text_muted.opacity(0.6)))
                             .buffer_font(cx),
@@ -65,9 +67,9 @@ impl RenderOnce for EndTrialUpsell {
             .child(PlanDefinitions.free_plan());
 
         AgentPanelOnboardingCard::new()
-            .child(Headline::new("Your Zed Pro Trial has expired"))
+            .child(Headline::new("您的 VibeDev Pro 试用已过期"))
             .child(
-                Label::new("You've been automatically reset to the Free plan.")
+                Label::new("您已被自动重置为 Free 方案。")
                     .color(Color::Muted)
                     .mb_2(),
             )
@@ -77,7 +79,7 @@ impl RenderOnce for EndTrialUpsell {
                 h_flex().absolute().top_4().right_4().child(
                     IconButton::new("dismiss_onboarding", IconName::Close)
                         .icon_size(IconSize::Small)
-                        .tooltip(Tooltip::text("Dismiss"))
+                        .tooltip(Tooltip::text("关闭"))
                         .on_click({
                             let callback = self.dismiss_upsell.clone();
                             move |_, window, cx| {

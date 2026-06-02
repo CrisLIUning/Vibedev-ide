@@ -56,7 +56,7 @@ impl McpServer {
         let task = cx.background_spawn(async move {
             let temp_dir = tempfile::Builder::new().prefix("zed-mcp").tempdir()?;
             let socket_path = temp_dir.path().join("mcp.sock");
-            let listener = UnixListener::bind(&socket_path).context("creating mcp socket")?;
+            let listener = UnixListener::bind(&socket_path).context("创建 mcp 套接字")?;
 
             anyhow::Ok((temp_dir, socket_path, listener))
         });
@@ -97,7 +97,7 @@ impl McpServer {
             .map(|desc| desc.to_string());
         debug_assert!(
             description.is_some(),
-            "Input schema struct must include a doc comment for the tool description"
+            "输入模式结构体必须包含用于工具描述的文档注释"
         );
 
         let registered_tool = RegisteredTool {
@@ -233,7 +233,7 @@ impl McpServer {
                 } else {
                     Self::send_err(
                         request_id,
-                        format!("unhandled method {}", request.method),
+                        format!("未处理的方法 {}", request.method),
                         &outgoing_tx,
                     );
                 }
@@ -320,7 +320,7 @@ impl McpServer {
                 } else {
                     Self::send_err(
                         request_id,
-                        format!("Tool not found: {}", params.name),
+                        format!("未找到工具: {}", params.name),
                         outgoing_tx,
                     );
                 }
@@ -384,11 +384,11 @@ impl McpServer {
                                 "jsonrpc": "2.0",
                                 "error": json!({
                                     "code": -32603,
-                                    "message": format!("Failed to parse: {error}"),
+                                    "message": format!("解析失败: {error}"),
                                 }),
                             }))?.as_bytes()).await?;
                             outgoing_bytes.write_all(&[b'\n']).await?;
-                            log::error!("failed to parse incoming message: {error}. Raw: {incoming_line}");
+                            log::error!("解析传入消息失败: {error}。原始内容: {incoming_line}");
                         }
                     }
                     incoming_line.clear();

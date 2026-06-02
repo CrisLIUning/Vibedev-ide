@@ -333,7 +333,7 @@ mod test {
                     &mode,
                     false
                 ),
-                "On letter: {}/{}",
+                "在字母上: {}/{}",
                 lower,
                 upper
             )

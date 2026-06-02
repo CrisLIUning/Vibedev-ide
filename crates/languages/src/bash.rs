@@ -13,12 +13,12 @@ use util::{ResultExt, maybe};
 pub(super) fn bash_task_context() -> ContextProviderWithTasks {
     ContextProviderWithTasks::new(TaskTemplates(vec![
         TaskTemplate {
-            label: "execute selection".to_owned(),
+            label: "执行选中内容".to_owned(),
             command: VariableName::SelectedText.template_value(),
             ..TaskTemplate::default()
         },
         TaskTemplate {
-            label: format!("run '{}'", VariableName::File.template_value()),
+            label: format!("运行 '{}'", VariableName::File.template_value()),
             command: VariableName::File.template_value(),
             tags: vec!["bash-script".to_owned()],
             ..TaskTemplate::default()
@@ -49,7 +49,7 @@ impl BashLspAdapter {
                 .join(Self::NODE_MODULE_RELATIVE_SERVER_PATH);
             anyhow::ensure!(
                 server_path.exists(),
-                "missing executable in directory {server_path:?}"
+                "目录 {server_path:?} 中缺少可执行文件"
             );
             Ok(LanguageServerBinary {
                 path: node.binary_path().await?,

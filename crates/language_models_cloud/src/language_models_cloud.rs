@@ -72,7 +72,7 @@ pub async fn authenticated_llm_request<TP: CloudLlmTokenProvider>(
     if !needs_llm_token_refresh(&response) && response.status() != StatusCode::UNAUTHORIZED {
         return Ok(response);
     }
-    log::info!("LLM token rejected; refreshing and retrying request");
+    log::info!("LLM 令牌被拒绝,正在刷新并重试请求");
     let token = token_provider.refresh_token(auth_context).await?;
     http_client.send(build_request(&token)?).await
 }
@@ -177,7 +177,7 @@ fn needs_llm_token_refresh(response: &Response<AsyncBody>) -> bool {
 }
 
 #[derive(Debug, Error)]
-#[error("cloud language model request failed with status {status}: {body}")]
+#[error("云端语言模型请求失败,状态码 {status}: {body}")]
 struct ApiError {
     status: StatusCode,
     body: String,
@@ -653,7 +653,7 @@ impl<TP: CloudLlmTokenProvider + 'static> CloudModelProvider<TP> {
                     .body(AsyncBody::empty())?)
             })
             .await
-            .context("failed to send list models request")?;
+            .context("发送模型列表请求失败")?;
 
         if response.status().is_success() {
             let mut body = String::new();
@@ -663,7 +663,7 @@ impl<TP: CloudLlmTokenProvider + 'static> CloudModelProvider<TP> {
             let mut body = String::new();
             response.body_mut().read_to_string(&mut body).await?;
             anyhow::bail!(
-                "error listing models.\nStatus: {:?}\nBody: {body}",
+                "列出模型时出错。\n状态: {:?}\n内容: {body}",
                 response.status(),
             );
         }

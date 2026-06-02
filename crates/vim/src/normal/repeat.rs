@@ -295,7 +295,7 @@ impl Vim {
         // Dot repeat always uses the recorded register, ignoring any "X
         // override, as the register is an inherent part of the recorded action.
         // For numbered registers, Neovim increments on each dot repeat so after
-        // using `"1p`, using `.` will equate to `"2p", the next `.` to `"3p`,
+        // using `"1p`,使用 `.` 等同于 `"2p",下一个 `.` 等同于 `"3p`,
         // etc..
         let recorded_register = cx.global::<VimGlobals>().recorded_register_for_dot;
         let next_register = recorded_register
@@ -569,7 +569,7 @@ mod test {
             three
         "});
 
-        // After `"1p` cycles to `2`, using `"ap` resets recorded_register to `a`,
+        // After `"1p` 循环到 `2`,使用 `"ap` resets recorded_register to `a`,
         // so the next `.` uses `a` and not 3.
         cx.set_shared_state(indoc! {"
             one
@@ -1003,7 +1003,7 @@ mod test {
         // `dot_replaying` value should be set back to `false`.
         assert!(
             !cx.update(|_, cx| cx.global::<VimGlobals>().dot_replaying),
-            "dot_replaying should be false after repeat completes"
+            "dot_replaying 在重放完成后应为 false"
         );
     }
 

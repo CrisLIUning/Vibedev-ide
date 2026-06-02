@@ -290,8 +290,8 @@ async fn resolve_dynamic_schema(
                     })
                 })
                 .context(concat!(
-                    "Failed to create adapter delegate - ",
-                    "either LSP store is not in local mode or no worktree is available"
+                    "创建适配器委托失败 - ",
+                    "LSP 存储未处于本地模式或没有可用的工作树"
                 ))?;
 
             let schema = match schema_kind {

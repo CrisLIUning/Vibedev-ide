@@ -71,8 +71,8 @@ pub fn sidebar_side_context_menu(
         let fs = <dyn fs::Fs>::global(cx);
         ContextMenu::build(window, cx, move |mut menu, _, _cx| {
             let positions: [(SidebarDockPosition, &str); 2] = [
-                (SidebarDockPosition::Left, "Left"),
-                (SidebarDockPosition::Right, "Right"),
+                (SidebarDockPosition::Left, "左"),
+                (SidebarDockPosition::Right, "右"),
             ];
             for (position, label) in positions {
                 let fs = fs.clone();
@@ -1239,7 +1239,7 @@ impl MultiWorkspace {
         cx.spawn(async move |_this, cx| {
             let session = connect_task
                 .await?
-                .ok_or_else(|| anyhow::anyhow!("Remote connection was cancelled"))?;
+                .ok_or_else(|| anyhow::anyhow!("远程连接已取消"))?;
 
             let new_project = cx.update(|cx| {
                 Project::remote(
@@ -1282,7 +1282,7 @@ impl MultiWorkspace {
                 };
 
             let window_handle =
-                window_handle.ok_or_else(|| anyhow::anyhow!("Window is not a MultiWorkspace"))?;
+                window_handle.ok_or_else(|| anyhow::anyhow!("窗口不是 MultiWorkspace"))?;
 
             open_remote_project_with_existing_connection(
                 connection_options,
@@ -1937,7 +1937,7 @@ impl MultiWorkspace {
                 this.update_in(cx, |this, window, cx| {
                     assert!(
                         !workspaces.contains(&new_active),
-                        "fallback workspace must not be one of the workspaces being removed"
+                        "后备工作区不能是被移除的工作区之一"
                     );
                     this.activate(new_active, None, window, cx);
                 })?;

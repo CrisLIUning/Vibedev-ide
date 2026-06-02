@@ -25,7 +25,7 @@ impl LoadedContext {
             if request_message.content.is_empty() {
                 request_message
                     .content
-                    .push(MessageContent::Text("Images attached by user:".to_string()));
+                    .push(MessageContent::Text("用户附加的图片:".to_string()));
             }
 
             for image in &self.images {
@@ -45,7 +45,7 @@ pub fn load_context(mention_set: &Entity<MentionSet>, cx: &mut App) -> Task<Opti
         let mut loaded_context = LoadedContext::default();
         loaded_context
             .text
-            .push_str("The following items were attached by the user.\n");
+            .push_str("以下项目由用户附加。\n");
         for (_, (_, mention)) in mentions {
             match mention {
                 Mention::Text { content, .. } => {

@@ -171,7 +171,7 @@ impl TabMap {
             .filter_map(|x| x)
             .collect();
         v.push(first_edit);
-        debug_assert_eq!(v.as_ptr(), _old_alloc_ptr, "Fold edits were reallocated");
+        debug_assert_eq!(v.as_ptr(), _old_alloc_ptr, "折叠编辑已重新分配");
         let tab_edits = v
             .into_iter()
             .map(|fold_edit| {
@@ -1040,7 +1040,7 @@ mod tests {
             assert_eq!(
                 tab_snapshot.expected_to_tab_point(fold_point),
                 tab_snapshot.fold_point_to_tab_point(fold_point),
-                "Failed with fold_point at column {ix}"
+                "在列 {ix} 的 fold_point 处失败"
             );
         }
     }
@@ -1061,23 +1061,23 @@ mod tests {
             assert_eq!(
                 tab_snapshot.expected_to_fold_point(range.start, Bias::Left),
                 tab_snapshot.tab_point_to_fold_point(range.start, Bias::Left),
-                "Failed with tab_point at column {ix}"
+                "在列 {ix} 的 tab_point 处失败"
             );
             assert_eq!(
                 tab_snapshot.expected_to_fold_point(range.start, Bias::Right),
                 tab_snapshot.tab_point_to_fold_point(range.start, Bias::Right),
-                "Failed with tab_point at column {ix}"
+                "在列 {ix} 的 tab_point 处失败"
             );
 
             assert_eq!(
                 tab_snapshot.expected_to_fold_point(range.end, Bias::Left),
                 tab_snapshot.tab_point_to_fold_point(range.end, Bias::Left),
-                "Failed with tab_point at column {ix}"
+                "在列 {ix} 的 tab_point 处失败"
             );
             assert_eq!(
                 tab_snapshot.expected_to_fold_point(range.end, Bias::Right),
                 tab_snapshot.tab_point_to_fold_point(range.end, Bias::Right),
-                "Failed with tab_point at column {ix}"
+                "在列 {ix} 的 tab_point 处失败"
             );
         }
     }
@@ -1141,26 +1141,26 @@ mod tests {
             assert_eq!(
                 tab_snapshot.expected_to_fold_point(range.start, Bias::Left),
                 tab_snapshot.tab_point_to_fold_point(range.start, Bias::Left),
-                "Failed with input: {}, with idx: {ix}",
+                "输入失败:{},索引为 {ix}",
                 input
             );
             assert_eq!(
                 tab_snapshot.expected_to_fold_point(range.start, Bias::Right),
                 tab_snapshot.tab_point_to_fold_point(range.start, Bias::Right),
-                "Failed with input: {}, with idx: {ix}",
+                "输入失败:{},索引为 {ix}",
                 input
             );
 
             assert_eq!(
                 tab_snapshot.expected_to_fold_point(range.end, Bias::Left),
                 tab_snapshot.tab_point_to_fold_point(range.end, Bias::Left),
-                "Failed with input: {}, with idx: {ix}",
+                "输入失败:{},索引为 {ix}",
                 input
             );
             assert_eq!(
                 tab_snapshot.expected_to_fold_point(range.end, Bias::Right),
                 tab_snapshot.tab_point_to_fold_point(range.end, Bias::Right),
-                "Failed with input: {}, with idx: {ix}",
+                "输入失败:{},索引为 {ix}",
                 input
             );
         }
@@ -1195,7 +1195,7 @@ mod tests {
                     .map(|c| c.text)
                     .collect::<String>(),
                 &output[ix..],
-                "text from index {ix}"
+                "索引 {ix} 处的文本"
             );
 
             if c != '\t' {
@@ -1347,23 +1347,23 @@ mod tests {
             MultiBuffer::build_random(&mut rng, cx)
         };
         let buffer_snapshot = buffer.read(cx).snapshot(cx);
-        log::info!("Buffer text: {:?}", buffer_snapshot.text());
+        log::info!("缓冲区文本: {:?}", buffer_snapshot.text());
 
         let (mut inlay_map, inlay_snapshot) = InlayMap::new(buffer_snapshot);
-        log::info!("InlayMap text: {:?}", inlay_snapshot.text());
+        log::info!("InlayMap 文本: {:?}", inlay_snapshot.text());
         let (mut fold_map, _) = FoldMap::new(inlay_snapshot.clone());
         fold_map.randomly_mutate(&mut rng);
         let (fold_snapshot, _) = fold_map.read(inlay_snapshot, vec![]);
-        log::info!("FoldMap text: {:?}", fold_snapshot.text());
+        log::info!("FoldMap 文本: {:?}", fold_snapshot.text());
         let (inlay_snapshot, _) = inlay_map.randomly_mutate(&mut 0, &mut rng);
-        log::info!("InlayMap text: {:?}", inlay_snapshot.text());
+        log::info!("InlayMap 文本: {:?}", inlay_snapshot.text());
 
         let (mut tab_map, _) = TabMap::new(fold_snapshot, tab_size);
         let tabs_snapshot = tab_map.set_max_expansion_column(32);
 
         let text = text::Rope::from(tabs_snapshot.text().as_str());
         log::info!(
-            "TabMap text (tab size: {}): {:?}",
+            "TabMap 文本 (制表符宽度: {}): {:?}",
             tab_size,
             tabs_snapshot.text(),
         );
@@ -1460,7 +1460,7 @@ mod tests {
 
             assert_eq!(
                 actual, expected,
-                "to_tab_point mismatch for fold_point {:?} in text {:?}",
+                "文本 {:?} 中 fold_point {:?} 的 to_tab_point 不匹配",
                 fold_point, text
             );
         }
@@ -1616,7 +1616,7 @@ mod tests {
             pretty_assertions::assert_eq!(
                 found_tab_stops,
                 expected_found_tab_stops,
-                "TabStopCursor output mismatch for distance {}. Input: {:?}",
+                "距离 {} 的 TabStopCursor 输出不匹配。输入: {:?}",
                 distance,
                 input
             );
@@ -1626,7 +1626,7 @@ mod tests {
                 let last_tab_stop = found_tab_stops.last().unwrap();
                 assert!(
                     final_position >= last_tab_stop.byte_offset,
-                    "Cursor final position {} is before last tab stop {}. Input: {:?}",
+                    "光标最终位置 {} 在最后一个制表位 {} 之前。输入: {:?}",
                     final_position,
                     last_tab_stop.byte_offset,
                     input
@@ -1727,7 +1727,7 @@ mod tests {
             pretty_assertions::assert_eq!(
                 found_tab_stops,
                 expected_found_tab_stops,
-                "TabStopCursor output mismatch for distance {}. Input: {:?}",
+                "距离 {} 的 TabStopCursor 输出不匹配。输入: {:?}",
                 distance,
                 input
             );
@@ -1737,7 +1737,7 @@ mod tests {
                 let last_tab_stop = found_tab_stops.last().unwrap();
                 assert!(
                     final_position >= last_tab_stop.byte_offset,
-                    "Cursor final position {} is before last tab stop {}. Input: {:?}",
+                    "光标最终位置 {} 在最后一个制表位 {} 之前。输入: {:?}",
                     final_position,
                     last_tab_stop.byte_offset,
                     input

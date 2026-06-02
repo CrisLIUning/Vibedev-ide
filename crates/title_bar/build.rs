@@ -1,4 +1,4 @@
-#![allow(clippy::disallowed_methods, reason = "build scripts are exempt")]
+#![allow(clippy::disallowed_methods, reason = "构建脚本豁免")]
 
 fn main() {
     println!("cargo::rustc-check-cfg=cfg(macos_sdk_26)");

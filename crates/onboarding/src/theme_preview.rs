@@ -308,11 +308,11 @@ impl Component for ThemePreviewTile {
     }
 
     fn name() -> &'static str {
-        "Theme Preview Tile"
+        "主题预览磁贴"
     }
 
     fn sort_name() -> &'static str {
-        "Theme Preview Tile"
+        "主题预览磁贴"
     }
 
     fn description() -> Option<&'static str> {
@@ -344,7 +344,7 @@ impl Component for ThemePreviewTile {
                 .children({
                     if let Some(one_dark) = one_dark.ok() {
                         vec![example_group(vec![single_example(
-                            "Default",
+                            "默认",
                             div()
                                 .w(px(240.))
                                 .h(px(180.))
@@ -357,7 +357,7 @@ impl Component for ThemePreviewTile {
                 })
                 .child(
                     example_group(vec![single_example(
-                        "Default Themes",
+                        "默认主题",
                         h_flex()
                             .gap_4()
                             .children(

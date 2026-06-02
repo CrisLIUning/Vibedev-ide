@@ -9,33 +9,30 @@ use zed_actions::feedback::{EmailZed, FileBugReport, RequestFeature};
 actions!(
     zed,
     [
-        /// Opens the Zed repository on GitHub.
+        /// Opens the VibeDev repository on GitHub.
         OpenZedRepo,
         /// Copies installed extensions to the clipboard for bug reports.
         CopyInstalledExtensionsIntoClipboard
     ]
 );
 
-const ZED_REPO_URL: &str = "https://github.com/zed-industries/zed";
+// VIBEDEV: feedback points at our public fork's issues, not zed-industries/zed.
+const ZED_REPO_URL: &str = "https://github.com/CrisLIUning/Vibedev-ide";
 
-const REQUEST_FEATURE_URL: &str = "https://github.com/zed-industries/zed/discussions/new/choose";
+const REQUEST_FEATURE_URL: &str = "https://github.com/CrisLIUning/Vibedev-ide/issues/new";
 
 fn file_bug_report_url(specs: &SystemSpecs) -> String {
+    // VIBEDEV: file issues on our fork (no upstream Zed issue template).
     format!(
-        concat!(
-            "https://github.com/zed-industries/zed/issues/new",
-            "?",
-            "template=10_bug_report.yml",
-            "&",
-            "environment={}"
-        ),
-        urlencoding::encode(&specs.to_string())
+        "https://github.com/CrisLIUning/Vibedev-ide/issues/new?body={}",
+        email_body(specs)
     )
 }
 
 fn email_zed_url(specs: &SystemSpecs) -> String {
+    // VIBEDEV: "Email Us" routes to our GitHub issues instead of a mailto.
     format!(
-        concat!("mailto:hi@zed.dev", "?", "body={}"),
+        "https://github.com/CrisLIUning/Vibedev-ide/issues/new?body={}",
         email_body(specs)
     )
 }
@@ -62,7 +59,7 @@ pub fn init(cx: &mut App) {
 
                     cx.prompt(
                         PromptLevel::Info,
-                        "Copied into clipboard",
+                        "已复制到剪贴板",
                         Some(&specs),
                         &["OK"],
                     )
@@ -75,7 +72,7 @@ pub fn init(cx: &mut App) {
                 cx.write_to_clipboard(ClipboardItem::new_string(clipboard_text.clone()));
                 drop(window.prompt(
                     PromptLevel::Info,
-                    "Copied into clipboard",
+                    "已复制到剪贴板",
                     Some(&clipboard_text),
                     &["OK"],
                     cx,

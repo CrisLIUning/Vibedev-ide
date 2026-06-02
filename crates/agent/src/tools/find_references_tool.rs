@@ -46,9 +46,9 @@ impl AgentTool for FindReferencesTool {
         _cx: &mut App,
     ) -> SharedString {
         if let Ok(input) = input {
-            format!("Find references to `{}`", input.symbol.symbol_name).into()
+            format!("查找对 `{}` 的引用", input.symbol.symbol_name).into()
         } else {
-            "Find references".into()
+            "查找引用".into()
         }
     }
 
@@ -63,7 +63,7 @@ impl AgentTool for FindReferencesTool {
             let input = input
                 .recv()
                 .await
-                .map_err(|e| format!("Failed to receive tool input: {e}"))?;
+                .map_err(|e| format!("接收工具输入失败: {e}"))?;
 
             let resolved = input.symbol.resolve(&project, cx).await?;
 
@@ -73,12 +73,12 @@ impl AgentTool for FindReferencesTool {
 
             let references = references_task
                 .await
-                .map_err(|e| format!("Find references failed: {e}"))?
+                .map_err(|e| format!("查找引用失败:{e}"))?
                 .unwrap_or_default();
 
             if references.is_empty() {
                 return Ok(format!(
-                    "No references found for '{}'.",
+                    "未找到对 '{}' 的引用。",
                     input.symbol.symbol_name
                 ));
             }

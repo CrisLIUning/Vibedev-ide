@@ -10,8 +10,8 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 /// This function recombines these edits into a new patch which can be thought
 /// of as a sequence of patches.
 ///
-/// You provide `edits_order` describing logical chunks (e.g., "write a feature",
-/// "refactor", "add tests"). For each group the function:
+/// You provide `edits_order` describing logical chunks (e.g., "编写功能",
+/// "refactor", "添加测试"). For each group the function:
 ///  1. Extracts those edits
 ///  2. Appends them to the output patch
 ///  3. Removes them from an internal remainder so subsequent original indices

@@ -196,7 +196,7 @@ impl MemoryPageBuilder {
         debug_assert_eq!(
             self.chunks.len(),
             PAGE_SIZE,
-            "Expected `build` to be called on a fully-fetched page"
+            "预期 `build` 会在完全获取的页面上被调用"
         );
         let contents = if let Some(first) = self.chunks.0.first()
             && self.chunks.len() == 1

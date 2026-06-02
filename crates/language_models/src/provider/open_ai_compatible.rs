@@ -502,7 +502,7 @@ impl Render for ConfigurationView {
         let api_key_section = if self.should_render_editor(cx) {
             v_flex()
                 .on_action(cx.listener(Self::save_api_key))
-                .child(Label::new("To use Zed's agent with an OpenAI-compatible provider, you need to add an API key."))
+                .child(Label::new("To use VibeDev's agent with an OpenAI-compatible provider, you need to add an API key."))
                 .child(
                     div()
                         .pt(DynamicSpacing::Base04.rems(cx))
@@ -510,7 +510,7 @@ impl Render for ConfigurationView {
                 )
                 .child(
                     Label::new(
-                        format!("You can also set the {env_var_name} environment variable and restart Zed."),
+                        format!("You can also set the {env_var_name} environment variable and restart VibeDev."),
                     )
                     .size(LabelSize::Small).color(Color::Muted),
                 )
@@ -537,9 +537,9 @@ impl Render for ConfigurationView {
                                 .text_ellipsis()
                                 .child(Label::new(
                                     if env_var_set {
-                                        format!("API key set in {env_var_name} environment variable")
+                                        format!("API 密钥已在 {env_var_name} 环境变量中设置")
                                     } else {
-                                        format!("API key configured for {}", &state.settings.api_url)
+                                        format!("已为 {} 配置 API 密钥", &state.settings.api_url)
                                     }
                                 ))
                         ),
@@ -548,12 +548,12 @@ impl Render for ConfigurationView {
                     h_flex()
                         .flex_shrink_0()
                         .child(
-                            Button::new("reset-api-key", "Reset API Key")
+                            Button::new("reset-api-key", "重置 API 密钥")
                                 .label_size(LabelSize::Small)
                                 .start_icon(Icon::new(IconName::Undo).size(IconSize::Small))
                                 .layer(ElevationIndex::ModalSurface)
                                 .when(env_var_set, |this| {
-                                    this.tooltip(Tooltip::text(format!("To reset your API key, unset the {env_var_name} environment variable.")))
+                                    this.tooltip(Tooltip::text(format!("要重置您的 API 密钥,请取消设置 {env_var_name} 环境变量。")))
                                 })
                                 .on_click(cx.listener(|this, _, window, cx| this.reset_api_key(window, cx))),
                         ),
@@ -562,7 +562,7 @@ impl Render for ConfigurationView {
         };
 
         if self.load_credentials_task.is_some() {
-            div().child(Label::new("Loading credentials…")).into_any()
+            div().child(Label::new("正在加载凭据…")).into_any()
         } else {
             v_flex().size_full().child(api_key_section).into_any()
         }

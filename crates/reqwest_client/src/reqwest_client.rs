@@ -58,15 +58,32 @@ impl ReqwestClient {
             reqwest::Proxy::all(proxy_url.clone())
                 .inspect_err(|e| {
                     log::error!(
-                        "Failed to parse proxy URL '{}': {}",
+                        "解析代理 URL '{}' 失败: {}",
                         proxy_url,
                         e.source().unwrap_or(&e as &_)
                     )
                 })
                 .ok()
         }) {
-            // Respect NO_PROXY env var
-            client = client.proxy(proxy.no_proxy(reqwest::NoProxy::from_env()));
+            // VIBEDEV: respect NO_PROXY, but ALWAYS exclude loopback so the IDE
+            // never proxies its own calls to the local sidecar (127.0.0.1). With
+            // a system proxy set, reqwest would otherwise route the loopback
+            // health/account requests through it and time out — which surfaced as
+            // "后端未就绪 / backend not ready" on first install. See memory
+            // project_vibedev_v2_backend_not_ready.
+            let no_proxy = {
+                let loopback = "localhost,127.0.0.1,::1";
+                let env_val = std::env::var("NO_PROXY")
+                    .or_else(|_| std::env::var("no_proxy"))
+                    .unwrap_or_default();
+                let combined = if env_val.is_empty() {
+                    loopback.to_string()
+                } else {
+                    format!("{},{}", loopback, env_val)
+                };
+                reqwest::NoProxy::from_string(&combined)
+            };
+            client = client.proxy(proxy.no_proxy(no_proxy));
             client_has_proxy = true;
         } else {
             client_has_proxy = false;
@@ -317,7 +334,7 @@ mod tests {
         let client = ReqwestClient::proxy_and_user_agent(Some(proxy), "test").unwrap();
         assert!(
             client.proxy.is_none(),
-            "An invalid proxy URL should add no proxy to the client!"
+            "无效的代理 URL 不应向客户端添加代理!"
         )
     }
 }

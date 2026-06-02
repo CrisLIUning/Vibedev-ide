@@ -13,10 +13,15 @@ use project::{
 use settings::{SettingsStore, update_settings_file};
 use std::{rc::Rc, sync::Arc};
 use ui::IconName;
+use vibedev_account;
 
 pub const GEMINI_ID: &str = "gemini";
 pub const CLAUDE_AGENT_ID: &str = "claude-acp";
 pub const CODEX_ID: &str = "codex-acp";
+/// VIBEDEV (V2-PLAN-8): the custom agent id for the bundled VibeDev ACP agent
+/// (matches the `agent_servers.VibeDev` key in default/user settings). Only
+/// this agent gets the remote self-provisioning command rewrite.
+pub const VIBEDEV_AGENT_ID: &str = "VibeDev";
 
 /// A generic agent server implementation for custom user-defined agents
 pub struct CustomAgentServer {
@@ -338,6 +343,13 @@ impl AgentServer for CustomAgentServer {
                     extra_env.insert("GEMINI_API_KEY".into(), api_key);
                 }
             }
+            // VIBEDEV BYOK: inject the user's authenticated providers (key/endpoint/models)
+            // so the agent backend can use the user's own keys per selected model. Empty map
+            // ({"providers":[]}) when none — harmless. Failure is non-fatal (gateway fallback).
+            let byok_task = cx.update(|cx| vibedev_account::byok::collect_byok_map(cx));
+            if let Ok(json) = byok_task.await {
+                extra_env.insert("VIBEDEV_BYOK".to_owned(), json);
+            }
             let command = store
                 .update(cx, |store, cx| {
                     let agent = store.get_external_agent(&agent_id).with_context(|| {
@@ -349,6 +361,101 @@ impl AgentServer for CustomAgentServer {
                     anyhow::Ok(agent.get_command(vec![], extra_env, &mut cx.to_async()))
                 })??
                 .await?;
+            // VIBEDEV (V2-PLAN-8): on a REMOTE ssh project the client-resolved
+            // command is a local (Windows) path that cannot execute on the remote
+            // host. For the VibeDev agent we (1) replace it with a self-provisioning
+            // launcher that deploys + execs the agent bundle on the remote, (2) sign
+            // it in via env, and (3) route its gateway traffic back through the
+            // client over a reverse tunnel (the remote often lacks egress). Other
+            // custom/registry agents keep their command.
+            let ssh_opts = project.read_with(cx, |project, cx| {
+                project.remote_client().and_then(|rc| {
+                    match rc.read(cx).connection_options() {
+                        remote::remote_client::RemoteConnectionOptions::Ssh(opts) => Some(opts),
+                        _ => None,
+                    }
+                })
+            });
+            let command = match ssh_opts {
+                Some(opts) if agent_id.as_ref() == VIBEDEV_AGENT_ID => {
+                    // VIBEDEV (agent-OTA): pass the local app's bundled agent
+                    // version so the provisioning script re-provisions a remote
+                    // whose dist/VERSION is absent or stale, keeping it in
+                    // lockstep with the local app. `None` (dev / no bundled
+                    // agent) keeps the original absent-only check. Bound first so
+                    // `as_deref()` borrows the local.
+                    let expected = vibedev_account::remote_agent::bundled_agent_version();
+                    let (program, args) =
+                        vibedev_account::remote_agent::remote_launch_command(
+                            &command.args,
+                            expected.as_deref(),
+                        );
+                    let mut env = command.env.unwrap_or_default();
+                    // root-on-remote: bypassPermissions is disabled when geteuid()==0
+                    // unless IS_SANDBOX is set; the agent runs in a controlled remote
+                    // dev box, so opt in (don't override an explicit value).
+                    env.entry("IS_SANDBOX".to_owned())
+                        .or_insert_with(|| "1".to_owned());
+                    // sign the remote agent in via env (no auth.json copied to the
+                    // remote): OPENAI_API_KEY / OPENAI_BASE_URL from the local
+                    // ~/.vibedev/auth.json. The base URL stays on the aitoken host so
+                    // the request signature (over method+url+body) stays valid.
+                    if let Some((api_key, base_url)) = vibedev_account::local_gateway_credentials()
+                    {
+                        env.entry("OPENAI_API_KEY".to_owned()).or_insert(api_key);
+                        env.entry("OPENAI_BASE_URL".to_owned()).or_insert(base_url);
+                    }
+                    // provision the FULL account auth.json on the remote (api_key +
+                    // proxy_url + available_models): the self-provision script writes
+                    // it from this env var, so the remote agent is signed in AND its
+                    // model picker shows the real gateway models (getVibedevChatModels
+                    // reads available_models) instead of the default claude tiers.
+                    if let Some(auth_json) = vibedev_account::local_auth_json_raw() {
+                        env.insert("VIBEDEV_AUTH_JSON".to_owned(), auth_json);
+                    }
+                    // reverse tunnel: route the agent's gateway HTTPS back through the
+                    // client (which has egress). Overrides any dead proxy inherited
+                    // from the remote env. Best-effort — on failure the agent falls
+                    // back to the remote's own egress.
+                    // ensure_tunnel blocks (spawns `ssh -R`, then waits to verify
+                    // the forward is live) — run it on a background thread so the
+                    // UI executor isn't frozen during agent connect.
+                    let host = opts.host.to_string();
+                    let t_host = host.clone();
+                    let t_port = opts.port;
+                    let t_user = opts.username.clone();
+                    let t_args = opts.args.clone().unwrap_or_default();
+                    let tunnel = cx
+                        .background_spawn(async move {
+                            vibedev_account::remote_tunnel::ensure_tunnel(
+                                &t_host,
+                                t_port,
+                                t_user.as_deref(),
+                                &t_args,
+                            )
+                        })
+                        .await;
+                    match tunnel {
+                        Ok(remote_port) => {
+                            let proxy = format!("http://127.0.0.1:{remote_port}");
+                            env.insert("HTTPS_PROXY".to_owned(), proxy.clone());
+                            env.insert("https_proxy".to_owned(), proxy.clone());
+                            env.insert("HTTP_PROXY".to_owned(), proxy.clone());
+                            env.insert("http_proxy".to_owned(), proxy);
+                        }
+                        Err(error) => log::warn!(
+                            "vibedev remote tunnel not established for {host} ({error:#}); \
+                             agent will use the remote's own egress"
+                        ),
+                    }
+                    project::agent_server_store::AgentServerCommand {
+                        path: program.into(),
+                        args,
+                        env: Some(env),
+                    }
+                }
+                _ => command,
+            };
             let connection = crate::acp::connect(
                 agent_id,
                 project,

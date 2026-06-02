@@ -75,7 +75,7 @@ mod go_locator {
         let delve = DebugAdapterName("Delve".into());
 
         let task = TaskTemplate {
-            label: "go run with flags".into(),
+            label: "带标志的 go run".into(),
             command: "go".into(),
             args: vec![
                 "run".to_string(),
@@ -213,7 +213,7 @@ mod python_locator {
     async fn test_python_locator() {
         let adapter = DebugAdapterName("Debugpy".into());
         let build_task = TaskTemplate {
-            label: "run module '$ZED_FILE'".into(),
+            label: "运行模块 '$ZED_FILE'".into(),
             command: "$ZED_CUSTOM_PYTHON_ACTIVE_ZED_TOOLCHAIN".into(),
             args: vec!["-m".into(), "$ZED_CUSTOM_PYTHON_MODULE_NAME".into()],
             env: Default::default(),
@@ -233,7 +233,7 @@ mod python_locator {
 
         let expected_scenario = DebugScenario {
             adapter: "Debugpy".into(),
-            label: "run module 'main.py'".into(),
+            label: "运行模块 'main.py'".into(),
             build: None,
             config: json!({
                 "request": "launch",
@@ -247,7 +247,7 @@ mod python_locator {
 
         assert_eq!(
             PythonLocator
-                .create_scenario(&build_task, "run module 'main.py'", &adapter)
+                .create_scenario(&build_task, "运行模块 'main.py'", &adapter)
                 .await
                 .expect("Failed to create a scenario"),
             expected_scenario

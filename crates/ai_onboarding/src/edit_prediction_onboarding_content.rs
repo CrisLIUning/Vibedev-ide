@@ -45,17 +45,17 @@ impl Render for EditPredictionOnboarding {
         let github_copilot = v_flex()
             .gap_1()
             .child(Label::new(if self.copilot_is_configured {
-                "Alternatively, you can continue to use GitHub Copilot as that's already set up."
+                "或者,你可以继续使用 GitHub Copilot,因为它已经设置好了。"
             } else {
-                "Alternatively, you can use GitHub Copilot as your edit prediction provider."
+                "或者,你可以使用 GitHub Copilot 作为你的编辑预测提供者。"
             }))
             .child(
                 Button::new(
                     "configure-copilot",
                     if self.copilot_is_configured {
-                        "Use Copilot"
+                        "使用 Copilot"
                     } else {
-                        "Configure Copilot"
+                        "配置 Copilot"
                     },
                 )
                 .full_width()

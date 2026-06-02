@@ -14,7 +14,7 @@ use serde::Deserialize;
 
 fn main() {
     if let Err(error) = run() {
-        eprintln!("error: {error}");
+        eprintln!("错误: {error}");
         process::exit(1);
     }
 }
@@ -23,7 +23,7 @@ fn run() -> Result<(), String> {
     let args: Vec<String> = env::args().skip(1).collect();
     if args.is_empty() {
         print_usage();
-        return Err("missing arguments".to_string());
+        return Err("缺少参数".to_string());
     }
 
     let input = CliInput::parse(&args)?;
@@ -34,12 +34,12 @@ fn run() -> Result<(), String> {
             actual_patch_path,
         } => {
             let base = fs::read_to_string(&base_path)
-                .map_err(|err| format!("failed to read {}: {err}", base_path.display()))?;
+                .map_err(|err| format!("读取 {} 失败: {err}", base_path.display()))?;
             let expected_patch = fs::read_to_string(&expected_patch_path).map_err(|err| {
-                format!("failed to read {}: {err}", expected_patch_path.display())
+                format!("读取 {} 失败: {err}", expected_patch_path.display())
             })?;
             let actual_patch = fs::read_to_string(&actual_patch_path)
-                .map_err(|err| format!("failed to read {}: {err}", actual_patch_path.display()))?;
+                .map_err(|err| format!("读取 {} 失败: {err}", actual_patch_path.display()))?;
 
             let expected = apply_patch_to_excerpt(&base, &expected_patch, 0)?;
             let actual = apply_patch_to_excerpt(&base, &actual_patch, 0)?;
@@ -51,9 +51,9 @@ fn run() -> Result<(), String> {
             prediction_index,
         } => {
             let json = fs::read_to_string(&json_path)
-                .map_err(|err| format!("failed to read {}: {err}", json_path.display()))?;
+                .map_err(|err| format!("读取 {} 失败: {err}", json_path.display()))?;
             let example: JsonExample = serde_json::from_str(&json)
-                .map_err(|err| format!("failed to parse {}: {err}", json_path.display()))?;
+                .map_err(|err| format!("解析 {} 失败: {err}", json_path.display()))?;
 
             let base = example.prompt_inputs.cursor_excerpt;
             let excerpt_start_row = example.prompt_inputs.excerpt_start_row;
@@ -61,13 +61,13 @@ fn run() -> Result<(), String> {
                 .expected_patches
                 .into_iter()
                 .next()
-                .ok_or_else(|| "JSON input is missing expected_patches[0]".to_string())?;
+                .ok_or_else(|| "JSON 输入缺少 expected_patches[0]".to_string())?;
             let actual_patch = example
                 .predictions
                 .into_iter()
                 .nth(prediction_index)
                 .ok_or_else(|| {
-                    format!("JSON input does not contain predictions[{prediction_index}]")
+                    format!("JSON 输入不包含 predictions[{prediction_index}]")
                 })?
                 .actual_patch;
 
@@ -84,7 +84,7 @@ fn run() -> Result<(), String> {
 
 fn print_usage() {
     eprintln!(
-        "Usage:\n  edit_prediction_metrics --base <base.txt> --expected-patch <expected.diff> --actual-patch <actual.diff>\n  edit_prediction_metrics --json <example.json> [--prediction-index <n>]"
+        "用法:\n  edit_prediction_metrics --base <base.txt> --expected-patch <expected.差异> --actual-patch <actual.差异>\n  edit_prediction_metrics --json <example.json> [--prediction-index <n>]"
     );
 }
 
@@ -131,7 +131,7 @@ impl CliInput {
                     index += 1;
                     let raw = string_arg(args, index, "--prediction-index")?;
                     prediction_index = raw.parse::<usize>().map_err(|err| {
-                        format!("invalid value for --prediction-index ({raw}): {err}")
+                        format!("--prediction-index 的值无效 ({raw}): {err}")
                     })?;
                 }
                 "--help" | "-h" => {
@@ -139,7 +139,7 @@ impl CliInput {
                     process::exit(0);
                 }
                 unknown => {
-                    return Err(format!("unrecognized argument: {unknown}"));
+                    return Err(format!("无法识别的参数: {unknown}"));
                 }
             }
             index += 1;
@@ -148,7 +148,7 @@ impl CliInput {
         if let Some(json_path) = json_path {
             if base_path.is_some() || expected_patch_path.is_some() || actual_patch_path.is_some() {
                 return Err(
-                    "--json cannot be combined with --base/--expected-patch/--actual-patch"
+                    "--json 不能与 --base/--expected-patch/--actual-patch 同时使用"
                         .to_string(),
                 );
             }
@@ -167,7 +167,7 @@ impl CliInput {
                 })
             }
             _ => Err(
-                "expected either --json <file> or all of --base, --expected-patch, and --actual-patch"
+                "需要提供 --json <file> 或同时提供 --base, --expected-patch 和 --actual-patch"
                     .to_string(),
             ),
         }
@@ -181,7 +181,7 @@ fn path_arg(args: &[String], index: usize, flag: &str) -> Result<std::path::Path
 fn string_arg<'a>(args: &'a [String], index: usize, flag: &str) -> Result<&'a str, String> {
     args.get(index)
         .map(|value| value.as_str())
-        .ok_or_else(|| format!("missing value for {flag}"))
+        .ok_or_else(|| format!("缺少 {flag} 的值"))
 }
 
 #[derive(Debug)]
@@ -243,7 +243,7 @@ impl EvaluationReport {
 }
 
 fn print_report(report: &EvaluationReport) {
-    println!("Metrics");
+    println!("指标");
     println!("=======");
     println!("kept_rate: {:.6}", report.kept_rate.kept_rate);
     println!("kept_rate_recall: {:.6}", report.kept_rate.recall_rate);
@@ -253,7 +253,7 @@ fn print_report(report: &EvaluationReport) {
     println!("delta_chr_f_beta: {:.6}", report.delta_chr_f.beta);
     println!();
 
-    println!("Exact line match");
+    println!("精确行匹配");
     println!("----------------");
     println!("true_positives: {}", report.exact_lines.true_positives);
     println!("false_positives: {}", report.exact_lines.false_positives);
@@ -265,7 +265,7 @@ fn print_report(report: &EvaluationReport) {
     println!("actual_changed_lines: {}", report.actual_changed_lines);
     println!();
 
-    println!("Patch structure");
+    println!("补丁结构");
     println!("---------------");
     println!("inserted_tokens: {}", report.token_changes.inserted_tokens);
     println!("deleted_tokens: {}", report.token_changes.deleted_tokens);
@@ -279,7 +279,7 @@ fn print_report(report: &EvaluationReport) {
     );
     println!();
 
-    println!("Final text checks");
+    println!("最终文本检查");
     println!("-----------------");
     println!(
         "expected_braces_disbalance: {}",
@@ -291,7 +291,7 @@ fn print_report(report: &EvaluationReport) {
     );
     println!();
 
-    println!("Kept-rate breakdown");
+    println!("保留率明细");
     println!("-------------------");
     println!(
         "candidate_new_chars: {}",
@@ -322,13 +322,13 @@ fn print_report(report: &EvaluationReport) {
 }
 
 fn print_kept_rate_explanation(base: &str, actual: &str, expected: &str) {
-    println!("Kept-rate explanation");
+    println!("保留率说明");
     println!("---------------------");
-    println!("Legend: context = default, kept = green background, discarded = red background");
+    println!("图例: 上下文 = 默认, kept = 绿色背景, discarded = 红色背景");
     println!();
 
     let annotated = annotate_kept_rate_tokens(base, actual, expected);
-    println!("Actual final text with token annotations:");
+    println!("带有标记注释的实际最终文本:");
     println!("{}", render_annotated_tokens(&annotated));
     println!();
 }
@@ -452,7 +452,7 @@ fn try_apply_hunks(
         let local_start = filtered.old_start.saturating_sub(excerpt_start_row) as i64 + line_delta;
         if local_start < 0 {
             return Err(format!(
-                "patch application moved before excerpt start at source row {}",
+                "补丁应用位置超出了源行 {} 处的摘录起始位置",
                 filtered.old_start
             ));
         }
@@ -460,7 +460,7 @@ fn try_apply_hunks(
 
         if local_start > lines.len() {
             return Err(format!(
-                "patch application starts past excerpt end at local line {}",
+                "补丁应用起始位置超出了本地行 {} 处的摘录结束位置",
                 local_start + 1
             ));
         }
@@ -496,7 +496,7 @@ fn try_apply_hunks(
 
         if local_start + old_len > lines.len() {
             return Err(format!(
-                "patch application exceeds excerpt bounds near source row {}",
+                "补丁应用超出了源行 {} 附近的摘录边界",
                 filtered.old_start
             ));
         }
@@ -510,7 +510,7 @@ fn try_apply_hunks(
             let mut details = String::new();
             let _ = write!(
                 details,
-                "patch context mismatch near source row {}: expected {:?}, found {:?}",
+                "源行 {} 附近的补丁上下文不匹配: 预期为 {:?}, 实际为 {:?}",
                 filtered.old_start, old_segment, current_segment
             );
             return Err(details);

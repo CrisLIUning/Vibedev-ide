@@ -2624,7 +2624,7 @@ pub struct Percentage(pub f32);
 pub fn percentage(value: f32) -> Percentage {
     debug_assert!(
         (0.0..=1.0).contains(&value),
-        "Percentage must be between 0 and 1"
+        "百分比必须在 0 到 1 之间"
     );
     Percentage(value)
 }
@@ -3391,7 +3391,7 @@ impl TryFrom<&'_ str> for AbsoluteLength {
             Ok(Self::Rems(rems))
         } else {
             Err(anyhow!(
-                "invalid AbsoluteLength '{value}', expected {EXPECTED_ABSOLUTE_LENGTH}"
+                "无效的 AbsoluteLength '{value}',应为 {EXPECTED_ABSOLUTE_LENGTH}"
             ))
         }
     }
@@ -3515,14 +3515,14 @@ impl TryFrom<&'_ str> for DefiniteLength {
     fn try_from(value: &'_ str) -> Result<Self, Self::Error> {
         if let Some(percentage) = value.strip_suffix('%') {
             let fraction: f32 = percentage.parse::<f32>().with_context(|| {
-                format!("invalid DefiniteLength '{value}', expected {EXPECTED_DEFINITE_LENGTH}")
+                format!("无效的 DefiniteLength '{value}',应为 {EXPECTED_DEFINITE_LENGTH}")
             })?;
             Ok(DefiniteLength::Fraction(fraction / 100.0))
         } else if let Ok(absolute_length) = value.try_into() {
             Ok(DefiniteLength::Absolute(absolute_length))
         } else {
             Err(anyhow!(
-                "invalid DefiniteLength '{value}', expected {EXPECTED_DEFINITE_LENGTH}"
+                "无效的 DefiniteLength '{value}',应为 {EXPECTED_DEFINITE_LENGTH}"
             ))
         }
     }
@@ -3630,7 +3630,7 @@ impl TryFrom<&'_ str> for Length {
             Ok(Length::Definite(definite_length))
         } else {
             Err(anyhow!(
-                "invalid Length '{value}', expected {EXPECTED_LENGTH}"
+                "无效的 Length '{value}',应为 {EXPECTED_LENGTH}"
             ))
         }
     }

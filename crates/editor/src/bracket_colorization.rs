@@ -1,4 +1,4 @@
-//! Bracket highlights, also known as "rainbow brackets".
+//! Bracket highlights, also known as "彩虹括号".
 //! Uses tree-sitter queries from brackets.scm to capture bracket pairs,
 //! and theme accents to colorize those.
 
@@ -300,7 +300,7 @@ where
 7 hsla(39.00, 67.00%, 69.00%, 1.00)
 "#,
             &bracket_colors_markup(&mut cx),
-            "All brackets should be colored based on their depth"
+            "所有括号应根据其深度进行着色"
         );
     }
 
@@ -334,7 +334,7 @@ where
                     editor_bracket_colors_markup(&editor.snapshot(window, cx))
                 })
                 .unwrap(),
-            "File-less buffer should still have its brackets colorized"
+            "无文件的缓冲区仍应为其括号着色"
         );
     }
 
@@ -359,7 +359,7 @@ where
 1 hsla(207.80, 16.20%, 69.19%, 1.00)
 "#,
             &bracket_colors_markup(&mut cx),
-            "All markdown brackets should be colored based on their depth"
+            "所有 Markdown 括号应根据其深度进行着色"
         );
 
         cx.set_state(indoc! {r#"ˇ{{}}"#});
@@ -372,7 +372,7 @@ where
 2 hsla(29.00, 54.00%, 65.88%, 1.00)
 "#,
             &bracket_colors_markup(&mut cx),
-            "All markdown brackets should be colored based on their depth, again"
+            "所有 Markdown 括号应再次根据其深度进行着色"
         );
 
         cx.set_state(indoc! {r#"ˇ('')('')
@@ -386,7 +386,7 @@ where
         assert_eq!(
             "«1('')1»«1('')1»\n\n«1(«2('')2»)1»«1('')1»\n\n«1('')1»«1(«2('')2»)1»\n1 hsla(207.80, 16.20%, 69.19%, 1.00)\n2 hsla(29.00, 54.00%, 65.88%, 1.00)\n",
             &bracket_colors_markup(&mut cx),
-            "Markdown quote pairs should not interfere with parenthesis pairing"
+            "Markdown 引号对不应干扰括号配对"
         );
     }
 
@@ -416,7 +416,7 @@ where
         assert_eq!(
             format!("{simple_brackets_highlights}\n{footer}"),
             bracket_colors_markup(&mut cx),
-            "Simple bracket pairs should be colored"
+            "简单括号对应被着色"
         );
 
         let paired_brackets = (0..rows).map(|_| "ˇ[]()\n").collect::<String>();
@@ -444,7 +444,7 @@ where
         assert_eq!(
             format!("{paired_brackets_highlights}\n{footer}"),
             bracket_colors_markup(&mut cx),
-            "Paired bracket pairs should be colored"
+            "成对括号对应被着色"
         );
     }
 
@@ -481,7 +481,7 @@ where
 2 hsla(29.00, 54.00%, 65.88%, 1.00)
 "#,
             &bracket_colors_markup(&mut cx),
-            "Markdown does not colorize <> brackets"
+            "Markdown 不对 <> 括号着色"
         );
 
         cx.update_buffer(|buffer, cx| {
@@ -499,7 +499,7 @@ where
 2 hsla(29.00, 54.00%, 65.88%, 1.00)
 "#,
             &bracket_colors_markup(&mut cx),
-            "After switching to Rust, <> brackets are now colorized"
+            "切换到 Rust 后,<> 括号现在已被着色"
         );
     }
 
@@ -545,7 +545,7 @@ fn process_data«1()1» «1{
 3 hsla(286.00, 51.00%, 75.25%, 1.00)
 "#},
             &bracket_colors_markup(&mut cx),
-            "Brackets without pairs should be ignored and not colored"
+            "不成对的括号应被忽略且不着色"
         );
 
         cx.update_editor(|editor, window, cx| {
@@ -590,7 +590,7 @@ fn process_data«1()1» «1{
 3 hsla(286.00, 51.00%, 75.25%, 1.00)
 "#},
             &bracket_colors_markup(&mut cx),
-            "When brackets start to get closed, inner brackets are re-colored based on their depth"
+            "当括号开始闭合时,内部括号会根据其深度重新着色"
         );
 
         cx.update_editor(|editor, window, cx| {
@@ -696,7 +696,7 @@ mod foo «1{
                 comment_lines,
             ),
             &bracket_colors_markup(&mut cx),
-            "First, the only visible chunk is getting the bracket highlights"
+            "首先,唯一可见的代码块获得了括号高亮"
         );
 
         cx.update_editor(|editor, window, cx| {
@@ -728,7 +728,7 @@ mod foo «1{
                 comment_lines,
             ),
             &bracket_colors_markup(&mut cx),
-            "After scrolling to the bottom, both chunks should have the highlights"
+            "滚动到底部后,两个代码块都应具有高亮"
         );
 
         cx.update_editor(|editor, window, cx| {
@@ -759,7 +759,7 @@ mod foo «1{
                 comment_lines,
             ),
             &bracket_colors_markup(&mut cx),
-            "First chunk's brackets are invalidated after an edit, and only 2nd (visible) chunk is re-colorized"
+            "编辑后第一个代码块的括号失效,只有第二个(可见)代码块被重新着色"
         );
 
         cx.update_editor(|editor, window, cx| {
@@ -790,7 +790,7 @@ mod foo «1{
                 comment_lines,
             ),
             &bracket_colors_markup(&mut cx),
-            "Scrolling back to top should re-colorize all chunks' brackets"
+            "滚动回顶部应重新着色所有代码块的括号"
         );
 
         cx.update(|_, cx| {
@@ -818,7 +818,7 @@ mod foo {
                 comment_lines,
             ),
             &bracket_colors_markup(&mut cx),
-            "Turning bracket colorization off should remove all bracket colors"
+            "关闭括号着色应移除所有括号颜色"
         );
 
         cx.update(|_, cx| {
@@ -851,7 +851,7 @@ mod foo «1{
                 comment_lines,
             ),
             &bracket_colors_markup(&mut cx),
-            "Turning bracket colorization back on refreshes the visible excerpts' bracket colors"
+            "重新开启括号着色会刷新可见摘录的括号颜色"
         );
     }
 
@@ -1131,7 +1131,7 @@ mod foo «1{
 
         assert_ne!(
             last_bracket, new_last_bracket,
-            "After scrolling down, we should have highlighted more brackets"
+            "向下滚动后,我们应该高亮了更多括号"
         );
 
         cx.update_editor(|editor, window, cx| {
@@ -1156,7 +1156,7 @@ mod foo «1{
             for (color, range) in colored_brackets.clone() {
                 assert!(
                     highlighted_brackets.entry(range).or_insert(color) == &color,
-                    "Colors should stay consistent while scrolling!"
+                    "滚动时颜色应保持一致!"
                 );
             }
 
@@ -1180,7 +1180,7 @@ mod foo «1{
                 assert!(
                     current_highlighted_bracket_set.contains(&highlight_range.start)
                         || current_highlighted_bracket_set.contains(&highlight_range.end),
-                    "Should not lose highlights while scrolling in the visible range!"
+                    "在可见范围内滚动时不应丢失高亮!"
                 );
             }
 
@@ -1213,7 +1213,7 @@ mod foo «1{
                 let start_bracket = colored_brackets.iter().find(|(_, range)| *range == start);
                 assert!(
                     start_bracket.is_some(),
-                    "Existing bracket start in the visible range should be highlighted. Missing color for match: \"{}\" at position {:?}",
+                    "可见范围内现有的括号起始位置应被高亮。缺少匹配项的颜色:\"{}\",位置 {:?}",
                     buffer_snapshot
                         .text_for_range(start.start..end.end)
                         .collect::<String>(),
@@ -1223,7 +1223,7 @@ mod foo «1{
                 let end_bracket = colored_brackets.iter().find(|(_, range)| *range == end);
                 assert!(
                     end_bracket.is_some(),
-                    "Existing bracket end in the visible range should be highlighted. Missing color for match: \"{}\" at position {:?}",
+                    "可见范围内现有的括号结束位置应被高亮。缺少匹配项的颜色:\"{}\",位置 {:?}",
                     buffer_snapshot
                         .text_for_range(start.start..end.end)
                         .collect::<String>(),
@@ -1233,7 +1233,7 @@ mod foo «1{
                 assert_eq!(
                     start_bracket.unwrap().0,
                     end_bracket.unwrap().0,
-                    "Bracket pair should be highlighted the same color!"
+                    "括号对应高亮为相同颜色!"
                 )
             }
         }
@@ -1447,7 +1447,7 @@ mod foo «1{
 2 hsla(240.00, 100.00%, 82.81%, 1.00)
 "#,},
             &editor_bracket_colors_markup(&editor_snapshot),
-            "After updating theme accents, the editor should update the bracket coloring"
+            "更新主题强调色后,编辑器应更新括号着色"
         );
     }
 

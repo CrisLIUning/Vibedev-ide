@@ -450,7 +450,7 @@ impl LanguageServer {
             cx,
             move |notification| {
                 log::info!(
-                    "Language server with id {} sent unhandled notification {}:\n{}",
+                    "ID 为 {} 的语言服务器发送了未处理的通知 {}:\n{}",
                     server_id,
                     notification.method,
                     serde_json::to_string_pretty(&notification.params).unwrap(),
@@ -503,7 +503,7 @@ impl LanguageServer {
                             id: message_id,
                             error: Some(Error {
                                 code: -32601,
-                                message: format!("Unrecognized method `{}`", msg.method),
+                                message: format!("无法识别的方法 `{}`", msg.method),
                                 data: None,
                             }),
                             result: None,
@@ -1062,7 +1062,7 @@ impl LanguageServer {
                 .into_response()
                 .with_context(|| {
                     format!(
-                        "initializing server {}, id {}",
+                        "正在初始化服务器 {},ID {}",
                         self.name(),
                         self.server_id()
                     )
@@ -1209,7 +1209,7 @@ impl LanguageServer {
         );
         assert!(
             prev_handler.is_none(),
-            "registered multiple handlers for the same LSP method"
+            "为同一个 LSP 方法注册了多个处理程序"
         );
         Subscription::Notification {
             method,
@@ -1288,7 +1288,7 @@ impl LanguageServer {
         );
         assert!(
             prev_handler.is_none(),
-            "registered multiple handlers for the same LSP method"
+            "为同一个 LSP 方法注册了多个处理程序"
         );
         Subscription::Notification {
             method,
@@ -1440,7 +1440,7 @@ impl LanguageServer {
             method: T::METHOD,
             params,
         })
-        .expect("LSP message should be serializable to JSON");
+        .expect("LSP 消息应可序列化为 JSON");
 
         let (tx, rx) = oneshot::channel();
         let handle_response = response_handlers
@@ -2240,17 +2240,17 @@ mod tests {
         let params = cx.update(|cx| server.default_initialize_params(false, false, cx));
 
         #[allow(deprecated)]
-        let root_uri = params.root_uri.expect("root_uri should be set");
+        let root_uri = params.root_uri.expect("应设置 root_uri");
         #[allow(deprecated)]
-        let root_path = params.root_path.expect("root_path should be set");
+        let root_path = params.root_path.expect("应设置 root_path");
 
         let expected_path = root_uri
             .to_file_path()
-            .expect("root_uri should be a valid file path");
+            .expect("root_uri 应为有效的文件路径");
         assert_eq!(
             root_path,
             expected_path.to_string_lossy(),
-            "root_path should be derived from root_uri"
+            "root_path 应派生自 root_uri"
         );
     }
 }

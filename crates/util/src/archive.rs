@@ -368,15 +368,15 @@ mod tests {
 
             assert!(
                 !base_dir.path().join("parent.txt").exists(),
-                "parent traversal entry should have been skipped"
+                "父目录遍历条目应已被跳过"
             );
             assert!(
                 !base_dir.path().join("grandparent.txt").exists(),
-                "nested traversal entry should have been skipped"
+                "嵌套遍历条目应已被跳过"
             );
             assert!(
                 !absolute_target.exists(),
-                "absolute path entry should have been skipped"
+                "绝对路径条目应已被跳过"
             );
         });
     }

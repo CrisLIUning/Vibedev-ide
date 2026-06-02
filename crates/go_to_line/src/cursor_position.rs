@@ -29,7 +29,7 @@ pub struct CursorPosition {
 /// A position in the editor, where user's caret is located at.
 /// Lines are never zero as there is always at least one line in the editor.
 /// Characters may start with zero as the caret may be at the beginning of a line, but all editors start counting characters from 1,
-/// where "1" will mean "before the first character".
+/// where "1" will mean "第一个字符之前".
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct UserCaretPosition {
     pub line: NonZeroU32,
@@ -242,13 +242,13 @@ impl Render for CursorPosition {
                     }))
                     .tooltip(move |_window, cx| match context.as_ref() {
                         Some(context) => Tooltip::for_action_in(
-                            "Go to Line/Column",
+                            "跳转到行/列",
                             &editor::actions::ToggleGoToLine,
                             context,
                             cx,
                         ),
                         None => Tooltip::for_action(
-                            "Go to Line/Column",
+                            "跳转到行/列",
                             &editor::actions::ToggleGoToLine,
                             cx,
                         ),

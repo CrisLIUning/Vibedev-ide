@@ -39,7 +39,7 @@ impl CapabilityGranter {
 
         if !is_allowed {
             bail!(
-                "capability for process:exec {desired_command} {desired_args:?} is not granted by the extension host",
+                "扩展宿主未授予 process:exec {desired_command} {desired_args:?} 的能力",
             );
         }
 
@@ -57,7 +57,7 @@ impl CapabilityGranter {
 
         if !is_allowed {
             bail!(
-                "capability for download_file {desired_url} is not granted by the extension host",
+                "扩展宿主未授予 download_file {desired_url} 的能力",
             );
         }
 

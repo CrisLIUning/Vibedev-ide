@@ -46,9 +46,9 @@ impl AgentTool for GoToDefinitionTool {
         _cx: &mut App,
     ) -> SharedString {
         if let Ok(input) = input {
-            format!("Go to definition of `{}`", input.symbol.symbol_name).into()
+            format!("跳转到 `{}` 的定义", input.symbol.symbol_name).into()
         } else {
-            "Go to definition".into()
+            "跳转到定义".into()
         }
     }
 
@@ -63,7 +63,7 @@ impl AgentTool for GoToDefinitionTool {
             let input = input
                 .recv()
                 .await
-                .map_err(|e| format!("Failed to receive tool input: {e}"))?;
+                .map_err(|e| format!("接收工具输入失败: {e}"))?;
 
             let resolved = input.symbol.resolve(&project, cx).await?;
 
@@ -73,12 +73,12 @@ impl AgentTool for GoToDefinitionTool {
 
             let definitions = definitions_task
                 .await
-                .map_err(|e| format!("Go to definition failed: {e}"))?
+                .map_err(|e| format!("跳转到定义失败: {e}"))?
                 .unwrap_or_default();
 
             if definitions.is_empty() {
                 return Ok(format!(
-                    "No definition found for '{}'.",
+                    "未找到 '{}' 的定义。",
                     input.symbol.symbol_name
                 ));
             }
@@ -86,11 +86,11 @@ impl AgentTool for GoToDefinitionTool {
             let mut output = String::new();
 
             if definitions.len() == 1 {
-                write!(output, "Definition of `{}`:\n", input.symbol.symbol_name).ok();
+                write!(output, "定义 `{}`:\n", input.symbol.symbol_name).ok();
             } else {
                 write!(
                     output,
-                    "Found {} definitions of `{}`:\n",
+                    "找到 {} 个 `{}` 的定义:\n",
                     definitions.len(),
                     input.symbol.symbol_name
                 )

@@ -1689,15 +1689,15 @@ pub enum DataBreakpointContext {
 impl DataBreakpointContext {
     pub fn human_readable_label(&self) -> String {
         match self {
-            DataBreakpointContext::Variable { name, .. } => format!("Variable: {}", name),
+            DataBreakpointContext::Variable { name, .. } => format!("变量: {}", name),
             DataBreakpointContext::Expression { expression, .. } => {
-                format!("Expression: {}", expression)
+                format!("表达式: {}", expression)
             }
             DataBreakpointContext::Address { address, bytes } => {
-                let mut label = format!("Address: {}", address);
+                let mut label = format!("地址: {}", address);
                 if let Some(bytes) = bytes {
                     label.push_str(&format!(
-                        " ({} byte{})",
+                        " ({} 字节{})",
                         bytes,
                         if *bytes == 1 { "" } else { "s" }
                     ));

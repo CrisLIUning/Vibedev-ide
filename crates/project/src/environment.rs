@@ -222,7 +222,7 @@ impl ProjectEnvironment {
                         Ok(shell_env) => Some(shell_env),
                         Err(e) => {
                             log::error!(
-                                "Failed to load shell environment for directory {abs_path:?}: {e:#}"
+                                "无法为目录 {abs_path:?} 加载 Shell 环境: {e:#}"
                             );
                             None
                         }
@@ -234,7 +234,7 @@ impl ProjectEnvironment {
                             .map(|path| path.as_str())
                             .unwrap_or_default();
                         log::debug!(
-                            "using project environment variables shell launched in {:?}. PATH={:?}",
+                            "正在使用在 {:?} 中启动的 Shell 的项目环境变量。PATH={:?}",
                             abs_path,
                             path
                         );
@@ -321,7 +321,7 @@ async fn load_directory_shell_environment(
     }
 
     let meta = smol::fs::metadata(&abs_path).await.with_context(|| {
-        tx.unbounded_send(format!("Failed to open {}", abs_path.display()))
+        tx.unbounded_send(format!("无法打开 {}", abs_path.display()))
             .ok();
         format!("stat {abs_path:?}")
     })?;
@@ -332,7 +332,7 @@ async fn load_directory_shell_environment(
         abs_path
             .parent()
             .with_context(|| {
-                tx.unbounded_send(format!("Failed to open {}", abs_path.display()))
+                tx.unbounded_send(format!("无法打开 {}", abs_path.display()))
                     .ok();
                 format!("getting parent of {abs_path:?}")
             })?
@@ -343,7 +343,7 @@ async fn load_directory_shell_environment(
     let mut envs = util::shell_env::capture(shell.clone(), args, abs_path)
         .await
         .with_context(|| {
-            tx.unbounded_send("Failed to load environment variables".into())
+            tx.unbounded_send("无法加载环境变量".into())
                 .ok();
             format!("capturing shell environment with {shell:?}")
         })?;
@@ -368,7 +368,7 @@ async fn load_directory_shell_environment(
         DirenvSettings::Direct => load_direnv_environment(&envs, &dir)
             .await
             .with_context(|| {
-                tx.unbounded_send("Failed to load direnv environment".into())
+                tx.unbounded_send("无法加载 direnv 环境".into())
                     .ok();
                 "load direnv environment"
             })
@@ -407,7 +407,7 @@ async fn load_direnv_environment(
 
     if !direnv_output.status.success() {
         bail!(
-            "Loading direnv environment failed ({}), stderr: {}",
+            "加载 direnv 环境失败 ({}),标准错误输出: {}",
             direnv_output.status,
             String::from_utf8_lossy(&direnv_output.stderr)
         );

@@ -53,9 +53,9 @@ pub(crate) fn render_skills_setup_page(
         .map(|this| {
             if skills.is_empty() {
                 let message = match &settings_window.current_file {
-                    SettingsUiFile::User => "No global skills installed.",
-                    SettingsUiFile::Project(_) => "No project skills found.",
-                    _ => "No skills available for this context.",
+                    SettingsUiFile::User => "未安装全局技能。",
+                    SettingsUiFile::Project(_) => "未找到项目技能。",
+                    _ => "此上下文无可用技能。",
                 };
                 let original_window = settings_window.original_window;
                 this.items_center().justify_center().child(
@@ -64,7 +64,7 @@ pub(crate) fn render_skills_setup_page(
                         .gap_2()
                         .child(Label::new(message).color(Color::Muted))
                         .child(
-                            Button::new("open-skill-creator", "Create a Skill")
+                            Button::new("open-skill-creator", "创建技能")
                                 .tab_index(0_isize)
                                 .style(ButtonStyle::Outlined)
                                 .end_icon(
@@ -135,7 +135,7 @@ fn render_skill_row(skill: &Skill, cx: &mut Context<SettingsWindow>) -> AnyEleme
                     )
                     .tab_index(0_isize)
                     .icon_size(IconSize::Small)
-                    .tooltip(Tooltip::text("Delete Skill"))
+                    .tooltip(Tooltip::text("删除技能"))
                     .on_click(cx.listener(
                         move |settings_window, _event, _window, cx| {
                             let directory_path = directory_path.clone();
@@ -179,7 +179,7 @@ fn render_skill_row(skill: &Skill, cx: &mut Context<SettingsWindow>) -> AnyEleme
                     )),
                 )
                 .child(
-                    Button::new(SharedString::from(format!("open-{}", skill.name)), "Open")
+                    Button::new(SharedString::from(format!("open-{}", skill.name)), "打开")
                         .tab_index(0_isize)
                         .style(ButtonStyle::OutlinedGhost)
                         .size(ButtonSize::Medium)

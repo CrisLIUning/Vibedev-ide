@@ -176,7 +176,7 @@ impl Project {
                                     let separator = shell_kind.sequential_commands_separator();
                                     let activation_script =
                                         activation_script.join(&format!("{separator} "));
-                                    let to_run = to_run.expect("activation command was formatted");
+                                    let to_run = to_run.expect("激活命令已被格式化");
 
                                     let arg = format!("{activation_script}{separator} {to_run}");
                                     let args = shell_kind.args_for_shell(true, arg);
@@ -209,7 +209,7 @@ impl Project {
                                     let separator = shell_kind.sequential_commands_separator();
                                     let activation_script =
                                         activation_script.join(&format!("{separator} "));
-                                    let to_run = to_run.expect("activation command was formatted");
+                                    let to_run = to_run.expect("激活命令已被格式化");
 
                                     let arg = format!("{activation_script}{separator} {to_run}");
                                     let args = shell_kind.args_for_shell(true, arg);
@@ -635,7 +635,7 @@ fn create_remote_shell(
         Shell::WithArguments {
             program: command.program,
             args: command.args,
-            title_override: Some(format!("{} — Terminal", host)),
+            title_override: Some(format!("{} — 终端", host)),
         },
         command.env,
     ))

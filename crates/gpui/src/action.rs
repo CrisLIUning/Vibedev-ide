@@ -219,10 +219,10 @@ impl Display for ActionBuildError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ActionBuildError::NotFound { name } => {
-                write!(f, "Didn't find an action named \"{name}\"")
+                write!(f, "未找到名为 \"{name}\" 的操作")
             }
             ActionBuildError::BuildError { name, error } => {
-                write!(f, "Error while building action \"{name}\": {error}")
+                write!(f, "构建操作 \"{name}\" 时出错: {error}")
             }
         }
     }

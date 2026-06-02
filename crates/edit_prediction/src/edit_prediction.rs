@@ -934,7 +934,7 @@ impl EditPredictionStore {
                         let mut body = String::new();
                         response.body_mut().read_to_string(&mut body).await?;
                         anyhow::bail!(
-                            "Failed to fetch experiments: {:?}\nBody: {}",
+                            "获取实验列表失败: {:?}\nBody: {}",
                             response.status(),
                             body
                         );
@@ -1265,7 +1265,7 @@ impl EditPredictionStore {
                                     timestamp: Instant::now(),
                                     metadata: vec![
                                         (
-                                            "Cache Hits",
+                                            "缓存命中",
                                             format!(
                                                 "{}/{}",
                                                 cache_hit_count,
@@ -1274,12 +1274,12 @@ impl EditPredictionStore {
                                             .into(),
                                         ),
                                         (
-                                            "Max LSP Time",
+                                            "最大 LSP 耗时",
                                             format!("{} ms", max_definition_latency.as_millis())
                                                 .into(),
                                         ),
                                         (
-                                            "Mean LSP Time",
+                                            "平均 LSP 耗时",
                                             format!("{} ms", mean_definition_latency.as_millis())
                                                 .into(),
                                         ),
@@ -1862,7 +1862,7 @@ impl EditPredictionStore {
                         .await;
 
                         if let Err(error) = result {
-                            log::error!("failed to submit edit prediction settled: {error:?}");
+                            log::error!("提交编辑预测结果失败: {error:?}");
                         }
                     }
                 })
@@ -2130,7 +2130,7 @@ impl EditPredictionStore {
         // Prefer predictions from buffer
         if project_state.current_prediction.is_some() {
             log::debug!(
-                "edit_prediction: diagnostic refresh skipped, current prediction already exists"
+                "edit_prediction: 诊断刷新已跳过,当前预测已存在"
             );
             return;
         }
@@ -2326,7 +2326,7 @@ impl EditPredictionStore {
                 EditPredictionProvider::None
                 | EditPredictionProvider::Copilot
                 | EditPredictionProvider::Codestral => {
-                    log::error!("queue_prediction_refresh called with non-store provider");
+                    log::error!("queue_prediction_refresh 调用了非存储提供者");
                     return;
                 }
             };
@@ -2872,7 +2872,7 @@ impl EditPredictionStore {
             let status = response.status();
             let mut body = String::new();
             response.body_mut().read_to_string(&mut body).await?;
-            anyhow::bail!("Request failed with status: {status:?}\nBody: {body}");
+            anyhow::bail!("请求失败,状态码:{status:?}\n响应体:{body}");
         }
     }
 
@@ -3199,7 +3199,7 @@ fn merge_anchor_ranges(
 
 #[derive(Error, Debug)]
 #[error(
-    "You must update to Zed version {minimum_version} or higher to continue using edit predictions."
+    "您必须更新到 VibeDev {minimum_version} 或更高版本才能继续使用编辑预测。"
 )]
 pub struct ZedUpdateRequiredError {
     minimum_version: Version,
@@ -3211,7 +3211,7 @@ fn is_upsell_dismissed(cx: &App) -> bool {
     // To make this backwards compatible with older versions of Zed, we
     // check if the user has seen the previous Edit Prediction Onboarding
     // before, by checking the data collection choice which was written to
-    // the database once the user clicked on "Accept and Enable"
+    // the database once the user clicked on "接受并启用"
     let kvp = KeyValueStore::global(cx);
     if kvp
         .read_kvp(ZED_PREDICT_DATA_COLLECTION_CHOICE)

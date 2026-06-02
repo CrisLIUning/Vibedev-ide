@@ -562,7 +562,7 @@ impl SettingsStore {
                             let resolved_path =
                                 fs.canonicalize(settings_path).await.with_context(|| {
                                     format!(
-                                        "Failed to canonicalize settings path {:?}",
+                                        "无法规范化设置路径 {:?}",
                                         settings_path
                                     )
                                 })?;
@@ -596,7 +596,7 @@ impl SettingsStore {
                 }
                 .boxed_local()
             }))
-            .map_err(|err| anyhow::format_err!("Failed to update settings file: {}", err))
+            .map_err(|err| anyhow::format_err!("无法更新设置文件: {}", err))
             .log_with_level(log::Level::Warn);
         return rx;
     }
@@ -847,10 +847,10 @@ impl SettingsStore {
         } else {
             let (old_content, parse_status) = UserSettingsContent::parse_json(text);
             if let ParseStatus::Failed { error } = &parse_status {
-                log::error!("Failed to parse settings for update: {error}");
+                log::error!("解析设置以进行更新时失败: {error}");
             }
             old_content
-                .context("Settings file could not be parsed. Fix syntax errors before updating.")?
+                .context("无法解析设置文件, 请在更新前修复语法错误。")?
         };
         let mut new_content = old_content.clone();
         update(&mut new_content.content);
@@ -1034,7 +1034,7 @@ impl SettingsStore {
         match (path.clone(), kind, content) {
             (LocalSettingsPath::InWorktree(directory_path), LocalSettingsKind::Tasks, _) => {
                 return Err(InvalidSettingsError::Tasks {
-                    message: "Attempted to submit tasks into the settings store".to_string(),
+                    message: "尝试将任务提交到设置存储".to_string(),
                     path: directory_path
                         .join(RelPath::unix(task_file_name()).unwrap())
                         .as_std_path()
@@ -1043,7 +1043,7 @@ impl SettingsStore {
             }
             (LocalSettingsPath::InWorktree(directory_path), LocalSettingsKind::Debug, _) => {
                 return Err(InvalidSettingsError::Debug {
-                    message: "Attempted to submit debugger config into the settings store"
+                    message: "尝试将调试器配置提交到设置存储"
                         .to_string(),
                     path: directory_path
                         .join(RelPath::unix(task_file_name()).unwrap())
@@ -1105,7 +1105,7 @@ impl SettingsStore {
             }
             (LocalSettingsPath::OutsideWorktree(path), kind, _) => {
                 log::error!(
-                    "OutsideWorktree path {:?} with kind {:?} is only supported by editorconfig",
+                    "类型为 {:?} 的 OutsideWorktree 路径 {:?} 仅受 editorconfig 支持",
                     path,
                     kind
                 );
@@ -1183,7 +1183,7 @@ impl SettingsStore {
             replace_subschema::<LanguageToSettingsMap>(generator, || {
                 json_schema!({
                     "type": "object",
-                    "errorMessage": "No language with this name is installed.",
+                    "errorMessage": "未安装此名称的语言。",
                     "properties": params.language_names.iter().map(|name| (name.clone(), language_settings_content_ref.clone())).collect::<serde_json::Map<_, _>>()
                 })
             });
@@ -1784,6 +1784,51 @@ mod tests {
         );
     }
 
+    // VIBEDEV: regression guard for "Custom agent server `VibeDev` is not
+    // registered". The baked agent_servers.VibeDev entry in default.json must
+    // survive the REAL parse path (parse_default_settings → strongly-typed
+    // SettingsContent deserialize), not just a raw serde_json::Value parse.
+    // The strongly-typed path is what SettingsStore::new actually runs, and
+    // it's stricter: a malformed/unrecognized field can make the whole
+    // agent_servers map deserialize to None even when raw JSONC is valid.
+    #[gpui::test]
+    fn test_default_settings_contains_vibedev_agent_server(_cx: &mut App) {
+        // 1. Raw JSONC parse (cheap ground truth).
+        let defaults: serde_json::Value =
+            crate::parse_json_with_comments(&default_settings())
+                .expect("default.json must parse as JSONC");
+        assert!(
+            defaults
+                .get("agent_servers")
+                .and_then(|a| a.as_object())
+                .and_then(|a| a.get("VibeDev"))
+                .is_some(),
+            "raw JSONC: agent_servers.VibeDev must exist"
+        );
+
+        // 2. Strongly-typed parse — the path SettingsStore::new actually uses.
+        // This is the one that matters for runtime registration.
+        let content = SettingsStore::parse_default_settings(&default_settings())
+            .expect("default.json must parse into SettingsContent");
+        let agent_servers = content
+            .agent_servers
+            .as_ref()
+            .expect("SettingsContent.agent_servers must deserialize to Some");
+        let vibedev = agent_servers
+            .0
+            .get("VibeDev")
+            .expect("typed agent_servers must contain VibeDev — if this fails, \
+                     the runtime store never registers it → 'not registered'");
+        // Must be the Custom variant with a command (not Registry).
+        assert!(
+            matches!(
+                vibedev,
+                settings_content::CustomAgentServerSettings::Custom { .. }
+            ),
+            "VibeDev must deserialize as Custom variant, got {vibedev:?}"
+        );
+    }
+
     #[gpui::test]
     fn test_default_settings_release_channel_overrides(cx: &mut App) {
         // The test deals with overrides and should ignore the other set-ups (Preview and Stable runs)
@@ -1795,7 +1840,7 @@ mod tests {
             crate::parse_json_with_comments(&default_settings()).unwrap();
         let root = defaults
             .as_object_mut()
-            .expect("default settings must be a JSON object");
+            .expect("默认设置必须是 JSON 对象");
         root.insert("dev".into(), serde_json::json!({ "auto_update": false }));
         root.insert("stable".into(), serde_json::json!({ "auto_update": true }));
         let defaults_with_overrides = serde_json::to_string(&defaults).unwrap();
@@ -1806,7 +1851,7 @@ mod tests {
         assert_eq!(
             store.get::<AutoUpdateSetting>(None),
             &AutoUpdateSetting { auto_update: false },
-            "dev override from default settings should apply",
+            "默认设置中的 dev 覆盖应该生效",
         );
     }
 

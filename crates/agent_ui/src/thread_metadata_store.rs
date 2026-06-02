@@ -174,7 +174,7 @@ fn migrate_thread_metadata(cx: &mut App) -> Task<anyhow::Result<()>> {
             }
         }
 
-        log::info!("Migrating {} thread store entries", to_migrate.len());
+        log::info!("正在迁移 {} 条对话线程存储条目", to_migrate.len());
 
         // Manually save each entry to the database and call reload, otherwise
         // we'll end up triggering lots of reloads after each save
@@ -182,7 +182,7 @@ fn migrate_thread_metadata(cx: &mut App) -> Task<anyhow::Result<()>> {
             db.save(entry).await?;
         }
 
-        log::info!("Finished migrating thread store entries");
+        log::info!("对话线程存储条目迁移完成");
 
         let _ = store.update(cx, |store, cx| store.reload(cx));
         anyhow::Ok(())
@@ -659,7 +659,7 @@ impl ThreadMetadataStore {
         self.reload_task.take();
 
         let list_task = cx
-            .background_spawn(async move { db.list().context("Failed to fetch sidebar metadata") });
+            .background_spawn(async move { db.list().context("获取侧边栏元数据失败") });
 
         let reload_task = cx
             .spawn(async move |this, cx| {
@@ -1911,18 +1911,18 @@ mod tests {
     fn test_thread_metadata_title_prefers_override() {
         let mut metadata = make_metadata(
             "session-1",
-            "Agent Generated Title",
+            "代理生成的标题",
             Utc::now(),
             PathList::default(),
         );
-        metadata.title_override = Some("User Title".into());
+        metadata.title_override = Some("用户标题".into());
 
-        assert_eq!(metadata.title().as_deref(), Some("User Title"));
-        assert_eq!(metadata.display_title().as_ref(), "User Title");
+        assert_eq!(metadata.title().as_deref(), Some("用户标题"));
+        assert_eq!(metadata.display_title().as_ref(), "用户标题");
 
         metadata.title_override = None;
-        assert_eq!(metadata.title().as_deref(), Some("Agent Generated Title"));
-        assert_eq!(metadata.display_title().as_ref(), "Agent Generated Title");
+        assert_eq!(metadata.title().as_deref(), Some("代理生成的标题"));
+        assert_eq!(metadata.display_title().as_ref(), "代理生成的标题");
     }
 
     #[gpui::test]
@@ -1930,11 +1930,11 @@ mod tests {
         let now = Utc::now();
         let mut metadata = make_metadata(
             "session-1",
-            "Agent Generated Title",
+            "代理生成的标题",
             now,
             PathList::new(&[Path::new("/project-a")]),
         );
-        metadata.title_override = Some("User Title".into());
+        metadata.title_override = Some("用户标题".into());
 
         let thread = std::thread::current();
         let test_name = thread.name().unwrap_or("unknown_test");
@@ -1947,9 +1947,9 @@ mod tests {
 
         let rows = db.list().unwrap();
         assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].title.as_deref(), Some("Agent Generated Title"));
-        assert_eq!(rows[0].title_override.as_deref(), Some("User Title"));
-        assert_eq!(rows[0].title().as_deref(), Some("User Title"));
+        assert_eq!(rows[0].title.as_deref(), Some("代理生成的标题"));
+        assert_eq!(rows[0].title_override.as_deref(), Some("用户标题"));
+        assert_eq!(rows[0].title().as_deref(), Some("用户标题"));
     }
 
     #[gpui::test]
@@ -1958,7 +1958,7 @@ mod tests {
 
         let metadata = make_metadata(
             "session-1",
-            "Agent Generated Title",
+            "代理生成的标题",
             Utc::now(),
             PathList::default(),
         );
@@ -1968,7 +1968,7 @@ mod tests {
             let store = ThreadMetadataStore::global(cx);
             store.update(cx, |store, cx| {
                 store.save(metadata, cx);
-                store.set_title_override(thread_id, "User Title".into(), cx);
+                store.set_title_override(thread_id, "用户标题".into(), cx);
             });
         });
 
@@ -1977,10 +1977,10 @@ mod tests {
         cx.update(|cx| {
             let store = ThreadMetadataStore::global(cx);
             let store = store.read(cx);
-            let metadata = store.entry(thread_id).expect("metadata should be cached");
-            assert_eq!(metadata.title.as_deref(), Some("Agent Generated Title"));
-            assert_eq!(metadata.title_override.as_deref(), Some("User Title"));
-            assert_eq!(metadata.display_title().as_ref(), "User Title");
+            let metadata = store.entry(thread_id).expect("元数据应该被缓存");
+            assert_eq!(metadata.title.as_deref(), Some("代理生成的标题"));
+            assert_eq!(metadata.title_override.as_deref(), Some("用户标题"));
+            assert_eq!(metadata.display_title().as_ref(), "用户标题");
         });
     }
 
@@ -2540,7 +2540,7 @@ mod tests {
     // `migrate_thread_metadata` reads `ThreadStore::entries()` before that
     // reload completes, it observes an empty iterator and no-ops, even though
     // the on-disk legacy DB has threads to migrate. In production this
-    // manifests as "my old threads disappeared after upgrading": the threads
+    // manifests as "升级后旧对话线程消失了": the threads
     // are still in the legacy `threads.db`, but never make it into
     // `sidebar_threads`, so the new sidebar UI can't see them.
     #[gpui::test]
@@ -2618,10 +2618,10 @@ mod tests {
         cx.read(|cx| {
             let store = ThreadMetadataStore::global(cx).read(cx);
             assert_eq!(store.entry_ids().count(), 1);
-            let entry = store.entry(thread_id).expect("draft metadata row");
+            let entry = store.entry(thread_id).expect("草稿元数据行");
             assert!(
                 entry.is_draft(),
-                "expected draft row to have session_id=None, got {:?}",
+                "期望草稿行的 session_id 为 None,但得到了 {:?}",
                 entry.session_id
             );
         });
@@ -2634,8 +2634,8 @@ mod tests {
 
         cx.read(|cx| {
             let store = ThreadMetadataStore::global(cx).read(cx);
-            let entry = store.entry(thread_id).expect("draft metadata row");
-            assert!(entry.is_draft(), "still a draft after title update");
+            let entry = store.entry(thread_id).expect("草稿元数据行");
+            assert!(entry.is_draft(), "更新标题后仍是草稿");
             assert_eq!(
                 entry.title.as_ref().map(|t| t.as_ref()),
                 Some("Draft Thread")

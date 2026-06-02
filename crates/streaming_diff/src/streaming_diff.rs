@@ -35,11 +35,11 @@ impl Matrix {
         }
 
         if col1 >= self.cols {
-            panic!("column out of bounds");
+            panic!("列越界");
         }
 
         if col2 >= self.cols {
-            panic!("column out of bounds");
+            panic!("列越界");
         }
 
         unsafe {
@@ -54,22 +54,22 @@ impl Matrix {
 
     fn get(&self, row: usize, col: usize) -> f64 {
         if row >= self.rows {
-            panic!("row out of bounds")
+            panic!("行越界")
         }
 
         if col >= self.cols {
-            panic!("column out of bounds")
+            panic!("列越界")
         }
         self.cells[col * self.rows + row]
     }
 
     fn set(&mut self, row: usize, col: usize, value: f64) {
         if row >= self.rows {
-            panic!("row out of bounds")
+            panic!("行越界")
         }
 
         if col >= self.cols {
-            panic!("column out of bounds")
+            panic!("列越界")
         }
 
         self.cells[col * self.rows + row] = value;
@@ -905,17 +905,17 @@ mod tests {
     fn test_random_diffs() {
         random_test(|mut rng| {
             let old_text_len = env::var("OLD_TEXT_LEN")
-                .map(|i| i.parse().expect("invalid `OLD_TEXT_LEN` variable"))
+                .map(|i| i.parse().expect("无效的 `OLD_TEXT_LEN` 变量"))
                 .unwrap_or(10);
 
             let old = random_text(&mut rng, old_text_len);
-            println!("old text: {:?}", old);
+            println!("旧文本: {:?}", old);
 
             let new = randomly_edit(&old, &mut rng);
-            println!("new text: {:?}", new);
+            println!("新文本: {:?}", new);
 
             let char_operations = random_streaming_diff(&mut rng, &old, &new);
-            println!("char operations: {:?}", char_operations);
+            println!("字符操作: {:?}", char_operations);
 
             // Use apply_char_operations to verify the result
             let patched = apply_char_operations(&old, &char_operations);
@@ -923,7 +923,7 @@ mod tests {
 
             // Test char_ops_to_line_ops
             let line_ops = char_ops_to_line_ops(&old, &char_operations);
-            println!("line operations: {:?}", line_ops);
+            println!("行操作: {:?}", line_ops);
             let patched = apply_line_operations(&old, &new, &line_ops);
             assert_eq!(patched, new);
         });
@@ -964,20 +964,20 @@ mod tests {
         F: FnMut(StdRng),
     {
         let iterations = env::var("ITERATIONS")
-            .map(|i| i.parse().expect("invalid `ITERATIONS` variable"))
+            .map(|i| i.parse().expect("无效的 `ITERATIONS` 变量"))
             .unwrap_or(100);
 
         let seed: u64 = env::var("SEED")
-            .map(|s| s.parse().expect("invalid `SEED` variable"))
+            .map(|s| s.parse().expect("无效的 `SEED` 变量"))
             .unwrap_or(0);
 
         println!(
-            "Running test with {} iterations and seed {}",
+            "使用 {} 次迭代和种子 {} 运行测试",
             iterations, seed
         );
 
         for i in 0..iterations {
-            println!("Iteration {}", i + 1);
+            println!("迭代 {}", i + 1);
             let rng = StdRng::seed_from_u64(seed + i);
             test_fn(rng);
         }

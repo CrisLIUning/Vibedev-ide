@@ -21,11 +21,17 @@ pub const SKILLS_DIR_NAME: &str = "skills";
 ///
 /// Windows doesn't recognize `~` as the home directory, so the env-var
 /// form is used there instead.
+///
+/// VIBEDEV: must mirror `global_skills_dir()` which writes to `~/.vibedev/skills`
+/// (NOT `~/.agents/skills`) so this matches the ccb backend's
+/// CLAUDE_CONFIG_DIR/skills. Use a `.vibedev` literal rather than
+/// `AGENTS_DIR_NAME` — the latter still describes the project-scope
+/// `.agents/skills` segment, which is unchanged.
 #[cfg(target_os = "windows")]
 pub const GLOBAL_SKILLS_DIR_DISPLAY: &str =
-    concatcp!("%USERPROFILE%\\", AGENTS_DIR_NAME, "\\", SKILLS_DIR_NAME);
+    concatcp!("%USERPROFILE%\\.vibedev\\", SKILLS_DIR_NAME);
 #[cfg(not(target_os = "windows"))]
-pub const GLOBAL_SKILLS_DIR_DISPLAY: &str = concatcp!("~/", AGENTS_DIR_NAME, "/", SKILLS_DIR_NAME);
+pub const GLOBAL_SKILLS_DIR_DISPLAY: &str = concatcp!("~/.vibedev/", SKILLS_DIR_NAME);
 
 /// Opaque identifier for the project scope a skill was loaded from.
 ///
@@ -245,7 +251,7 @@ pub fn parse_skill_frontmatter(
 ) -> Result<Skill> {
     if content.len() > MAX_SKILL_FILE_SIZE {
         anyhow::bail!(
-            "SKILL.md file exceeds maximum size of {}KB",
+            "SKILL.md 文件超过最大大小 {}KB",
             MAX_SKILL_FILE_SIZE / 1024
         );
     }
@@ -257,7 +263,7 @@ pub fn parse_skill_frontmatter(
 
     let directory_path = skill_file_path
         .parent()
-        .context("SKILL.md file has no parent directory")?
+        .context("SKILL.md 文件没有父目录")?
         .to_path_buf();
 
     Ok(Skill {
@@ -275,7 +281,7 @@ fn extract_frontmatter(content: &str) -> Result<(SkillMetadata, &str)> {
     let content = content.trim_start();
 
     if !content.starts_with("---") {
-        anyhow::bail!("SKILL.md must start with YAML frontmatter (---)");
+        anyhow::bail!("SKILL.md 必须以 YAML frontmatter (---) 开头");
     }
 
     // Find every candidate closing `---` line: a line consisting EXACTLY of
@@ -317,7 +323,7 @@ fn extract_frontmatter(content: &str) -> Result<(SkillMetadata, &str)> {
     }
 
     if candidates.is_empty() {
-        anyhow::bail!("SKILL.md missing closing frontmatter delimiter (---)");
+        anyhow::bail!("SKILL.md 缺少闭合 frontmatter 分隔符 (---)");
     }
 
     // Try each candidate in order: slice content up through the candidate's
@@ -339,8 +345,8 @@ fn extract_frontmatter(content: &str) -> Result<(SkillMetadata, &str)> {
     }
 
     Err(last_error
-        .unwrap_or_else(|| anyhow::anyhow!("could not parse YAML frontmatter"))
-        .context("Invalid YAML frontmatter"))
+        .unwrap_or_else(|| anyhow::anyhow!("无法解析 YAML frontmatter"))
+        .context("无效的 YAML frontmatter"))
 }
 
 /// Maximum length for a valid skill name. Mirrors the upper bound enforced
@@ -437,21 +443,21 @@ pub fn slugify_skill_name(input: &str) -> Option<String> {
 /// can convert them to `anyhow::Error` via `anyhow::Error::msg`.
 pub fn validate_name(name: &str) -> Result<(), &'static str> {
     if name.is_empty() {
-        return Err("Skill name cannot be empty");
+        return Err("技能名称不能为空");
     }
     if name.len() > MAX_SKILL_NAME_LEN {
         return Err(formatcp!(
-            "Skill name must be at most {MAX_SKILL_NAME_LEN} characters"
+            "技能名称最多 {MAX_SKILL_NAME_LEN} 个字符"
         ));
     }
     if name.starts_with('-') || name.ends_with('-') {
-        return Err("Skill name must not start or end with a hyphen");
+        return Err("技能名称不能以连字符开头或结尾");
     }
     if !name
         .chars()
         .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-')
     {
-        return Err("Skill name must contain only lowercase letters, numbers, and hyphens");
+        return Err("技能名称只能包含小写字母、数字和连字符");
     }
     Ok(())
 }
@@ -460,11 +466,11 @@ pub fn validate_name(name: &str) -> Result<(), &'static str> {
 /// loader and the create-skill UI.
 pub fn validate_description(description: &str) -> Result<(), &'static str> {
     if description.trim().is_empty() {
-        return Err("Skill description cannot be empty");
+        return Err("技能描述不能为空");
     }
     if description.len() > MAX_SKILL_DESCRIPTION_LEN {
         return Err(formatcp!(
-            "Skill description must be at most {MAX_SKILL_DESCRIPTION_LEN} bytes"
+            "技能描述最多 {MAX_SKILL_DESCRIPTION_LEN} 个字节"
         ));
     }
     Ok(())
@@ -608,7 +614,7 @@ pub async fn load_skill_frontmatter(
         return Err(SkillLoadError {
             path: skill_file_path.clone(),
             message: format!(
-                "SKILL.md file exceeds maximum size of {}KB",
+                "SKILL.md 文件超过最大大小 {}KB",
                 MAX_SKILL_FILE_SIZE / 1024
             ),
         });
@@ -619,7 +625,7 @@ pub async fn load_skill_frontmatter(
         .await
         .map_err(|e| SkillLoadError {
             path: skill_file_path.clone(),
-            message: format!("Failed to open file: {}", e),
+            message: format!("打开文件失败: {}", e),
         })?;
 
     // The chunked read is intentionally synchronous: `Fs::open_sync`
@@ -629,7 +635,7 @@ pub async fn load_skill_frontmatter(
     // executor — not on the foreground thread. Routing through
     // `smol::unblock` instead would schedule the work on smol's blocking
     // pool, whose wakeups don't drive GPUI's test scheduler and therefore
-    // panic with "Parking forbidden" under `TestAppContext`.
+    // panic with "禁止停车" under `TestAppContext`.
     let read_result: Result<Vec<u8>, io::Error> = (|| {
         let mut accumulated: Vec<u8> = Vec::new();
         let mut chunk = [0u8; SKILL_READ_CHUNK_SIZE];
@@ -653,12 +659,12 @@ pub async fn load_skill_frontmatter(
     })();
     let accumulated = read_result.map_err(|e| SkillLoadError {
         path: skill_file_path.clone(),
-        message: format!("Failed to read file: {}", e),
+        message: format!("读取文件失败: {}", e),
     })?;
 
     let content = std::str::from_utf8(&accumulated).map_err(|e| SkillLoadError {
         path: skill_file_path.clone(),
-        message: format!("SKILL.md is not valid UTF-8: {}", e),
+        message: format!("SKILL.md 不是有效的 UTF-8: {}", e),
     })?;
 
     parse_skill_frontmatter(&skill_file_path, content, source).map_err(|e| SkillLoadError {
@@ -677,7 +683,7 @@ pub async fn read_skill_body(
 ) -> Result<String, SkillLoadError> {
     let content = fs.load(skill_file_path).await.map_err(|e| SkillLoadError {
         path: skill_file_path.to_path_buf(),
-        message: format!("Failed to read file: {}", e),
+        message: format!("读取文件失败: {}", e),
     })?;
 
     let (_metadata, body) = extract_frontmatter(&content).map_err(|e| SkillLoadError {
@@ -735,20 +741,24 @@ pub fn builtin_skill_content(skill_file_path: &Path) -> Option<&'static str> {
     })
 }
 
-/// Returns the global skills directory: `~/.agents/skills`.
+/// Returns the global skills directory: `~/.vibedev/skills`.
 ///
-/// Other agents (e.g. Claude Code) already write skill files into this
-/// location, so a Zed installation may have skills here even before the
-/// rest of Zed's skills support ships.
+/// VIBEDEV: the user-scope global skills dir is `~/.vibedev/skills`, NOT
+/// the upstream `~/.agents/skills`. The VibeDev ccb backend reads skills
+/// from `CLAUDE_CONFIG_DIR/skills` (= `~/.vibedev/skills`); aligning the
+/// frontend global dir here is what makes a skill installed via the Zed UI
+/// visible to the ACP agent. Only the user-level global path is moved —
+/// project-scope skills stay at `.agents/skills` (see
+/// `project_skills_relative_path` / `AGENTS_DIR_NAME`).
 ///
 /// In test builds, `paths::home_dir()` is hardcoded to a fixed path
 /// (e.g. `/Users/zed`), so all tests using this function operate on the
 /// same simulated home directory. Each test should use its own `FakeFs`
 /// instance to keep skill setups from leaking across tests.
 pub fn global_skills_dir() -> PathBuf {
-    paths::home_dir()
-        .join(AGENTS_DIR_NAME)
-        .join(SKILLS_DIR_NAME)
+    // VIBEDEV: `.vibedev` (not AGENTS_DIR_NAME / `.agents`) so this matches the
+    // ccb backend's CLAUDE_CONFIG_DIR/skills. Project-scope is unchanged.
+    paths::home_dir().join(".vibedev").join(SKILLS_DIR_NAME)
 }
 
 /// Project-local skills live at this path relative to a worktree root,
@@ -799,6 +809,19 @@ mod tests {
     use gpui::TestAppContext;
 
     #[test]
+    fn global_skills_dir_points_at_vibedev() {
+        let dir = global_skills_dir();
+        let s = dir.to_string_lossy();
+        // VibeDev: global skills must live under ~/.vibedev/skills so the
+        // ccb backend (which reads CLAUDE_CONFIG_DIR/skills = ~/.vibedev/skills)
+        // sees skills installed via the frontend.
+        assert!(
+            s.ends_with(".vibedev/skills") || s.ends_with(".vibedev\\skills"),
+            "expected ~/.vibedev/skills, got {s}"
+        );
+    }
+
+    #[test]
     fn test_skill_source_precedence_is_total_and_ordered() {
         // Pin the hierarchy: project-local > global > built-in. Every
         // override and conflict-resolution site routes through this,
@@ -844,10 +867,10 @@ Do the thing.
             content,
             SkillSource::Global,
         );
-        let skill = result.expect("Should parse successfully");
+        let skill = result.expect("应该成功解析");
 
         assert_eq!(skill.name, "my-skill");
-        assert_eq!(skill.description, "A test skill for testing purposes");
+        assert_eq!(skill.description, "用于测试目的的测试技能");
         assert_eq!(skill.directory_path, Path::new("/skills/my-skill"));
         // Default: skill is invocable by both model and user.
         assert!(!skill.disable_model_invocation);
@@ -869,7 +892,7 @@ Steps to deploy.
             content,
             SkillSource::Global,
         )
-        .expect("should parse");
+        .expect("应该解析");
         assert!(skill.disable_model_invocation);
     }
 
@@ -889,7 +912,7 @@ Help.
             content,
             SkillSource::Global,
         )
-        .expect("should parse");
+        .expect("应该解析");
         assert!(!skill.disable_model_invocation);
     }
 
@@ -907,7 +930,7 @@ Help.
             result
                 .unwrap_err()
                 .to_string()
-                .contains("must start with YAML frontmatter")
+                .contains("必须以 YAML frontmatter 开头")
         );
     }
 
@@ -929,7 +952,7 @@ description: Test
             result
                 .unwrap_err()
                 .to_string()
-                .contains("missing closing frontmatter delimiter")
+                .contains("缺少闭合 frontmatter 分隔符")
         );
     }
 
@@ -951,16 +974,16 @@ description: Test
         let err = result.unwrap_err();
         let err_chain = format!("{:?}", err);
         assert!(
-            !err_chain.contains("missing closing frontmatter delimiter"),
-            "Error should NOT be the missing-closer error since the closer is present: {}",
+            !err_chain.contains("缺少闭合 frontmatter 分隔符"),
+            "错误不应该是缺失关闭符的错误,因为关闭符存在: {}",
             err_chain
         );
         assert!(
-            err_chain.contains("missing field")
+            err_chain.contains("缺少字段")
                 || err_chain.contains("name")
                 || err_chain.contains("description")
-                || err_chain.contains("Invalid YAML"),
-            "Error should mention missing name/description field or invalid YAML: {}",
+                || err_chain.contains("无效的 YAML"),
+            "错误应该提到缺失 name/description 字段或无效 YAML: {}",
             err_chain
         );
     }
@@ -983,10 +1006,10 @@ Content here.
         let err = result.unwrap_err();
         let err_chain = format!("{:?}", err);
         assert!(
-            err_chain.contains("missing field")
+            err_chain.contains("缺少字段")
                 || err_chain.contains("name")
-                || err_chain.contains("Invalid YAML"),
-            "Error should mention missing name field or invalid YAML: {}",
+                || err_chain.contains("无效的 YAML"),
+            "错误应该提到缺失 name 字段或无效 YAML: {}",
             err_chain
         );
     }
@@ -1009,10 +1032,10 @@ Content here.
         let err = result.unwrap_err();
         let err_chain = format!("{:?}", err);
         assert!(
-            err_chain.contains("missing field")
+            err_chain.contains("缺少字段")
                 || err_chain.contains("description")
-                || err_chain.contains("Invalid YAML"),
-            "Error should mention missing description field or invalid YAML: {}",
+                || err_chain.contains("无效的 YAML"),
+            "错误应该提到缺失 description 字段或无效 YAML: {}",
             err_chain
         );
     }
@@ -1036,7 +1059,7 @@ Content.
             SkillSource::Global,
         );
         assert!(result.is_err());
-        let expected = format!("at most {MAX_SKILL_NAME_LEN} characters");
+        let expected = format!("最多 {MAX_SKILL_NAME_LEN} 个字符");
         assert!(result.unwrap_err().to_string().contains(&expected));
     }
 
@@ -1060,7 +1083,7 @@ Content.
             result
                 .unwrap_err()
                 .to_string()
-                .contains("lowercase letters, numbers, and hyphens")
+                .contains("小写字母、数字和连字符")
         );
     }
 
@@ -1289,7 +1312,7 @@ Content.
         ] {
             let slug = slugify_skill_name(input).expect("should slugify");
             validate_name(&slug).unwrap_or_else(|err| {
-                panic!("slug {slug:?} from {input:?} failed validation: {err}")
+                panic!("slug {slug:?} 来自 {input:?} 验证失败: {err}")
             });
         }
     }
@@ -1313,7 +1336,7 @@ Content.
             SkillSource::Global,
         );
         assert!(result.is_err());
-        let expected = format!("at most {MAX_SKILL_DESCRIPTION_LEN} bytes");
+        let expected = format!("最多 {MAX_SKILL_DESCRIPTION_LEN} 字节");
         assert!(result.unwrap_err().to_string().contains(&expected));
     }
 
@@ -1333,7 +1356,7 @@ Content.
             SkillSource::Global,
         );
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("cannot be empty"));
+        assert!(result.unwrap_err().to_string().contains("不能为空"));
     }
 
     #[test]
@@ -1354,7 +1377,7 @@ description: Test skill
             SkillSource::Global,
         );
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("exceeds maximum"));
+        assert!(result.unwrap_err().to_string().contains("超过最大值"));
     }
 
     #[test]
@@ -1371,9 +1394,9 @@ description: A skill with no body content
             SkillSource::Global,
         );
 
-        let skill = result.expect("Empty body should be allowed");
+        let skill = result.expect("应允许空内容");
         assert_eq!(skill.name, "minimal-skill");
-        assert_eq!(skill.description, "A skill with no body content");
+        assert_eq!(skill.description, "没有内容的技能");
     }
 
     #[test]
@@ -1386,7 +1409,7 @@ description: A skill with no body content
             SkillSource::Global,
         );
 
-        let skill = result.expect("Whitespace-only body should be allowed");
+        let skill = result.expect("应允许纯空白内容");
         assert_eq!(skill.name, "whitespace-skill");
     }
 
@@ -1399,10 +1422,10 @@ description: A skill with no body content
             content,
             SkillSource::Global,
         );
-        let skill = result.expect("CRLF document should parse successfully");
+        let skill = result.expect("CRLF 文档应该成功解析");
 
         assert_eq!(skill.name, "crlf-skill");
-        assert_eq!(skill.description, "A skill with CRLF line endings");
+        assert_eq!(skill.description, "使用 CRLF 行尾的技能");
     }
 
     #[test]
@@ -1414,10 +1437,10 @@ description: A skill with no body content
             content,
             SkillSource::Global,
         );
-        let skill = result.expect("Mixed line endings should parse successfully");
+        let skill = result.expect("混合行尾应该成功解析");
 
         assert_eq!(skill.name, "mixed-skill");
-        assert_eq!(skill.description, "Frontmatter uses CRLF, body uses LF");
+        assert_eq!(skill.description, "Frontmatter 使用 CRLF,正文使用 LF");
     }
 
     #[test]
@@ -1436,7 +1459,7 @@ description: A skill with no body content
             result
                 .unwrap_err()
                 .to_string()
-                .contains("missing closing frontmatter delimiter")
+                .contains("缺少闭合 frontmatter 分隔符")
         );
     }
 
@@ -1452,10 +1475,10 @@ description: A skill with no body content
             content,
             SkillSource::Global,
         )
-        .expect("Should pick the truly-terminated closing delimiter");
+        .expect("应该选择真正终止的分隔符");
 
         assert_eq!(skill.name, "skill-name");
-        assert_eq!(skill.description, "A real description");
+        assert_eq!(skill.description, "真实的描述");
     }
 
     #[test]
@@ -1474,7 +1497,7 @@ description: A skill with no body content
             result
                 .unwrap_err()
                 .to_string()
-                .contains("missing closing frontmatter delimiter")
+                .contains("缺少闭合 frontmatter 分隔符")
         );
     }
 
@@ -1513,9 +1536,9 @@ description: A skill with no body content
         .await;
 
         assert_eq!(results.len(), 1);
-        let skill = results[0].as_ref().expect("Should load successfully");
+        let skill = results[0].as_ref().expect("应该成功加载");
         assert_eq!(skill.name, "my-skill");
-        assert_eq!(skill.description, "Test skill");
+        assert_eq!(skill.description, "测试技能");
     }
 
     #[gpui::test]
@@ -1573,7 +1596,7 @@ description: A skill with no body content
                     "SKILL.md": "---\nname: bravo\ndescription: B\n---\n\nB"
                 },
                 "delta": {
-                    "SKILL.md": "No frontmatter, will fail"
+                    "SKILL.md": "没有 frontmatter,将失败"
                 },
             }),
         )
@@ -1610,9 +1633,9 @@ description: A skill with no body content
                 "my-skill": {
                     "SKILL.md": "---\nname: my-skill\ndescription: Test\n---\n\nContent"
                 },
-                "not-a-skill.txt": "This is not a skill",
+                "not-a-skill.txt": "这不是一个技能",
                 "some-dir": {
-                    "other-file.md": "Not a SKILL.md"
+                    "other-file.md": "不是 SKILL. md"
                 }
             }),
         )
@@ -1626,7 +1649,7 @@ description: A skill with no body content
         .await;
 
         assert_eq!(results.len(), 1);
-        let skill = results[0].as_ref().expect("Should load successfully");
+        let skill = results[0].as_ref().expect("应该成功加载");
         assert_eq!(skill.name, "my-skill");
     }
 
@@ -1640,7 +1663,7 @@ description: A skill with no body content
                     "SKILL.md": "---\nname: valid-skill\ndescription: Valid\n---\n\nContent"
                 },
                 "invalid-skill": {
-                    "SKILL.md": "No frontmatter here"
+                    "SKILL.md": "这里没有 frontmatter"
                 }
             }),
         )
@@ -1682,7 +1705,7 @@ description: A skill with no body content
     fn test_skill_summary_from_skill() {
         let skill = Skill {
             name: "test-skill".to_string(),
-            description: "A test description".to_string(),
+            description: "测试描述".to_string(),
             source: SkillSource::Global,
             directory_path: PathBuf::from("/skills/test-skill"),
             skill_file_path: PathBuf::from("/skills/test-skill/SKILL.md"),
@@ -1692,7 +1715,7 @@ description: A skill with no body content
 
         let summary = SkillSummary::from(&skill);
         assert_eq!(summary.name, "test-skill");
-        assert_eq!(summary.description, "A test description");
+        assert_eq!(summary.description, "测试描述");
         assert_eq!(summary.location, "/skills/test-skill/SKILL.md");
     }
 
@@ -1760,10 +1783,10 @@ description: A skill with no body content
         .await;
 
         assert_eq!(results.len(), 1);
-        let err = results[0].as_ref().expect_err("Oversized file must error");
+        let err = results[0].as_ref().expect_err("超大文件必须报错");
         assert!(
-            err.message.contains("exceeds maximum size"),
-            "unexpected error message: {}",
+            err.message.contains("超过最大大小"),
+            "意外的错误消息: {}",
             err.message
         );
     }
@@ -1791,10 +1814,10 @@ description: A skill with no body content
             SkillSource::Global,
         )
         .await
-        .expect("frontmatter should parse");
+        .expect("frontmatter 应该解析");
 
         assert_eq!(skill.name, "my-skill");
-        assert_eq!(skill.description, "A skill for tests");
+        assert_eq!(skill.description, "用于测试的技能");
         assert!(skill.disable_model_invocation);
         assert_eq!(
             skill.skill_file_path,
@@ -1858,7 +1881,7 @@ description: A skill with no body content
 
         let body = read_skill_body(fs.as_ref(), Path::new("/skills/my-skill/SKILL.md"))
             .await
-            .expect("body should load");
+            .expect("内容应该加载");
 
         // Trimmed: no leading blank line after the closing `---`, and no
         // trailing whitespace.
@@ -1880,9 +1903,9 @@ description: A skill with no body content
 
         let body = read_skill_body(fs.as_ref(), Path::new("/skills/empty/SKILL.md"))
             .await
-            .expect("body should load");
+            .expect("内容应该加载");
 
-        assert!(body.is_empty(), "expected empty body, got: {body:?}");
+        assert!(body.is_empty(), "预期空内容,得到: {body:?}");
     }
 
     #[test]
@@ -2035,7 +2058,7 @@ description: A skill with no body content
             if let Some(slug) = slugify_skill_name(input) {
                 assert!(
                     validate_name(&slug).is_ok(),
-                    "slug {slug:?} from {input:?} failed validate_name"
+                    "slug {slug:?} 来自 {input:?} validate_name 验证失败"
                 );
             }
         }

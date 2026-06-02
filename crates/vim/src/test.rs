@@ -1524,7 +1524,7 @@ async fn test_lsp_completions_with_additional_edits_undo(cx: &mut gpui::TestAppC
     let completion_item = lsp::CompletionItem {
         label: "some".into(),
         kind: Some(lsp::CompletionItemKind::SNIPPET),
-        detail: Some("Wrap the expression in an `Option::Some`".to_string()),
+        detail: Some("将表达式包装在 `Option::Some` 中".to_string()),
         documentation: Some(lsp::Documentation::MarkupContent(lsp::MarkupContent {
             kind: lsp::MarkupKind::Markdown,
             value: "```rust\nSome(2)\n```".to_string(),

@@ -469,7 +469,7 @@ impl TestScheduler {
             false
         } else if cfg!(miri) {
             // miri cannot debug print backtraces with `miri-disable-isolation` enabled
-            panic!("Parking forbidden.");
+            panic!("禁止暂停。");
         } else if self.state.lock().capture_pending_traces {
             let mut pending_traces = String::new();
             for (_, trace) in mem::take(&mut self.state.lock().pending_traces) {

@@ -170,7 +170,7 @@ impl RemoteBufferStore {
         capability: Capability,
         cx: &mut Context<BufferStore>,
     ) -> Result<Option<Entity<Buffer>>> {
-        match envelope.payload.variant.context("missing variant")? {
+        match envelope.payload.variant.context("缺少变体")? {
             proto::create_buffer_for_peer::Variant::State(mut state) => {
                 let buffer_id = BufferId::new(state.id)?;
 
@@ -183,7 +183,7 @@ impl RemoteBufferStore {
                             .read(cx)
                             .worktree_for_id(worktree_id, cx)
                             .with_context(|| {
-                                format!("no worktree found for id {}", file.worktree_id)
+                                format!("找不到 id 为 {} 的工作树", file.worktree_id)
                             })?;
                         buffer_file = Some(Arc::new(File::from_proto(file, worktree, cx)?)
                             as Arc<dyn language::File>);
@@ -213,7 +213,7 @@ impl RemoteBufferStore {
                     .cloned()
                     .with_context(|| {
                         format!(
-                            "received chunk for buffer {} without initial state",
+                            "收到缓冲区 {} 的块,但没有初始状态",
                             chunk.buffer_id
                         )
                     })?;
@@ -372,7 +372,7 @@ impl RemoteBufferStore {
         });
 
         cx.spawn(async move |this, cx| {
-            let response = request.await?.transaction.context("missing transaction")?;
+            let response = request.await?.transaction.context("缺少事务")?;
             this.update(cx, |this, cx| {
                 this.deserialize_project_transaction(response, push_to_history, cx)
             })?
@@ -613,7 +613,7 @@ impl LocalBufferStore {
         cx: &mut Context<BufferStore>,
     ) -> Task<Result<()>> {
         let Some(file) = File::from_dyn(buffer.read(cx).file()) else {
-            return Task::ready(Err(anyhow!("buffer doesn't have a file")));
+            return Task::ready(Err(anyhow!("缓冲区没有文件")));
         };
         let worktree = file.worktree.clone();
         self.save_local_buffer(buffer, worktree, file.path.clone(), false, cx)
@@ -630,7 +630,7 @@ impl LocalBufferStore {
             .read(cx)
             .worktree_for_id(path.worktree_id, cx)
         else {
-            return Task::ready(Err(anyhow!("no such worktree")));
+            return Task::ready(Err(anyhow!("无此工作树")));
         };
         self.save_local_buffer(buffer, worktree, path.path, true, cx)
     }
@@ -869,7 +869,7 @@ impl BufferStore {
                     .read(cx)
                     .worktree_for_id(project_path.worktree_id, cx)
                 else {
-                    return Task::ready(Err(anyhow!("no such worktree")));
+                    return Task::ready(Err(anyhow!("无此工作树")));
                 };
                 let load_buffer = match &self.state {
                     BufferStoreState::Local(this) => this.open_buffer(path, worktree, cx),
@@ -992,8 +992,8 @@ impl BufferStore {
                     if is_remote {
                         return Ok(());
                     } else {
-                        debug_panic!("buffer {remote_id} was already registered");
-                        anyhow::bail!("buffer {remote_id} was already registered");
+                        debug_panic!("缓冲区 {remote_id} 已注册");
+                        anyhow::bail!("缓冲区 {remote_id} 已注册");
                     }
                 }
                 entry.insert(open_buffer);
@@ -1053,7 +1053,7 @@ impl BufferStore {
 
     pub fn get_existing(&self, buffer_id: BufferId) -> Result<Entity<Buffer>> {
         self.get(buffer_id)
-            .with_context(|| format!("unknown buffer id {buffer_id}"))
+            .with_context(|| format!("未知的缓冲区 id {buffer_id}"))
     }
 
     pub fn get_possibly_incomplete(&self, buffer_id: BufferId) -> Option<Entity<Buffer>> {
@@ -1216,7 +1216,7 @@ impl BufferStore {
             buffer.lsp_handle = Some(handle);
             return;
         }
-        debug_panic!("tried to register shared lsp handle, but buffer was not shared")
+        debug_panic!("尝试注册共享 LSP 句柄,但缓冲区未共享")
     }
 
     pub fn handle_synchronize_buffers(
@@ -1230,7 +1230,7 @@ impl BufferStore {
             buffers: Default::default(),
         };
         let Some(guest_id) = envelope.original_sender_id else {
-            anyhow::bail!("missing original_sender_id on SynchronizeBuffers request");
+            anyhow::bail!("SynchronizeBuffers 请求中缺少 original_sender_id");
         };
 
         self.shared_buffers.entry(guest_id).or_default().clear();
@@ -1316,7 +1316,7 @@ impl BufferStore {
     ) -> Result<()> {
         let remote = self
             .as_remote_mut()
-            .context("buffer store is not a remote")?;
+            .context("缓冲区存储不是远程的")?;
 
         if let Some(buffer) =
             remote.handle_create_buffer_for_peer(envelope, replica_id, capability, cx)?
@@ -1338,12 +1338,12 @@ impl BufferStore {
         this.update(&mut cx, |this, cx| {
             let payload = envelope.payload.clone();
             if let Some(buffer) = this.get_possibly_incomplete(buffer_id) {
-                let file = payload.file.context("invalid file")?;
+                let file = payload.file.context("无效文件")?;
                 let worktree = this
                     .worktree_store
                     .read(cx)
                     .worktree_for_id(WorktreeId::from_proto(file.worktree_id), cx)
-                    .context("no such worktree")?;
+                    .context("无此工作树")?;
                 let file = File::from_proto(file, worktree, cx)?;
                 let old_file = buffer.update(cx, |buffer, cx| {
                     let old_file = buffer.file().cloned();
@@ -1385,7 +1385,7 @@ impl BufferStore {
                 this.downstream_client
                     .as_ref()
                     .map(|(_, project_id)| *project_id)
-                    .context("project is not shared")?,
+                    .context("项目未共享")?,
             ))
         })?;
         buffer
@@ -1433,7 +1433,7 @@ impl BufferStore {
                 return;
             }
             debug_panic!(
-                "peer_id {} closed buffer_id {} which was either not open or already closed",
+                "peer_id {} 关闭了 buffer_id {},该缓冲区未打开或已关闭",
                 peer_id,
                 buffer_id
             )
@@ -1480,7 +1480,7 @@ impl BufferStore {
         let mtime = envelope.payload.mtime.clone().map(|time| time.into());
         let line_ending = deserialize_line_ending(
             proto::LineEnding::from_i32(envelope.payload.line_ending)
-                .context("missing line ending")?,
+                .context("缺少行尾符")?,
         );
         this.update(&mut cx, |this, cx| {
             if let Some(buffer) = this.get_possibly_incomplete(buffer_id) {
@@ -1656,7 +1656,7 @@ impl BufferStore {
             );
             let this = self
                 .as_local_mut()
-                .expect("local-only method called in a non-local context");
+                .expect("在非本地上下文中调用了仅限本地的方法");
             if let Some(entry_id) = file.entry_id {
                 this.local_buffer_ids_by_entry_id
                     .insert(entry_id, buffer_id);
@@ -1674,8 +1674,8 @@ impl BufferStore {
         if let Some(this) = self.as_remote_mut() {
             this.deserialize_project_transaction(message, push_to_history, cx)
         } else {
-            debug_panic!("not a remote buffer store");
-            Task::ready(Err(anyhow!("not a remote buffer store")))
+            debug_panic!("不是远程缓冲区存储");
+            Task::ready(Err(anyhow!("不是远程缓冲区存储")))
         }
     }
 
@@ -1687,8 +1687,8 @@ impl BufferStore {
         if let Some(this) = self.as_remote_mut() {
             this.wait_for_remote_buffer(id, cx)
         } else {
-            debug_panic!("not a remote buffer store");
-            Task::ready(Err(anyhow!("not a remote buffer store")))
+            debug_panic!("不是远程缓冲区存储");
+            Task::ready(Err(anyhow!("不是远程缓冲区存储")))
         }
     }
 
@@ -1760,7 +1760,7 @@ impl BufferStore {
         let buffer_ids = match envelope
             .payload
             .variant
-            .context("Expected non-null variant")?
+            .context("期望非空变体")?
         {
             Variant::Matches(find_search_candidates_matches) => find_search_candidates_matches
                 .buffer_ids

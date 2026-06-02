@@ -237,7 +237,7 @@ fn populate_capture_indices(
     let success = missing_required_captures.is_empty();
     if !success {
         log::error!(
-            "missing required capture(s) in {} {} TreeSitter query: {}",
+            "在 {} {} TreeSitter 查询中缺少必需的捕获: {}",
             language_name,
             query_type,
             missing_required_captures.join(", ")
@@ -298,27 +298,27 @@ impl Grammar {
         if let Some(query) = queries.highlights {
             self = self
                 .with_highlights_query(query.as_ref())
-                .context("Error loading highlights query")?;
+                .context("加载高亮查询失败")?;
         }
         if let Some(query) = queries.brackets {
             self = self
                 .with_brackets_query(query.as_ref(), name)
-                .context("Error loading brackets query")?;
+                .context("加载括号查询失败")?;
         }
         if let Some(query) = queries.indents {
             self = self
                 .with_indents_query(query.as_ref(), name)
-                .context("Error loading indents query")?;
+                .context("加载缩进查询失败")?;
         }
         if let Some(query) = queries.outline {
             self = self
                 .with_outline_query(query.as_ref(), name)
-                .context("Error loading outline query")?;
+                .context("加载大纲查询失败")?;
         }
         if let Some(query) = queries.injections {
             self = self
                 .with_injection_query(query.as_ref(), name)
-                .context("Error loading injection query")?;
+                .context("加载注入查询失败")?;
         }
         if let Some(query) = queries.overrides {
             self = self
@@ -329,27 +329,27 @@ impl Grammar {
                     &mut config.brackets,
                     &config.scope_opt_in_language_servers,
                 )
-                .context("Error loading override query")?;
+                .context("加载覆盖查询失败")?;
         }
         if let Some(query) = queries.redactions {
             self = self
                 .with_redaction_query(query.as_ref(), name)
-                .context("Error loading redaction query")?;
+                .context("加载编辑查询失败")?;
         }
         if let Some(query) = queries.runnables {
             self = self
                 .with_runnable_query(query.as_ref())
-                .context("Error loading runnables query")?;
+                .context("加载可运行项查询失败")?;
         }
         if let Some(query) = queries.text_objects {
             self = self
                 .with_text_object_query(query.as_ref(), name)
-                .context("Error loading textobject query")?;
+                .context("加载文本对象查询失败")?;
         }
         if let Some(query) = queries.debugger {
             self = self
                 .with_debug_variables_query(query.as_ref(), name)
-                .context("Error loading debug variables query")?;
+                .context("加载调试变量查询失败")?;
         }
         Ok(self)
     }
@@ -455,7 +455,7 @@ impl Grammar {
                 text_objects_by_capture_ix.push((ix as u32, text_object));
             } else {
                 log::warn!(
-                    "unrecognized capture name '{}' in {} textobjects TreeSitter query",
+                    "在 {} 文本对象 TreeSitter 查询中无法识别的捕获名称 '{}'",
                     name,
                     language_name,
                 );
@@ -482,7 +482,7 @@ impl Grammar {
                 objects_by_capture_ix.push((ix as u32, text_object));
             } else {
                 log::warn!(
-                    "unrecognized capture name '{}' in {} debugger TreeSitter query",
+                    "在 {} 调试器 TreeSitter 查询中无法识别的捕获名称 '{}'",
                     name,
                     language_name,
                 );
@@ -605,14 +605,14 @@ impl Grammar {
             language_capture_ix = match (language_capture_ix, injection_language_capture_ix) {
                 (None, Some(ix)) => Some(ix),
                 (Some(_), Some(_)) => {
-                    anyhow::bail!("both language and injection.language captures are present");
+                    anyhow::bail!("同时存在 language 和 injection.language 捕获");
                 }
                 _ => language_capture_ix,
             };
             content_capture_ix = match (content_capture_ix, injection_content_capture_ix) {
                 (None, Some(ix)) => Some(ix),
                 (Some(_), Some(_)) => {
-                    anyhow::bail!("both content and injection.content captures are present")
+                    anyhow::bail!("同时存在 content 和 injection.content 捕获")
                 }
                 _ => content_capture_ix,
             };
@@ -676,7 +676,7 @@ impl Grammar {
             for server_name in &value.opt_into_language_servers {
                 if !scope_opt_in_language_servers.contains(server_name) {
                     util::debug_panic!(
-                        "Server {server_name:?} has been opted-in by scope {name:?} but has not been marked as an opt-in server"
+                        "服务器 {server_name:?} 已被作用域 {name:?} 选择加入,但未被标记为选择加入服务器"
                     );
                 }
             }
@@ -701,7 +701,7 @@ impl Grammar {
                 .any(|entry| entry.name == *referenced_name)
             {
                 anyhow::bail!(
-                    "language {:?} has overrides in config not in query: {referenced_name:?}",
+                    "语言 {:?} 在配置中有覆盖但在查询中不存在: {referenced_name:?}",
                     language_name
                 );
             }

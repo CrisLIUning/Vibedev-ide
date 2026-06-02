@@ -306,7 +306,7 @@ impl PlatformWindow for TestWindow {
             let device_size: Size<DevicePixels> = size.to_device_pixels(scale_factor);
             renderer.render_scene_to_image(scene, device_size)
         } else {
-            anyhow::bail!("render_to_image not available: no HeadlessRenderer configured")
+            anyhow::bail!("render_to_image 不可用:未配置 HeadlessRenderer")
         }
     }
 

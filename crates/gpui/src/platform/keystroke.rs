@@ -59,13 +59,13 @@ impl Display for InvalidKeystrokeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Invalid keystroke \"{}\". {}",
+            "无效的按键 \"{}\"。{}",
             self.keystroke, KEYSTROKE_PARSE_EXPECTED_MESSAGE
         )
     }
 }
 
-/// Sentence explaining what keystroke parser expects, starting with "Expected ..."
+/// Sentence explaining what keystroke parser expects, starting with "期望 ..."
 pub const KEYSTROKE_PARSE_EXPECTED_MESSAGE: &str = "Expected a sequence of modifiers \
     (`ctrl`, `alt`, `shift`, `fn`, `cmd`, `super`, or `win`) \
     followed by a key, separated by `-`.";
@@ -75,7 +75,7 @@ impl Keystroke {
     /// the key_char or the key itself. On some non-US keyboards keys we use in our
     /// bindings are behind option (for example `$` is typed `alt-ç` on a Czech keyboard),
     /// and on some keyboards the IME handler converts a sequence of keys into a
-    /// specific character (for example `"` is typed as `" space` on a brazilian keyboard).
+    /// specific character (for example `"` 输入为 `" space` on a brazilian keyboard).
     ///
     /// This method assumes that `self` was typed and `target' is in the keymap, and checks
     /// both possibilities for self against the target.

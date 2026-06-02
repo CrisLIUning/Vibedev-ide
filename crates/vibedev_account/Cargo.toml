@@ -1,0 +1,59 @@
+[package]
+name = "vibedev_account"
+version = "0.1.0"
+edition.workspace = true
+publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
+
+[lib]
+path = "src/vibedev_account.rs"
+doctest = false
+
+[dependencies]
+anyhow.workspace = true
+dirs.workspace = true
+# VIBEDEV: edit_prediction owns the OpenAI-compatible FIM provider's key-state
+# global + settings glue; we call its `vibedev_configure_fim` after the sidecar
+# handshake to point inline autocomplete at the loopback endpoint.
+edit_prediction.workspace = true
+futures.workspace = true
+gpui.workspace = true
+http_client.workspace = true
+# VIBEDEV: byok enumerates LanguageModelRegistry providers and reads each
+# provider's key via ApiKey::load_from_system_keychain (the LanguageModelProvider
+# trait + ApiKey live here).
+language_model.workspace = true
+# VIBEDEV: language_models owns the LanguageModelRegistry + the openai_compatible
+# provider glue; we call its `vibedev_configure_inline_assistant` after the
+# sidecar handshake to point the inline assistant at the loopback chat endpoint.
+# byok also reads AllLanguageModelSettings (per-provider api_url) from here.
+language_models.workspace = true
+log.workspace = true
+# VIBEDEV: update_check needs AppVersion::global(cx) to compare the running
+# binary's version against the remote latest.json before flagging an update.
+release_channel.workspace = true
+semver.workspace = true
+serde.workspace = true
+# VIBEDEV: byok calls AllLanguageModelSettings::get_global, which is the
+# `settings::Settings` trait method — the trait has to be in scope.
+settings.workspace = true
+serde_json.workspace = true
+smol.workspace = true
+# VIBEDEV: url_handler parses `vibedev://auth-callback?payload=...` query
+# strings (form_urlencoded) and percent-decodes the payload value before
+# handing it to the sidecar.
+url.workspace = true
+urlencoding.workspace = true
+util.workspace = true
+# VIBEDEV: byok reads provider API keys from the system keychain via this
+# crate's global CredentialsProvider (same template agent_servers uses for the
+# Gemini CLI key).
+zed_credentials_provider.workspace = true
+
+[dev-dependencies]
+# VIBEDEV: session_prefs tests redirect VIBEDEV_HOME to a tempdir so the dev's
+# real ~/.vibedev/last-session-prefs.json is never touched.
+tempfile.workspace = true

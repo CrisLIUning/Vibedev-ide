@@ -24,7 +24,7 @@ trait CapacityResultExt {
 
 impl<T> CapacityResultExt for Result<(), T> {
     fn unwrap_oob(self) {
-        self.unwrap_or_else(|_| panic!("item should fit into fixed size ArrayVec"))
+        self.unwrap_or_else(|_| panic!("项目应能放入固定大小的 ArrayVec"))
     }
 }
 
@@ -1344,14 +1344,14 @@ impl<T: Item> Node<T> {
     fn child_trees(&self) -> &ArrayVec<SumTree<T>, { 2 * TREE_BASE }, u8> {
         match self {
             Node::Internal { child_trees, .. } => child_trees,
-            Node::Leaf { .. } => panic!("Leaf nodes have no child trees"),
+            Node::Leaf { .. } => panic!("叶节点没有子树"),
         }
     }
 
     fn items(&self) -> &ArrayVec<T, { 2 * TREE_BASE }, u8> {
         match self {
             Node::Leaf { items, .. } => items,
-            Node::Internal { .. } => panic!("Internal nodes have no items"),
+            Node::Internal { .. } => panic!("内部节点没有条目"),
         }
     }
 
@@ -1417,14 +1417,14 @@ mod tests {
     fn test_random() {
         let mut starting_seed = 0;
         if let Ok(value) = std::env::var("SEED") {
-            starting_seed = value.parse().expect("invalid SEED variable");
+            starting_seed = value.parse().expect("无效的 SEED 变量");
         }
         let mut num_iterations = 100;
         if let Ok(value) = std::env::var("ITERATIONS") {
-            num_iterations = value.parse().expect("invalid ITERATIONS variable");
+            num_iterations = value.parse().expect("无效的 ITERATIONS 变量");
         }
         let num_operations = std::env::var("OPERATIONS")
-            .map_or(5, |o| o.parse().expect("invalid OPERATIONS variable"));
+            .map_or(5, |o| o.parse().expect("无效的 OPERATIONS 变量"));
 
         for seed in starting_seed..(starting_seed + num_iterations) {
             eprintln!("seed = {}", seed);

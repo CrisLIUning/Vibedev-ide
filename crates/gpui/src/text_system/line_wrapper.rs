@@ -958,7 +958,7 @@ mod tests {
             for c in word.chars() {
                 assert!(
                     LineWrapper::is_word_char(c),
-                    "assertion failed for '{}' (unicode 0x{:x})",
+                    "'{}' 断言失败 (unicode 0x{:x})",
                     c,
                     c as u32
                 );

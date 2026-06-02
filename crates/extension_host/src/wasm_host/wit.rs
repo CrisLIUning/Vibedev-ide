@@ -85,7 +85,7 @@ pub fn authorize_access_to_unreleased_wasm_api_version(
 
     anyhow::ensure!(
         allow_unreleased_version,
-        "unreleased versions of the extension API can only be used on development builds of Zed"
+        "扩展 API 的未发布版本仅可用于 VibeDev 的开发版本"
     );
 
     Ok(())
@@ -1264,7 +1264,7 @@ impl Extension {
             | Extension::V0_0_6(_)
             | Extension::V0_0_4(_)
             | Extension::V0_0_1(_) => {
-                anyhow::bail!("`run_dap_locator` not available prior to v0.6.0");
+                anyhow::bail!("`run_dap_locator` 在 v0.6.0 之前不可用");
             }
         }
     }

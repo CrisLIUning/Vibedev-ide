@@ -144,13 +144,13 @@ impl XContext {
         // create a new connection to an X11 server
         let (conn, screen_num): (RustConnection, _) =
             RustConnection::connect(None).map_err(|_| {
-                Error::unknown("X11 server connection timed out because it was unreachable")
+                Error::unknown("X11 服务器连接因不可达而超时")
             })?;
         let screen = conn
             .setup()
             .roots
             .get(screen_num)
-            .ok_or(Error::unknown("no screen found"))?;
+            .ok_or(Error::unknown("未找到屏幕"))?;
         let win_id = conn.generate_id().map_err(into_unknown)?;
 
         let event_mask =
@@ -235,7 +235,7 @@ impl Inner {
     ) -> Result<()> {
         if self.serve_stopped.load(Ordering::Relaxed) {
             return Err(Error::unknown(
-                "The clipboard handler thread seems to have stopped. Logging messages may reveal the cause. (See the `log` crate.)",
+                "剪贴板处理线程似乎已停止。日志消息可能会揭示原因。(参见 `log` crate。)",
             ));
         }
 
@@ -302,7 +302,7 @@ impl Inner {
         let highest_precedence_format =
             match self.read_single(&reader, selection, self.atoms.TARGETS) {
                 Err(err) => {
-                    log::trace!("Clipboard TARGETS query failed with {err:?}");
+                    log::trace!("剪贴板 TARGETS 查询失败: {err:?}");
                     None
                 }
                 Ok(ClipboardData { bytes, format }) => {
@@ -313,7 +313,7 @@ impl Inner {
                             .find(|format| available_formats.contains(format))
                     } else {
                         log::trace!(
-                            "Unexpected clipboard TARGETS format {}",
+                            "意外的剪贴板 TARGETS 格式 {}",
                             self.atom_name(format)
                         );
                         None
@@ -326,7 +326,7 @@ impl Inner {
             if !formats.contains(&data.format) {
                 // This shouldn't happen since the format is from the TARGETS list.
                 log::trace!(
-                    "Conversion to {} responded with {} which is not supported",
+                    "转换为 {} 时响应了不支持的 {}",
                     self.atom_name(format),
                     self.atom_name(data.format),
                 );
@@ -335,7 +335,7 @@ impl Inner {
             return Ok(data);
         }
 
-        log::trace!("Falling back on attempting to convert clipboard to each format.");
+        log::trace!("回退尝试将剪贴板转换为每种格式。");
         for format in formats {
             match self.read_single(&reader, selection, *format) {
                 Ok(data) => {
@@ -343,7 +343,7 @@ impl Inner {
                         return Ok(data);
                     } else {
                         log::trace!(
-                            "Conversion to {} responded with {} which is not supported",
+                            "转换为 {} 时响应了不支持的 {}",
                             self.atom_name(*format),
                             self.atom_name(data.format),
                         );
@@ -354,12 +354,12 @@ impl Inner {
                     continue;
                 }
                 Err(e) => {
-                    log::trace!("Conversion to {} failed: {}", self.atom_name(*format), e);
+                    log::trace!("转换为 {} 失败: {}", self.atom_name(*format), e);
                     return Err(e);
                 }
             }
         }
-        log::trace!("All conversions to supported formats failed.");
+        log::trace!("所有到支持格式的转换均失败。");
         Err(Error::ContentNotAvailable)
     }
 
@@ -396,7 +396,7 @@ impl Inner {
             .map_err(into_unknown)?;
         reader.conn.sync().map_err(into_unknown)?;
 
-        log::trace!("Finished `convert_selection`");
+        log::trace!("完成 `convert_selection`");
 
         let mut incr_data: Vec<u8> = Vec::new();
         let mut using_incr = false;
@@ -415,7 +415,7 @@ impl Inner {
             match event {
                 // The first response after requesting a selection.
                 Event::SelectionNotify(event) => {
-                    log::trace!("Read SelectionNotify");
+                    log::trace!("读取 SelectionNotify");
                     let result = self.handle_read_selection_notify(
                         reader,
                         target_format,
@@ -454,12 +454,12 @@ impl Inner {
                     }
                 }
                 _ => log::trace!(
-                    "An unexpected event arrived while reading the clipboard: {:?}",
+                    "读取剪贴板时收到意外事件: {:?}",
                     event
                 ),
             }
         }
-        log::info!("Time-out hit while reading the clipboard.");
+        log::info!("读取剪贴板时超时。");
         Err(Error::ContentNotAvailable)
     }
 
@@ -549,12 +549,12 @@ impl Inner {
         }
         if self.kind_of(event.selection).is_none() {
             log::info!(
-                "Received a SelectionNotify for a selection other than CLIPBOARD, PRIMARY or SECONDARY. This is unexpected."
+                "收到了针对 CLIPBOARD、PRIMARY 或 SECONDARY 以外选区的 SelectionNotify。这是意外的。"
             );
             return Ok(ReadSelNotifyResult::EventNotRecognized);
         }
         if *using_incr {
-            log::warn!("Received a SelectionNotify while already expecting INCR segments.");
+            log::warn!("在已预期 INCR 数据段时收到了 SelectionNotify。");
             return Ok(ReadSelNotifyResult::EventNotRecognized);
         }
         // Accept any property type. The property type will typically match the format type except
@@ -597,7 +597,7 @@ impl Inner {
                 .map_err(into_unknown)?
                 .reply()
                 .map_err(into_unknown)?;
-            log::trace!("Receiving INCR segments");
+            log::trace!("正在接收 INCR 数据段");
             *using_incr = true;
             if reply.value_len == 4 {
                 let min_data_len = reply
@@ -651,7 +651,7 @@ impl Inner {
             .reply()
             .map_err(into_unknown)?;
 
-        // log::trace!("Received segment. value_len {}", reply.value_len,);
+        // log::trace!("收到数据段。value_len {}", reply.value_len,);
         if reply.value_len == 0 {
             // This indicates that all the data has been sent.
             return Ok(true);
@@ -670,7 +670,7 @@ impl Inner {
             Some(kind) => kind,
             None => {
                 log::warn!(
-                    "Received a selection request to a selection other than the CLIPBOARD, PRIMARY or SECONDARY. This is unexpected."
+                    "收到了针对 CLIPBOARD、PRIMARY 或 SECONDARY 以外选区的选择请求。这是意外的。"
                 );
                 return Ok(());
             }
@@ -680,7 +680,7 @@ impl Inner {
         // we are asked for a list of supported conversion targets
         if event.target == self.atoms.TARGETS {
             log::trace!(
-                "Handling TARGETS, dst property is {}",
+                "正在处理 TARGETS,目标属性为 {}",
                 self.atom_name(event.property)
             );
             let mut targets = Vec::with_capacity(10);
@@ -712,7 +712,7 @@ impl Inner {
             self.server.conn.flush().map_err(into_unknown)?;
             success = true;
         } else {
-            log::trace!("Handling request for (probably) the clipboard contents.");
+            log::trace!("正在处理(可能是)剪贴板内容的请求。");
             let data = self.selection_of(selection).data.read();
             if let Some(data_list) = &*data {
                 success = match data_list.iter().find(|d| d.format == event.target) {
@@ -770,7 +770,7 @@ impl Inner {
     fn ask_clipboard_manager_to_request_our_data(&self) -> Result<()> {
         if self.server.win_id == 0 {
             // This shouldn't really ever happen but let's just check.
-            log::error!("The server's window id was 0. This is unexpected");
+            log::error!("服务器的窗口 ID 为 0。这是意外的");
             return Ok(());
         }
 
@@ -793,7 +793,7 @@ impl Inner {
         // after the request but before we can lock it here.
         let mut handover_state = self.handover_state.lock();
 
-        log::trace!("Sending the data to the clipboard manager");
+        log::trace!("正在将数据发送到剪贴板管理器");
         self.server
             .conn
             .convert_selection(
@@ -820,20 +820,20 @@ impl Inner {
         }
         if result.timed_out() {
             log::warn!(
-                "Could not hand the clipboard contents over to the clipboard manager. The request timed out."
+                "无法将剪贴板内容移交给剪贴板管理器。请求超时。"
             );
             return Ok(());
         }
 
         Err(Error::unknown(
-            "The handover was not finished and the condvar didn't time out, yet the condvar wait ended. This should be unreachable.",
+            "移交未完成且条件变量未超时,但条件变量等待已结束。此处应不可达。",
         ))
     }
 }
 
 fn serve_requests(context: Arc<Inner>) -> Result<(), Box<dyn std::error::Error>> {
     fn handover_finished(clip: &Arc<Inner>, mut handover_state: MutexGuard<ManagerHandoverState>) {
-        log::trace!("Finishing clipboard manager handover.");
+        log::trace!("正在完成剪贴板管理器移交。");
         *handover_state = ManagerHandoverState::Finished;
 
         // Not sure if unlocking the mutex is necessary here but better safe than sorry.
@@ -842,7 +842,7 @@ fn serve_requests(context: Arc<Inner>) -> Result<(), Box<dyn std::error::Error>>
         clip.handover_cv.notify_all();
     }
 
-    log::trace!("Started serve requests thread.");
+    log::trace!("已启动服务请求线程。");
 
     let _guard = util::defer(|| {
         context.serve_stopped.store(true, Ordering::Relaxed);
@@ -855,14 +855,14 @@ fn serve_requests(context: Arc<Inner>) -> Result<(), Box<dyn std::error::Error>>
         match context.server.conn.wait_for_event().map_err(into_unknown)? {
             Event::DestroyNotify(_) => {
                 // This window is being destroyed.
-                log::trace!("Clipboard server window is being destroyed x_x");
+                log::trace!("剪贴板服务器窗口正在被销毁 x_x");
                 return Ok(());
             }
             Event::SelectionClear(event) => {
                 // TODO: check if this works
                 // Someone else has new content in the clipboard, so it is
                 // notifying us that we should delete our data now.
-                log::trace!("Somebody else owns the clipboard now");
+                log::trace!("其他人现在拥有剪贴板");
 
                 if let Some(selection) = context.kind_of(event.selection) {
                     let selection = context.selection_of(selection);
@@ -880,7 +880,7 @@ fn serve_requests(context: Arc<Inner>) -> Result<(), Box<dyn std::error::Error>>
             }
             Event::SelectionRequest(event) => {
                 log::trace!(
-                    "SelectionRequest - selection is: {}, target is {}",
+                    "SelectionRequest - 选区为: {}, 目标为 {}",
                     context.atom_name(event.selection),
                     context.atom_name(event.target),
                 );
@@ -896,7 +896,7 @@ fn serve_requests(context: Arc<Inner>) -> Result<(), Box<dyn std::error::Error>>
                     // Only set written, when the actual contents were written,
                     // not just a response to what TARGETS we have.
                     if event.target != context.atoms.TARGETS {
-                        log::trace!("The contents were written to the clipboard manager.");
+                        log::trace!("内容已写入剪贴板管理器。");
                         written = true;
                         // if we have written and notified, make sure to notify that we are done
                         if notified {
@@ -912,7 +912,7 @@ fn serve_requests(context: Arc<Inner>) -> Result<(), Box<dyn std::error::Error>>
                 // signaling that the data was handed over successfully.
                 if event.selection != context.atoms.CLIPBOARD_MANAGER {
                     log::error!(
-                        "Received a `SelectionNotify` from a selection other than the CLIPBOARD_MANAGER. This is unexpected in this thread."
+                        "收到了来自 CLIPBOARD_MANAGER 以外选区的 `SelectionNotify`。在此线程中这是意外的。"
                     );
                     continue;
                 }
@@ -922,7 +922,7 @@ fn serve_requests(context: Arc<Inner>) -> Result<(), Box<dyn std::error::Error>>
                     // before even sending a request for the actual contents.
                     // (That's why we use the "notified" & "written" flags)
                     log::trace!(
-                        "The clipboard manager indicated that it's done requesting the contents from us."
+                        "剪贴板管理器表示已完成向我们请求内容。"
                     );
                     notified = true;
 
@@ -939,7 +939,7 @@ fn serve_requests(context: Arc<Inner>) -> Result<(), Box<dyn std::error::Error>>
             }
             _event => {
                 // May be useful for debugging but nothing else really.
-                //log::trace!("Received unwanted event: {:?}", event);
+                //log::trace!("收到不需要的事件: {:?}", event);
             }
         }
     }
@@ -960,12 +960,12 @@ impl Clipboard {
         // At this point we know that the clipboard does not exist.
         let ctx = Arc::new(Inner::new()?);
         let join_handle = std::thread::Builder::new()
-            .name("Clipboard".to_owned())
+            .name("剪贴板".to_owned())
             .spawn({
                 let ctx = Arc::clone(&ctx);
                 move || {
                     if let Err(error) = serve_requests(ctx) {
-                        log::error!("Worker thread errored with: {}", error);
+                        log::error!("工作线程出错: {}", error);
                     }
                 }
             })
@@ -1042,7 +1042,7 @@ impl Clipboard {
         let result = self.inner.read(&format_atoms, selection)?;
 
         log::trace!(
-            "read clipboard as format {:?}",
+            "以 {:?} 格式读取剪贴板",
             self.inner.atom_name(result.format)
         );
 
@@ -1089,7 +1089,7 @@ impl Drop for Clipboard {
 
             if let Err(e) = self.inner.ask_clipboard_manager_to_request_our_data() {
                 log::error!(
-                    "Could not hand the clipboard data over to the clipboard manager: {}",
+                    "无法将剪贴板数据移交给剪贴板管理器: {}",
                     e
                 );
             }
@@ -1100,11 +1100,11 @@ impl Drop for Clipboard {
                 .conn
                 .destroy_window(self.inner.server.win_id)
             {
-                log::error!("Failed to destroy the clipboard window. Error: {}", e);
+                log::error!("销毁剪贴板窗口失败。错误: {}", e);
                 return;
             }
             if let Err(e) = self.inner.server.conn.flush() {
-                log::error!("Failed to flush the clipboard window. Error: {}", e);
+                log::error!("刷新剪贴板窗口失败。错误: {}", e);
                 return;
             }
             if let Some(global_cb) = global_cb
@@ -1121,11 +1121,11 @@ impl Drop for Clipboard {
                 }
                 if let Some(message) = message {
                     log::error!(
-                        "The clipboard server thread panicked. Panic message: '{}'",
+                        "剪贴板服务器线程崩溃。崩溃消息: '{}'",
                         message,
                     );
                 } else {
-                    log::error!("The clipboard server thread panicked.");
+                    log::error!("剪贴板服务器线程崩溃。");
                 }
             }
         }
@@ -1191,7 +1191,7 @@ pub enum Error {
 
     /// The native clipboard is not accessible due to being held by an other party.
     ///
-    /// This "other party" could be a different process or it could be within
+    /// This "其他方" could be a different process or it could be within
     /// the same program. So for example you may get this error when trying
     /// to interact with the clipboard from multiple threads at once.
     ///
@@ -1214,10 +1214,10 @@ pub enum Error {
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-			Error::ContentNotAvailable => f.write_str("The clipboard contents were not available in the requested format or the clipboard is empty."),
-			Error::ClipboardOccupied => f.write_str("The native clipboard is not accessible due to being held by an other party."),
-			Error::ConversionFailure => f.write_str("The image or the text that was about the be transferred to/from the clipboard could not be converted to the appropriate format."),
-			Error::Unknown { description } => f.write_fmt(format_args!("Unknown error while interacting with the clipboard: {description}")),
+			Error::ContentNotAvailable => f.write_str("剪贴板内容在请求的格式下不可用,或剪贴板为空。"),
+			Error::ClipboardOccupied => f.write_str("原生剪贴板因被其他方占用而无法访问。"),
+			Error::ConversionFailure => f.write_str("即将传入或传出剪贴板的图像或文本无法转换为适当的格式。"),
+			Error::Unknown { description } => f.write_fmt(format_args!("与剪贴板交互时发生未知错误: {description}")),
 		}
     }
 }

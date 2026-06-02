@@ -83,13 +83,13 @@ fn start_test_playback(
                 let microphone = match open_test_microphone(input_device_id, stop_signal.clone()) {
                     Ok(mic) => mic,
                     Err(e) => {
-                        log::error!("Could not open microphone for audio test: {e}");
+                        log::error!("无法打开麦克风进行音频测试: {e}");
                         return;
                     }
                 };
 
                 let Ok(output) = audio::open_test_output(output_device_id) else {
-                    log::error!("Could not open output device for audio test");
+                    log::error!("无法打开输出设备进行音频测试");
                     return;
                 };
 
@@ -133,9 +133,9 @@ impl Render for AudioTestWindow {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let is_testing = self._stop_playback.is_some();
         let button_text = if is_testing {
-            "Stop Testing"
+            "停止测试"
         } else {
-            "Start Testing"
+            "开始测试"
         };
 
         let button_style = if is_testing {
@@ -215,13 +215,13 @@ impl Render for AudioTestWindow {
             .child(
                 v_flex()
                     .gap_1()
-                    .child(Label::new("Output Device"))
+                    .child(Label::new("输出设备"))
                     .child(output_dropdown),
             )
             .child(
                 v_flex()
                     .gap_1()
-                    .child(Label::new("Input Device"))
+                    .child(Label::new("输入设备"))
                     .child(input_dropdown),
             )
             .child(
@@ -283,7 +283,7 @@ pub fn open_audio_test_window(_window: &mut Window, cx: &mut App) {
     cx.open_window(
         WindowOptions {
             titlebar: Some(gpui::TitlebarOptions {
-                title: Some("Audio Test".into()),
+                title: Some("音频测试".into()),
                 appears_transparent: true,
                 traffic_light_position: Some(gpui::point(px(12.0), px(12.0))),
             }),

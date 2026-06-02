@@ -128,7 +128,7 @@
 //! -- src/c.rs
 //!    --
 
-//! List of "tainted files" that the user may not operate on
+//! List of "受影响的文件" that the user may not operate on
 
 use crate::ProjectPanel;
 use anyhow::{Context, Result, anyhow};
@@ -259,17 +259,17 @@ impl UndoManager {
     pub fn undo(&mut self) -> Result<()> {
         self.tx
             .try_send(UndoMessage::Undo)
-            .context("Undo and redo task can not keep up")
+            .context("撤销和重做任务处理不过来")
     }
     pub fn redo(&mut self) -> Result<()> {
         self.tx
             .try_send(UndoMessage::Redo)
-            .context("Undo and redo task can not keep up")
+            .context("撤销和重做任务处理不过来")
     }
     pub fn record(&mut self, changes: impl IntoIterator<Item = Change>) -> Result<()> {
         self.tx
             .try_send(UndoMessage::Changed(changes.into_iter().collect()))
-            .context("Undo and redo task can not keep up")
+            .context("撤销和重做任务处理不过来")
     }
     /// just for the UI, an undo may still fail if there are concurrent file
     /// operations happening.
@@ -296,8 +296,8 @@ impl UndoMessage {
             UndoMessage::Changed(_) => {
                 "this is a bug in the manage_undo_and_redo task please report"
             }
-            UndoMessage::Undo => "Undo failed",
-            UndoMessage::Redo => "Redo failed",
+            UndoMessage::Undo => "撤销失败",
+            UndoMessage::Redo => "重做失败",
         }
     }
 }
@@ -477,7 +477,7 @@ impl Inner {
         cx: &mut AsyncApp,
     ) -> Result<CreatedEntry> {
         let Some(workspace) = self.workspace.upgrade() else {
-            return Err(anyhow!("Failed to obtain workspace."));
+            return Err(anyhow!("获取工作区失败。"));
         };
 
         let res: Result<Task<Result<CreatedEntry>>> = workspace.update(cx, |workspace, cx| {
@@ -485,7 +485,7 @@ impl Inner {
                 let entry_id = project
                     .entry_for_path(from, cx)
                     .map(|entry| entry.id)
-                    .ok_or_else(|| anyhow!("No entry for path."))?;
+                    .ok_or_else(|| anyhow!("路径无对应条目。"))?;
 
                 Ok(project.rename_entry(entry_id, to.clone(), cx))
             })
@@ -496,7 +496,7 @@ impl Inner {
 
     async fn trash(&self, project_path: &ProjectPath, cx: &mut AsyncApp) -> Result<TrashedEntry> {
         let Some(workspace) = self.workspace.upgrade() else {
-            return Err(anyhow!("Failed to obtain workspace."));
+            return Err(anyhow!("获取工作区失败。"));
         };
 
         workspace
@@ -505,7 +505,7 @@ impl Inner {
                     let entry_id = project
                         .entry_for_path(&project_path, cx)
                         .map(|entry| entry.id)
-                        .ok_or_else(|| anyhow!("No entry for path."))?;
+                        .ok_or_else(|| anyhow!("路径无对应条目。"))?;
 
                     project
                         .delete_entry(entry_id, true, cx)
@@ -525,7 +525,7 @@ impl Inner {
         cx: &mut AsyncApp,
     ) -> Result<ProjectPath> {
         let Some(workspace) = self.workspace.upgrade() else {
-            return Err(anyhow!("Failed to obtain workspace."));
+            return Err(anyhow!("获取工作区失败。"));
         };
 
         workspace

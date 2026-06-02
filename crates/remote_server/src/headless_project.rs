@@ -998,7 +998,7 @@ impl HeadlessProject {
         // We need to manage the child process lifecycle
         let child = if !envelope.payload.command.is_empty() {
             spawn_kernel(&envelope.payload.command, &envelope.payload.args).context(format!(
-                "failed to spawn kernel process (command: {})",
+                "无法启动内核进程(命令:{})",
                 envelope.payload.command
             ))?
         } else if let Some(venv_python) = working_directory
@@ -1007,13 +1007,13 @@ impl HeadlessProject {
         {
             let path_str = venv_python.to_string_lossy().to_string();
             spawn_kernel(&path_str, &[]).context(format!(
-                "failed to spawn kernel process (venv: {})",
+                "无法启动内核进程 (venv: {})",
                 path_str
             ))?
         } else {
             spawn_kernel("python3", &[])
                 .or_else(|_| spawn_kernel("python", &[]))
-                .context("failed to spawn kernel process (tried python3 and python)")?
+                .context("无法启动内核进程(已尝试 python3 和 python)")?
         };
 
         this.update(&mut cx.clone(), |this, _cx| {

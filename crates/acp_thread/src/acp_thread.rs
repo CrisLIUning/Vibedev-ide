@@ -8,7 +8,11 @@ use anyhow::{Context as _, Result, anyhow};
 use collections::HashSet;
 pub use connection::*;
 pub use diff::*;
-use feature_flags::{AcpBetaFeatureFlag, FeatureFlagAppExt as _};
+// VIBEDEV: `feature_flags::{AcpBetaFeatureFlag, FeatureFlagAppExt}` import
+// removed. Both call sites that consumed the beta gate (UsageUpdate at ~1596
+// and ResultUsage at ~2502) were ungated to make the pie chart work on a
+// default VibeDev install. Restore the import if a future upstream merge
+// brings back another `cx.has_flag::<AcpBetaFeatureFlag>()` call site.
 use futures::{FutureExt, channel::oneshot, future::BoxFuture};
 use gpui::{
     AppContext, AsyncApp, Context, Entity, EventEmitter, SharedString, Subscription, Task,
@@ -49,7 +53,7 @@ pub struct MaxOutputTokensError;
 
 impl std::fmt::Display for MaxOutputTokensError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "output token limit reached")
+        write!(f, "已达到输出 token 上限")
     }
 }
 
@@ -198,7 +202,7 @@ impl AgentThreadEntry {
             Self::AssistantMessage(message) => message.to_markdown(cx),
             Self::ToolCall(tool_call) => tool_call.to_markdown(cx),
             Self::CompletedPlan(entries) => {
-                let mut md = String::from("## Plan\n\n");
+                let mut md = String::from("## 计划\n\n");
                 for entry in entries {
                     let source = entry.content.read(cx).source().to_string();
                     md.push_str(&format!("- [x] {}\n", source));
@@ -585,7 +589,7 @@ pub enum AuthorizationKind {
     /// This is the default for tool authorization prompts.
     PermissionGrant,
     /// The user is choosing between actions for the tool to take next
-    /// (for example, "Save" vs "Discard" before editing a dirty buffer).
+    /// (for example, "保存" vs "放弃" before editing a dirty buffer).
     /// The tool call always transitions to `InProgress` regardless of the
     /// selected `PermissionOptionKind`; the caller interprets the chosen
     /// `option_id` to decide what to do.
@@ -1593,7 +1597,17 @@ impl AcpThread {
                 config_options,
                 ..
             }) => cx.emit(AcpThreadEvent::ConfigOptionsUpdated(config_options)),
-            acp::SessionUpdate::UsageUpdate(update) if cx.has_flag::<AcpBetaFeatureFlag>() => {
+            // VIBEDEV: same gate-removal as the response-usage path below (~2502).
+            // Upstream guards UsageUpdate behind AcpBetaFeatureFlag, which means
+            // max_tokens stays 0 on a VibeDev install. The pie chart in
+            // conversation_view::thread_view::render_token_usage divides
+            // used_tokens / max_tokens — with max_tokens == 0 the ratio falls
+            // through the `else 0.0` branch and the chart reads 0% forever
+            // (used tokens fill in via the ResultUsage path but max never
+            // arrives). The backend bridge.ts already emits usage_update with
+            // size == modelCatalog[modelId].contextWindow, we just have to
+            // accept it without the experimental flag.
+            acp::SessionUpdate::UsageUpdate(update) => {
                 let usage = self.token_usage.get_or_insert_with(Default::default);
                 usage.max_tokens = update.size;
                 usage.used_tokens = update.used;
@@ -2434,7 +2448,7 @@ impl AcpThread {
                         if r.stop_reason == acp::StopReason::MaxTokens {
                             this.had_error = true;
                             cx.emit(AcpThreadEvent::Error);
-                            log::error!("Max tokens reached. Usage: {:?}", this.token_usage);
+                            log::error!("已达到最大 Token 数。使用情况: {:?}", this.token_usage);
 
                             let exceeded_max_output_tokens =
                                 this.token_usage.as_ref().is_some_and(|u| {
@@ -2444,11 +2458,11 @@ impl AcpThread {
 
                             if exceeded_max_output_tokens {
                                 log::error!(
-                                    "Max output tokens reached. Usage: {:?}",
+                                    "已达到最大输出 Token 数。用量: {:?}",
                                     this.token_usage
                                 );
                             } else {
-                                log::error!("Max tokens reached. Usage: {:?}", this.token_usage);
+                                log::error!("已达到最大 Token 数。使用情况: {:?}", this.token_usage);
                             }
                             return Err(anyhow!(MaxOutputTokensError));
                         }
@@ -2498,9 +2512,18 @@ impl AcpThread {
                             }
                         }
 
-                        if cx.has_flag::<AcpBetaFeatureFlag>()
-                            && let Some(response_usage) = &r.usage
-                        {
+                        // VIBEDEV: the upstream gate was
+                        //   `if cx.has_flag::<AcpBetaFeatureFlag>() && let Some(response_usage) = ...`
+                        // which only wrote token_usage when an experimental flag
+                        // was on. The context-usage pie chart in
+                        // conversation_view::thread_view::render_token_usage
+                        // early-returns None when token_usage is None, so on a
+                        // VibeDev install (beta flag off by default) the chart
+                        // simply never appeared after we wired the 1M-context
+                        // catalog through sub2 — the chart was never beta-only
+                        // in any meaningful product sense, only its data source
+                        // was. Always write the usage if the agent sent one.
+                        if let Some(response_usage) = &r.usage {
                             let usage = this.token_usage.get_or_insert_with(Default::default);
                             usage.input_tokens = response_usage.input_tokens;
                             usage.output_tokens = response_usage.output_tokens;
@@ -2515,7 +2538,7 @@ impl AcpThread {
 
                         this.had_error = true;
                         cx.emit(AcpThreadEvent::Error);
-                        log::error!("Error in run turn: {:?}", e);
+                        log::error!("运行轮次时出错: {:?}", e);
                         Err(e)
                     }
                 }
@@ -2666,7 +2689,7 @@ impl AcpThread {
                     git.compare_checkpoints(old_checkpoint.clone(), new_checkpoint, cx)
                 })
                 .await
-                .context("failed to compare checkpoints")
+                .context("无法比较检查点")
                 .log_err()
             else {
                 return Ok(());
@@ -5616,7 +5639,7 @@ mod tests {
         assert_eq!(
             *title_updated_events.borrow(),
             1,
-            "setting a provisional title should emit TitleUpdated"
+            "设置临时标题应触发 TitleUpdated"
         );
 
         let result = thread.update(cx, |thread, cx| {
@@ -5627,7 +5650,7 @@ mod tests {
                 cx,
             )
         });
-        result.expect("session info update should succeed");
+        result.expect("会话信息更新应成功");
 
         thread.read_with(cx, |thread, _| {
             assert_eq!(
@@ -5636,18 +5659,18 @@ mod tests {
             );
             assert!(
                 !thread.has_provisional_title(),
-                "session info title update should clear provisional title"
+                "会话信息标题更新应清除临时标题"
             );
         });
 
         assert_eq!(
             *title_updated_events.borrow(),
             2,
-            "session info title update should emit TitleUpdated"
+            "会话信息标题更新应触发 TitleUpdated"
         );
         assert!(
             connection.set_title_calls.borrow().is_empty(),
-            "session info title update should not propagate back to the connection"
+            "会话信息标题更新不应传播回连接"
         );
     }
 
@@ -5855,7 +5878,7 @@ mod tests {
         assert_eq!(
             thread.read_with(cx, |t, _| t.status()),
             ThreadStatus::Generating,
-            "thread should be generating while the handler is parked"
+            "处理程序暂停时线程应处于生成状态"
         );
 
         // Replace the in-flight send_task with a no-op. Dropping the original
@@ -5869,13 +5892,13 @@ mod tests {
         let result = request.await;
         assert!(
             matches!(result, Ok(None)),
-            "outer task should resolve to Ok(None) on dropped tx, got {result:?}"
+            "外部任务应在 tx 被丢弃时解析为 Ok(None),实际得到 {result:?}"
         );
 
         assert_eq!(
             thread.read_with(cx, |t, _| t.status()),
             ThreadStatus::Idle,
-            "running_turn must be cleared even when tx was dropped without send"
+            "即使 tx 被丢弃而未发送,也必须清除 running_turn"
         );
     }
 }

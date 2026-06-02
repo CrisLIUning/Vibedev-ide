@@ -63,7 +63,7 @@ impl WslRemoteConnection {
         cx: &mut AsyncApp,
     ) -> Result<Self> {
         log::info!(
-            "Connecting to WSL distro {} with user {:?}",
+            "正在连接到 WSL 发行版 {},用户 {:?}",
             connection_options.distro_name,
             connection_options.user
         );
@@ -82,7 +82,7 @@ impl WslRemoteConnection {
             default_system_shell: String::from("/bin/sh"),
             has_wsl_interop: false,
         };
-        delegate.set_status(Some("Detecting WSL environment"), cx);
+        delegate.set_status(Some("正在检测 WSL 环境"), cx);
         this.shell = this
             .detect_shell()
             .await
@@ -91,7 +91,7 @@ impl WslRemoteConnection {
         this.shell_kind = ShellKind::new(&this.shell, false);
         this.has_wsl_interop = this.detect_has_wsl_interop().await.unwrap_or_default();
         log::info!(
-            "Remote has wsl interop {}",
+            "远程 WSL 互操作性 {}",
             if this.has_wsl_interop {
                 "enabled"
             } else {
@@ -142,7 +142,7 @@ impl WslRemoteConnection {
             Err(err) => self
                 .run_wsl_command_with_output("cat", &["/proc/sys/fs/binfmt_misc/WSLInterop-late"])
                 .await
-                .inspect_err(|err2| log::error!("Failed to detect wsl interop: {err}; {err2}"))?,
+                .inspect_err(|err2| log::error!("检测 WSL 互操作失败: {err}; {err2}"))?,
         };
         Ok(interop.contains("enabled"))
     }
@@ -179,7 +179,7 @@ impl WslRemoteConnection {
         };
 
         let binary_name = format!(
-            "zed-remote-server-{}-{}",
+            "vibedev-remote-server-{}-{}",
             release_channel.dev_name(),
             version_str
         );
@@ -258,7 +258,7 @@ impl WslRemoteConnection {
         delegate: &Arc<dyn RemoteClientDelegate>,
         cx: &mut AsyncApp,
     ) -> Result<()> {
-        delegate.set_status(Some("Uploading remote server"), cx);
+        delegate.set_status(Some("正在上传远程服务器"), cx);
 
         if let Some(parent) = dst_path.parent() {
             let parent = parent.display(PathStyle::Posix);
@@ -274,7 +274,7 @@ impl WslRemoteConnection {
             .with_context(|| format!("source path does not exist: {}", src_path.display()))?;
         let size = src_stat.len();
         log::info!(
-            "uploading remote server to WSL {:?} ({}kb)",
+            "正在上传远程服务器到 WSL {:?} ({}kb)",
             dst_path,
             size / 1024
         );
@@ -288,7 +288,7 @@ impl WslRemoteConnection {
         .await
         .map_err(|e| {
             anyhow!(
-                "Failed to copy file {}({}) to WSL {:?}: {}",
+                "复制文件 {}({}) 到 WSL {:?} 失败: {}",
                 src_path.display(),
                 src_path_in_wsl,
                 dst_path,
@@ -307,7 +307,7 @@ impl WslRemoteConnection {
         delegate: &Arc<dyn RemoteClientDelegate>,
         cx: &mut AsyncApp,
     ) -> Result<()> {
-        delegate.set_status(Some("Extracting remote server"), cx);
+        delegate.set_status(Some("正在解压远程服务器"), cx);
 
         let tmp_path_str = tmp_path.display(PathStyle::Posix);
         let dst_path_str = dst_path.display(PathStyle::Posix);
@@ -345,7 +345,7 @@ impl RemoteConnection for WslRemoteConnection {
         delegate: Arc<dyn RemoteClientDelegate>,
         cx: &mut AsyncApp,
     ) -> Task<Result<i32>> {
-        delegate.set_status(Some("Starting proxy"), cx);
+        delegate.set_status(Some("正在启动代理"), cx);
 
         let Some(remote_binary_path) = &self.remote_binary_path else {
             return Task::ready(Err(anyhow!("Remote binary path not set")));
@@ -355,7 +355,7 @@ impl RemoteConnection for WslRemoteConnection {
         for env_var in ["RUST_LOG", "RUST_BACKTRACE", "ZED_GENERATE_MINIDUMPS"] {
             if let Some(value) = std::env::var(env_var).ok() {
                 // We don't quote the value here as it seems excessive and may result in invalid envs for the
-                // proxy server. For example, `RUST_LOG='debug'` will result in a warning "invalid logging spec 'debug'', ignoring it"
+                // proxy server. For example, `RUST_LOG='debug'` will result in a warning "无效的日志规格 'debug'',已忽略"
                 // in the proxy server. Therefore, we pass the env vars as is.
                 proxy_args.push(format!("{}={}", env_var, value));
             }
@@ -408,7 +408,7 @@ impl RemoteConnection for WslRemoteConnection {
                 );
                 run_wsl_command_impl(command).await.map_err(|e| {
                     anyhow!(
-                        "failed to upload directory {} -> {}: {}",
+                        "上传目录 {} -> {} 失败: {}",
                         src_path.display(),
                         dest_path,
                         e
@@ -612,7 +612,7 @@ fn run_wsl_command_impl(
 
         if !output.status.success() {
             return Err(anyhow!(
-                "Command '{:?}' failed: {}",
+                "命令 '{:?}' 失败: {}",
                 command,
                 String::from_utf8_lossy(&output.stderr).trim()
             ));

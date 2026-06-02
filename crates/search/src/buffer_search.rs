@@ -134,7 +134,7 @@ impl Render for BufferSearchBar {
                             IconButton::new("diff-unified", IconName::DiffUnified)
                                 .icon_size(IconSize::Small)
                                 .toggle_state(diff_view_style == DiffViewStyle::Unified)
-                                .tooltip(Tooltip::text("Unified"))
+                                .tooltip(Tooltip::text("统一"))
                                 .on_click({
                                     let splittable_editor = splittable_editor.downgrade();
                                     move |_, window, cx| {
@@ -166,10 +166,10 @@ impl Render for BufferSearchBar {
                                 .icon_size(IconSize::Small)
                                 .tooltip(Tooltip::element(move |_, cx| {
                                     let message = if is_split_set && !is_split_active {
-                                        format!("Split when wider than {} columns", min_columns)
+                                        format!("宽度超过 {} 列时拆分", min_columns)
                                             .into()
                                     } else {
-                                        SharedString::from("Split")
+                                        SharedString::from("拆分")
                                     };
 
                                     v_flex()
@@ -186,7 +186,7 @@ impl Render for BufferSearchBar {
                                                     Some(TextSize::Small.rems(cx).into()),
                                                     false,
                                                 ))
-                                                .child("click to change min width"),
+                                                .child("点击修改最小宽度"),
                                         )
                                         .into_any()
                                 }))
@@ -241,9 +241,9 @@ impl Render for BufferSearchBar {
                 .map(|editor: Entity<Editor>| editor.read(cx).has_any_buffer_folded(cx))
                 .unwrap_or_default();
             let (icon, tooltip_label) = if is_collapsed {
-                (IconName::ChevronUpDown, "Expand All Files")
+                (IconName::ChevronUpDown, "展开所有文件")
             } else {
-                (IconName::ChevronDownUp, "Collapse All Files")
+                (IconName::ChevronDownUp, "折叠所有文件")
             };
 
             let collapse_expand_icon_button = |id| {
@@ -299,12 +299,12 @@ impl Render for BufferSearchBar {
 
         self.query_editor.update(cx, |query_editor, cx| {
             if query_editor.placeholder_text(cx).is_none() {
-                query_editor.set_placeholder_text("Search…", window, cx);
+                query_editor.set_placeholder_text("搜索…", window, cx);
             }
         });
 
         self.replacement_editor.update(cx, |editor, cx| {
-            editor.set_placeholder_text("Replace with…", window, cx);
+            editor.set_placeholder_text("替换为…", window, cx);
         });
 
         let mut color_override = None;
@@ -392,7 +392,7 @@ impl Render for BufferSearchBar {
                     "buffer-search-bar-toggle",
                     IconName::Replace,
                     self.replace_enabled.then_some(ActionButtonState::Toggled),
-                    "Toggle Replace",
+                    "切换替换",
                     &ToggleReplace,
                     focus_handle.clone(),
                 ))
@@ -416,7 +416,7 @@ impl Render for BufferSearchBar {
                         let focus_handle = focus_handle.clone();
                         move |_window, cx| {
                             Tooltip::for_action_in(
-                                "Toggle Search Selection",
+                                "切换选区搜索",
                                 &ToggleSelection,
                                 &focus_handle,
                                 cx,
@@ -438,7 +438,7 @@ impl Render for BufferSearchBar {
                         self.active_match_index
                             .is_none()
                             .then_some(ActionButtonState::Disabled),
-                        "Select Previous Match",
+                        "选择上一个匹配项",
                         &SelectPreviousMatch,
                         query_focus.clone(),
                     ))
@@ -448,7 +448,7 @@ impl Render for BufferSearchBar {
                         self.active_match_index
                             .is_none()
                             .then_some(ActionButtonState::Disabled),
-                        "Select Next Match",
+                        "选择下一个匹配项",
                         &SelectNextMatch,
                         query_focus.clone(),
                     ))
@@ -469,7 +469,7 @@ impl Render for BufferSearchBar {
                         "buffer-search-nav-button",
                         IconName::SelectAll,
                         Default::default(),
-                        "Select All Matches",
+                        "选择所有匹配项",
                         &SelectAllMatches,
                         query_focus.clone(),
                     ))
@@ -481,7 +481,7 @@ impl Render for BufferSearchBar {
                     "buffer-search",
                     IconName::Close,
                     Default::default(),
-                    "Close Search Bar",
+                    "关闭搜索栏",
                     &Dismiss,
                     focus_handle.clone(),
                 ))
@@ -515,7 +515,7 @@ impl Render for BufferSearchBar {
                     "buffer-search-replace-button",
                     IconName::ReplaceNext,
                     Default::default(),
-                    "Replace Next Match",
+                    "替换下一个匹配项",
                     &ReplaceNext,
                     focus_handle.clone(),
                 ))
@@ -523,7 +523,7 @@ impl Render for BufferSearchBar {
                     "buffer-search-replace-button",
                     IconName::ReplaceAll,
                     Default::default(),
-                    "Replace All Matches",
+                    "替换所有匹配项",
                     &ReplaceAll,
                     focus_handle,
                 ));
@@ -568,7 +568,7 @@ impl Render for BufferSearchBar {
                                 "buffer-search",
                                 IconName::Close,
                                 Default::default(),
-                                "Close Search Bar",
+                                "关闭搜索栏",
                                 &Dismiss,
                                 focus_handle.clone(),
                             )),
@@ -3122,7 +3122,7 @@ mod tests {
         });
 
         // Focus on the editor instead of the search bar, as we want to ensure
-        // that pressing the "Replace Next Match" button will work, even if the
+        // that pressing the "替换下一个匹配项" button will work, even if the
         // search bar is not focused.
         cx.focus(&editor);
 
@@ -3717,7 +3717,7 @@ mod tests {
         let has_any_folded = editor.read_with(cx, |editor, cx| editor.has_any_buffer_folded(cx));
         assert!(
             has_any_folded,
-            "All buffers should be folded after fold_all"
+            "执行全部折叠后,所有缓冲区都应被折叠"
         );
 
         // Manually unfold one buffer (simulating a chevron click)
@@ -3740,7 +3740,7 @@ mod tests {
         let has_any_folded = editor.read_with(cx, |editor, cx| editor.has_any_buffer_folded(cx));
         assert!(
             has_any_folded,
-            "Should still report folds when only one buffer is unfolded"
+            "当仅展开一个缓冲区时,仍应报告存在折叠"
         );
 
         // Manually unfold the second buffer too
@@ -3763,7 +3763,7 @@ mod tests {
         let has_any_folded = editor.read_with(cx, |editor, cx| editor.has_any_buffer_folded(cx));
         assert!(
             !has_any_folded,
-            "No folds should remain after unfolding all buffers individually"
+            "逐个展开所有缓冲区后,不应保留任何折叠"
         );
 
         // Manually fold one buffer back
@@ -3774,7 +3774,7 @@ mod tests {
         let has_any_folded = editor.read_with(cx, |editor, cx| editor.has_any_buffer_folded(cx));
         assert!(
             has_any_folded,
-            "Should report folds after manually folding one buffer"
+            "手动折叠一个缓冲区后,应报告存在折叠"
         );
     }
 

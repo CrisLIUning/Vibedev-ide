@@ -234,7 +234,7 @@ impl Database {
             || update.updated_entries.len() > proto::MAX_WORKTREE_UPDATE_MAX_CHUNK_SIZE
         {
             return Err(anyhow!(
-                "invalid worktree update. removed entries: {}, updated entries: {}",
+                "无效的工作树更新。移除条目: {}, 更新条目: {}",
                 update.removed_entries.len(),
                 update.updated_entries.len()
             ))?;
@@ -1260,7 +1260,7 @@ impl Database {
             Ok(connection_ids)
         } else {
             Err(anyhow!(
-                "can only send project updates to a project you're in"
+                "只能向您所在的项目发送项目更新"
             ))?
         }
     }

@@ -69,7 +69,7 @@ impl<T> PriorityQueueState<T> {
     fn push(queues: &mut PriorityQueues<T>, priority: Priority, item: T) {
         match priority {
             Priority::RealtimeAudio => unreachable!(
-                "Realtime audio priority runs on a dedicated thread and is never queued"
+                "实时音频优先级在专用线程上运行,从不入队"
             ),
             Priority::High => queues.high_priority.push_back(item),
             Priority::Medium => queues.medium_priority.push_back(item),

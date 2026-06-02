@@ -79,13 +79,13 @@ impl WebWindow {
     ) -> anyhow::Result<Self> {
         let document = browser_window
             .document()
-            .ok_or_else(|| anyhow::anyhow!("No `document` found on window"))?;
+            .ok_or_else(|| anyhow::anyhow!("窗口中未找到 `document`"))?;
 
         let canvas: web_sys::HtmlCanvasElement = document
             .create_element("canvas")
-            .map_err(|e| anyhow::anyhow!("Failed to create canvas element: {e:?}"))?
+            .map_err(|e| anyhow::anyhow!("无法创建 canvas 元素: {e:?}"))?
             .dyn_into()
-            .map_err(|e| anyhow::anyhow!("Created element is not a canvas: {e:?}"))?;
+            .map_err(|e| anyhow::anyhow!("创建的元素不是 canvas: {e:?}"))?;
 
         let dpr = browser_window.device_pixel_ratio() as f32;
         let max_texture_dimension = context.device.limits().max_texture_dimension_2d;
@@ -96,31 +96,31 @@ impl WebWindow {
         let style = canvas.style();
         style
             .set_property("width", "100%")
-            .map_err(|e| anyhow::anyhow!("Failed to set canvas width style: {e:?}"))?;
+            .map_err(|e| anyhow::anyhow!("无法设置 canvas 宽度样式: {e:?}"))?;
         style
             .set_property("height", "100%")
-            .map_err(|e| anyhow::anyhow!("Failed to set canvas height style: {e:?}"))?;
+            .map_err(|e| anyhow::anyhow!("无法设置 canvas 高度样式: {e:?}"))?;
         style
             .set_property("display", "block")
-            .map_err(|e| anyhow::anyhow!("Failed to set canvas display style: {e:?}"))?;
+            .map_err(|e| anyhow::anyhow!("无法设置 canvas 显示样式: {e:?}"))?;
         style
             .set_property("outline", "none")
-            .map_err(|e| anyhow::anyhow!("Failed to set canvas outline style: {e:?}"))?;
+            .map_err(|e| anyhow::anyhow!("无法设置 canvas 轮廓样式: {e:?}"))?;
         style
             .set_property("touch-action", "none")
-            .map_err(|e| anyhow::anyhow!("Failed to set touch-action style: {e:?}"))?;
+            .map_err(|e| anyhow::anyhow!("无法设置触摸行为样式: {e:?}"))?;
 
         let body = document
             .body()
-            .ok_or_else(|| anyhow::anyhow!("No `body` found on document"))?;
+            .ok_or_else(|| anyhow::anyhow!("文档中未找到 `body`"))?;
         body.append_child(&canvas)
-            .map_err(|e| anyhow::anyhow!("Failed to append canvas to body: {e:?}"))?;
+            .map_err(|e| anyhow::anyhow!("无法将 canvas 添加到 body: {e:?}"))?;
 
         let input_element: web_sys::HtmlInputElement = document
             .create_element("input")
-            .map_err(|e| anyhow::anyhow!("Failed to create input element: {e:?}"))?
+            .map_err(|e| anyhow::anyhow!("创建 input 元素失败: {e:?}"))?
             .dyn_into()
-            .map_err(|e| anyhow::anyhow!("Created element is not an input: {e:?}"))?;
+            .map_err(|e| anyhow::anyhow!("创建的元素不是 input: {e:?}"))?;
         let input_style = input_element.style();
         input_style.set_property("position", "fixed").ok();
         input_style.set_property("top", "0").ok();
@@ -129,7 +129,7 @@ impl WebWindow {
         input_style.set_property("height", "1px").ok();
         input_style.set_property("opacity", "0").ok();
         body.append_child(&input_element)
-            .map_err(|e| anyhow::anyhow!("Failed to append input to body: {e:?}"))?;
+            .map_err(|e| anyhow::anyhow!("无法将 input 添加到 body: {e:?}"))?;
         input_element.focus().ok();
 
         let device_size = Size {
@@ -599,11 +599,11 @@ impl PlatformWindow for WebWindow {
     fn set_background_appearance(&self, _background: WindowBackgroundAppearance) {}
 
     fn minimize(&self) {
-        log::warn!("WebWindow::minimize is not supported in the browser");
+        log::warn!("WebWindow::minimize 在浏览器中不受支持");
     }
 
     fn zoom(&self) {
-        log::warn!("WebWindow::zoom is not supported in the browser");
+        log::warn!("WebWindow::zoom 在浏览器中不受支持");
     }
 
     fn toggle_fullscreen(&self) {

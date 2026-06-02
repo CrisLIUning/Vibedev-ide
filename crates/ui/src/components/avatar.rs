@@ -247,53 +247,53 @@ impl Component for Avatar {
                 .gap_6()
                 .children(vec![
                     example_group(vec![
-                        single_example("Default", Avatar::new(example_avatar).into_any_element()),
+                        single_example("默认", Avatar::new(example_avatar).into_any_element()),
                         single_example(
-                            "Grayscale",
+                            "灰度",
                             Avatar::new(example_avatar)
                                 .grayscale(true)
                                 .into_any_element(),
                         ),
                         single_example(
-                            "Border",
+                            "边框",
                             Avatar::new(example_avatar)
                                 .border_color(cx.theme().colors().border)
                                 .into_any_element(),
-                        ).description("Can be used to create visual space by setting the border color to match the background, which creates the appearance of a gap around the avatar."),
+                        ).description("可以通过将边框颜色设置为与背景匹配来创建视觉空间,从而在头像周围产生间隙的外观。"),
                     ]),
                     example_group_with_title(
-                        "Indicator Styles",
+                        "指示器样式",
                         vec![
                             single_example(
-                                "Muted",
+                                "静音",
                                 Avatar::new(example_avatar)
                                     .indicator(AvatarAudioStatusIndicator::new(AudioStatus::Muted))
                                     .into_any_element(),
-                            ).description("Indicates the collaborator's mic is muted."),
+                            ).description("表示协作者的麦克风已静音。"),
                             single_example(
-                                "Deafened",
+                                "聋音",
                                 Avatar::new(example_avatar)
                                     .indicator(AvatarAudioStatusIndicator::new(
                                         AudioStatus::Deafened,
                                     ))
                                     .into_any_element(),
-                            ).description("Indicates that both the collaborator's mic and audio are muted."),
+                            ).description("表示协作者的麦克风和音频均已静音。"),
                             single_example(
-                                "Availability: Free",
+                                "状态:空闲",
                                 Avatar::new(example_avatar)
                                     .indicator(AvatarAvailabilityIndicator::new(
                                         CollaboratorAvailability::Free,
                                     ))
                                     .into_any_element(),
-                            ).description("Indicates that the person is free, usually meaning they are not in a call."),
+                            ).description("表示该人员空闲,通常意味着他们不在通话中。"),
                             single_example(
-                                "Availability: Busy",
+                                "状态:忙碌",
                                 Avatar::new(example_avatar)
                                     .indicator(AvatarAvailabilityIndicator::new(
                                         CollaboratorAvailability::Busy,
                                     ))
                                     .into_any_element(),
-                            ).description("Indicates that the person is busy, usually meaning they are in a channel or direct call."),
+                            ).description("表示该人员忙碌,通常意味着他们正在频道或直接通话中。"),
                         ],
                     ),
                 ])

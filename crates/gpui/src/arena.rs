@@ -133,7 +133,7 @@ impl Arena {
                 self.chunks.push(Chunk::new(self.chunk_size));
                 assert_eq!(self.current_chunk_index, self.chunks.len() - 1);
                 log::trace!(
-                    "increased element arena capacity to {}kb",
+                    "已将元素 arena 容量增加到 {}kb",
                     self.capacity() / 1024,
                 );
             }

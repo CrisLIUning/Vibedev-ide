@@ -71,7 +71,7 @@ impl Connection {
 
                         // Writes to a half-open TCP connection will error.
                         if killed.load(SeqCst) {
-                            std::io::Result::Err(Error::other("connection lost"))?;
+                            std::io::Result::Err(Error::other("连接丢失"))?;
                         }
 
                         Ok(msg)

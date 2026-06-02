@@ -35,7 +35,7 @@ impl CsvPreviewView {
             .flex()
             .flex_col()
             .gap_1()
-            .child("Performance metrics:")
+            .child("性能指标:")
             .children(
                 format_performance_metrics(&self.performance_metrics)
                     .into_iter()
@@ -56,15 +56,15 @@ fn format_performance_metrics(metrics: &PerformanceMetrics) -> Vec<String> {
     if !timing_display.is_empty() {
         lines.extend(timing_display.lines().map(|line| format!("- {}", line)));
     } else {
-        lines.push("- No timing data yet".to_string());
+        lines.push("- 暂无计时数据".to_string());
     }
 
     // Add rendered indices information
     if metrics.rendered_indices.is_empty() {
-        lines.push("- Rendered: none".to_string());
+        lines.push("- 已渲染:无".to_string());
     } else {
         lines.push(format!(
-            "- Rendered: {} rows",
+            "- 已渲染:{} 行",
             metrics.rendered_indices.len()
         ));
         if metrics.rendered_indices.len() <= 20 {

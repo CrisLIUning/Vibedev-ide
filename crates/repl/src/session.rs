@@ -183,7 +183,7 @@ impl EditorBlock {
                         .icon_color(Color::Muted)
                         .size(ButtonSize::Compact)
                         .shape(IconButtonShape::Square)
-                        .tooltip(Tooltip::text("Close output area"))
+                        .tooltip(Tooltip::text("关闭输出区域"))
                         .on_click(move |_, window, cx| {
                             if let BlockId::Custom(block_id) = block_id {
                                 (on_close)(block_id, window, cx)
@@ -349,7 +349,7 @@ impl Session {
                         cx,
                     )
                 } else {
-                    Task::ready(Err(anyhow::anyhow!("No project associated with editor")))
+                    Task::ready(Err(anyhow::anyhow!("编辑器未关联项目")))
                 }
             }
             KernelSpecification::WslRemote(spec) => WslRunningKernel::new(
@@ -928,18 +928,18 @@ impl Render for Session {
                     .as_ref()
                     .map(|info| info.language_info.name.clone()),
                 Some(
-                    Button::new("interrupt", "Interrupt")
+                    Button::new("interrupt", "中断")
                         .style(ButtonStyle::Subtle)
                         .on_click(cx.listener(move |session, _, _, cx| {
                             session.interrupt(cx);
                         })),
                 ),
             ),
-            Kernel::StartingKernel(_) => (Some("Starting".into()), None),
-            Kernel::ErroredLaunch(err) => (Some(format!("Error: {err}")), None),
-            Kernel::ShuttingDown => (Some("Shutting Down".into()), None),
-            Kernel::Shutdown => (Some("Shutdown".into()), None),
-            Kernel::Restarting => (Some("Restarting".into()), None),
+            Kernel::StartingKernel(_) => (Some("启动中".into()), None),
+            Kernel::ErroredLaunch(err) => (Some(format!("错误: {err}")), None),
+            Kernel::ShuttingDown => (Some("正在关闭".into()), None),
+            Kernel::Shutdown => (Some("已关闭".into()), None),
+            Kernel::Restarting => (Some("重启中".into()), None),
         };
 
         KernelListItem::new(self.kernel_specification.clone())
@@ -964,7 +964,7 @@ impl Render for Session {
             .child(Label::new(self.kernel_specification.name()))
             .children(status_text.map(|status_text| Label::new(format!("({status_text})"))))
             .button(
-                Button::new("shutdown", "Shutdown")
+                Button::new("shutdown", "已关闭")
                     .style(ButtonStyle::Subtle)
                     .disabled(self.kernel.is_shutting_down())
                     .on_click(cx.listener(move |session, _, window, cx| {

@@ -55,7 +55,7 @@ impl ModelContextProtocol {
 
         anyhow::ensure!(
             Self::supported_protocols().contains(&response.protocol_version),
-            "Unsupported protocol version: {:?}",
+            "不支持的协议版本: {:?}",
             response.protocol_version
         );
 

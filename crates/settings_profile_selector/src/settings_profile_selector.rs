@@ -150,7 +150,7 @@ impl PickerDelegate for SettingsProfileSelectorDelegate {
     type ListItem = ListItem;
 
     fn placeholder_text(&self, _: &mut Window, _: &mut App) -> std::sync::Arc<str> {
-        "Select a settings profile...".into()
+        "选择一个设置配置文件...".into()
     }
 
     fn match_count(&self) -> usize {
@@ -274,7 +274,7 @@ impl PickerDelegate for SettingsProfileSelectorDelegate {
 }
 
 fn display_name(profile_name: &Option<String>) -> String {
-    profile_name.clone().unwrap_or("Disabled".into())
+    profile_name.clone().unwrap_or("已禁用".into())
 }
 
 #[cfg(test)]

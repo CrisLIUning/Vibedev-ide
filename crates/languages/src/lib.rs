@@ -39,7 +39,7 @@ pub static LANGUAGE_GIT_COMMIT: std::sync::LazyLock<Arc<Language>> =
     std::sync::LazyLock::new(|| {
         Arc::new(Language::new(
             LanguageConfig {
-                name: "Git Commit".into(),
+                name: "Git 提交".into(),
                 soft_wrap: Some(language::SoftWrap::EditorWidth),
                 matcher: LanguageMatcher {
                     path_suffixes: vec!["COMMIT_EDITMSG".to_owned()],
@@ -240,7 +240,7 @@ pub fn init(languages: Arc<LanguageRegistry>, fs: Arc<dyn Fs>, node: NodeRuntime
     // ```json
     // {
     //   "languages": {
-    //     "My Language": {
+    //     "我的语言": {
     //       "language_servers": ["tailwindcss-language-server", "..."]
     //     }
     //   }

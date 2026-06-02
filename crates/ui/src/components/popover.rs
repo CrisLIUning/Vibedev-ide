@@ -14,8 +14,8 @@ pub const POPOVER_Y_PADDING: Pixels = px(8.);
 /// and the popover should be statically positioned relative to that element (not the
 /// user's mouse.)
 ///
-/// Example: A "new" menu with options like "new file", "new folder", etc,
-/// Linear's "Display" menu, a profile menu that appears when you click your avatar.
+/// Example: A "new" menu with options like "新建文件", "新建文件夹", etc,
+/// Linear's "显示" menu, a profile menu that appears when you click your avatar.
 ///
 /// Related elements:
 ///

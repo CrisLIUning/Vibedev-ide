@@ -18,7 +18,7 @@ impl Render for SetMenus {
             .items_center()
             .text_xl()
             .text_color(gpui::black())
-            .child("Set Menus Example")
+            .child("设置菜单示例")
     }
 }
 
@@ -69,8 +69,8 @@ impl ViewMode {
 impl Into<SharedString> for ViewMode {
     fn into(self) -> SharedString {
         match self {
-            ViewMode::List => "List",
-            ViewMode::Grid => "Grid",
+            ViewMode::List => "列表",
+            ViewMode::Grid => "网格",
         }
         .into()
     }
@@ -93,14 +93,14 @@ impl Global for AppState {}
 fn set_app_menus(cx: &mut App) {
     let app_state = cx.global::<AppState>();
     cx.set_menus([Menu::new("set_menus").items([
-        MenuItem::os_submenu("Services", SystemMenuType::Services),
+        MenuItem::os_submenu("服务", SystemMenuType::Services),
         MenuItem::separator(),
-        MenuItem::action("Disabled Item", gpui::NoAction).disabled(true),
-        MenuItem::submenu(Menu::new("Disabled Submenu").disabled(true)),
+        MenuItem::action("禁用项", gpui::NoAction).disabled(true),
+        MenuItem::submenu(Menu::new("禁用子菜单").disabled(true)),
         MenuItem::separator(),
-        MenuItem::action("List Mode", ToggleCheck).checked(app_state.view_mode == ViewMode::List),
+        MenuItem::action("列表模式", ToggleCheck).checked(app_state.view_mode == ViewMode::List),
         MenuItem::submenu(
-            Menu::new("Mode").items([
+            Menu::new("模式").items([
                 MenuItem::action(ViewMode::List, ToggleCheck)
                     .checked(app_state.view_mode == ViewMode::List),
                 MenuItem::action(ViewMode::Grid, ToggleCheck)
@@ -108,7 +108,7 @@ fn set_app_menus(cx: &mut App) {
             ]),
         ),
         MenuItem::separator(),
-        MenuItem::action("Quit", Quit),
+        MenuItem::action("退出", Quit),
     ])]);
 }
 
@@ -117,7 +117,7 @@ actions!(set_menus, [Quit, ToggleCheck]);
 
 // Define the quit function that is registered with the App
 fn quit(_: &Quit, cx: &mut App) {
-    println!("Gracefully quitting the application...");
+    println!("正在正常退出应用程序...");
     cx.quit();
 }
 

@@ -60,7 +60,7 @@ struct WebPlatformCallbacks {
 impl WebPlatform {
     pub fn new(allow_multi_threading: bool) -> Self {
         let browser_window =
-            web_sys::window().expect("must be running in a browser window context");
+            web_sys::window().expect("必须在浏览器窗口上下文中运行");
         let dispatcher = Arc::new(WebDispatcher::new(
             browser_window.clone(),
             allow_multi_threading,
@@ -75,7 +75,7 @@ impl WebPlatform {
             .map(|bytes| Cow::Borrowed(*bytes))
             .collect();
         if let Err(error) = text_system.add_fonts(fonts) {
-            log::error!("failed to load bundled fonts: {error:#}");
+            log::error!("加载捆绑字体失败: {error:#}");
         }
         let text_system: Arc<dyn PlatformTextSystem> = text_system;
         let active_display: Rc<dyn PlatformDisplay> =
@@ -123,12 +123,12 @@ impl Platform for WebPlatform {
         wasm_bindgen_futures::spawn_local(async move {
             match WgpuContext::new_web().await {
                 Ok(context) => {
-                    log::info!("WebGPU context initialized successfully");
+                    log::info!("WebGPU 上下文初始化成功");
                     *wgpu_context.borrow_mut() = Some(context);
                     on_finish_launching();
                 }
                 Err(err) => {
-                    log::error!("Failed to initialize WebGPU context: {err:#}");
+                    log::error!("初始化 WebGPU 上下文失败: {err:#}");
                     on_finish_launching();
                 }
             }
@@ -136,7 +136,7 @@ impl Platform for WebPlatform {
     }
 
     fn quit(&self) {
-        log::warn!("WebPlatform::quit called, but quitting is not supported in the browser .");
+        log::warn!("调用了 WebPlatform::quit,但浏览器不支持退出操作。");
     }
 
     fn restart(&self, _binary_path: Option<PathBuf>) {}
@@ -168,7 +168,7 @@ impl Platform for WebPlatform {
     ) -> anyhow::Result<Box<dyn PlatformWindow>> {
         let context_ref = self.wgpu_context.borrow();
         let context = context_ref.as_ref().ok_or_else(|| {
-            anyhow::anyhow!("WebGPU context not initialized. Was Platform::run() called?")
+            anyhow::anyhow!("WebGPU 上下文未初始化。是否调用了 Platform::run()?")
         })?;
 
         let window = WebWindow::new(handle, params, context, self.browser_window.clone())?;
@@ -192,7 +192,7 @@ impl Platform for WebPlatform {
 
     fn open_url(&self, url: &str) {
         if let Err(error) = self.browser_window.open_with_url(url) {
-            log::warn!("Failed to open URL '{url}': {error:?}");
+            log::warn!("打开 URL '{url}' 失败: {error:?}");
         }
     }
 
@@ -210,7 +210,7 @@ impl Platform for WebPlatform {
     ) -> oneshot::Receiver<Result<Option<Vec<PathBuf>>>> {
         let (tx, rx) = oneshot::channel();
         tx.send(Err(anyhow::anyhow!(
-            "prompt_for_paths is not supported on the web"
+            "Web 端不支持 prompt_for_paths"
         )))
         .ok();
         rx
@@ -224,7 +224,7 @@ impl Platform for WebPlatform {
         let (sender, receiver) = oneshot::channel();
         sender
             .send(Err(anyhow::anyhow!(
-                "prompt_for_new_path is not supported on the web"
+                "Web 端不支持 prompt_for_new_path"
             )))
             .ok();
         receiver
@@ -338,7 +338,7 @@ impl Platform for WebPlatform {
 
     fn write_credentials(&self, _url: &str, _username: &str, _password: &[u8]) -> Task<Result<()>> {
         Task::ready(Err(anyhow::anyhow!(
-            "credential storage is not available on the web"
+            "Web 端不可用凭据存储"
         )))
     }
 
@@ -430,6 +430,6 @@ fn set_body_cursor(browser_window: &web_sys::Window, css_cursor: &str) {
         && let Some(body) = document.body()
         && let Err(error) = body.style().set_property("cursor", css_cursor)
     {
-        log::warn!("Failed to set cursor style: {error:?}");
+        log::warn!("设置光标样式失败: {error:?}");
     }
 }

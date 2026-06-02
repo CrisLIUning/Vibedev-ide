@@ -977,7 +977,7 @@ mod tests {
     fn parses_heading_text_align_from_style() {
         let parsed = parse_html_block("<h2 style=\"text-align: right\">Title</h2>", 0..45).unwrap();
         let ParsedHtmlElement::Heading(heading) = &parsed.children[0] else {
-            panic!("expected heading");
+            panic!("预期为标题");
         };
         assert_eq!(heading.text_align, Some(TextAlign::Right));
     }
@@ -995,7 +995,7 @@ mod tests {
     fn parses_heading_text_align_from_align_attribute() {
         let parsed = parse_html_block("<h2 align=\"right\">Title</h2>", 0..30).unwrap();
         let ParsedHtmlElement::Heading(heading) = &parsed.children[0] else {
-            panic!("expected heading");
+            panic!("预期为标题");
         };
         assert_eq!(heading.text_align, Some(TextAlign::Right));
     }

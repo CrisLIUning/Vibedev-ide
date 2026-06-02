@@ -247,7 +247,7 @@ pub(crate) fn deserialize_devcontainer_json_to_value(
     json: &str,
 ) -> Result<serde_json_lenient::Value, DevContainerError> {
     serde_json_lenient::from_str(json).map_err(|e| {
-        log::error!("Unable to deserialize json values: {e}");
+        log::error!("无法反序列化 JSON 值: {e}");
         DevContainerError::DevContainerParseFailed
     })
 }
@@ -256,7 +256,7 @@ pub(crate) fn deserialize_devcontainer_json_from_value(
     json: serde_json_lenient::Value,
 ) -> Result<DevContainer, DevContainerError> {
     serde_json_lenient::from_value(json).map_err(|e| {
-        log::error!("Unable to deserialize devcontainer from json values: {e}");
+        log::error!("无法从 JSON 值反序列化 devcontainer: {e}");
         DevContainerError::DevContainerParseFailed
     })
 }
@@ -286,7 +286,7 @@ impl DevContainer {
                     || (self.workspace_folder.is_none() && self.workspace_mount.is_some())
                 {
                     return Err(DevContainerError::DevContainerValidationFailed(
-                        "workspaceMount and workspaceFolder must both be defined, or neither defined"
+                        "workspaceMount 和 workspaceFolder 必须同时定义或都不定义"
                             .to_string(),
                     ));
                 }
@@ -295,7 +295,7 @@ impl DevContainer {
             DevContainerBuildType::DockerCompose => {
                 if self.service.is_none() {
                     return Err(DevContainerError::DevContainerValidationFailed(
-                        "must specify a connecting service for docker-compose".to_string(),
+                        "必须为 docker-compose 指定连接的服务".to_string(),
                     ));
                 }
                 Ok(())
@@ -352,7 +352,7 @@ impl LifecycleScript {
                     Some((k.clone(), command))
                 } else {
                     log::warn!(
-                        "Lifecycle script command {k}, value {:?} has no program to run. Skipping",
+                        "生命周期脚本命令 {k}, 值 {:?} 没有可运行的程序, 已跳过",
                         v
                     );
                     None
@@ -367,7 +367,7 @@ impl LifecycleScript {
         working_directory: &Path,
     ) -> Result<(), DevContainerError> {
         for (command_name, mut command) in self.script_commands() {
-            log::debug!("Running script {command_name}");
+            log::debug!("正在运行脚本 {command_name}");
 
             command.current_dir(working_directory);
 
@@ -375,17 +375,17 @@ impl LifecycleScript {
                 .run_command(&mut command)
                 .await
                 .map_err(|e| {
-                    log::error!("Error running command {command_name}: {e}");
+                    log::error!("运行命令 {command_name} 出错: {e}");
                     DevContainerError::CommandFailed(command_name.clone())
                 })?;
             if !output.status.success() {
                 let std_err = String::from_utf8_lossy(&output.stderr);
                 log::error!(
-                    "Command {command_name} produced a non-successful output. StdErr: {std_err}"
+                    "命令 {command_name} 产生了非成功输出. StdErr: {std_err}"
                 );
             }
             let std_out = String::from_utf8_lossy(&output.stdout);
-            log::debug!("Command {command_name} output:\n {std_out}");
+            log::debug!("命令 {command_name} 输出:\n {std_out}");
         }
         Ok(())
     }
@@ -405,7 +405,7 @@ impl<'de> Deserialize<'de> for LifecycleScript {
             type Value = LifecycleScript;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("a string, an array of strings, or a map of arrays")
+                formatter.write_str("字符串, 字符串数组或数组映射")
             }
 
             fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
@@ -494,7 +494,7 @@ where
             }
 
             let target = target
-                .ok_or_else(|| D::Error::custom(format!("mount string missing 'target': {}", s)))?;
+                .ok_or_else(|| D::Error::custom(format!("挂载字符串缺少 'target': {}", s)))?;
 
             MountDefinition {
                 source,
@@ -547,7 +547,7 @@ where
                 }
 
                 let target = target.ok_or_else(|| {
-                    D::Error::custom(format!("mount string missing 'target': {}", s))
+                    D::Error::custom(format!("挂载字符串缺少 'target': {}", s))
                 })?;
 
                 mounts.push(MountDefinition {
@@ -667,7 +667,7 @@ mod test {
 
         assert!(
             result.is_ok(),
-            "Should ignore unknown customization keys, but got: {:?}",
+            "应该忽略未知的定制键, 但得到: {:?}",
             result.err()
         );
         let devcontainer = result.expect("ok");
@@ -698,7 +698,7 @@ mod test {
 
         assert!(
             result.is_ok(),
-            "Should handle missing zed key in customizations, but got: {:?}",
+            "应该处理定制中缺失的 zed 键, 但得到: {:?}",
             result.err()
         );
         let devcontainer = result.expect("ok");
@@ -1473,7 +1473,7 @@ mod test {
 
         assert!(
             rendered.starts_with("type=bind,"),
-            "Expected mount type 'bind' for Unix absolute path, but got: {rendered}"
+            "Unix 绝对路径期望挂载类型为 'bind', 但得到: {rendered}"
         );
     }
 
@@ -1489,7 +1489,7 @@ mod test {
 
         assert!(
             rendered.starts_with("type=bind,"),
-            "Expected mount type 'bind' for Windows UNC path, but got: {rendered}"
+            "Windows UNC 路径期望挂载类型为 'bind', 但得到: {rendered}"
         );
     }
 
@@ -1505,7 +1505,7 @@ mod test {
 
         assert!(
             rendered.starts_with("type=bind,"),
-            "Expected mount type 'bind' for Windows absolute path, but got: {rendered}"
+            "Windows 绝对路径期望挂载类型为 'bind', 但得到: {rendered}"
         );
     }
 
@@ -1608,7 +1608,7 @@ mod test {
         assert_eq!(
             devcontainer.validate_devcontainer_contents(),
             Err(DevContainerError::DevContainerValidationFailed(
-                "workspaceMount and workspaceFolder must both be defined, or neither defined"
+                "workspaceMount 和 workspaceFolder 必须同时定义或都不定义"
                     .to_string()
             ))
         );
@@ -1646,7 +1646,7 @@ mod test {
         assert_eq!(
             devcontainer.validate_devcontainer_contents(),
             Err(DevContainerError::DevContainerValidationFailed(
-                "workspaceMount and workspaceFolder must both be defined, or neither defined"
+                "workspaceMount 和 workspaceFolder 必须同时定义或都不定义"
                     .to_string()
             ))
         );

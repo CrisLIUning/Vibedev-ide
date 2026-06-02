@@ -25,7 +25,7 @@ impl Render for HelloWorld {
             .border_color(rgb(0x0000ff))
             .text_xl()
             .text_color(rgb(0xffffff))
-            .child(format!("Hello, {}!", &self.text))
+            .child(format!("你好,{}!", &self.text))
             .child(
                 div()
                     .flex()
@@ -99,7 +99,7 @@ fn run_example() {
             },
             |_, cx| {
                 cx.new(|_| HelloWorld {
-                    text: "World".into(),
+                    text: "世界".into(),
                 })
             },
         )

@@ -1274,7 +1274,7 @@ impl PlatformWindow for MacWindow {
     ) -> Option<oneshot::Receiver<usize>> {
         // NSAlert's first button keeps Return and Cancel keeps Escape, but the keyboard
         // focus (and therefore Space) defaults to Cancel, leaving the middle button of
-        // prompts like "Save / Don't Save / Cancel" unreachable from the keyboard. Move
+        // prompts like "保存 / 不保存 / 取消" unreachable from the keyboard. Move
         // the initial focus onto the last non-cancel, non-default button instead.
         let initial_focus_ix = answers
             .iter()

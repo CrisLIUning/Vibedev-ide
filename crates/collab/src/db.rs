@@ -233,7 +233,7 @@ impl Database {
         let result = f(TransactionHandle(tx.clone())).await;
         let tx = Arc::get_mut(&mut tx)
             .and_then(|tx| tx.take())
-            .context("couldn't complete transaction because it's still in use")?;
+            .context("无法完成事务,因为它仍在使用中")?;
 
         Ok((tx, result))
     }
@@ -248,7 +248,7 @@ impl Database {
             test_options.executor.simulate_random_delay().await;
             let fail_probability = *test_options.query_failure_probability.lock();
             if test_options.executor.rng().random_bool(fail_probability) {
-                return Err(anyhow!("simulated query failure"))?;
+                return Err(anyhow!("模拟查询失败"))?;
             }
 
             test_options.runtime.block_on(future)

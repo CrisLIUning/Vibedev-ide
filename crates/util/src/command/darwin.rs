@@ -579,7 +579,7 @@ fn cvt_nz(error: libc::c_int) -> io::Result<()> {
 fn invalid_input_error() -> io::Error {
     io::Error::new(
         io::ErrorKind::InvalidInput,
-        "invalid argument: path or argument contains null byte",
+        "无效参数: 路径或参数包含空字节",
     )
 }
 
@@ -597,7 +597,7 @@ mod tests {
     // git's stdin write end open and deadlock the git child on `read()`.
     #[test]
     fn test_create_pipe_not_inherited_by_unrelated_spawn() {
-        let (read_fd, write_fd) = create_pipe().expect("create_pipe failed");
+        let (read_fd, write_fd) = create_pipe().expect("create_pipe 失败");
 
         // Probe with the exact fds returned by `create_pipe` (no dup), since
         // duping with `F_DUPFD` would lose CLOEXEC and `F_DUPFD_CLOEXEC` would
@@ -616,7 +616,7 @@ mod tests {
                 echo DONE"
             ))
             .output()
-            .expect("failed to spawn sh");
+            .expect("启动 sh 失败");
 
         let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
 
@@ -638,7 +638,7 @@ mod tests {
                 .args(["-n", "hello world"])
                 .output()
                 .await
-                .expect("failed to run command");
+                .expect("运行命令失败");
 
             assert!(output.status.success());
             assert_eq!(output.stdout, b"hello world");
@@ -652,18 +652,18 @@ mod tests {
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .spawn()
-                .expect("failed to spawn");
+                .expect("启动失败");
 
             if let Some(ref mut stdin) = child.stdin {
                 stdin
                     .write_all(b"hello from stdin")
                     .await
-                    .expect("failed to write");
-                stdin.close().await.expect("failed to close");
+                    .expect("写入失败");
+                stdin.close().await.expect("关闭失败");
             }
             drop(child.stdin.take());
 
-            let output = child.output().await.expect("failed to get output");
+            let output = child.output().await.expect("获取输出失败");
             assert!(output.status.success());
             assert_eq!(output.stdout, b"hello from stdin");
         });
@@ -676,7 +676,7 @@ mod tests {
                 .args(["-c", "echo error >&2"])
                 .output()
                 .await
-                .expect("failed to run command");
+                .expect("运行命令失败");
 
             assert!(output.status.success());
             assert_eq!(output.stderr, b"error\n");
@@ -690,7 +690,7 @@ mod tests {
                 .args(["-c", "exit 42"])
                 .output()
                 .await
-                .expect("failed to run command");
+                .expect("运行命令失败");
 
             assert!(!output.status.success());
             assert_eq!(output.status.code(), Some(42));
@@ -704,7 +704,7 @@ mod tests {
                 .current_dir("/tmp")
                 .output()
                 .await
-                .expect("failed to run command");
+                .expect("运行命令失败");
 
             assert!(output.status.success());
             let pwd = String::from_utf8_lossy(&output.stdout);
@@ -720,7 +720,7 @@ mod tests {
                 .env("MY_TEST_VAR", "test_value")
                 .output()
                 .await
-                .expect("failed to run command");
+                .expect("运行命令失败");
 
             assert!(output.status.success());
             assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "test_value");
@@ -733,14 +733,14 @@ mod tests {
             let status = Command::new("/usr/bin/true")
                 .status()
                 .await
-                .expect("failed to run command");
+                .expect("运行命令失败");
 
             assert!(status.success());
 
             let status = Command::new("/usr/bin/false")
                 .status()
                 .await
-                .expect("failed to run command");
+                .expect("运行命令失败");
 
             assert!(!status.success());
         });
@@ -755,7 +755,7 @@ mod tests {
                 .env_remove("MY_VAR")
                 .output()
                 .await
-                .expect("failed to run command");
+                .expect("运行命令失败");
 
             assert!(output.status.success());
             assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "unset");
@@ -773,7 +773,7 @@ mod tests {
                 .env_remove("TEST_INHERITED_VAR")
                 .output()
                 .await
-                .expect("failed to run command");
+                .expect("运行命令失败");
 
             assert!(output.status.success());
             assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "unset");
@@ -792,7 +792,7 @@ mod tests {
                 .env("MY_VAR", "new_value")
                 .output()
                 .await
-                .expect("failed to run command");
+                .expect("运行命令失败");
 
             assert!(output.status.success());
             assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "new_value");
@@ -809,7 +809,7 @@ mod tests {
                 .env_remove("MY_VAR")
                 .output()
                 .await
-                .expect("failed to run command");
+                .expect("运行命令失败");
 
             assert!(output.status.success());
             assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "unset");
@@ -823,9 +823,9 @@ mod tests {
                 .stdin(Stdio::null())
                 .stdout(Stdio::piped())
                 .spawn()
-                .expect("failed to spawn");
+                .expect("启动失败");
 
-            let output = child.output().await.expect("failed to get output");
+            let output = child.output().await.expect("获取输出失败");
             assert!(output.status.success());
             assert!(
                 output.stdout.is_empty(),
@@ -841,14 +841,14 @@ mod tests {
                 .args(["hello"])
                 .stdout(Stdio::null())
                 .spawn()
-                .expect("failed to spawn");
+                .expect("启动失败");
 
             assert!(
                 child.stdout.is_none(),
                 "stdout should be None when Stdio::null() is used"
             );
 
-            let status = child.status().await.expect("failed to get status");
+            let status = child.status().await.expect("获取状态失败");
             assert!(status.success());
         });
     }
@@ -860,14 +860,14 @@ mod tests {
                 .args(["-c", "echo error >&2"])
                 .stderr(Stdio::null())
                 .spawn()
-                .expect("failed to spawn");
+                .expect("启动失败");
 
             assert!(
                 child.stderr.is_none(),
                 "stderr should be None when Stdio::null() is used"
             );
 
-            let status = child.status().await.expect("failed to get status");
+            let status = child.status().await.expect("获取状态失败");
             assert!(status.success());
         });
     }
@@ -879,7 +879,7 @@ mod tests {
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .spawn()
-                .expect("failed to spawn");
+                .expect("启动失败");
 
             assert!(
                 child.stdin.is_some(),
@@ -890,12 +890,12 @@ mod tests {
                 stdin
                     .write_all(b"piped input")
                     .await
-                    .expect("failed to write");
-                stdin.close().await.expect("failed to close");
+                    .expect("写入失败");
+                stdin.close().await.expect("关闭失败");
             }
             drop(child.stdin.take());
 
-            let output = child.output().await.expect("failed to get output");
+            let output = child.output().await.expect("获取输出失败");
             assert!(output.status.success());
             assert_eq!(output.stdout, b"piped input");
         });

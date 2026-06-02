@@ -79,32 +79,32 @@ impl UpdateButton {
     }
 
     pub fn checking() -> Self {
-        Self::new(IconName::LoadCircle, "Checking for Zed Updates…")
+        Self::new(IconName::LoadCircle, "Checking for VibeDev Updates…")
             .icon_animate(true)
             .disabled(true)
     }
 
     pub fn downloading(version: impl Into<SharedString>) -> Self {
-        Self::new(IconName::Download, "Downloading Zed Update…")
+        Self::new(IconName::Download, "Downloading VibeDev Update…")
             .tooltip(version)
             .disabled(true)
     }
 
     pub fn installing(version: impl Into<SharedString>) -> Self {
-        Self::new(IconName::LoadCircle, "Installing Zed Update…")
+        Self::new(IconName::LoadCircle, "Installing VibeDev Update…")
             .icon_animate(true)
             .tooltip(version)
             .disabled(true)
     }
 
     pub fn updated(version: impl Into<SharedString>) -> Self {
-        Self::new(IconName::Download, "Restart to Update")
+        Self::new(IconName::Download, "重启以更新")
             .tooltip(version)
             .with_dismiss()
     }
 
     pub fn errored(error: impl Into<SharedString>) -> Self {
-        Self::new(IconName::Warning, "Failed to Update")
+        Self::new(IconName::Warning, "更新失败")
             .icon_color(Color::Warning)
             .tooltip(error)
             .with_dismiss()
@@ -156,7 +156,7 @@ impl RenderOnce for UpdateButton {
                         IconButton::new("dismiss-update-button", IconName::Close)
                             .icon_size(IconSize::Indicator)
                             .when_some(self.on_dismiss, |this, handler| this.on_click(handler))
-                            .tooltip(Tooltip::text("Dismiss")),
+                            .tooltip(Tooltip::text("关闭")),
                     ),
                 )
             })
@@ -174,7 +174,7 @@ impl Component for UpdateButton {
 
     fn description() -> Option<&'static str> {
         Some(
-            "A button component displayed in the title bar to show auto-update status and allow users to restart Zed.",
+            "显示在标题栏中的按钮组件,用于展示自动更新状态并允许用户重启 VibeDev。",
         )
     }
 
@@ -186,29 +186,29 @@ impl Component for UpdateButton {
                 .gap_6()
                 .children(vec![
                     example_group_with_title(
-                        "Progress States",
+                        "进度状态",
                         vec![
-                            single_example("Checking", UpdateButton::checking().into_any_element()),
+                            single_example("检查中", UpdateButton::checking().into_any_element()),
                             single_example(
-                                "Downloading",
+                                "下载中",
                                 UpdateButton::downloading(version).into_any_element(),
                             ),
                             single_example(
-                                "Installing",
+                                "安装中",
                                 UpdateButton::installing(version).into_any_element(),
                             ),
                         ],
                     ),
                     example_group_with_title(
-                        "Actionable States",
+                        "可操作状态",
                         vec![
                             single_example(
-                                "Ready to Update",
+                                "准备更新",
                                 UpdateButton::updated(version).into_any_element(),
                             ),
                             single_example(
-                                "Error",
-                                UpdateButton::errored("Network timeout").into_any_element(),
+                                "错误",
+                                UpdateButton::errored("网络超时").into_any_element(),
                             ),
                         ],
                     ),

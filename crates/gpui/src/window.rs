@@ -1113,9 +1113,9 @@ impl InputLatencyTracker {
             first_input_at: None,
             pending_input_count: 0,
             latency_histogram: Histogram::new(3)
-                .map_err(|e| anyhow!("Failed to create input latency histogram: {e}"))?,
+                .map_err(|e| anyhow!("创建输入延迟直方图失败: {e}"))?,
             events_per_frame_histogram: Histogram::new(3)
-                .map_err(|e| anyhow!("Failed to create events per frame histogram: {e}"))?,
+                .map_err(|e| anyhow!("创建每帧事件直方图失败: {e}"))?,
             mid_draw_events_dropped: 0,
         })
     }
@@ -2767,7 +2767,7 @@ impl Window {
         let mut depth = 0;
         loop {
             // Limit maximum nesting depth to prevent infinite loops.
-            assert!(depth < 10, "Exceeded maximum (10) deferred depth");
+            assert!(depth < 10, "超过最大 (10) 延迟深度");
             depth += 1;
             let deferred_count = self.next_frame.deferred_draws.len();
             if deferred_count == 0 {

@@ -73,13 +73,13 @@ impl CsvPreviewView {
                 .await;
             let parse_duration = instant.elapsed();
             let parse_end_time: Instant = Instant::now();
-            log::debug!("Parsed CSV in {}ms", parse_duration.as_millis());
+            log::debug!("CSV 解析耗时 {}ms", parse_duration.as_millis());
             view.update(cx, move |view, cx| {
                 view.performance_metrics
                     .timings
-                    .insert("Parsing", (parse_duration, Instant::now()));
+                    .insert("解析", (parse_duration, Instant::now()));
 
-                log::debug!("Parsed {} rows", parsed_csv.rows.len());
+                log::debug!("已解析 {} 行", parsed_csv.rows.len());
                 view.engine.contents = parsed_csv;
                 view.sync_column_widths(cx);
                 view.last_parse_end_time = Some(parse_end_time);

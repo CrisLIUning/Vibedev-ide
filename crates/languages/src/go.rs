@@ -34,10 +34,10 @@ use util::{ResultExt, fs::remove_matching, maybe, merge_json_value_into};
 
 pub(crate) fn semantic_token_rules() -> SemanticTokenRules {
     let content = grammars::get_file("go/semantic_token_rules.json")
-        .expect("missing go/semantic_token_rules.json");
-    let json = std::str::from_utf8(&content.data).expect("invalid utf-8 in semantic_token_rules");
+        .expect("缺少 go/semantic_token_rules.json");
+    let json = std::str::from_utf8(&content.data).expect("semantic_token_rules 中包含无效的 UTF-8 字符");
     settings::parse_json_with_comments::<SemanticTokenRules>(json)
-        .expect("failed to parse go semantic_token_rules.json")
+        .expect("解析 go semantic_token_rules.json 失败")
 }
 
 fn server_binary_arguments() -> Vec<OsString> {
@@ -97,7 +97,7 @@ impl LspInstaller for GoLspAdapter {
         let version: Option<String> = release.tag_name.strip_prefix("gopls/v").map(str::to_string);
         if version.is_none() {
             log::warn!(
-                "couldn't infer gopls version from GitHub release tag name '{}'",
+                "无法从 GitHub 发布标签名称 '{}' 推断 gopls 版本",
                 release.tag_name
             );
         }
@@ -166,12 +166,12 @@ impl LspInstaller for GoLspAdapter {
 
             if !install_output.status.success() {
                 log::error!(
-                    "failed to install gopls via `go install`. stdout: {:?}, stderr: {:?}",
+                    "通过 `go install` 安装 gopls 失败。stdout: {:?}, stderr: {:?}",
                     String::from_utf8_lossy(&install_output.stdout),
                     String::from_utf8_lossy(&install_output.stderr)
                 );
                 anyhow::bail!(
-                    "failed to install gopls with `go install`. Is `go` installed and in the PATH? Check logs for more information."
+                    "使用 `go install` 安装 gopls 失败。`go` 是否已安装并在 PATH 中?请检查日志以获取更多信息。"
                 );
             }
 
@@ -214,7 +214,7 @@ impl LspAdapter for GoLspAdapter {
         cx: &mut AsyncApp,
     ) -> Result<Option<serde_json::Value>> {
         let semantic_tokens_enabled = cx.update(|cx| {
-            LanguageSettings::resolve(None, Some(&LanguageName::new("Go")), cx)
+            LanguageSettings::resolve(None, Some(&LanguageName::new("前往")), cx)
                 .semantic_tokens
                 .enabled()
         });
@@ -1012,7 +1012,7 @@ mod tests {
 
         assert!(
             !tag_strings.contains(&"go-test".to_string()),
-            "Should NOT find go-test tag, found: {:?}",
+            "不应找到 go-test 标签,找到: {:?}",
             tag_strings
         );
     }
@@ -1060,12 +1060,12 @@ mod tests {
 
         assert!(
             tag_strings.contains(&"go-test".to_string()),
-            "Should find go-test tag, found: {:?}",
+            "应该找到 go-test 标签,找到: {:?}",
             tag_strings
         );
         assert!(
             tag_strings.contains(&"go-testify-suite".to_string()),
-            "Should find go-testify-suite tag, found: {:?}",
+            "应该找到 go-testify-suite 标签,找到: {:?}",
             tag_strings
         );
     }
@@ -1120,12 +1120,12 @@ mod tests {
 
         assert!(
             tag_strings.contains(&"go-test".to_string()),
-            "Should find go-test tag, found: {:?}",
+            "应该找到 go-test 标签,找到: {:?}",
             tag_strings
         );
         assert!(
             tag_strings.contains(&"go-subtest".to_string()),
-            "Should find go-subtest tag, found: {:?}",
+            "应该找到 go-subtest 标签,找到: {:?}",
             tag_strings
         );
 
@@ -1149,12 +1149,12 @@ mod tests {
 
         assert!(
             tag_strings.contains(&"go-test".to_string()),
-            "Should find go-test tag, found: {:?}",
+            "应该找到 go-test 标签,找到: {:?}",
             tag_strings
         );
         assert!(
             tag_strings.contains(&"go-subtest".to_string()),
-            "Should find go-subtest tag, found: {:?}",
+            "应该找到 go-subtest 标签,找到: {:?}",
             tag_strings
         );
     }
@@ -1191,7 +1191,7 @@ mod tests {
 
         assert!(
             tag_strings.contains(&"go-example".to_string()),
-            "Should find go-example tag, found: {:?}",
+            "应该找到 go-example 标签,找到: {:?}",
             tag_strings
         );
     }
@@ -1262,12 +1262,12 @@ mod tests {
 
         assert!(
             tag_strings.contains(&"go-test".to_string()),
-            "Should find go-test tag, found: {:?}",
+            "应该找到 go-test 标签,找到: {:?}",
             tag_strings
         );
         assert!(
             tag_strings.contains(&"go-table-test-case".to_string()),
-            "Should find go-table-test-case tag, found: {:?}",
+            "应该找到 go-table-test-case 标签,找到: {:?}",
             tag_strings
         );
 
@@ -1280,12 +1280,12 @@ mod tests {
 
         assert!(
             go_test_count == 1,
-            "Should find exactly 1 go-test, found: {}",
+            "应该恰好找到 1 个 go-test,找到: {}",
             go_test_count
         );
         // assert!(
         //     go_table_test_count == 3,
-        //     "Should find exactly 3 go-table-test-case, found: {}",
+        //     "应该恰好找到 3 个 go-table-test-case,找到: {}",
         //     go_table_test_count
         // );
     }
@@ -1341,12 +1341,12 @@ mod tests {
 
         assert!(
             tag_strings.contains(&"go-test".to_string()),
-            "Should find go-test tag, found: {:?}",
+            "应该找到 go-test 标签,找到: {:?}",
             tag_strings
         );
         assert!(
             tag_strings.contains(&"go-table-test-case-without-explicit-variable".to_string()),
-            "Should find go-table-test-case-without-explicit-variable tag, found: {:?}",
+            "应该找到 go-table-test-case-without-explicit-variable 标签,找到: {:?}",
             tag_strings
         );
 
@@ -1354,7 +1354,7 @@ mod tests {
 
         assert!(
             go_test_count == 1,
-            "Should find exactly 1 go-test, found: {}",
+            "应该恰好找到 1 个 go-test,找到: {}",
             go_test_count
         );
     }
@@ -1406,12 +1406,12 @@ mod tests {
 
         assert!(
             tag_strings.contains(&"go-test".to_string()),
-            "Should find go-test tag, found: {:?}",
+            "应该找到 go-test 标签,找到: {:?}",
             tag_strings
         );
         assert!(
             tag_strings.contains(&"go-table-test-case-without-explicit-variable".to_string()),
-            "Should find go-table-test-case-without-explicit-variable tag, found: {:?}",
+            "应该找到 go-table-test-case-without-explicit-variable 标签,找到: {:?}",
             tag_strings
         );
 
@@ -1423,12 +1423,12 @@ mod tests {
 
         assert!(
             go_test_count == 1,
-            "Should find exactly 1 go-test, found: {}",
+            "应该恰好找到 1 个 go-test,找到: {}",
             go_test_count
         );
         assert!(
             go_table_test_count == 2,
-            "Should find exactly 2 go-table-test-case-without-explicit-variable, found: {}",
+            "应该恰好找到 2 个 go-table-test-case-without-explicit-variable,找到: {}",
             go_table_test_count
         );
     }
@@ -1473,12 +1473,12 @@ mod tests {
 
         assert!(
             !tag_strings.contains(&"go-test".to_string()),
-            "Should find go-test tag, found: {:?}",
+            "应该找到 go-test 标签,找到: {:?}",
             tag_strings
         );
         assert!(
             !tag_strings.contains(&"go-table-test-case".to_string()),
-            "Should find go-table-test-case tag, found: {:?}",
+            "应该找到 go-table-test-case 标签,找到: {:?}",
             tag_strings
         );
     }
@@ -1545,12 +1545,12 @@ mod tests {
 
         assert!(
             tag_strings.contains(&"go-test".to_string()),
-            "Should find go-test tag, found: {:?}",
+            "应该找到 go-test 标签,找到: {:?}",
             tag_strings
         );
         assert!(
             tag_strings.contains(&"go-table-test-case".to_string()),
-            "Should find go-table-test-case tag, found: {:?}",
+            "应该找到 go-table-test-case 标签,找到: {:?}",
             tag_strings
         );
 
@@ -1562,12 +1562,12 @@ mod tests {
 
         assert!(
             go_test_count == 1,
-            "Should find exactly 1 go-test, found: {}",
+            "应该恰好找到 1 个 go-test,找到: {}",
             go_test_count
         );
         assert!(
             go_table_test_count == 2,
-            "Should find exactly 2 go-table-test-case, found: {}",
+            "应该恰好找到 2 个 go-table-test-case,找到: {}",
             go_table_test_count
         );
     }
@@ -1612,12 +1612,12 @@ mod tests {
 
         assert!(
             !tag_strings.contains(&"go-test".to_string()),
-            "Should find go-test tag, found: {:?}",
+            "应该找到 go-test 标签,找到: {:?}",
             tag_strings
         );
         assert!(
             !tag_strings.contains(&"go-table-test-case".to_string()),
-            "Should find go-table-test-case tag, found: {:?}",
+            "应该找到 go-table-test-case 标签,找到: {:?}",
             tag_strings
         );
     }

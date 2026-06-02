@@ -160,7 +160,7 @@ pub struct RpcError {
 /// ErrorCode.
 impl RpcError {
     /// Returns the raw server-provided error message without any RPC framing
-    /// (e.g. without the "RPC request X failed: " prefix that `Display` adds).
+    /// (e.g. without the "RPC 请求 X 失败: " prefix that `Display` adds).
     pub fn raw_message(&self) -> &str {
         &self.msg
     }

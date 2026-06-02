@@ -764,7 +764,7 @@ impl LspAction {
                 .command
                 .as_ref()
                 .map(|command| command.title.as_str())
-                .unwrap_or("Unknown command"),
+                .unwrap_or("未知命令"),
         }
     }
 
@@ -2538,7 +2538,7 @@ impl Project {
         let project_path = project_path.into();
         let Some(worktree) = self.worktree_for_id(project_path.worktree_id, cx) else {
             return Task::ready(Err(anyhow!(format!(
-                "No worktree for path {project_path:?}"
+                "路径 {project_path:?} 没有对应的工作树"
             ))));
         };
         worktree.update(cx, |worktree, cx| {
@@ -2574,7 +2574,7 @@ impl Project {
             .worktree_and_entry_for_id(entry_id, cx)
             .map(|(worktree, entry)| (worktree, entry.path.clone(), entry.is_dir()))
         else {
-            return Task::ready(Err(anyhow!(format!("No worktree for entry {entry_id:?}"))));
+            return Task::ready(Err(anyhow!(format!("条目 {entry_id:?} 没有对应的工作树"))));
         };
 
         let worktree_id = worktree.read(cx).id();
@@ -2662,7 +2662,7 @@ impl Project {
         cx: &mut Context<'_, Self>,
     ) -> Task<Result<ProjectPath>> {
         let Some(worktree) = self.worktree_for_id(worktree_id, cx) else {
-            return Task::ready(Err(anyhow!("No worktree for id {worktree_id:?}")));
+            return Task::ready(Err(anyhow!("找不到 ID 为 {worktree_id:?} 的工作树")));
         };
 
         cx.spawn(async move |_, cx| {
@@ -2697,7 +2697,7 @@ impl Project {
             worktree.expand_all_for_entry(entry_id, cx)
         });
         Some(cx.spawn(async move |this, cx| {
-            task.context("no task")?.await?;
+            task.context("无任务")?.await?;
             this.update(cx, |_, cx| {
                 cx.emit(Event::ExpandedAllForEntry(worktree_id, entry_id));
             })?;
@@ -2708,7 +2708,7 @@ impl Project {
     pub fn shared(&mut self, project_id: u64, cx: &mut Context<Self>) -> Result<()> {
         anyhow::ensure!(
             matches!(self.client_state, ProjectClientState::Local),
-            "project was already shared"
+            "项目已被共享"
         );
 
         self.client_subscriptions.extend([
@@ -2835,7 +2835,7 @@ impl Project {
     fn unshare_internal(&mut self, cx: &mut App) -> Result<()> {
         anyhow::ensure!(
             !self.is_via_collab(),
-            "attempted to unshare a remote project"
+            "尝试取消共享远程项目"
         );
 
         if let ProjectClientState::Shared { remote_id, .. } = self.client_state {
@@ -3110,7 +3110,7 @@ impl Project {
 
         let Some(remote_client) = &self.remote_client else {
             log::error!("download_file: not a remote project");
-            return Task::ready(Err(anyhow!("not a remote project")));
+            return Task::ready(Err(anyhow!("不是远程项目")));
         };
 
         let proto_client = remote_client.read(cx).proto_client();
@@ -3695,7 +3695,7 @@ impl Project {
         match event {
             SettingsObserverEvent::LocalSettingsUpdated(result) => match result {
                 Err(InvalidSettingsError::LocalSettings { message, path }) => {
-                    let message = format!("Failed to set local settings in {path:?}:\n{message}");
+                    let message = format!("在 {path:?} 中设置本地设置失败:\n{message}");
                     cx.emit(Event::Toast {
                         notification_id: format!("local-settings-{path:?}").into(),
                         link: None,
@@ -3709,11 +3709,11 @@ impl Project {
             },
             SettingsObserverEvent::LocalTasksUpdated(result) => match result {
                 Err(InvalidSettingsError::Tasks { message, path }) => {
-                    let message = format!("Failed to set local tasks in {path:?}:\n{message}");
+                    let message = format!("在 {path:?} 中设置本地任务失败:\n{message}");
                     cx.emit(Event::Toast {
                         notification_id: format!("local-tasks-{path:?}").into(),
                         link: Some(ToastLink {
-                            label: "Open Tasks Documentation",
+                            label: "打开任务文档",
                             url: "https://zed.dev/docs/tasks",
                         }),
                         message,
@@ -3727,7 +3727,7 @@ impl Project {
             SettingsObserverEvent::LocalDebugScenariosUpdated(result) => match result {
                 Err(InvalidSettingsError::Debug { message, path }) => {
                     let message =
-                        format!("Failed to set local debug scenarios in {path:?}:\n{message}");
+                        format!("在 {path:?} 中设置本地调试场景失败:\n{message}");
                     cx.emit(Event::Toast {
                         notification_id: format!("local-debug-scenarios-{path:?}").into(),
                         link: None,
@@ -4891,7 +4891,7 @@ impl Project {
             let _release_subscription = release_subscription;
             released_rx
                 .await
-                .map_err(|_| anyhow!("worktree release observer dropped before release"))?;
+                .map_err(|_| anyhow!("工作树释放观察器在释放前已丢弃"))?;
             Ok(())
         })
     }
@@ -5869,7 +5869,7 @@ impl Project {
             } => {
                 if sharing_has_stopped {
                     return Task::ready(Err(anyhow!(
-                        "can't synchronize remote buffers on a readonly project"
+                        "无法在只读项目上同步远程缓冲区"
                     )));
                 } else {
                     remote_id
@@ -5877,7 +5877,7 @@ impl Project {
             }
             ProjectClientState::Shared { .. } | ProjectClientState::Local => {
                 return Task::ready(Err(anyhow!(
-                    "can't synchronize remote buffers on a local project"
+                    "无法在本地项目上同步远程缓冲区"
                 )));
             }
         };
@@ -6276,7 +6276,7 @@ impl ProjectGroupKey {
             }
         }
         if names.is_empty() {
-            "Empty Workspace".into()
+            "空工作区".into()
         } else {
             names.join(", ").into()
         }

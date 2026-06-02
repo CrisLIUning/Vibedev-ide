@@ -835,7 +835,7 @@ pub(crate) async fn discover_api_endpoint(
 
     anyhow::ensure!(
         response.status().is_success(),
-        "GraphQL endpoint discovery failed: {}",
+        "GraphQL 端点发现失败: {}",
         response.status()
     );
 
@@ -844,11 +844,11 @@ pub(crate) async fn discover_api_endpoint(
     let body_str = std::str::from_utf8(&body)?;
 
     let parsed: GraphQLResponse = serde_json::from_str(body_str)
-        .context("Failed to parse GraphQL response for Copilot endpoint discovery")?;
+        .context("解析 Copilot 端点发现的 GraphQL 响应失败")?;
 
     let data = parsed
         .data
-        .context("GraphQL response contained no data field")?;
+        .context("GraphQL 响应不包含 data 字段")?;
 
     Ok(data.viewer.copilot_endpoints.api)
 }
@@ -904,7 +904,7 @@ async fn request_models(
 
     anyhow::ensure!(
         response.status().is_success(),
-        "Failed to request models: {}",
+        "请求模型失败: {}",
         response.status()
     );
     let mut body = Vec::new();
@@ -974,7 +974,7 @@ async fn stream_completion(
         response.body_mut().read_to_end(&mut body).await?;
         let body_str = std::str::from_utf8(&body)?;
         anyhow::bail!(
-            "Failed to connect to API: {} {}",
+            "连接 API 失败: {} {}",
             response.status(),
             body_str
         );
@@ -1043,7 +1043,7 @@ async fn stream_messages(
     if !response.status().is_success() {
         let mut body = String::new();
         response.body_mut().read_to_string(&mut body).await?;
-        anyhow::bail!("Failed to connect to API: {} {}", response.status(), body);
+        anyhow::bail!("连接 API 失败: {} {}", response.status(), body);
     }
 
     let reader = BufReader::new(response.into_body());
@@ -1062,7 +1062,7 @@ async fn stream_messages(
                         Ok(event) => Some(Ok(event)),
                         Err(error) => {
                             log::error!(
-                                "Failed to parse Copilot messages stream event: `{}`\nResponse: `{}`",
+                                "解析 Copilot 消息流事件失败: `{}`\n响应: `{}`",
                                 error,
                                 line,
                             );

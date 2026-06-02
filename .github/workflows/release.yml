@@ -386,8 +386,8 @@ jobs:
     - name: run_bundling::upload_artifact
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: zed-remote-server-linux-aarch64.gz
-        path: target/zed-remote-server-linux-aarch64.gz
+        name: vibedev-remote-server-linux-aarch64.gz
+        path: target/vibedev-remote-server-linux-aarch64.gz
         if-no-files-found: error
     timeout-minutes: 60
   bundle_linux_x86_64:
@@ -426,8 +426,8 @@ jobs:
     - name: run_bundling::upload_artifact
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: zed-remote-server-linux-x86_64.gz
-        path: target/zed-remote-server-linux-x86_64.gz
+        name: vibedev-remote-server-linux-x86_64.gz
+        path: target/vibedev-remote-server-linux-x86_64.gz
         if-no-files-found: error
     timeout-minutes: 60
   bundle_mac_aarch64:
@@ -471,8 +471,8 @@ jobs:
     - name: run_bundling::upload_artifact
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: zed-remote-server-macos-aarch64.gz
-        path: target/zed-remote-server-macos-aarch64.gz
+        name: vibedev-remote-server-macos-aarch64.gz
+        path: target/vibedev-remote-server-macos-aarch64.gz
         if-no-files-found: error
     timeout-minutes: 60
   bundle_mac_x86_64:
@@ -516,8 +516,8 @@ jobs:
     - name: run_bundling::upload_artifact
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: zed-remote-server-macos-x86_64.gz
-        path: target/zed-remote-server-macos-x86_64.gz
+        name: vibedev-remote-server-macos-x86_64.gz
+        path: target/vibedev-remote-server-macos-x86_64.gz
         if-no-files-found: error
     timeout-minutes: 60
   bundle_windows_aarch64:
@@ -561,8 +561,8 @@ jobs:
     - name: run_bundling::upload_artifact
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: zed-remote-server-windows-aarch64.zip
-        path: target/zed-remote-server-windows-aarch64.zip
+        name: vibedev-remote-server-windows-aarch64.zip
+        path: target/vibedev-remote-server-windows-aarch64.zip
         if-no-files-found: error
     timeout-minutes: 60
   bundle_windows_x86_64:
@@ -606,8 +606,8 @@ jobs:
     - name: run_bundling::upload_artifact
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: zed-remote-server-windows-x86_64.zip
-        path: target/zed-remote-server-windows-x86_64.zip
+        name: vibedev-remote-server-windows-x86_64.zip
+        path: target/vibedev-remote-server-windows-x86_64.zip
         if-no-files-found: error
     timeout-minutes: 60
   upload_release_assets:
@@ -637,12 +637,12 @@ jobs:
         mv ./artifacts/zed-linux-x86_64.tar.gz/zed-linux-x86_64.tar.gz release-artifacts/zed-linux-x86_64.tar.gz
         mv ./artifacts/Zed-x86_64.exe/Zed-x86_64.exe release-artifacts/Zed-x86_64.exe
         mv ./artifacts/Zed-aarch64.exe/Zed-aarch64.exe release-artifacts/Zed-aarch64.exe
-        mv ./artifacts/zed-remote-server-macos-aarch64.gz/zed-remote-server-macos-aarch64.gz release-artifacts/zed-remote-server-macos-aarch64.gz
-        mv ./artifacts/zed-remote-server-macos-x86_64.gz/zed-remote-server-macos-x86_64.gz release-artifacts/zed-remote-server-macos-x86_64.gz
-        mv ./artifacts/zed-remote-server-linux-aarch64.gz/zed-remote-server-linux-aarch64.gz release-artifacts/zed-remote-server-linux-aarch64.gz
-        mv ./artifacts/zed-remote-server-linux-x86_64.gz/zed-remote-server-linux-x86_64.gz release-artifacts/zed-remote-server-linux-x86_64.gz
-        mv ./artifacts/zed-remote-server-windows-aarch64.zip/zed-remote-server-windows-aarch64.zip release-artifacts/zed-remote-server-windows-aarch64.zip
-        mv ./artifacts/zed-remote-server-windows-x86_64.zip/zed-remote-server-windows-x86_64.zip release-artifacts/zed-remote-server-windows-x86_64.zip
+        mv ./artifacts/vibedev-remote-server-macos-aarch64.gz/vibedev-remote-server-macos-aarch64.gz release-artifacts/vibedev-remote-server-macos-aarch64.gz
+        mv ./artifacts/vibedev-remote-server-macos-x86_64.gz/vibedev-remote-server-macos-x86_64.gz release-artifacts/vibedev-remote-server-macos-x86_64.gz
+        mv ./artifacts/vibedev-remote-server-linux-aarch64.gz/vibedev-remote-server-linux-aarch64.gz release-artifacts/vibedev-remote-server-linux-aarch64.gz
+        mv ./artifacts/vibedev-remote-server-linux-x86_64.gz/vibedev-remote-server-linux-x86_64.gz release-artifacts/vibedev-remote-server-linux-x86_64.gz
+        mv ./artifacts/vibedev-remote-server-windows-aarch64.zip/vibedev-remote-server-windows-aarch64.zip release-artifacts/vibedev-remote-server-windows-aarch64.zip
+        mv ./artifacts/vibedev-remote-server-windows-x86_64.zip/vibedev-remote-server-windows-x86_64.zip release-artifacts/vibedev-remote-server-windows-x86_64.zip
     - name: gh release upload "$GITHUB_REF_NAME" --repo=zed-industries/zed release-artifacts/*
       run: gh release upload "$GITHUB_REF_NAME" --repo=zed-industries/zed release-artifacts/*
       env:
@@ -654,7 +654,7 @@ jobs:
     steps:
     - name: release::validate_release_assets
       run: |
-        EXPECTED_ASSETS='["Zed-aarch64.dmg", "Zed-x86_64.dmg", "zed-linux-aarch64.tar.gz", "zed-linux-x86_64.tar.gz", "Zed-x86_64.exe", "Zed-aarch64.exe", "zed-remote-server-macos-aarch64.gz", "zed-remote-server-macos-x86_64.gz", "zed-remote-server-linux-aarch64.gz", "zed-remote-server-linux-x86_64.gz", "zed-remote-server-windows-aarch64.zip", "zed-remote-server-windows-x86_64.zip"]'
+        EXPECTED_ASSETS='["Zed-aarch64.dmg", "Zed-x86_64.dmg", "zed-linux-aarch64.tar.gz", "zed-linux-x86_64.tar.gz", "Zed-x86_64.exe", "Zed-aarch64.exe", "vibedev-remote-server-macos-aarch64.gz", "vibedev-remote-server-macos-x86_64.gz", "vibedev-remote-server-linux-aarch64.gz", "vibedev-remote-server-linux-x86_64.gz", "vibedev-remote-server-windows-aarch64.zip", "vibedev-remote-server-windows-x86_64.zip"]'
         TAG="$GITHUB_REF_NAME"
 
         ACTUAL_ASSETS=$(gh release view "$TAG" --repo=zed-industries/zed --json assets -q '[.assets[].name]')

@@ -1694,7 +1694,7 @@ async fn test_remote_search_commits_streams_proto_chunks(
         let repository_id = repository.read(cx).snapshot().id;
         let remote_client = project
             .remote_client()
-            .expect("project should have a remote client");
+            .expect("项目应该具有远程客户端");
         (remote_client, repository_id)
     });
     let proto_client = remote_client.read_with(cx, |remote_client, _| remote_client.proto_client());
@@ -1711,21 +1711,21 @@ async fn test_remote_search_commits_streams_proto_chunks(
             case_sensitive: true,
         })
         .await
-        .expect("search commits stream should start");
+        .expect("搜索提交流应该启动");
 
     let mut chunks = Vec::new();
     while let Some(response) = futures::StreamExt::next(&mut stream).await {
-        chunks.push(response.expect("search commits chunk should succeed").shas);
+        chunks.push(response.expect("搜索提交块应该成功").shas);
     }
 
     assert!(
         chunks.len() > 1,
-        "expected search results to stream in multiple chunks"
+        "预期搜索结果将分块流式传输"
     );
     for chunk in chunks.iter().take(chunks.len() - 1) {
         assert!(
             chunk.len() <= RESPONSE_MAX_SIZE,
-            "non-final chunks should meet the target byte size"
+            "非最终块应该满足目标字节大小"
         );
     }
 
@@ -2561,7 +2561,7 @@ async fn test_remote_apply_code_action_skips_unadvertised_command(
                 fake.set_request_handler::<lsp::request::ExecuteCommand, _, _>(
                     |params, _| async move {
                         panic!(
-                            "Unadvertised command {} must not reach the language server",
+                            "未公开的命令 {} 不应到达语言服务器",
                             params.command
                         );
                     },
@@ -2624,7 +2624,7 @@ async fn test_remote_apply_code_action_skips_unadvertised_command(
             project.apply_code_action(buffer.clone(), action, true, cx)
         })
         .await
-        .expect("Unadvertised command must not be forwarded to executeCommand");
+        .expect("未公开的命令不应转发到 executeCommand");
     assert_eq!(transaction.0.len(), 0);
 }
 
@@ -2713,7 +2713,7 @@ async fn test_remote_restore_unstaged_hunk_clears_diff(
                 &snapshot.buffer_snapshot(),
             )
             .collect();
-        assert!(!hunks.is_empty(), "should have diff hunks before restore");
+        assert!(!hunks.is_empty(), "恢复前应有差异代码块");
     });
 
     cx.update_window_entity(&editor, |editor, window, cx| {
@@ -2727,13 +2727,13 @@ async fn test_remote_restore_unstaged_hunk_clears_diff(
         assert_eq!(
             snapshot.text(),
             base_text,
-            "buffer text should match base after restoring all hunks"
+            "恢复所有代码块后缓冲区文本应与基础文本匹配"
         );
 
         let hunks: Vec<_> = editor
             .diff_hunks_in_ranges(&[editor::Anchor::Min..editor::Anchor::Max], &snapshot)
             .collect();
-        assert!(hunks.is_empty(), "should have no diff hunks after restore");
+        assert!(hunks.is_empty(), "恢复后应无差异代码块");
     });
 }
 

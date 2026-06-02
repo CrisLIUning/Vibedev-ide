@@ -429,38 +429,38 @@ impl<T: ButtonBuilder, const COLS: usize, const ROWS: usize> Component
             v_flex()
                 .gap_6()
                 .children(vec![example_group_with_title(
-                    "Transparent Variant",
+                    "透明变体",
                     vec![
                         single_example(
-                            "Single Row Group",
+                            "单行组",
                             ToggleButtonGroup::single_row(
                                 "single_row_test",
                                 [
-                                    ToggleButtonSimple::new("First", |_, _, _| {}),
-                                    ToggleButtonSimple::new("Second", |_, _, _| {}),
-                                    ToggleButtonSimple::new("Third", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第一", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第二", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第三", |_, _, _| {}),
                                 ],
                             )
                             .selected_index(1)
                             .into_any_element(),
                         ),
                         single_example(
-                            "Single Row Group with icons",
+                            "带图标的单行组",
                             ToggleButtonGroup::single_row(
                                 "single_row_test_icon",
                                 [
                                     ToggleButtonWithIcon::new(
-                                        "First",
+                                        "第一",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                     ToggleButtonWithIcon::new(
-                                        "Second",
+                                        "第二",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                     ToggleButtonWithIcon::new(
-                                        "Third",
+                                        "第三",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
@@ -470,57 +470,57 @@ impl<T: ButtonBuilder, const COLS: usize, const ROWS: usize> Component
                             .into_any_element(),
                         ),
                         single_example(
-                            "Multiple Row Group",
+                            "多行组",
                             ToggleButtonGroup::two_rows(
                                 "multiple_row_test",
                                 [
-                                    ToggleButtonSimple::new("First", |_, _, _| {}),
-                                    ToggleButtonSimple::new("Second", |_, _, _| {}),
-                                    ToggleButtonSimple::new("Third", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第一", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第二", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第三", |_, _, _| {}),
                                 ],
                                 [
-                                    ToggleButtonSimple::new("Fourth", |_, _, _| {}),
-                                    ToggleButtonSimple::new("Fifth", |_, _, _| {}),
-                                    ToggleButtonSimple::new("Sixth", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第四", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第五", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第六", |_, _, _| {}),
                                 ],
                             )
                             .selected_index(3)
                             .into_any_element(),
                         ),
                         single_example(
-                            "Multiple Row Group with Icons",
+                            "带图标的多行组",
                             ToggleButtonGroup::two_rows(
                                 "multiple_row_test_icons",
                                 [
                                     ToggleButtonWithIcon::new(
-                                        "First",
+                                        "第一",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                     ToggleButtonWithIcon::new(
-                                        "Second",
+                                        "第二",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                     ToggleButtonWithIcon::new(
-                                        "Third",
+                                        "第三",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                 ],
                                 [
                                     ToggleButtonWithIcon::new(
-                                        "Fourth",
+                                        "第四",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                     ToggleButtonWithIcon::new(
-                                        "Fifth",
+                                        "第五",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                     ToggleButtonWithIcon::new(
-                                        "Sixth",
+                                        "第六",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
@@ -532,16 +532,16 @@ impl<T: ButtonBuilder, const COLS: usize, const ROWS: usize> Component
                     ],
                 )])
                 .children(vec![example_group_with_title(
-                    "Outlined Variant",
+                    "轮廓变体",
                     vec![
                         single_example(
-                            "Single Row Group",
+                            "单行组",
                             ToggleButtonGroup::single_row(
                                 "single_row_test_outline",
                                 [
-                                    ToggleButtonSimple::new("First", |_, _, _| {}),
-                                    ToggleButtonSimple::new("Second", |_, _, _| {}),
-                                    ToggleButtonSimple::new("Third", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第一", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第二", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第三", |_, _, _| {}),
                                 ],
                             )
                             .selected_index(1)
@@ -549,22 +549,22 @@ impl<T: ButtonBuilder, const COLS: usize, const ROWS: usize> Component
                             .into_any_element(),
                         ),
                         single_example(
-                            "Single Row Group with icons",
+                            "带图标的单行组",
                             ToggleButtonGroup::single_row(
                                 "single_row_test_icon_outlined",
                                 [
                                     ToggleButtonWithIcon::new(
-                                        "First",
+                                        "第一",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                     ToggleButtonWithIcon::new(
-                                        "Second",
+                                        "第二",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                     ToggleButtonWithIcon::new(
-                                        "Third",
+                                        "第三",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
@@ -575,18 +575,18 @@ impl<T: ButtonBuilder, const COLS: usize, const ROWS: usize> Component
                             .into_any_element(),
                         ),
                         single_example(
-                            "Multiple Row Group",
+                            "多行组",
                             ToggleButtonGroup::two_rows(
                                 "multiple_row_test",
                                 [
-                                    ToggleButtonSimple::new("First", |_, _, _| {}),
-                                    ToggleButtonSimple::new("Second", |_, _, _| {}),
-                                    ToggleButtonSimple::new("Third", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第一", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第二", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第三", |_, _, _| {}),
                                 ],
                                 [
-                                    ToggleButtonSimple::new("Fourth", |_, _, _| {}),
-                                    ToggleButtonSimple::new("Fifth", |_, _, _| {}),
-                                    ToggleButtonSimple::new("Sixth", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第四", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第五", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第六", |_, _, _| {}),
                                 ],
                             )
                             .selected_index(3)
@@ -594,39 +594,39 @@ impl<T: ButtonBuilder, const COLS: usize, const ROWS: usize> Component
                             .into_any_element(),
                         ),
                         single_example(
-                            "Multiple Row Group with Icons",
+                            "带图标的多行组",
                             ToggleButtonGroup::two_rows(
                                 "multiple_row_test",
                                 [
                                     ToggleButtonWithIcon::new(
-                                        "First",
+                                        "第一",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                     ToggleButtonWithIcon::new(
-                                        "Second",
+                                        "第二",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                     ToggleButtonWithIcon::new(
-                                        "Third",
+                                        "第三",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                 ],
                                 [
                                     ToggleButtonWithIcon::new(
-                                        "Fourth",
+                                        "第四",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                     ToggleButtonWithIcon::new(
-                                        "Fifth",
+                                        "第五",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                     ToggleButtonWithIcon::new(
-                                        "Sixth",
+                                        "第六",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
@@ -639,16 +639,16 @@ impl<T: ButtonBuilder, const COLS: usize, const ROWS: usize> Component
                     ],
                 )])
                 .children(vec![example_group_with_title(
-                    "Filled Variant",
+                    "填充变体",
                     vec![
                         single_example(
-                            "Single Row Group",
+                            "单行组",
                             ToggleButtonGroup::single_row(
                                 "single_row_test_outline",
                                 [
-                                    ToggleButtonSimple::new("First", |_, _, _| {}),
-                                    ToggleButtonSimple::new("Second", |_, _, _| {}),
-                                    ToggleButtonSimple::new("Third", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第一", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第二", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第三", |_, _, _| {}),
                                 ],
                             )
                             .selected_index(2)
@@ -656,22 +656,22 @@ impl<T: ButtonBuilder, const COLS: usize, const ROWS: usize> Component
                             .into_any_element(),
                         ),
                         single_example(
-                            "Single Row Group with icons",
+                            "带图标的单行组",
                             ToggleButtonGroup::single_row(
                                 "single_row_test_icon_outlined",
                                 [
                                     ToggleButtonWithIcon::new(
-                                        "First",
+                                        "第一",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                     ToggleButtonWithIcon::new(
-                                        "Second",
+                                        "第二",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                     ToggleButtonWithIcon::new(
-                                        "Third",
+                                        "第三",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
@@ -682,18 +682,18 @@ impl<T: ButtonBuilder, const COLS: usize, const ROWS: usize> Component
                             .into_any_element(),
                         ),
                         single_example(
-                            "Multiple Row Group",
+                            "多行组",
                             ToggleButtonGroup::two_rows(
                                 "multiple_row_test",
                                 [
-                                    ToggleButtonSimple::new("First", |_, _, _| {}),
-                                    ToggleButtonSimple::new("Second", |_, _, _| {}),
-                                    ToggleButtonSimple::new("Third", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第一", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第二", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第三", |_, _, _| {}),
                                 ],
                                 [
-                                    ToggleButtonSimple::new("Fourth", |_, _, _| {}),
-                                    ToggleButtonSimple::new("Fifth", |_, _, _| {}),
-                                    ToggleButtonSimple::new("Sixth", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第四", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第五", |_, _, _| {}),
+                                    ToggleButtonSimple::new("第六", |_, _, _| {}),
                                 ],
                             )
                             .selected_index(3)
@@ -702,39 +702,39 @@ impl<T: ButtonBuilder, const COLS: usize, const ROWS: usize> Component
                             .into_any_element(),
                         ),
                         single_example(
-                            "Multiple Row Group with Icons",
+                            "带图标的多行组",
                             ToggleButtonGroup::two_rows(
                                 "multiple_row_test",
                                 [
                                     ToggleButtonWithIcon::new(
-                                        "First",
+                                        "第一",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                     ToggleButtonWithIcon::new(
-                                        "Second",
+                                        "第二",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                     ToggleButtonWithIcon::new(
-                                        "Third",
+                                        "第三",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                 ],
                                 [
                                     ToggleButtonWithIcon::new(
-                                        "Fourth",
+                                        "第四",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                     ToggleButtonWithIcon::new(
-                                        "Fifth",
+                                        "第五",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
                                     ToggleButtonWithIcon::new(
-                                        "Sixth",
+                                        "第六",
                                         IconName::AiZed,
                                         |_, _, _| {},
                                     ),
@@ -748,16 +748,16 @@ impl<T: ButtonBuilder, const COLS: usize, const ROWS: usize> Component
                     ],
                 )])
                 .children(vec![single_example(
-                    "With Tooltips",
+                    "带工具提示",
                     ToggleButtonGroup::single_row(
                         "with_tooltips",
                         [
-                            ToggleButtonSimple::new("First", |_, _, _| {})
-                                .tooltip(Tooltip::text("This is a tooltip. Hello!")),
-                            ToggleButtonSimple::new("Second", |_, _, _| {})
-                                .tooltip(Tooltip::text("This is a tooltip. Hey?")),
-                            ToggleButtonSimple::new("Third", |_, _, _| {})
-                                .tooltip(Tooltip::text("This is a tooltip. Get out of here now!")),
+                            ToggleButtonSimple::new("第一", |_, _, _| {})
+                                .tooltip(Tooltip::text("这是一个工具提示。你好!")),
+                            ToggleButtonSimple::new("第二", |_, _, _| {})
+                                .tooltip(Tooltip::text("这是一个工具提示。嘿?")),
+                            ToggleButtonSimple::new("第三", |_, _, _| {})
+                                .tooltip(Tooltip::text("这是一个工具提示。马上离开这里!")),
                         ],
                     )
                     .selected_index(1)

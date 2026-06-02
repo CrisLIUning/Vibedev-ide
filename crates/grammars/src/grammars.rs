@@ -45,14 +45,14 @@ pub fn native_grammars() -> Vec<(&'static str, tree_sitter::Language)> {
 pub fn load_config(name: &str) -> LanguageConfig {
     let config_toml = String::from_utf8(
         GrammarDir::get(&format!("{}/config.toml", name))
-            .unwrap_or_else(|| panic!("missing config for language {:?}", name))
+            .unwrap_or_else(|| panic!("缺少语言 {:?} 的配置", name))
             .data
             .to_vec(),
     )
     .unwrap();
 
     let config: LanguageConfig = ::toml::from_str(&config_toml)
-        .with_context(|| format!("failed to load config.toml for language {name:?}"))
+        .with_context(|| format!("加载语言 {name:?} 的 config.toml 失败"))
         .unwrap();
 
     config

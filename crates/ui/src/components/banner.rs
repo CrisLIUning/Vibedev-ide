@@ -12,9 +12,9 @@ use gpui::{AnyElement, IntoElement, ParentElement, Styled};
 ///
 /// Banner::new()
 ///     .severity(Severity::Success)
-///     .children([Label::new("This is a success message")])
+///     .children([Label::new("这是一条成功消息")])
 ///     .action_slot(
-///         Button::new("learn-more", "Learn More")
+///         Button::new("learn-more", "了解更多")
 ///             .end_icon(Icon::new(IconName::ArrowUpRight).size(IconSize::Small)),
 ///     );
 /// ```
@@ -137,44 +137,44 @@ impl Component for Banner {
     fn preview(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
         let severity_examples = vec![
             single_example(
-                "Default",
+                "默认",
                 Banner::new()
-                    .child(Label::new("This is a default banner with no customization"))
+                    .child(Label::new("这是一个未自定义的默认横幅"))
                     .into_any_element(),
             ),
             single_example(
-                "Info",
+                "信息",
                 Banner::new()
                     .severity(Severity::Info)
-                    .child(Label::new("This is an informational message"))
+                    .child(Label::new("这是一条信息提示"))
                     .action_slot(
-                        Button::new("learn-more", "Learn More")
+                        Button::new("learn-more", "了解更多")
                             .end_icon(Icon::new(IconName::ArrowUpRight).size(IconSize::Small)),
                     )
                     .into_any_element(),
             ),
             single_example(
-                "Success",
+                "成功",
                 Banner::new()
                     .severity(Severity::Success)
-                    .child(Label::new("Operation completed successfully"))
-                    .action_slot(Button::new("dismiss", "Dismiss"))
+                    .child(Label::new("操作成功完成"))
+                    .action_slot(Button::new("dismiss", "关闭"))
                     .into_any_element(),
             ),
             single_example(
-                "Warning",
+                "警告",
                 Banner::new()
                     .severity(Severity::Warning)
-                    .child(Label::new("Your settings file uses deprecated settings"))
-                    .action_slot(Button::new("update", "Update Settings"))
+                    .child(Label::new("您的设置文件使用了已弃用的设置"))
+                    .action_slot(Button::new("update", "更新设置"))
                     .into_any_element(),
             ),
             single_example(
-                "Error",
+                "错误",
                 Banner::new()
                     .severity(Severity::Error)
-                    .child(Label::new("Connection error: unable to connect to server"))
-                    .action_slot(Button::new("reconnect", "Retry"))
+                    .child(Label::new("连接错误:无法连接到服务器"))
+                    .action_slot(Button::new("reconnect", "重试"))
                     .into_any_element(),
             ),
         ];

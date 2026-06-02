@@ -56,7 +56,7 @@ pub fn init(cx: &mut App) -> Arc<AgentCliAppState> {
     let http = {
         let _guard = Tokio::handle(cx).enter();
         ReqwestClient::proxy_and_user_agent(proxy_url, &user_agent)
-            .expect("could not start HTTP client")
+            .expect("无法启动 HTTP 客户端")
     };
     cx.set_http_client(Arc::new(http));
 

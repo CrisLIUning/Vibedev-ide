@@ -64,7 +64,7 @@ pub fn send_telemetry(scenario: &DebugScenario, location: TelemetrySpawnLocation
             .and_then(Result::ok);
 
         telemetry::event!(
-            "Debugger Session Started",
+            "调试器会话已启动",
             spawn_location = location,
             with_build_task = with_build_task,
             kind = kind,

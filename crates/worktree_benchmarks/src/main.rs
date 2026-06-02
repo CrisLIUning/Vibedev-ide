@@ -10,7 +10,7 @@ use worktree::Worktree;
 fn main() {
     let Some(worktree_root_path) = std::env::args().nth(1) else {
         println!(
-            "Missing path to worktree root\nUsage: bench_background_scan PATH_TO_WORKTREE_ROOT"
+            "缺少工作树根目录路径\n用法: bench_background_scan PATH_TO_WORKTREE_ROOT"
         );
         return;
     };
@@ -40,7 +40,7 @@ fn main() {
             let (files, directories) =
                 worktree.read_with(cx, |this, _| (this.file_count(), this.dir_count()));
             println!(
-                "{:?} for {directories} directories and {files} files",
+                "{:?},包含 {directories} 个目录和 {files} 个文件",
                 elapsed
             );
             cx.update(|cx| {

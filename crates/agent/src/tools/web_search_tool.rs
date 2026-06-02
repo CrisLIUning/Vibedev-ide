@@ -35,7 +35,7 @@ impl From<WebSearchToolOutput> for LanguageModelToolResultContent {
     fn from(value: WebSearchToolOutput) -> Self {
         match value {
             WebSearchToolOutput::Success(response) => serde_json::to_string(&response)
-                .unwrap_or_else(|e| format!("Failed to serialize web search response: {e}"))
+                .unwrap_or_else(|e| format!("无法序列化网络搜索响应: {e}"))
                 .into(),
             WebSearchToolOutput::Error { error } => error.into(),
         }

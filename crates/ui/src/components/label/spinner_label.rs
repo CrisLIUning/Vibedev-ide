@@ -183,21 +183,21 @@ impl Component for SpinnerLabel {
     }
 
     fn name() -> &'static str {
-        "Spinner Label"
+        "旋转标签"
     }
 
     fn sort_name() -> &'static str {
-        "Spinner Label"
+        "旋转标签"
     }
 
     fn preview(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
         let examples = vec![
-            single_example("Default", SpinnerLabel::new().into_any_element()),
+            single_example("默认", SpinnerLabel::new().into_any_element()),
             single_example(
-                "Dots Variant",
+                "点状变体",
                 SpinnerLabel::dots_variant().into_any_element(),
             ),
-            single_example("Sand Variant", SpinnerLabel::sand().into_any_element()),
+            single_example("沙漏变体", SpinnerLabel::sand().into_any_element()),
         ];
 
         Some(example_group(examples).vertical().into_any_element())

@@ -20,7 +20,7 @@
 //!     });
 //!
 //!     // Check rendered state
-//!     assert_eq!(window.title(), Some("Expected Title"));
+//!     assert_eq!(window.title(), Some("预期标题"));
 //! }
 //! ```
 
@@ -535,7 +535,7 @@ mod tests {
 
     impl Render for Counter {
         fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
-            div().child(format!("Count: {}", self.count))
+            div().child(format!("计数: {}", self.count))
         }
     }
 

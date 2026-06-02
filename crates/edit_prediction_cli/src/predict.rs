@@ -53,7 +53,7 @@ pub async fn run_prediction(
 
     let Some(provider) = args.provider else {
         anyhow::bail!(
-            "No existing predictions found. Use --provider to specify which model to use for prediction."
+            "未找到现有预测。请使用 --provider 指定用于预测的模型。"
         );
     };
 
@@ -62,7 +62,7 @@ pub async fn run_prediction(
         PredictionProvider::TeacherMultiRegion(..)
             | PredictionProvider::TeacherMultiRegionNonBatching(..)
     ) {
-        anyhow::bail!("Teacher multi-region providers are not supported for prediction.");
+        anyhow::bail!("不支持使用多区域 Teacher 提供程序进行预测。");
     }
 
     if let PredictionProvider::Teacher(backend, _)
@@ -169,7 +169,7 @@ pub async fn run_prediction(
             }
         }
     });
-    step_progress.set_substatus("configuring model");
+    step_progress.set_substatus("正在配置模型");
     let state = example.state.as_ref().context("state must be set")?;
     let run_dir = RUN_DIR.join(&example.spec.name);
 
@@ -241,12 +241,12 @@ pub async fn run_prediction(
 
         if repetition_count > 1 {
             step_progress.set_substatus(format!(
-                "running prediction {}/{}",
+                "正在运行预测 {}/{}",
                 ix + 1,
                 repetition_count
             ));
         } else {
-            step_progress.set_substatus("running prediction");
+            step_progress.set_substatus("正在运行预测");
         }
 
         fs::create_dir_all(&run_dir)?;
@@ -272,7 +272,7 @@ pub async fn run_prediction(
                 avg_logprob: None,
             });
 
-        step_progress.set_substatus("requesting prediction");
+        step_progress.set_substatus("正在请求预测");
         let prediction = ep_store
             .update(&mut cx, |store, cx| {
                 store.request_prediction(
@@ -306,7 +306,7 @@ pub async fn run_prediction(
             let (info, style) = if has_prediction {
                 ("predicted", InfoStyle::Normal)
             } else {
-                ("no prediction", InfoStyle::Warning)
+                ("无预测", InfoStyle::Warning)
             };
             step_progress.set_info(info, style);
         }
@@ -382,12 +382,12 @@ async fn predict_anthropic(
     for ix in 0..repetition_count {
         if repetition_count > 1 {
             step_progress.set_substatus(format!(
-                "running prediction {}/{}",
+                "正在运行预测 {}/{}",
                 ix + 1,
                 repetition_count
             ));
         } else {
-            step_progress.set_substatus("running prediction");
+            step_progress.set_substatus("正在运行预测");
         }
 
         let messages = vec![anthropic::Message {
@@ -495,12 +495,12 @@ async fn predict_openai(
     for ix in 0..repetition_count {
         if repetition_count > 1 {
             step_progress.set_substatus(format!(
-                "running prediction {}/{}",
+                "正在运行预测 {}/{}",
                 ix + 1,
                 repetition_count
             ));
         } else {
-            step_progress.set_substatus("running prediction");
+            step_progress.set_substatus("正在运行预测");
         }
 
         let messages = vec![open_ai::RequestMessage::User {
@@ -596,16 +596,16 @@ pub async fn predict_baseten(
     step_progress: &StepProgress,
 ) -> anyhow::Result<()> {
     let model_id =
-        std::env::var("ZED_ZETA_MODEL").context("ZED_ZETA_MODEL environment variable required")?;
+        std::env::var("ZED_ZETA_MODEL").context("需要 ZED_ZETA_MODEL 环境变量")?;
 
     let api_key =
-        std::env::var("BASETEN_API_KEY").context("BASETEN_API_KEY environment variable not set")?;
+        std::env::var("BASETEN_API_KEY").context("未设置 BASETEN_API_KEY 环境变量")?;
 
     let prompt = example.prompt.as_ref().context("Prompt is required")?;
     let prompt_text = prompt.input.clone();
     let prefill = prompt.prefill.clone().unwrap_or_default();
 
-    step_progress.set_substatus("running prediction via baseten");
+    step_progress.set_substatus("通过 Baseten 运行预测");
 
     let environment: String = <&'static str>::from(&format).to_lowercase();
     let url = format!(
@@ -622,7 +622,7 @@ pub async fn predict_baseten(
     };
 
     let body_bytes =
-        serde_json::to_vec(&request_body).context("Failed to serialize request body")?;
+        serde_json::to_vec(&request_body).context("序列化请求体失败")?;
 
     let http_client: Arc<dyn HttpClient> = Arc::new(ReqwestClient::new());
     let request = http_client::Request::builder()
@@ -640,14 +640,14 @@ pub async fn predict_baseten(
         .body_mut()
         .read_to_string(&mut body)
         .await
-        .context("Failed to read Baseten response body")?;
+        .context("读取 Baseten 响应体失败")?;
 
     if !status.is_success() {
-        anyhow::bail!("Baseten API returned {status}: {body}");
+        anyhow::bail!("Baseten API 返回 {status}: {body}");
     }
 
     let completion: RawCompletionResponse =
-        serde_json::from_str(&body).context("Failed to parse Baseten response")?;
+        serde_json::from_str(&body).context("解析 Baseten 响应失败")?;
 
     let actual_output = completion
         .choices
@@ -738,7 +738,7 @@ pub async fn reprocess_after_batch_wait(
     }
 
     if reprocessed > 0 {
-        eprintln!("Reprocessed {} example(s) with batch results", reprocessed);
+        eprintln!("已使用批处理结果重新处理 {} 个示例", reprocessed);
     }
 
     Ok(())
@@ -754,7 +754,7 @@ pub async fn wait_for_batches(provider: Option<&PredictionProvider>) -> anyhow::
         }
 
         eprintln!(
-            "Waiting for {} pending batch request(s) to complete... (polling every {}s)",
+            "正在等待 {} 个待处理的批处理请求完成...(每 {} 秒轮询一次)",
             pending,
             poll_interval.as_secs()
         );

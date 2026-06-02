@@ -120,7 +120,7 @@ impl LspStdoutHandler {
                 }
             } else {
                 warn!(
-                    "failed to deserialize LSP message:\n{}",
+                    "反序列化 LSP 消息失败:\n{}",
                     std::str::from_utf8(&buffer)?
                 );
             }

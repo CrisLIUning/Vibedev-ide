@@ -22,7 +22,6 @@ pub use app_menus::*;
 use assets::Assets;
 
 use breadcrumbs::Breadcrumbs;
-use client::zed_urls;
 use collections::VecDeque;
 use debugger_ui::debugger_panel::DebugPanel;
 use editor::{Editor, MultiBuffer};
@@ -173,7 +172,7 @@ pub fn init(cx: &mut App) {
                 return;
             }
             added = true;
-            cx.on_action(|_: &TestPanic, _| panic!("Ran the TestPanic action"))
+            cx.on_action(|_: &TestPanic, _| panic!("运行了 TestPanic 操作"))
                 .on_action(|_: &TestCrash, _| {
                     unsafe extern "C" {
                         fn puts(s: *const i8);
@@ -198,7 +197,7 @@ pub fn init(cx: &mut App) {
             open_bundled_file(
                 workspace,
                 asset_str::<Assets>("licenses.md"),
-                "Open Source License Attribution",
+                "开源许可协议归属",
                 "Markdown",
                 window,
                 cx,
@@ -225,10 +224,11 @@ pub fn init(cx: &mut App) {
             );
         });
     })
-    .on_action(|_: &OpenAccountSettings, cx| {
-        with_active_or_new_workspace(cx, |_, _, cx| {
-            cx.open_url(&zed_urls::account_url(cx));
-        });
+    // VIBEDEV: OpenAccountSettings used to jump to zed.dev/account. The
+    // VibeDev account panel (crates/vibedev_account) replaces this; users
+    // open it via the toolbar/menu entry registered by vibedev_ui instead.
+    .on_action(|_: &OpenAccountSettings, _cx| {
+        // no-op
     })
     .on_action(|_: &OpenTasks, cx| {
         with_active_or_new_workspace(cx, |_, window, cx| {
@@ -255,7 +255,7 @@ pub fn init(cx: &mut App) {
             open_bundled_file(
                 workspace,
                 settings::default_semantic_token_rules(),
-                "Default Semantic Token Rules",
+                "默认语义标记规则",
                 "JSONC",
                 window,
                 cx,
@@ -267,7 +267,7 @@ pub fn init(cx: &mut App) {
             open_bundled_file(
                 workspace,
                 settings::default_settings(),
-                "Default Settings",
+                "默认设置",
                 "JSON",
                 window,
                 cx,
@@ -279,7 +279,7 @@ pub fn init(cx: &mut App) {
             open_bundled_file(
                 workspace,
                 settings::default_keymap(),
-                "Default Key Bindings",
+                "默认键位绑定",
                 "JSON",
                 window,
                 cx,
@@ -565,6 +565,10 @@ pub fn initialize_workspace(app_state: Arc<AppState>, cx: &mut App) {
             cx.new(|cx| toolchain_selector::ActiveToolchain::new(workspace, window, cx));
         let vim_mode_indicator = cx.new(|cx| vim::ModeIndicator::new(window, cx));
         let image_info = cx.new(|_cx| ImageInfo::new(workspace));
+        let vibedev_cost = {
+            let http = cx.http_client();
+            cx.new(|cx| vibedev_ui::VibedevCostStatusItem::new(http, cx))
+        };
 
         let lsp_button_menu_handle = PopoverMenuHandle::default();
         let lsp_button =
@@ -596,6 +600,7 @@ pub fn initialize_workspace(app_state: Arc<AppState>, cx: &mut App) {
             status_bar.add_right_item(vim_mode_indicator, window, cx);
             status_bar.add_right_item(cursor_position, window, cx);
             status_bar.add_right_item(image_info, window, cx);
+            status_bar.add_right_item(vibedev_cost, window, cx);
         });
 
         let panels_task = initialize_panels(window, cx);
@@ -623,7 +628,7 @@ fn initialize_file_watcher(window: &mut Window, cx: &mut Context<Workspace>) {
         );
         let prompt = window.prompt(
             PromptLevel::Critical,
-            "Could not start inotify",
+            "无法启动 inotify",
             Some(&message),
             &["Troubleshoot and Quit"],
             cx,
@@ -654,7 +659,7 @@ fn initialize_file_watcher(window: &mut Window, cx: &mut Context<Workspace>) {
         );
         let prompt = window.prompt(
             PromptLevel::Critical,
-            "Could not start ReadDirectoryChangesW",
+            "无法启动 ReadDirectoryChangesW",
             Some(&message),
             &["Troubleshoot and Quit"],
             cx,
@@ -704,9 +709,9 @@ fn show_software_emulation_warning_if_needed(
         );
         let prompt = window.prompt(
             PromptLevel::Critical,
-            "Unsupported GPU",
+            "不支持的 GPU",
             Some(&message),
-            &["Skip", "Troubleshoot and Quit"],
+            &["跳过", "Troubleshoot and Quit"],
             cx,
         );
         cx.spawn(async move |_, cx| {
@@ -730,6 +735,8 @@ fn initialize_panels(window: &mut Window, cx: &mut Context<Workspace>) -> Task<a
         let channels_panel =
             collab_ui::collab_panel::CollabPanel::load(workspace_handle.clone(), cx.clone());
         let debug_panel = DebugPanel::load(workspace_handle.clone(), cx);
+        let vibedev_account_panel =
+            vibedev_ui::VibedevAccountPanel::load(workspace_handle.clone(), cx.clone());
 
         async fn add_panel_when_ready(
             panel_task: impl Future<Output = anyhow::Result<Entity<impl workspace::Panel>>> + 'static,
@@ -753,6 +760,7 @@ fn initialize_panels(window: &mut Window, cx: &mut Context<Workspace>) -> Task<a
             add_panel_when_ready(git_panel, workspace_handle.clone(), cx.clone()),
             add_panel_when_ready(channels_panel, workspace_handle.clone(), cx.clone()),
             add_panel_when_ready(debug_panel, workspace_handle.clone(), cx.clone()),
+            add_panel_when_ready(vibedev_account_panel, workspace_handle.clone(), cx.clone()),
             initialize_agent_panel(workspace_handle, cx.clone()).map(|r| r.log_err()),
         );
 
@@ -909,7 +917,7 @@ fn register_actions(
                 Err(e) => {
                     workspace.show_error(
                         &anyhow::anyhow!(
-                            "Opening this URL in a browser failed because the URL is invalid: {}\n\nError was: {e}",
+                            "在浏览器中打开此 URL 失败,因为 URL 无效: {}\n\n错误为: {e}",
                             action.url
                         ),
                         cx,
@@ -918,7 +926,7 @@ fn register_actions(
             }
         })
         .register_action(|workspace, action: &workspace::Open, window, cx| {
-            telemetry::event!("Project Opened");
+            telemetry::event!("项目已打开");
             workspace::prompt_for_open_path_and_open(
                 workspace,
                 workspace.app_state().clone(),
@@ -958,7 +966,7 @@ fn register_actions(
             if workspace.project().read(cx).is_local() {
                 return;
             }
-            telemetry::event!("Project Opened");
+            telemetry::event!("项目已打开");
             let paths = workspace.prompt_for_open_path(
                 PathPromptOptions {
                     files: true,
@@ -1103,7 +1111,7 @@ fn register_actions(
                         Toast::new(
                             NotificationId::unique::<RegisterZedScheme>(),
                             format!(
-                                "zed:// links will now open in {}.",
+                                "zed:// 链接现在将在 {} 中打开。",
                                 ReleaseChannel::global(cx).display_name()
                             ),
                         ),
@@ -1113,7 +1121,7 @@ fn register_actions(
                 Ok(())
             })
             .detach_and_prompt_err(
-                "Error registering zed:// scheme",
+                "注册 zed:// 协议时出错",
                 window,
                 cx,
                 |_, _, _| None,
@@ -1389,7 +1397,7 @@ fn open_about_window(cx: &mut App) {
             let version = env!("CARGO_PKG_VERSION");
 
             let debug = if cfg!(debug_assertions) {
-                "(debug)"
+                "(调试)"
             } else {
                 ""
             };
@@ -1455,14 +1463,14 @@ fn open_about_window(cx: &mut App) {
                             .child(Headline::new(self.message.clone()))
                             .when_some(self.commit.clone(), |this, commit| {
                                 this.child(
-                                    Label::new("Commit")
+                                    Label::new("提交")
                                         .color(Color::Muted)
                                         .size(LabelSize::XSmall),
                                 )
                                 .child(Label::new(commit).size(LabelSize::Small))
                             })
                             .child(
-                                Label::new("Version")
+                                Label::new("版本")
                                     .color(Color::Muted)
                                     .size(LabelSize::XSmall),
                             )
@@ -1480,7 +1488,7 @@ fn open_about_window(cx: &mut App) {
                                         window.remove_window();
                                     }))
                                     .child(
-                                        Button::new("ok", "Ok")
+                                        Button::new("ok", "确定")
                                             .full_width()
                                             .style(ButtonStyle::OutlinedGhost)
                                             .toggle_state(ok_is_focused)
@@ -1500,7 +1508,7 @@ fn open_about_window(cx: &mut App) {
                                         },
                                     ))
                                     .child(
-                                        Button::new("copy", "Copy")
+                                        Button::new("copy", "复制")
                                             .full_width()
                                             .style(ButtonStyle::Tinted(TintColor::Accent))
                                             .toggle_state(copy_is_focused)
@@ -1547,7 +1555,7 @@ fn open_about_window(cx: &mut App) {
     cx.open_window(
         WindowOptions {
             titlebar: Some(TitlebarOptions {
-                title: Some("About Zed".into()),
+                title: Some("About VibeDev".into()),
                 appears_transparent: true,
                 traffic_light_position: Some(point(px(12.), px(12.))),
             }),
@@ -1605,9 +1613,9 @@ fn quit(_: &Quit, cx: &mut App) {
                 .update(cx, |_, window, cx| {
                     window.prompt(
                         PromptLevel::Info,
-                        "Are you sure you want to quit?",
+                        "您确定要退出吗?",
                         None,
-                        &["Quit", "Cancel"],
+                        &["退出", "取消"],
                         cx,
                     )
                 })
@@ -1757,14 +1765,14 @@ fn open_log_file(workspace: &mut Workspace, window: &mut Window, cx: &mut Contex
                 buffer.set_text(log, cx);
             });
 
-            let buffer = cx.new(|cx| MultiBuffer::singleton(buffer, cx).with_title("Log".into()));
+            let buffer = cx.new(|cx| MultiBuffer::singleton(buffer, cx).with_title("日志".into()));
 
             let editor = cx
                 .new_window_entity(|window, cx| {
                     let mut editor = Editor::for_multibuffer(buffer, Some(project), window, cx);
                     editor.set_read_only(true);
                     editor.set_breadcrumb_header(format!(
-                        "Last {} lines in {}",
+                        "位于 {} 的最后 {} 行",
                         MAX_LINES,
                         paths::log_file().display()
                     ));
@@ -1810,8 +1818,8 @@ fn notify_settings_errors(result: settings::SettingsParseResult, is_user: bool, 
             } else {
                 show_app_notification(id, cx, move |cx| {
                     cx.new(|cx| {
-                        MessageNotification::new(format!("Invalid user settings file\n{error}"), cx)
-                            .primary_message("Open Settings File")
+                        MessageNotification::new(format!("无效的用户设置文件\n{error}"), cx)
+                            .primary_message("打开设置文件")
                             .primary_icon(IconName::Settings)
                             .primary_on_click(|window, cx| {
                                 window.dispatch_action(
@@ -1847,7 +1855,7 @@ fn notify_settings_errors(result: settings::SettingsParseResult, is_user: bool, 
                             ),
                             cx,
                         )
-                        .primary_message("Open Settings File")
+                        .primary_message("打开设置文件")
                         .primary_icon(IconName::Settings)
                         .primary_on_click(|window, cx| {
                             window.dispatch_action(zed_actions::OpenSettingsFile.boxed_clone(), cx);
@@ -1894,8 +1902,8 @@ pub fn watch_user_agents_md(fs: Arc<dyn fs::Fs>, cx: &mut App) {
         }
         UserAgentsMdState::Error(message) => {
             let path = paths::agents_file().display().to_string();
-            log::error!("Failed to load user AGENTS.md from {path}: {message}");
-            let body = format!("Failed to load {path}\n{message}");
+            log::error!("无法加载用户 AGENTS.md 文件 {path}: {message}");
+            let body = format!("无法加载 {path}\n{message}");
             let notification_id = notification_id.clone();
             show_app_notification(notification_id, cx, move |cx| {
                 let body = body.clone();
@@ -2050,7 +2058,7 @@ fn show_keymap_file_json_error(
     show_app_notification(notification_id, cx, move |cx| {
         cx.new(|cx| {
             MessageNotification::new(message.clone(), cx)
-                .primary_message("Open Keymap File")
+                .primary_message("打开键位映射文件")
                 .primary_icon(IconName::Settings)
                 .primary_on_click(|window, cx| {
                     window.dispatch_action(zed_actions::OpenKeymapFile.boxed_clone(), cx);
@@ -2068,7 +2076,7 @@ fn show_keymap_file_load_error(
     show_markdown_app_notification(
         notification_id,
         error_message,
-        "Open Keymap File".into(),
+        "打开键位映射文件".into(),
         |window, cx| {
             window.dispatch_action(zed_actions::OpenKeymapFile.boxed_clone(), cx);
             cx.emit(DismissEvent);
@@ -2124,7 +2132,7 @@ fn reload_keymaps(cx: &mut App, mut user_key_bindings: Vec<KeyBinding>) {
     // On Windows, this is set in the `update_jump_list` method of the `HistoryManager`.
     #[cfg(not(target_os = "windows"))]
     cx.set_dock_menu(vec![gpui::MenuItem::action(
-        "New Window",
+        "新建窗口",
         workspace::NewWindow,
     )]);
     // todo: nicer api here?
@@ -2306,7 +2314,7 @@ fn open_local_file(
         struct NoOpenFolders;
 
         workspace.show_notification(NotificationId::unique::<NoOpenFolders>(), cx, |cx| {
-            cx.new(|cx| MessageNotification::new("This project has no folders open.", cx))
+            cx.new(|cx| MessageNotification::new("此项目没有打开的文件夹。", cx))
         })
     }
 }
@@ -3006,7 +3014,7 @@ mod tests {
             .unwrap();
         executor.run_until_parked();
 
-        cx.simulate_prompt_answer("Don't Save");
+        cx.simulate_prompt_answer("不保存");
         close.await.unwrap();
 
         // Advance the clock to ensure that the item has been serialized and dropped from the queue
@@ -3072,7 +3080,7 @@ mod tests {
         assert_eq!(cx.update(|cx| cx.windows().len()), 1);
 
         // The window is successfully closed after the user dismisses the prompt.
-        cx.simulate_prompt_answer("Don't Save");
+        cx.simulate_prompt_answer("不保存");
         executor.run_until_parked();
         assert_eq!(cx.update(|cx| cx.windows().len()), 0);
     }
@@ -3461,20 +3469,20 @@ mod tests {
             ]
             .into_iter()
             .find_map(std::convert::identity)
-            .expect("found no project panels")
+            .expect("未找到项目面板")
             .read(cx);
             let (selected_worktree, selected_entry) = project_panel
                 .selected_entry(cx)
-                .expect("project panel should have a selected entry");
+                .expect("项目面板应具有选中的条目");
             assert_eq!(
                 selected_worktree.abs_path().as_ref(),
                 expected_worktree_path,
-                "Unexpected project panel selected worktree path"
+                "意外的项目面板选中工作树路径"
             );
             assert_eq!(
                 selected_entry.path.as_ref(),
                 expected_entry_path,
-                "Unexpected project panel selected entry path"
+                "意外的项目面板选中条目路径"
             );
         }
 
@@ -3766,13 +3774,13 @@ mod tests {
                 .read_with(cx, |mw, _| mw.workspace().entity_id())
                 .unwrap(),
             workspace.entity_id(),
-            "Excluded files in subfolders of a workspace root should be opened in the workspace"
+            "工作区根目录子文件夹中的被排除文件应在工作区中打开"
         );
         let mut opened_paths = cx.read(|cx| {
             assert_eq!(
                 new_items.len(),
                 paths_to_open.len(),
-                "Expect to get the same number of opened items as submitted paths to open"
+                "期望获得与提交的打开路径相同数量的已打开项目"
             );
             new_items
                 .iter()
@@ -3780,7 +3788,7 @@ mod tests {
                 .map(|(i, path)| {
                     match i {
                         Some(Ok(i)) => Some(i.project_path(cx).map(|p| p.path)),
-                        Some(Err(e)) => panic!("Excluded file {path:?} failed to open: {e:?}"),
+                        Some(Err(e)) => panic!("被排除的文件 {path:?} 打开失败: {e:?}"),
                         None => None,
                     }
                     .flatten()
@@ -3795,13 +3803,13 @@ mod tests {
                 Some(rel_path(".git/HEAD").into()),
                 Some(rel_path("excluded_dir/file").into()),
             ],
-            "Excluded files should get opened, excluded dir should not get opened"
+            "被排除的文件应被打开,被排除的目录不应被打开"
         );
 
         let entries = cx.read(|cx| workspace.file_project_paths(cx));
         assert_eq!(
             initial_entries, entries,
-            "Workspace entries should not change after opening excluded files and directories paths"
+            "打开被排除的文件和目录路径后,工作区条目不应更改"
         );
 
         cx.read(|cx| {
@@ -3810,7 +3818,7 @@ mod tests {
                     .items()
                     .map(|i| {
                         i.project_path(cx)
-                            .expect("all excluded files that got open should have a path")
+                            .expect("所有已打开的被排除文件都应具有路径")
                             .path
                     })
                     .collect::<Vec<_>>();
@@ -3818,7 +3826,7 @@ mod tests {
                 assert_eq!(
                     opened_buffer_paths,
                     vec![rel_path(".git/HEAD").into(), rel_path("excluded_dir/file").into()],
-                    "Despite not being present in the worktrees, buffers for excluded files are opened and added to the pane"
+                    "尽管不存在于工作树中,但被排除文件的缓冲区已打开并添加到窗格中"
                 );
             });
     }
@@ -3887,7 +3895,7 @@ mod tests {
             })
             .unwrap();
         cx.background_executor.run_until_parked();
-        cx.simulate_prompt_answer("Overwrite");
+        cx.simulate_prompt_answer("覆盖");
         save_task.await.unwrap();
         window
             .update(cx, |_, _, cx| {
@@ -4213,7 +4221,7 @@ mod tests {
             close_pinned: false,
         });
         cx.background_executor.run_until_parked();
-        cx.simulate_prompt_answer("Don't Save");
+        cx.simulate_prompt_answer("不保存");
         cx.background_executor.run_until_parked();
 
         workspace.read_with(cx, |workspace, cx| {
@@ -4894,11 +4902,11 @@ mod tests {
         let after_go_back = active_path(&workspace, cx);
         assert!(
             after_go_back.is_some() && after_go_back != Some(file1.clone()),
-            "After go_back from file1, should be at a different file"
+            "从 file1 返回后,应位于不同的文件"
         );
 
         pane.read_with(cx, |pane, _| {
-            assert!(pane.can_navigate_forward(), "Should be able to go forward");
+            assert!(pane.can_navigate_forward(), "应该能够前进");
         });
 
         fn active_path(
@@ -5344,17 +5352,17 @@ mod tests {
             .unwrap();
         assert!(
             active_editor.is_some(),
-            "Settings action should have opened an editor with the default file contents"
+            "设置操作应已打开一个包含默认文件内容的编辑器"
         );
 
         let active_editor = active_editor.unwrap();
         assert!(
             active_editor.read_with(cx, |editor, cx| editor.read_only(cx)),
-            "Default settings should be readonly"
+            "默认设置应为只读"
         );
         assert!(
             active_editor.read_with(cx, |editor, cx| editor.buffer().read(cx).read_only()),
-            "The underlying buffer should also be readonly for the shipped default settings"
+            "对于附带的默认设置,底层缓冲区也应是只读的"
         );
     }
 
@@ -5377,7 +5385,7 @@ mod tests {
                 multi_workspace.workspace().update(cx, |workspace, cx| {
                     workspace
                         .active_item(cx)
-                        .expect("default settings should be open")
+                        .expect("默认设置应已打开")
                         .item_id()
                 })
             })
@@ -5394,7 +5402,7 @@ mod tests {
                     let pane = workspace.active_pane().read(cx);
                     (
                         pane.active_item()
-                            .expect("default settings should still be open")
+                            .expect("默认设置应仍处于打开状态")
                             .item_id(),
                         pane.items_len(),
                     )
@@ -5422,7 +5430,7 @@ mod tests {
             languages
                 .language_for_name(name.as_ref())
                 .await
-                .with_context(|| format!("language name {name}"))
+                .with_context(|| format!("语言名称 {name}"))
                 .unwrap();
         }
         cx.run_until_parked();
@@ -5535,7 +5543,7 @@ mod tests {
                     // actions match...
                     bound_action.partial_eq(action)
                 }),
-                "On {} Failed to find {}",
+                "在 {} 上未能找到 {}",
                 line,
                 action.name(),
             );
@@ -5544,7 +5552,7 @@ mod tests {
                 bindings
                     .into_iter()
                     .any(|binding| binding.keystrokes().iter().any(|k| k.key() == key)),
-                "On {} Failed to find {} with key binding {}",
+                "在 {} 上未能通过键位绑定 {} 找到 {}",
                 line,
                 action.name(),
                 key
@@ -5557,7 +5565,7 @@ mod tests {
         // Use the proper initialization for runtime state
         let app_state = init_keymap_test(cx);
 
-        eprintln!("Running test_opening_project_settings_when_excluded");
+        eprintln!("正在运行 test_opening_project_settings_when_excluded");
 
         // 1. Set up a project with some project settings
         let settings_init =
@@ -5575,7 +5583,7 @@ mod tests {
             )
             .await;
 
-        eprintln!("Created project with .zed/settings.json containing UNIQUEVALUE");
+        eprintln!("创建了包含 UNIQUEVALUE 的 .zed/设置.json 的项目");
 
         // 2. Create a project with the file system and load it
         let project = Project::test(app_state.fs.clone(), [Path::new("/root")], cx).await;
@@ -5590,10 +5598,10 @@ mod tests {
         let original_settings_str = original_settings.clone();
 
         // Verify settings exist on disk and have expected content
-        eprintln!("Original settings content: {}", original_settings_str);
+        eprintln!("原始设置内容: {}", original_settings_str);
         assert!(
             original_settings_str.contains("UNIQUEVALUE"),
-            "Test setup failed - settings file doesn't contain our marker"
+            "测试设置失败 - 设置文件不包含我们的标记"
         );
 
         // 3. Add .zed to file scan exclusions in user settings
@@ -5604,7 +5612,7 @@ mod tests {
             });
         });
 
-        eprintln!("Added .zed to file_scan_exclusions in settings");
+        eprintln!("已将 .zed 添加到设置中的 file_scan_exclusions");
 
         // 4. Run tasks to apply settings
         cx.background_executor.run_until_parked();
@@ -5616,7 +5624,7 @@ mod tests {
             cx.update(|cx| worktree.read(cx).entry_for_path(rel_path(".zed")).is_some());
 
         eprintln!(
-            "Is .zed directory visible in worktree after exclusion: {}",
+            "排除后 .zed 目录在工作树中是否可见: {}",
             has_zed_entry
         );
 
@@ -5624,7 +5632,7 @@ mod tests {
         // If .zed is not excluded, the test will fail here
         assert!(
             !has_zed_entry,
-            "Test precondition failed: .zed directory should be excluded but was found in worktree"
+            "测试前提条件失败:.zed 目录应被排除但在工作树中找到了它"
         );
 
         // 6. Create workspace and trigger the actual function that causes the bug
@@ -5637,7 +5645,7 @@ mod tests {
             .update(cx, |_, window, cx| {
                 workspace.update(cx, |workspace, cx| {
                     // Call the exact function that contains the bug
-                    eprintln!("About to call open_project_settings_file");
+                    eprintln!("即将调用 open_project_settings_file");
                     open_project_settings_file(workspace, &OpenProjectSettingsFile, window, cx);
                 });
             })
@@ -5654,17 +5662,17 @@ mod tests {
             .unwrap();
 
         let new_content_str = new_content;
-        eprintln!("New settings content: {}", new_content_str);
+        eprintln!("新设置内容: {}", new_content_str);
 
         // The bug causes the settings to be overwritten with empty settings
         // So if the unique value is no longer present, the bug has been reproduced
         let bug_exists = !new_content_str.contains("UNIQUEVALUE");
-        eprintln!("Bug reproduced: {}", bug_exists);
+        eprintln!("Bug 已复现: {}", bug_exists);
 
         // This assertion should fail if the bug exists - showing the bug is real
         assert!(
             new_content_str.contains("UNIQUEVALUE"),
-            "BUG FOUND: Project settings were overwritten when opening via command - original custom content was lost"
+            "发现 BUG:通过命令打开时项目设置被覆盖 - 原始自定义内容已丢失"
         );
     }
 
@@ -6067,7 +6075,7 @@ mod tests {
             "Case 1: Should prompt to save dirty item in active workspace"
         );
 
-        cx.simulate_prompt_answer("Cancel");
+        cx.simulate_prompt_answer("取消");
         cx.run_until_parked();
 
         assert_eq!(
@@ -6087,7 +6095,7 @@ mod tests {
             })
             .unwrap();
         cx.run_until_parked();
-        cx.simulate_prompt_answer("Don't Save");
+        cx.simulate_prompt_answer("不保存");
         close_task.await.ok();
         cx.run_until_parked();
 
@@ -6144,7 +6152,7 @@ mod tests {
             "Case 2: Should prompt to save dirty item in non-active workspace"
         );
 
-        cx.simulate_prompt_answer("Cancel");
+        cx.simulate_prompt_answer("取消");
         cx.run_until_parked();
 
         assert_eq!(
@@ -6164,7 +6172,7 @@ mod tests {
             })
             .unwrap();
         cx.run_until_parked();
-        cx.simulate_prompt_answer("Don't Save");
+        cx.simulate_prompt_answer("不保存");
         close_task.await.ok();
         cx.run_until_parked();
 
@@ -6228,7 +6236,7 @@ mod tests {
             "Case 3: Should prompt to save dirty item in non-active window"
         );
 
-        cx.simulate_prompt_answer("Cancel");
+        cx.simulate_prompt_answer("取消");
         cx.run_until_parked();
 
         assert_eq!(

@@ -89,10 +89,31 @@ static ZED_CLIENT_CHECKSUM_SEED: LazyLock<Option<Vec<u8>>> = LazyLock::new(|| {
         })
 });
 
+// VIBEDEV: route crash minidumps + telemetry events to the vibedev fork of
+// sub2api (deployed at aitoken.bigopen.cn). Upstream Zed sends these to
+// zed.dev's collab server; we run our own (handler/vibedev/telemetry.go), so
+// the IDE has somewhere to report when something breaks on a user's machine.
+//
+// Both default to the public sub2api host. ZED_MINIDUMP_ENDPOINT /
+// VIBEDEV_TELEMETRY_ENDPOINT env vars still override (for local dev /
+// staging). Endpoints are mounted on the root (NOT under /v1/), are
+// unauthenticated (IDE reports before sign-in), and are guarded by per-IP
+// rate limit + size caps on the server side.
+const VIBEDEV_DEFAULT_MINIDUMP_ENDPOINT: &str = "https://aitoken.bigopen.cn/crashes/upload";
+const VIBEDEV_DEFAULT_TELEMETRY_ENDPOINT: &str = "https://aitoken.bigopen.cn/telemetry/events";
+
 pub static MINIDUMP_ENDPOINT: LazyLock<Option<String>> = LazyLock::new(|| {
     option_env!("ZED_MINIDUMP_ENDPOINT")
         .map(str::to_string)
         .or_else(|| env::var("ZED_MINIDUMP_ENDPOINT").ok())
+        .or_else(|| Some(VIBEDEV_DEFAULT_MINIDUMP_ENDPOINT.to_string()))
+});
+
+pub static TELEMETRY_EVENTS_ENDPOINT: LazyLock<Option<String>> = LazyLock::new(|| {
+    option_env!("VIBEDEV_TELEMETRY_ENDPOINT")
+        .map(str::to_string)
+        .or_else(|| env::var("VIBEDEV_TELEMETRY_ENDPOINT").ok())
+        .or_else(|| Some(VIBEDEV_DEFAULT_TELEMETRY_ENDPOINT.to_string()))
 });
 
 static DOTNET_PROJECT_FILES_REGEX: LazyLock<Regex> = LazyLock::new(|| {
@@ -152,7 +173,7 @@ pub fn os_version() -> String {
                file
            } else {
                log::error!(
-                   "Failed to load /etc/os-release, /usr/lib/os-release, or /var/run/os-release"
+                   "加载 /etc/os-release, /usr/lib/os-release 或 /var/run/os-release 失败"
                );
                "".to_string()
            };
@@ -594,13 +615,20 @@ impl Telemetry {
 
         let checksum = calculate_json_checksum(&json_bytes).unwrap_or_default();
 
+        // VIBEDEV: route to sub2api telemetry collector (see TELEMETRY_EVENTS_ENDPOINT
+        // above). build_zed_api_url would target the legacy zed.dev collab endpoint,
+        // which our fork doesn't run — fall back to it only if the override is unset
+        // (in practice never, since TELEMETRY_EVENTS_ENDPOINT has a sub2api default).
+        let uri = if let Some(endpoint) = TELEMETRY_EVENTS_ENDPOINT.as_ref() {
+            endpoint.clone()
+        } else {
+            self.http_client
+                .build_zed_api_url("/telemetry/events", &[])?
+                .to_string()
+        };
         Ok(Request::builder()
             .method(Method::POST)
-            .uri(
-                self.http_client
-                    .build_zed_api_url("/telemetry/events", &[])?
-                    .as_ref(),
-            )
+            .uri(uri)
             .header("Content-Type", "application/json")
             .header("x-zed-checksum", checksum)
             .body(json_bytes.into())?)

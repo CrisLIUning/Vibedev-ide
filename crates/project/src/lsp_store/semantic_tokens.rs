@@ -256,7 +256,7 @@ impl LspStore {
                                 match response.await {
                                     Ok(tokens) => Some((server_id, tokens)),
                                     Err(e) => {
-                                        log::error!("Failed to query remote semantic tokens for server {server_id:?}: {e:#}");
+                                        log::error!("无法查询服务器 {server_id:?} 的远程语义令牌: {e:#}");
                                         None
                                     }
                                 }
@@ -340,7 +340,7 @@ impl LspStore {
                             match response {
                                 Ok(tokens) => Some((server_id, tokens)),
                                 Err(e) => {
-                                    log::error!("Failed to query remote semantic tokens for server {server_id:?}: {e:#}");
+                                    log::error!("无法查询服务器 {server_id:?} 的远程语义令牌: {e:#}");
                                     None
                                 }
                             }
@@ -812,7 +812,7 @@ mod tests {
             }
 
             let parsed: serde_json::Value =
-                serde_json::from_str(line).expect("Failed to parse JSON");
+                serde_json::from_str(line).expect("解析 JSON 失败");
 
             // Try to extract data from various JSON shapes
             let (data, edits, new_result_id) = extract_semantic_tokens(&parsed);
@@ -823,18 +823,18 @@ mod tests {
 
             if let Some(full_data) = data {
                 println!("\n{}", "=".repeat(70));
-                println!("FULL RESPONSE (resultId: {:?})", result_id);
+                println!("完整响应 (resultId: {:?})", result_id);
                 current_data = full_data;
             } else if let Some(delta_edits) = edits {
                 println!("\n{}", "=".repeat(70));
                 println!(
-                    "DELTA RESPONSE: {} edit(s) (resultId: {:?})",
+                    "增量响应: {} 个编辑 (resultId: {:?})",
                     delta_edits.len(),
                     result_id
                 );
                 for (i, edit) in delta_edits.iter().enumerate() {
                     println!(
-                        "  [{}] start={}, delete={}, insert {} values",
+                        "  [{}] 起始={}, 删除={}, 插入 {} 个值",
                         i,
                         edit.start,
                         edit.delete_count,
@@ -849,15 +849,15 @@ mod tests {
 
         // Print parsed tokens
         println!(
-            "\nDATA: {} values = {} tokens",
+            "\n数据: {} 个值 = {} 个令牌",
             current_data.len(),
             current_data.len() / 5
         );
-        println!("\nPARSED TOKENS:");
+        println!("\n已解析的令牌:");
         println!("{:-<100}", "");
         println!(
             "{:>5} {:>6} {:>4}  {:<15} {}",
-            "LINE", "START", "LEN", "TYPE", "MODIFIERS"
+            "行", "起始", "长度", "类型", "修饰符"
         );
         println!("{:-<100}", "");
 

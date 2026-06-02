@@ -195,7 +195,7 @@ impl Drop for Subscription {
 
 impl std::fmt::Debug for Subscription {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Subscription").finish()
+        f.debug_struct("订阅").finish()
     }
 }
 
@@ -252,7 +252,7 @@ mod tests {
         // Neither should fire again — both dropped their subscriptions.
         app.update(|cx| cx.set_global(TestGlobal));
         assert_eq!(observer_a_count.get(), 1);
-        assert_eq!(observer_b_count.get(), 1, "orphaned subscriber fired again");
+        assert_eq!(observer_b_count.get(), 1, "孤立订阅者再次触发");
     }
 
     #[test]
@@ -291,7 +291,7 @@ mod tests {
         assert_eq!(
             observer_b_count.get(),
             0,
-            "B should not fire — A dropped its subscription"
+            "B 不应触发 — A 已丢弃其订阅"
         );
     }
 
@@ -321,7 +321,7 @@ mod tests {
         assert_eq!(count.get(), 1);
 
         app.update(|cx| cx.set_global(TestGlobal));
-        assert_eq!(count.get(), 1, "should not fire after self-drop");
+        assert_eq!(count.get(), 1, "自丢弃后不应触发");
     }
 
     #[test]
@@ -346,6 +346,6 @@ mod tests {
         drop(subscription);
 
         app.update(|cx| cx.set_global(TestGlobal));
-        assert_eq!(count.get(), 0, "should not fire after drop");
+        assert_eq!(count.get(), 0, "丢弃后不应触发");
     }
 }

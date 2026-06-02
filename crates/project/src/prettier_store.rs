@@ -264,7 +264,7 @@ impl PrettierStore {
                         }
                         Err(e) => {
                             log::error!(
-                                "Failed to determine prettier ignore path for buffer: {e:#}"
+                                "无法确定缓冲区的 prettier 忽略路径: {e:#}"
                             );
                             None
                         }
@@ -349,7 +349,7 @@ impl PrettierStore {
                             }
                         })?;
                         anyhow::bail!(
-                            "Cannot start default prettier due to its installation failure: {e:#}"
+                            "由于安装失败,无法启动默认 prettier: {e:#}"
                         );
                     }
                     let new_default_prettier =
@@ -412,7 +412,7 @@ impl PrettierStore {
             prettier_store
                 .update(cx, |prettier_store, cx| {
                     let name = if is_default {
-                        LanguageServerName("prettier (default)".into())
+                        LanguageServerName("prettier (默认)".into())
                     } else {
                         let worktree_path = worktree_id
                             .and_then(|id| {
@@ -480,7 +480,7 @@ impl PrettierStore {
         let current_worktree_id = worktree.read(cx).id();
 
         log::info!(
-            "Prettier config file {config_path:?} changed, reloading prettier instances for worktree {current_worktree_id}"
+            "Prettier 配置文件 {config_path:?} 已更改,正在为工作树 {current_worktree_id} 重新加载 prettier 实例"
         );
 
         let prettiers_to_reload = self
@@ -521,10 +521,10 @@ impl PrettierStore {
                         Err(e) => {
                             match prettier_path {
                                 Some(prettier_path) => log::error!(
-                                    "Failed to clear prettier {prettier_path:?} cache for worktree {worktree_id:?} on prettier settings update: {e:#}"
+                                    "在更新 prettier 设置时,无法清除工作树 {worktree_id:?} 的 prettier {prettier_path:?} 缓存: {e:#}"
                                 ),
                                 None => log::error!(
-                                    "Failed to clear default prettier cache for worktree {worktree_id:?} on prettier settings update: {e:#}"
+                                    "在更新 prettier 设置时,无法清除工作树 {worktree_id:?} 的默认 prettier 缓存: {e:#}"
                                 ),
                             }
                         },
@@ -566,7 +566,7 @@ impl PrettierStore {
                 if installation_attempt > prettier::FAIL_THRESHOLD {
                     *installation_task = None;
                     log::warn!(
-                        "Default prettier installation had failed {installation_attempt} times, not attempting again",
+                        "默认 prettier 安装已失败 {installation_attempt} 次,不再重试",
                     );
                     return;
                 }
@@ -635,7 +635,7 @@ impl PrettierStore {
                                 };
                             })?;
                             log::warn!(
-                                "Default prettier installation had failed {installation_attempt} times, not attempting again",
+                                "默认 prettier 安装已失败 {installation_attempt} 次,不再重试",
                             );
                             return Ok(());
                         }
@@ -756,8 +756,8 @@ pub(super) async fn format_with_prettier(
     let (prettier_path, prettier_task) = prettier_instance?;
 
     let prettier_description = match prettier_path.as_ref() {
-        Some(path) => format!("prettier at {path:?}"),
-        None => "default prettier instance".to_string(),
+        Some(path) => format!("位于 {path:?} 的 prettier"),
+        None => "默认 prettier 实例".to_string(),
     };
 
     let request_timeout: Duration = cx.update(|app| {
@@ -805,7 +805,7 @@ pub(super) async fn format_with_prettier(
                 .log_err();
 
             Some(Err(anyhow!(
-                "{prettier_description} failed to spawn: {error:#}"
+                "{prettier_description} 启动失败: {error:#}"
             )))
         }
     }
@@ -885,7 +885,7 @@ impl PrettierInstance {
         if self.attempt > prettier::FAIL_THRESHOLD {
             match prettier_dir {
                 Some(prettier_dir) => log::warn!(
-                    "Prettier from path {prettier_dir:?} exceeded launch threshold, not starting"
+                    "来自路径 {prettier_dir:?} 的 Prettier 超过启动阈值,不再启动"
                 ),
                 None => log::warn!("Default prettier exceeded launch threshold, not starting"),
             }
@@ -938,11 +938,11 @@ async fn install_prettier_packages(
 
     let default_prettier_dir = default_prettier_dir().as_path();
     match fs.metadata(default_prettier_dir).await.with_context(|| {
-        format!("fetching FS metadata for default prettier dir {default_prettier_dir:?}")
+        format!("正在获取默认 prettier 目录 {default_prettier_dir:?} 的文件系统元数据")
     })? {
         Some(prettier_dir_metadata) => anyhow::ensure!(
             prettier_dir_metadata.is_dir,
-            "default prettier dir {default_prettier_dir:?} is not a directory"
+            "默认 prettier 目录 {default_prettier_dir:?} 不是一个目录"
         ),
         None => fs
             .create_dir(default_prettier_dir)
@@ -950,7 +950,7 @@ async fn install_prettier_packages(
             .with_context(|| format!("creating default prettier dir {default_prettier_dir:?}"))?,
     }
 
-    log::info!("Installing default prettier and plugins: {packages_to_install:?}");
+    log::info!("正在安装默认 Prettier 和插件: {packages_to_install:?}");
     let borrowed_packages = packages_to_install
         .iter()
         .map(|package_name| package_name.as_str())
@@ -971,7 +971,7 @@ async fn save_prettier_server_file(fs: &dyn Fs) -> anyhow::Result<()> {
     .await
     .with_context(|| {
         format!(
-            "writing {} file at {prettier_wrapper_path:?}",
+            "正在在 {prettier_wrapper_path:?} 写入 {} 文件",
             prettier::PRETTIER_SERVER_FILE
         )
     })?;

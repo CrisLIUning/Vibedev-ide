@@ -788,7 +788,7 @@ mod test {
                             cx.processor(|this, range: Range<usize>, _window, _cx| {
                                 this.visible_range = range.clone();
                                 range
-                                    .map(|ix| div().id(ix).h(px(20.0)).child(format!("Item {ix}")))
+                                    .map(|ix| div().id(ix).h(px(20.0)).child(format!("项目 {ix}")))
                                     .collect()
                             }),
                         )

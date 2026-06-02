@@ -1366,7 +1366,7 @@ impl schemars::JsonSchema for FontWeightContent {
             "minimum": Self::THIN.0,
             "maximum": Self::BLACK.0,
             "default": Self::NORMAL.0,
-            "description": "Font weight value between 100 (thin) and 900 (black)"
+            "description": "介于 100 (细) 和 900 (黑) 之间的字重值"
         })
     }
 }
@@ -1433,7 +1433,7 @@ mod tests {
 
         assert!(
             buffer_font_weight.get("default").is_some(),
-            "buffer_font_weight should have a default value in the schema"
+            "buffer_font_weight 在 schema 中应有默认值"
         );
 
         let default_value = &buffer_font_weight["default"];
@@ -1449,17 +1449,17 @@ mod tests {
         assert_eq!(
             font_weight_def["minimum"].as_f64(),
             Some(FontWeightContent::THIN.0 as f64),
-            "FontWeightContent should have minimum of 100.0"
+            "FontWeightContent 最小值应为 100.0"
         );
         assert_eq!(
             font_weight_def["maximum"].as_f64(),
             Some(FontWeightContent::BLACK.0 as f64),
-            "FontWeightContent should have maximum of 900.0"
+            "FontWeightContent 最大值应为 900.0"
         );
         assert_eq!(
             font_weight_def["default"].as_f64(),
             Some(FontWeightContent::NORMAL.0 as f64),
-            "FontWeightContent should have default of 400.0"
+            "FontWeightContent 默认值应为 400.0"
         );
     }
 }

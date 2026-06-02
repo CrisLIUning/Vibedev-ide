@@ -100,7 +100,7 @@ where
                 )
             })
         });
-        info!("panic handler registered");
+        info!("panic 处理程序已注册");
         let handler = CrashHandler::attach(unsafe {
             let client = client.clone();
             let handler = move |crash_context: &crash_handler::CrashContext| {
@@ -121,7 +121,7 @@ where
                     client.ping().ok();
                     let r = client.request_dump(crash_context);
                     if let Err(e) = &r {
-                        eprintln!("failed to request dump: {:?}", e);
+                        eprintln!("请求转储失败: {:?}", e);
                     }
                     #[cfg(target_os = "macos")]
                     macos::resume_all_other_threads();
@@ -135,7 +135,7 @@ where
         })
         .expect("failed to attach signal handler");
 
-        info!("crash signal handlers installed");
+        info!("崩溃信号处理器已安装");
         send_crash_server_message(&client, CrashServerMessage::Init(crash_init));
 
         #[cfg(target_os = "linux")]
@@ -150,12 +150,12 @@ where
                     if let Err(e) = client.ping() {
                         #[cfg(not(target_os = "windows"))]
                         log::error!(
-                            "ping failed: {:?}, process exit status: {:?}",
+                            "ping 失败: {:?}, 进程退出状态: {:?}",
                             e,
                             _crash_handler.try_status()
                         );
                         #[cfg(target_os = "windows")]
-                        log::error!("ping failed: {:?}", e,);
+                        log::error!("ping 失败: {:?}", e,);
                         break;
                     };
                     wait_timer(Duration::from_secs(10)).await;
@@ -210,13 +210,13 @@ fn send_crash_server_message(crash_client: &Arc<Client>, message: CrashServerMes
     let data = match serde_json::to_vec(&message) {
         Ok(data) => data,
         Err(err) => {
-            log::warn!("Failed to serialize crash server message: {:?}", err);
+            log::warn!("无法序列化崩溃服务器消息: {:?}", err);
             return;
         }
     };
 
     if let Err(err) = crash_client.send_message(0, data) {
-        log::warn!("Failed to send data to crash server {:?}", err);
+        log::warn!("无法发送数据至崩溃服务器 {:?}", err);
     }
 }
 
@@ -245,7 +245,7 @@ impl minidumper::ServerHandler for CrashServer {
                     .initialization_params
                     .lock()
                     .as_ref()
-                    .expect("Missing initialization data")
+                    .expect("缺少初始化数据")
                     .session_id,
             )
             .with_extension("dmp");
@@ -368,10 +368,10 @@ pub fn panic_hook(crash_client: Arc<Client>, message: &str, location: Option<&Lo
         .unwrap_or_default();
 
     let current_thread = std::thread::current();
-    let thread_name = current_thread.name().unwrap_or("<unnamed>");
+    let thread_name = current_thread.name().unwrap_or("<未命名>");
 
-    let location = location.map_or_else(|| "<unknown>".to_owned(), |location| location.to_string());
-    log::error!("thread '{thread_name}' panicked at {location}:\n{message}...");
+    let location = location.map_or_else(|| "<未知>".to_owned(), |location| location.to_string());
+    log::error!("线程 '{thread_name}' 在 {location} 发生 panic:\n{message}...");
 
     send_crash_server_message(
         &crash_client,

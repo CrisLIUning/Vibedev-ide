@@ -460,7 +460,7 @@ pub(crate) fn handle_from(
 
                 if has_edits_since_start {
                     Err(anyhow!(
-                        "Auto-close Operation Failed - Buffer has edits since start"
+                        "自动关闭操作失败 - 缓冲区自开始以来已有编辑"
                     ))
                     .log_err()?;
                 }

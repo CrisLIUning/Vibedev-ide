@@ -86,8 +86,8 @@ fn show_etw_status_notification(cx: &mut App, status: Result<StatusMessage>, out
             let display_path = output_path.display().to_string();
             show_etw_notification_with_action(
                 cx,
-                format!("ETW trace saved to {display_path}"),
-                "Show in File Manager",
+                format!("ETW 追踪已保存至 {display_path}"),
+                "在文件管理器中显示",
                 move |_window, cx| {
                     cx.reveal_path(&output_path);
                     cx.emit(DismissEvent);
@@ -98,8 +98,8 @@ fn show_etw_status_notification(cx: &mut App, status: Result<StatusMessage>, out
             let display_path = output_path.display().to_string();
             show_etw_notification_with_action(
                 cx,
-                format!("ETW recording timed out. Trace saved to {display_path}"),
-                "Show in File Manager",
+                format!("ETW 录制超时。追踪已保存至 {display_path}"),
+                "在文件管理器中显示",
                 move |_window, cx| {
                     cx.reveal_path(&output_path);
                     cx.emit(DismissEvent);
@@ -107,13 +107,13 @@ fn show_etw_status_notification(cx: &mut App, status: Result<StatusMessage>, out
             );
         }
         Ok(StatusMessage::Cancelled) => {
-            show_etw_notification(cx, "ETW recording cancelled");
+            show_etw_notification(cx, "ETW 录制已取消");
         }
         Ok(_) => {
-            show_etw_notification(cx, "ETW recording ended unexpectedly");
+            show_etw_notification(cx, "ETW 录制意外结束");
         }
         Err(error) => {
-            show_etw_notification(cx, format!("Failed to complete ETW recording: {error:#}"));
+            show_etw_notification(cx, format!("无法完成 ETW 录制: {error:#}"));
         }
     }
 }
@@ -132,15 +132,15 @@ pub fn init(cx: &mut App) {
     cx.on_action(|_: &SaveEtwTrace, cx: &mut App| {
         let session = cx.global_mut::<GlobalEtwSession>().0.as_mut();
         let Some(session) = session else {
-            show_etw_notification(cx, "No active ETW recording to stop");
+            show_etw_notification(cx, "没有可停止的活动 ETW 录制");
             return;
         };
         match send_json(&mut session.writer, &Command::Save) {
             Ok(()) => {
-                show_etw_notification(cx, "Stopping ETW recording...");
+                show_etw_notification(cx, "正在停止 ETW 录制...");
             }
             Err(error) => {
-                show_etw_notification(cx, format!("Failed to stop ETW recording: {error:#}"));
+                show_etw_notification(cx, format!("无法停止 ETW 录制: {error:#}"));
             }
         }
     });
@@ -148,15 +148,15 @@ pub fn init(cx: &mut App) {
     cx.on_action(|_: &CancelEtwTrace, cx: &mut App| {
         let session = cx.global_mut::<GlobalEtwSession>().0.as_mut();
         let Some(session) = session else {
-            show_etw_notification(cx, "No active ETW recording to cancel");
+            show_etw_notification(cx, "没有可取消的活动 ETW 录制");
             return;
         };
         match send_json(&mut session.writer, &Command::Cancel) {
             Ok(()) => {
-                show_etw_notification(cx, "Cancelling ETW recording...");
+                show_etw_notification(cx, "正在取消 ETW 录制...");
             }
             Err(error) => {
-                show_etw_notification(cx, format!("Failed to cancel ETW recording: {error:#}"));
+                show_etw_notification(cx, format!("无法取消 ETW 录制: {error:#}"));
             }
         }
     });
@@ -164,7 +164,7 @@ pub fn init(cx: &mut App) {
 
 fn start_etw_recording(cx: &mut App, heap_pid: Option<u32>) {
     if has_active_etw_session(cx) {
-        show_etw_notification(cx, "ETW recording is already in progress");
+        show_etw_notification(cx, "ETW 录制已在进行中");
         return;
     }
     let save_dialog = cx.prompt_for_new_path(&PathBuf::default(), Some("zed-trace.etl"));
@@ -174,7 +174,7 @@ fn start_etw_recording(cx: &mut App, heap_pid: Option<u32>) {
             Ok(Ok(None)) => return,
             Ok(Err(error)) => {
                 cx.update(|cx| {
-                    show_etw_notification(cx, format!("Failed to pick save location: {error:#}"));
+                    show_etw_notification(cx, format!("无法选择保存位置: {error:#}"));
                 });
                 return;
             }
@@ -194,7 +194,7 @@ fn start_etw_recording(cx: &mut App, heap_pid: Option<u32>) {
             Ok(session) => session,
             Err(error) => {
                 cx.update(|cx| {
-                    show_etw_notification(cx, format!("Failed to start ETW recording: {error:#}"));
+                    show_etw_notification(cx, format!("无法启动 ETW 录制: {error:#}"));
                 });
                 return;
             }
@@ -206,7 +206,7 @@ fn start_etw_recording(cx: &mut App, heap_pid: Option<u32>) {
             let status = cx
                 .background_spawn(async move {
                     recv_json(&mut BufReader::new(read_half))
-                        .context("Receive status from subprocess")
+                        .context("从子进程接收状态")
                 })
                 .await;
             cx.update(|cx| {
@@ -222,7 +222,7 @@ fn start_etw_recording(cx: &mut App, heap_pid: Option<u32>) {
                 _listener: listener,
                 socket_path,
             });
-            show_etw_notification(cx, "ETW recording started");
+            show_etw_notification(cx, "ETW 录制已开始");
         });
     })
     .detach();
@@ -401,7 +401,7 @@ fn create_wpr<T: windows_core::Interface>(clsid: &windows_core::GUID) -> Result<
             None,
             CLSCTX_INPROC_SERVER.0,
         )
-        .context("WPRCCreateInstance failed")
+        .context("WPRCCreateInstance 失败")
     }
 }
 
@@ -414,11 +414,11 @@ fn build_profile_collection(heap_pid: Option<u32>) -> Result<IProfileCollection>
             profile
                 .LoadFromFile(&BSTR::from(*profile_name), &BSTR::new())
                 .wpr_context(&profile)
-                .with_context(|| format!("Load built-in profile '{profile_name}'"))?;
+                .with_context(|| format!("加载内置配置文件 '{profile_name}'"))?;
             collection
                 .Add(&profile, VARIANT_FALSE)
                 .wpr_context(&collection)
-                .with_context(|| format!("Add profile '{profile_name}' to collection"))?;
+                .with_context(|| format!("将配置文件 '{profile_name}' 添加到集合"))?;
         }
     }
 
@@ -428,11 +428,11 @@ fn build_profile_collection(heap_pid: Option<u32>) -> Result<IProfileCollection>
         heap_profile
             .LoadFromString(&BSTR::from(heap_xml))
             .wpr_context(&heap_profile)
-            .context("Load profile from XML string")?;
+            .context("从 XML 字符串加载配置文件")?;
         collection
             .Add(&heap_profile, VARIANT_BOOL(0))
             .wpr_context(&collection)
-            .context("Add ZedHeap profile to collection")?;
+            .context("将 ZedHeap 配置文件添加到集合")?;
     }
 
     Ok(collection)
@@ -446,11 +446,11 @@ pub fn record_etw_trace(
     unsafe {
         CoInitializeEx(None, COINIT_MULTITHREADED)
             .ok()
-            .context("COM initialization failed")?;
+            .context("COM 初始化失败")?;
     }
 
     let socket_path = Path::new(socket_path);
-    let mut stream = net::UnixStream::connect(socket_path).context("Connect to parent socket")?;
+    let mut stream = net::UnixStream::connect(socket_path).context("连接到父套接字")?;
 
     match record_etw_trace_inner(heap_pid, output_path, &mut stream) {
         Ok(()) => Ok(()),
@@ -484,7 +484,7 @@ fn record_etw_trace_inner(
         control_manager
             .Start(&collection)
             .wpr_context(&control_manager)
-            .context("Start WPR recording")?;
+            .context("启动 WPR 录制")?;
     }
 
     // We must call Save or Cancel before returning or we'll leak the kernel buffers used to record the ETW session.
@@ -505,7 +505,7 @@ fn record_etw_trace_inner(
                 control_manager
                     .Cancel(None)
                     .wpr_context(&control_manager)
-                    .context("Cancel WPR recording")?;
+                    .context("取消 WPR 录制")?;
             }
             cancel_guard.abort();
 
@@ -520,7 +520,7 @@ fn record_etw_trace_inner(
                         None,
                     )
                     .wpr_context(&control_manager)
-                    .context("Stop WPR recording")?;
+                    .context("停止 WPR 录制")?;
             }
             cancel_guard.abort();
 
@@ -551,14 +551,14 @@ fn receive_command(stream: &mut net::UnixStream) -> Result<(Command, bool)> {
         )
     };
     if ret != 0 {
-        bail!("Failed to set socket receive timeout: setsockopt returned {ret}");
+        bail!("无法设置套接字接收超时: setsockopt 返回 {ret}");
     }
 
     let mut reader = BufReader::new(&mut *stream);
     match recv_json::<Command>(&mut reader) {
         Ok(command) => Ok((command, false)),
         Err(error) => {
-            log::warn!("Failed to receive ETW command, treating as timed-out Save: {error:#}");
+            log::warn!("无法接收 ETW 命令,视为超时保存: {error:#}");
             Ok((Command::Save, true))
         }
     }
@@ -575,9 +575,9 @@ pub fn launch_etw_recording(heap_pid: Option<u32>, output_path: &Path) -> Result
     let sock_path = std::env::temp_dir().join(format!("zed-etw-{}.sock", std::process::id()));
 
     _ = std::fs::remove_file(&sock_path);
-    let listener = net::UnixListener::bind(&sock_path).context("Bind Unix socket for ETW IPC")?;
+    let listener = net::UnixListener::bind(&sock_path).context("绑定用于 ETW IPC 的 Unix 套接字")?;
 
-    let exe_path = std::env::current_exe().context("Failed to get current exe path")?;
+    let exe_path = std::env::current_exe().context("无法获取当前 exe 路径")?;
     let pid_arg = heap_pid.map_or(-1i64, |pid| pid as i64);
     let args = format!(
         "--record-etw-trace --etw-zed-pid {} --etw-output \"{}\" --etw-socket \"{}\"",
@@ -608,10 +608,10 @@ pub fn launch_etw_recording(heap_pid: Option<u32>, output_path: &Path) -> Result
 
     let result_code = result.0 as usize;
     if result_code <= 32 {
-        bail!("ShellExecuteW failed to launch elevated process (code: {result_code})");
+        bail!("ShellExecuteW 无法启动提升权限的进程 (代码: {result_code})");
     }
 
-    let (stream, _) = listener.accept().context("Accept subprocess connection")?;
+    let (stream, _) = listener.accept().context("接受子进程连接")?;
 
     let mut session = EtwSession {
         output_path: output_path.to_path_buf(),
@@ -621,15 +621,15 @@ pub fn launch_etw_recording(heap_pid: Option<u32>, output_path: &Path) -> Result
     };
 
     let status: StatusMessage =
-        recv_json(&mut session.stream).context("Wait for Started status")?;
+        recv_json(&mut session.stream).context("等待已启动状态")?;
 
     match status {
         StatusMessage::Started => {}
         StatusMessage::Error { message } => {
-            bail!("Subprocess reported error during start: {message}");
+            bail!("子进程在启动期间报告错误: {message}");
         }
         other => {
-            bail!("Unexpected status from subprocess: {other:?}");
+            bail!("来自子进程的意外状态: {other:?}");
         }
     }
 
@@ -654,17 +654,17 @@ pub enum Command {
 }
 
 fn send_json<T: serde::Serialize>(writer: &mut impl Write, value: &T) -> Result<()> {
-    let json = serde_json::to_string(value).context("Serialize message")?;
-    writeln!(writer, "{json}").context("Write to socket")?;
-    writer.flush().context("Flush socket")?;
+    let json = serde_json::to_string(value).context("序列化消息")?;
+    writeln!(writer, "{json}").context("写入套接字")?;
+    writer.flush().context("刷新套接字")?;
     Ok(())
 }
 
 fn recv_json<T: serde::de::DeserializeOwned>(reader: &mut impl BufRead) -> Result<T> {
     let mut line = String::new();
-    reader.read_line(&mut line).context("Read from socket")?;
+    reader.read_line(&mut line).context("从套接字读取")?;
     if line.is_empty() {
-        bail!("Socket closed before a message was received");
+        bail!("套接字在收到消息前已关闭");
     }
-    serde_json::from_str(line.trim()).context("Parse message")
+    serde_json::from_str(line.trim()).context("解析消息")
 }

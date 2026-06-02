@@ -32,12 +32,12 @@ impl Job {
             apply: Box::new(move |app_dir| {
                 let dir = app_dir.join(name);
                 std::fs::create_dir_all(&dir)
-                    .context(format!("Failed to create directory {}", dir.display()))
+                    .context(format!("创建目录 {} 失败", dir.display()))
             }),
             rollback: Box::new(move |app_dir| {
                 let dir = app_dir.join(name);
                 std::fs::remove_dir_all(&dir)
-                    .context(format!("Failed to remove directory {}", dir.display()))
+                    .context(format!("移除目录失败 {}", dir.display()))
             }),
         }
     }
@@ -50,7 +50,7 @@ impl Job {
 
                 if check.exists() {
                     std::fs::create_dir_all(&dir)
-                        .context(format!("Failed to create directory {}", dir.display()))?
+                        .context(format!("创建目录 {} 失败", dir.display()))?
                 }
                 Ok(())
             }),
@@ -59,7 +59,7 @@ impl Job {
 
                 if dir.exists() {
                     std::fs::remove_dir_all(&dir)
-                        .context(format!("Failed to remove directory {}", dir.display()))?
+                        .context(format!("移除目录失败 {}", dir.display()))?
                 }
 
                 Ok(())
@@ -73,25 +73,25 @@ impl Job {
                 let old_file = app_dir.join(filename);
                 let new_file = app_dir.join(new_filename);
                 log::info!(
-                    "Moving file: {}->{}",
+                    "移动文件: {}->{}",
                     old_file.display(),
                     new_file.display()
                 );
 
                 std::fs::rename(&old_file, new_file)
-                    .context(format!("Failed to move file {}", old_file.display()))
+                    .context(format!("移动文件失败 {}", old_file.display()))
             }),
             rollback: Box::new(move |app_dir| {
                 let old_file = app_dir.join(filename);
                 let new_file = app_dir.join(new_filename);
                 log::info!(
-                    "Rolling back file move: {}->{}",
+                    "回滚文件移动: {}->{}",
                     old_file.display(),
                     new_file.display()
                 );
 
                 std::fs::rename(&new_file, &old_file).context(format!(
-                    "Failed to rollback file move {}->{}",
+                    "回滚文件移动失败 {}->{}",
                     new_file.display(),
                     old_file.display()
                 ))
@@ -107,13 +107,13 @@ impl Job {
 
                 if old_file.exists() {
                     log::info!(
-                        "Moving file: {}->{}",
+                        "移动文件: {}->{}",
                         old_file.display(),
                         new_file.display()
                     );
 
                     std::fs::rename(&old_file, new_file)
-                        .context(format!("Failed to move file {}", old_file.display()))?;
+                        .context(format!("移动文件失败 {}", old_file.display()))?;
                 }
 
                 Ok(())
@@ -124,13 +124,13 @@ impl Job {
 
                 if new_file.exists() {
                     log::info!(
-                        "Rolling back file move: {}->{}",
+                        "回滚文件移动: {}->{}",
                         old_file.display(),
                         new_file.display()
                     );
 
                     std::fs::rename(&new_file, &old_file).context(format!(
-                        "Failed to rollback file move {}->{}",
+                        "回滚文件移动失败 {}->{}",
                         new_file.display(),
                         old_file.display()
                     ))?
@@ -155,7 +155,7 @@ impl Job {
             rollback: Box::new(move |app_dir| {
                 let filename = app_dir.join(filename);
                 anyhow::bail!(
-                    "Delete operations cannot be rolled back, file: {}",
+                    "删除操作无法回滚,文件: {}",
                     filename.display()
                 )
             }),
@@ -164,7 +164,7 @@ impl Job {
 }
 
 #[cfg(not(test))]
-pub(crate) static JOBS: LazyLock<[Job; 22]> = LazyLock::new(|| {
+pub(crate) static JOBS: LazyLock<[Job; 24]> = LazyLock::new(|| {
     fn p(value: &str) -> &Path {
         Path::new(value)
     }
@@ -172,10 +172,13 @@ pub(crate) static JOBS: LazyLock<[Job; 22]> = LazyLock::new(|| {
         // Move old files
         // Not deleting because installing new files can fail
         Job::mkdir(p("old")),
-        Job::move_file(p("Zed.exe"), p("old\\Zed.exe")),
+        Job::move_file(p("VibeDev.exe"), p("old\\VibeDev.exe")),
         Job::mkdir(p("old\\bin")),
-        Job::move_file(p("bin\\Zed.exe"), p("old\\bin\\Zed.exe")),
-        Job::move_file(p("bin\\zed"), p("old\\bin\\zed")),
+        Job::move_file(p("bin\\vibedev.exe"), p("old\\bin\\vibedev.exe")),
+        Job::move_file(p("bin\\vibedev"), p("old\\bin\\vibedev")),
+        // VIBEDEV: the bundled ACP agent (ccb backend dist + bun.exe) changes every
+        // release; it MUST be swapped or backend fixes never reach users.
+        Job::move_file(p("agent"), p("old\\agent")),
         //
         // TODO: remove after a few weeks once everyone is on the new version and this file never exists
         Job::move_if_exists(p("OpenConsole.exe"), p("old\\OpenConsole.exe")),
@@ -189,9 +192,11 @@ pub(crate) static JOBS: LazyLock<[Job; 22]> = LazyLock::new(|| {
         //
         Job::move_file(p("conpty.dll"), p("old\\conpty.dll")),
         // Copy new files
-        Job::move_file(p("install\\Zed.exe"), p("Zed.exe")),
-        Job::move_file(p("install\\bin\\Zed.exe"), p("bin\\Zed.exe")),
-        Job::move_file(p("install\\bin\\zed"), p("bin\\zed")),
+        Job::move_file(p("install\\VibeDev.exe"), p("VibeDev.exe")),
+        Job::move_file(p("install\\bin\\vibedev.exe"), p("bin\\vibedev.exe")),
+        Job::move_file(p("install\\bin\\vibedev"), p("bin\\vibedev")),
+        // VIBEDEV: install the freshly-built bundled agent.
+        Job::move_file(p("install\\agent"), p("agent")),
         //
         Job::mkdir_if_exists(p("x64"), p("install\\x64")),
         Job::mkdir_if_exists(p("arm64"), p("install\\arm64")),
@@ -279,13 +284,14 @@ pub(crate) static JOBS: LazyLock<[Job; 9]> = LazyLock::new(|| {
 fn release_file_handles(app_dir: &Path) -> Result<()> {
     // Files that commonly get locked by Explorer or other processes
     let files_to_release = [
-        app_dir.join("Zed.exe"),
-        app_dir.join("bin\\Zed.exe"),
-        app_dir.join("bin\\zed"),
+        app_dir.join("VibeDev.exe"),
+        app_dir.join("bin\\vibedev.exe"),
+        app_dir.join("bin\\vibedev"),
+        app_dir.join("agent\\vibedev-agent.exe"),
         app_dir.join("conpty.dll"),
     ];
 
-    log::info!("Attempting to release file handles using Restart Manager...");
+    log::info!("正在尝试使用 Restart Manager 释放文件句柄...");
 
     let mut session: u32 = 0;
     let mut session_key = [0u16; CCH_RM_SESSION_KEY as usize + 1];
@@ -299,7 +305,7 @@ fn release_file_handles(app_dir: &Path) -> Result<()> {
         )
     };
     if err.is_err() {
-        anyhow::bail!("RmStartSession failed: {err:?}");
+        anyhow::bail!("RmStartSession 失败: {err:?}");
     }
 
     // Ensure we end the session when done
@@ -320,7 +326,7 @@ fn release_file_handles(app_dir: &Path) -> Result<()> {
         .collect();
 
     if wide_paths.is_empty() {
-        log::info!("No files to release handles for");
+        log::info!("没有需要释放句柄的文件");
         return Ok(());
     }
 
@@ -332,7 +338,7 @@ fn release_file_handles(app_dir: &Path) -> Result<()> {
     // Register the files we want to modify
     let err = unsafe { RmRegisterResources(session, Some(&pcwstr_paths), None, None) };
     if err.is_err() {
-        anyhow::bail!("RmRegisterResources failed: {err:?}");
+        anyhow::bail!("RmRegisterResources 失败: {err:?}");
     }
 
     // Check if any processes are using these files
@@ -342,12 +348,12 @@ fn release_file_handles(app_dir: &Path) -> Result<()> {
     let _ = unsafe { RmGetList(session, &mut needed, &mut count, None, &mut reboot_reasons) };
 
     if needed == 0 {
-        log::info!("No processes are holding handles to the files");
+        log::info!("没有进程持有这些文件的句柄");
         return Ok(());
     }
 
     log::info!(
-        "{} process(es) are holding handles to the files, requesting release...",
+        "{} 个进程正持有这些文件的句柄,正在请求释放...",
         needed
     );
 
@@ -356,10 +362,10 @@ fn release_file_handles(app_dir: &Path) -> Result<()> {
     // For Explorer, this typically releases icon cache handles without closing Explorer
     let err = unsafe { RmShutdown(session, 0, None) };
     if err.is_err() {
-        anyhow::bail!("RmShutdown failed: {:?}", err);
+        anyhow::bail!("RmShutdown 失败: {:?}", err);
     }
 
-    log::info!("Successfully requested handle release");
+    log::info!("已成功请求释放句柄");
     Ok(())
 }
 
@@ -368,7 +374,7 @@ pub(crate) fn perform_update(app_dir: &Path, hwnd: Option<isize>, launch: bool) 
 
     // Try to release file handles before starting the update
     if let Err(e) = release_file_handles(app_dir) {
-        log::warn!("Restart Manager failed (will continue anyway): {}", e);
+        log::warn!("Restart Manager 失败 (将继续执行): {}", e);
     }
 
     let mut last_successful_job = None;
@@ -388,16 +394,16 @@ pub(crate) fn perform_update(app_dir: &Path, hwnd: Option<isize>, launch: bool) 
                 Err(err) => match err.downcast_ref::<std::io::Error>() {
                     Some(io_err) => match io_err.kind() {
                         std::io::ErrorKind::NotFound => {
-                            log::error!("Operation failed with file not found, aborting: {}", err);
+                            log::error!("操作失败,找不到文件,正在中止: {}", err);
                             break 'outer;
                         }
                         _ => {
-                            log::error!("Operation failed (retrying): {}", err);
+                            log::error!("操作失败 (正在重试): {}", err);
                             std::thread::sleep(Duration::from_millis(50));
                         }
                     },
                     None => {
-                        log::error!("Operation failed with unexpected error, aborting: {}", err);
+                        log::error!("操作失败,发生意外错误,正在中止: {}", err);
                         break 'outer;
                     }
                 },
@@ -417,7 +423,7 @@ pub(crate) fn perform_update(app_dir: &Path, hwnd: Option<isize>, launch: bool) 
             let job = &JOBS[job];
             if let Err(e) = (job.rollback)(app_dir) {
                 anyhow::bail!(
-                    "Job rollback failed, the app might be left in an inconsistent state: ({:?})",
+                    "任务回滚失败,应用可能处于不一致状态: ({:?})",
                     e
                 );
             }
@@ -428,7 +434,7 @@ pub(crate) fn perform_update(app_dir: &Path, hwnd: Option<isize>, launch: bool) 
 
     if launch {
         #[allow(clippy::disallowed_methods, reason = "doesn't run in the main binary")]
-        let _ = std::process::Command::new(app_dir.join("Zed.exe")).spawn();
+        let _ = std::process::Command::new(app_dir.join("VibeDev.exe")).spawn();
     }
     log::info!("Update completed successfully");
     Ok(())

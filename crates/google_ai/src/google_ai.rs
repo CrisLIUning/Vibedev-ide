@@ -42,7 +42,7 @@ pub async fn stream_generate_content(
                             match serde_json::from_str(line) {
                                 Ok(response) => Some(Ok(response)),
                                 Err(error) => Some(Err(anyhow!(format!(
-                                    "Error parsing JSON: {error:?}\n{line:?}"
+                                    "解析 JSON 时出错: {error:?}\n{line:?}"
                                 )))),
                             }
                         } else {
@@ -57,7 +57,7 @@ pub async fn stream_generate_content(
         let mut text = String::new();
         response.body_mut().read_to_string(&mut text).await?;
         Err(anyhow!(
-            "error during streamGenerateContent, status code: {:?}, body: {}",
+            "streamGenerateContent 期间发生错误, 状态码: {:?}, 主体: {}",
             response.status(),
             text
         ))
@@ -567,7 +567,7 @@ impl Model {
             Self::Gemini25FlashLite => "Gemini 2.5 Flash-Lite",
             Self::Gemini25Flash => "Gemini 2.5 Flash",
             Self::Gemini25Pro => "Gemini 2.5 Pro",
-            Self::Gemini31FlashLite => "Gemini 3.1 Flash Lite",
+            Self::Gemini31FlashLite => "Gemini 3.1 轻量版",
             Self::Gemini3Flash => "Gemini 3 Flash",
             Self::Gemini35Flash => "Gemini 3.5 Flash",
             Self::Gemini31Pro => "Gemini 3.1 Pro",

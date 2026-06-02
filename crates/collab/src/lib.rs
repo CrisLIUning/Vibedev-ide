@@ -77,7 +77,7 @@ impl IntoResponse for Error {
             }
             Error::Database(error) => {
                 log::error!(
-                    "HTTP error {}: {:?}",
+                    "HTTP 错误 {}: {:?}",
                     StatusCode::INTERNAL_SERVER_ERROR,
                     &error
                 );
@@ -85,7 +85,7 @@ impl IntoResponse for Error {
             }
             Error::Internal(error) => {
                 log::error!(
-                    "HTTP error {}: {:?}",
+                    "HTTP 错误 {}: {:?}",
                     StatusCode::INTERNAL_SERVER_ERROR,
                     &error
                 );
@@ -246,7 +246,7 @@ impl AppState {
         let http_client = reqwest::Client::builder()
             .user_agent(user_agent)
             .build()
-            .context("failed to construct HTTP client")?;
+            .context("无法构建 HTTP 客户端")?;
 
         let db = Arc::new(db);
         let this = Self {
