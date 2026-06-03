@@ -72,7 +72,7 @@ jobs:
       # proven run_bundling.yml (20.04 + clang-18).
       CC: clang-18
       CXX: clang++-18
-      CARGO_BUILD_JOBS: "4"   # fewer parallel rustc → lower peak RAM on 16GB
+      CARGO_BUILD_JOBS: "2"   # fewer parallel rustc → lower peak RAM on 16GB
     timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
@@ -80,15 +80,12 @@ jobs:
       - run: ./script/linux                 # Zed's Ubuntu dependency installer
       - run: ./script/download-wasi-sdk
       - uses: dtolnay/rust-toolchain@stable
-      - name: Add swap (16GB RAM OOM-kills the LTO build; trial can't give a bigger runner)
-        run: |
-          sudo fallocate -l 24G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
-          free -h
-      - run: ./script/bundle-linux
-      # VibeDev ships no Linux desktop IDE — only the remote-server is deployed.
+      # VibeDev ships no Linux DESKTOP IDE — only the remote-server. So build just
+      # `remote_server` (skips the entire IDE + the heavy webrtc-sys/livekit) rather
+      # than the full bundle-linux. Far lighter on RAM — may fit the trial's 16GB
+      # where the full LTO IDE build OOM-killed the `project` crate.
+      - run: cargo build --release --target x86_64-unknown-linux-gnu -p remote_server
+      - run: gzip -f -c target/x86_64-unknown-linux-gnu/release/remote_server > target/vibedev-remote-server-linux-x86_64.gz
       - name: Stage artifacts for release-deploy
         run: |
           mkdir -p dist
