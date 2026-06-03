@@ -3,7 +3,8 @@ use buffer_diff::BufferDiff;
 use gpui::{App, AppContext, AsyncApp, Context, Entity, Subscription, Task};
 use itertools::Itertools;
 use language::{
-    Anchor, Buffer, Capability, LanguageRegistry, OffsetRangeExt as _, Point, TextBuffer,
+    Anchor, Buffer, Capability, LanguageNotFound, LanguageRegistry, OffsetRangeExt as _, Point,
+    TextBuffer,
 };
 use multi_buffer::{MultiBuffer, PathKey, excerpt_context_lines};
 use std::{cmp::Reverse, ops::Range, path::Path, sync::Arc};
@@ -30,10 +31,18 @@ impl Diff {
             let path = path.clone();
             let buffer = new_buffer.clone();
             async move |_, cx| {
-                let language = language_registry
+                // A file whose language isn't registered (e.g. an extension-provided
+                // language that isn't installed) is an expected, recoverable case in
+                // agent diffs — render without highlighting instead of logging an
+                // error on every such edit (this ERROR-spammed long tasks).
+                let language = match language_registry
                     .load_language_for_file_path(Path::new(&path))
                     .await
-                    .log_err();
+                {
+                    Ok(language) => Some(language),
+                    Err(error) if error.is::<LanguageNotFound>() => None,
+                    Err(error) => Err(error).log_err(),
+                };
 
                 buffer.update(cx, |buffer, cx| buffer.set_language(language.clone(), cx));
                 buffer.update(cx, |buffer, _| buffer.parsing_idle()).await;
