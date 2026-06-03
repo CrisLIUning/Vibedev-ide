@@ -63,20 +63,30 @@ jobs:
 
   build-linux:
     if: ${{ inputs.platform == 'linux-x86_64' }}
-    runs-on: nscloud-ubuntu-20.04-amd64-16x32
+    # The Namespace trial caps at 8 vCPU / 16GB (16x32 & 32x64 stay queued). The Zed
+    # LTO build OOMs at 16GB, so we add swap (step below) + cap parallelism.
+    runs-on: nscloud-ubuntu-20.04-amd64-8x16
     env:
       # webrtc-sys's C++ needs clang 17+ (C++20); script/linux installs clang-18
       # on 20.04 (NOT on 22.04, where default g++/clang-14 fail). Mirrors the
       # proven run_bundling.yml (20.04 + clang-18).
       CC: clang-18
       CXX: clang++-18
-    timeout-minutes: 120
+      CARGO_BUILD_JOBS: "4"   # fewer parallel rustc → lower peak RAM on 16GB
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - run: echo stable > crates/zed/RELEASE_CHANNEL
       - run: ./script/linux                 # Zed's Ubuntu dependency installer
       - run: ./script/download-wasi-sdk
       - uses: dtolnay/rust-toolchain@stable
+      - name: Add swap (16GB RAM OOM-kills the LTO build; trial can't give a bigger runner)
+        run: |
+          sudo fallocate -l 24G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          free -h
       - run: ./script/bundle-linux
       # VibeDev ships no Linux desktop IDE — only the remote-server is deployed.
       - name: Stage artifacts for release-deploy
