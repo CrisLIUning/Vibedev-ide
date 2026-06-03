@@ -25,9 +25,21 @@ use crate::read_endpoint;
 // Relative to the dev cwd (the zed repo root when run via `cargo run`); the
 // sibling `claude-code-best` checkout holds the dev agent build. No absolute /
 // user-specific path so this is clean for the public repo.
+#[cfg(target_os = "windows")]
 const DEV_AGENT_BIN: &str = r"..\claude-code-best\dist\vibedev-agent.exe";
+#[cfg(not(target_os = "windows"))]
+const DEV_AGENT_BIN: &str = "../claude-code-best/dist/vibedev-agent";
 
 /// Max time to wait for the handshake file + health check after a spawn.
+// VIBEDEV (macOS): the agent is a ~218 MB `bun --compile` binary; its FIRST
+// launch on Apple Silicon is slow (~25-30s) while the kernel/AMFI scans the
+// freshly-written ad-hoc-signed binary. 5s is right once warm and on Win/Linux,
+// but too short for that cold start (the account panel flashes "backend not
+// ready" on first run). `await_ready` polls and returns the instant the sidecar
+// is up, so a larger ceiling only costs time on a genuine miss.
+#[cfg(target_os = "macos")]
+pub const SIDECAR_HEALTH_TIMEOUT: Duration = Duration::from_secs(45);
+#[cfg(not(target_os = "macos"))]
 pub const SIDECAR_HEALTH_TIMEOUT: Duration = Duration::from_secs(5);
 
 const HEALTH_POLL_INTERVAL: Duration = Duration::from_millis(150);
@@ -537,7 +549,7 @@ async fn supervise(
         let mut child = match util::command::new_command(&agent_bin)
             .arg("--vibedev-sidecar")
             .kill_on_drop(true)
-            .stdin(std::process::Stdio::null())
+            .stdin(util::command::Stdio::null())
             .spawn()
         {
             Ok(child) => child,

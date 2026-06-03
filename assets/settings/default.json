@@ -2692,13 +2692,14 @@
   "agent_servers": {
     "VibeDev": {
       "type": "custom",
-      // VIBEDEV: `${ZED_BIN_DIR}` is expanded at runtime by settings.rs to the
-      // VibeDev install directory. The installer ships the compiled single-binary
-      // ACP agent at <install_dir>/agent/vibedev-agent.exe (self-contained — it
-      // embeds the Bun runtime, so there's no separate bun.exe + cli-bun.js entry
-      // script). No PATH munging or user setup required. To override on a dev
-      // checkout, set this in user settings.
-      "command": "${ZED_BIN_DIR}/agent/vibedev-agent.exe",
+      // VIBEDEV: `${ZED_BIN_DIR}` and `${ZED_EXE}` are expanded at runtime by
+      // settings.rs — `${ZED_BIN_DIR}` → the VibeDev install dir, `${ZED_EXE}` →
+      // ".exe" on Windows / "" on macOS+Linux. The installer ships the compiled
+      // single-binary ACP agent at <install_dir>/agent/vibedev-agent${ZED_EXE}
+      // (self-contained — it embeds the Bun runtime, so there's no separate
+      // bun[.exe] + cli-bun.js entry script). No PATH munging or user setup
+      // required. To override on a dev checkout, set this in user settings.
+      "command": "${ZED_BIN_DIR}/agent/vibedev-agent${ZED_EXE}",
       "args": [
         "--acp"
       ],
