@@ -530,18 +530,27 @@ fn default_settings_for_agent(
             .get(agent_id.as_ref())
             .cloned()
     });
-    if let Some(project::agent_server_store::CustomAgentServerSettings::Custom { command, .. }) =
-        resolved
+    if let Some(project::agent_server_store::CustomAgentServerSettings::Custom {
+        command,
+        default_mode,
+        default_model,
+        favorite_models,
+        default_config_options,
+        favorite_config_option_values,
+    }) = resolved
     {
+        // Preserve the baked command AND any baked defaults/favorites. Dropping the
+        // latter (the old `None`/empty here) would silently erase a default_model or
+        // favorites that a baked `Custom` agent could ship with in default.json.
         settings::CustomAgentServerSettings::Custom {
             path: command.path,
             args: command.args,
             env: command.env.unwrap_or_default().into_iter().collect(),
-            default_mode: None,
-            default_model: None,
-            favorite_models: Vec::new(),
-            default_config_options: Default::default(),
-            favorite_config_option_values: Default::default(),
+            default_mode,
+            default_model,
+            favorite_models,
+            default_config_options: default_config_options.into_iter().collect(),
+            favorite_config_option_values: favorite_config_option_values.into_iter().collect(),
         }
     } else {
         settings::CustomAgentServerSettings::Registry {
