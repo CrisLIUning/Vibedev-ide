@@ -65,10 +65,19 @@ jobs:
     if: ${{ inputs.platform == 'windows-x86_64' }}
     runs-on: windows-latest
     timeout-minutes: 180
+    env:
+      # cargo fetches git deps (e.g. microsoft/python-environment-tools) whose
+      # nested test fixtures blow past Windows' 260-char MAX_PATH under libgit2
+      # ("path too long; class=Filesystem (30)"). Fetch with the git CLI, which
+      # honors core.longpaths (enabled below) and uses the \\?\ long-path prefix.
+      CARGO_NET_GIT_FETCH_WITH_CLI: "true"
     steps:
       - uses: actions/checkout@v4
       - run: echo stable > crates/zed/RELEASE_CHANNEL
         shell: bash
+      - name: Enable git long paths (Windows MAX_PATH)
+        shell: bash
+        run: git config --global core.longpaths true
       - uses: dtolnay/rust-toolchain@stable
       - run: script/bundle-windows.ps1 -Architecture x86_64
         shell: pwsh
