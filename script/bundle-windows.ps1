@@ -102,12 +102,17 @@ function CheckEnvironmentVariables {
         return
     }
 
-    $requiredVars = @(
-        'ZED_WORKSPACE', 'RELEASE_VERSION', 'ZED_RELEASE_CHANNEL',
-        'AZURE_TENANT_ID', 'AZURE_CLIENT_ID', 'AZURE_CLIENT_SECRET',
-        'ACCOUNT_NAME', 'CERT_PROFILE_NAME', 'ENDPOINT',
-        'FILE_DIGEST', 'TIMESTAMP_DIGEST', 'TIMESTAMP_SERVER'
-    )
+    # VIBEDEV: signing creds are optional. Require the Azure Trusted Signing vars
+    # only when signing is configured (AZURE_TENANT_ID present); an unsigned build
+    # just needs workspace + version + channel (all set by ParseZedWorkspace).
+    $requiredVars = @('ZED_WORKSPACE', 'RELEASE_VERSION', 'ZED_RELEASE_CHANNEL')
+    if (-not [string]::IsNullOrWhiteSpace($env:AZURE_TENANT_ID)) {
+        $requiredVars += @(
+            'AZURE_TENANT_ID', 'AZURE_CLIENT_ID', 'AZURE_CLIENT_SECRET',
+            'ACCOUNT_NAME', 'CERT_PROFILE_NAME', 'ENDPOINT',
+            'FILE_DIGEST', 'TIMESTAMP_DIGEST', 'TIMESTAMP_SERVER'
+        )
+    }
 
     foreach ($var in $requiredVars) {
         if (-not (Test-Path "env:$var")) {
