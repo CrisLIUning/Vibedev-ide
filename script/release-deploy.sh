@@ -75,8 +75,10 @@ plan() {
       # NOTE: Linux IDE ('vibedev') is not in the OTA manifest today — see CICD-RELEASE-PLAN.md §8.
       ;;
     windows-x86_64)
-      # NOTE: confirm the Windows installer artifact name from bundle-windows.ps1 — see plan §8.
-      printf '%s|%s|%s|%s|%s\n' "VibeDevSetup-${IDE_VERSION}.exe" "VibeDevSetup-${IDE_VERSION}.exe" "" "vibedev" "$IDE_VERSION"
+      # Download names confirmed on server: VibeDevSetup-<ver>.exe (manifest target)
+      # + VibeDevSetup.exe (version-less "latest" alias for the landing page).
+      # The LOCAL build-artifact name from bundle-windows.ps1 is still TBD — plan §8.
+      printf '%s|%s|%s|%s|%s\n' "VibeDevSetup-${IDE_VERSION}.exe" "VibeDevSetup-${IDE_VERSION}.exe" "VibeDevSetup.exe" "vibedev" "$IDE_VERSION"
       printf '%s|%s|%s|%s|%s\n' "vibedev-remote-server-windows-x86_64.zip" "vibedev-remote-server-windows-x86_64-${IDE_VN}.zip" "" "vibedev-remote-server" "$IDE_VERSION"
       [ -n "$AGENT_VERSION" ] && printf '%s|%s|%s|%s|%s\n' "vibedev-agent-windows-x86_64.tar.gz" "vibedev-agent-windows-x86_64-${AGENT_VN}.tar.gz" "" "vibedev-agent" "$AGENT_VERSION"
       ;;

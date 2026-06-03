@@ -16,6 +16,7 @@
 #   echo '<entries-json>' | update-ota-manifest.py --manifest PATH [--channel stable]
 #   update-ota-manifest.py --manifest PATH --restore PATH.bak.<epoch>   # rollback
 import argparse
+import fcntl
 import json
 import os
 import shutil
@@ -59,43 +60,51 @@ def main():
     if not isinstance(entries, list) or not entries:
         sys.exit("error: expected a non-empty JSON array of entries on stdin")
 
-    with open(args.manifest, encoding="utf-8") as f:
-        manifest = json.load(f)
+    # Serialize concurrent updaters (e.g. the IDE and agent repos releasing at the
+    # same time, both editing this one manifest) so no update is lost.
+    lock = open(f"{args.manifest}.lock", "w")
+    fcntl.flock(lock, fcntl.LOCK_EX)
+    try:
+        with open(args.manifest, encoding="utf-8") as f:
+            manifest = json.load(f)
 
-    channel = manifest.setdefault(args.channel, {})
-    before = {k: canon(v) for k, v in leaves(channel).items()}
+        channel = manifest.setdefault(args.channel, {})
+        before = {k: canon(v) for k, v in leaves(channel).items()}
 
-    applied = set()
-    for e in entries:
-        for k in ("product", "os", "arch", "version", "url"):
-            if k not in e:
-                sys.exit(f"error: entry missing '{k}': {e}")
-        key = (e["product"], e["os"], e["arch"])
-        (channel.setdefault(e["product"], {})
-                .setdefault(e["os"], {}))[e["arch"]] = {
-            "version": e["version"],
-            "url": e["url"],
-        }
-        applied.add(key)
+        applied = set()
+        for e in entries:
+            for k in ("product", "os", "arch", "version", "url"):
+                if k not in e:
+                    sys.exit(f"error: entry missing '{k}': {e}")
+            key = (e["product"], e["os"], e["arch"])
+            (channel.setdefault(e["product"], {})
+                    .setdefault(e["os"], {}))[e["arch"]] = {
+                "version": e["version"],
+                "url": e["url"],
+            }
+            applied.add(key)
 
-    # SAFETY: nothing outside `applied` may have changed.
-    after = {k: canon(v) for k, v in leaves(channel).items()}
-    for k, v in before.items():
-        if k in applied:
-            continue
-        if after.get(k) != v:
-            sys.exit(f"ABORT: pre-existing entry {'/'.join(k)} would change — refusing to write")
+        # SAFETY: nothing outside `applied` may have changed.
+        after = {k: canon(v) for k, v in leaves(channel).items()}
+        for k, v in before.items():
+            if k in applied:
+                continue
+            if after.get(k) != v:
+                sys.exit(f"ABORT: pre-existing entry {'/'.join(k)} would change — refusing to write")
 
-    bak = f"{args.manifest}.bak.{int(time.time())}"
-    shutil.copy2(args.manifest, bak)
+        bak = f"{args.manifest}.bak.{int(time.time())}"
+        shutil.copy2(args.manifest, bak)
 
-    tmp = f"{args.manifest}.tmp.{os.getpid()}"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(manifest, f, indent=2, ensure_ascii=False)
-        f.write("\n")
-    with open(tmp, encoding="utf-8") as f:
-        json.load(f)  # validate before the swap
-    os.replace(tmp, args.manifest)  # atomic
+        tmp = f"{args.manifest}.tmp.{os.getpid()}"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(manifest, f, indent=2, ensure_ascii=False)
+            f.write("\n")
+        with open(tmp, encoding="utf-8") as f:
+            json.load(f)  # validate before the swap
+        os.replace(tmp, args.manifest)  # atomic
+    finally:
+        fcntl.flock(lock, fcntl.LOCK_UN)
+        lock.close()
 
     applied_str = ", ".join(sorted("/".join(k) for k in applied))
     print(f"OK  backup={bak}")
