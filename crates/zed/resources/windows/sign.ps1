@@ -3,6 +3,15 @@ param (
     [string]$filePath
 )
 
+# VIBEDEV: code signing is optional. bundle-windows.ps1 invokes this for every
+# artifact unconditionally; when the Azure Trusted Signing creds are absent
+# (unsigned GitHub-runner builds) skip instead of throwing. Use `return` (not
+# `exit`) so the in-process `& sign.ps1` callers keep running.
+if ([string]::IsNullOrWhiteSpace($ENV:AZURE_TENANT_ID) -and [string]::IsNullOrWhiteSpace($ENV:ENDPOINT)) {
+    Write-Output "VIBEDEV: no code-signing creds — skipping signing of $filePath"
+    return
+}
+
 $params = @{}
 
 $endpoint = $ENV:ENDPOINT
