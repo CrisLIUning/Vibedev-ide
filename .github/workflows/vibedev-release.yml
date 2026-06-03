@@ -63,7 +63,7 @@ jobs:
 
   build-linux:
     if: ${{ inputs.platform == 'linux-x86_64' }}
-    runs-on: nscloud-ubuntu-20.04-amd64-8x16
+    runs-on: nscloud-ubuntu-20.04-amd64-16x32
     env:
       # webrtc-sys's C++ needs clang 17+ (C++20); script/linux installs clang-18
       # on 20.04 (NOT on 22.04, where default g++/clang-14 fail). Mirrors the
