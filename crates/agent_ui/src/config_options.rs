@@ -619,7 +619,7 @@ impl PickerDelegate for ConfigOptionPickerDelegate {
                     .default_config_option(self.config_id.0.as_ref(), cx);
                 let is_default = default_value.as_deref() == Some(&*option.value.0);
 
-                let is_favorite = self.favorites.contains(&option.value);
+                let _is_favorite = self.favorites.contains(&option.value);
 
                 let option_name = option.name.clone();
                 let description = option.description.clone();
@@ -650,27 +650,34 @@ impl PickerDelegate for ConfigOptionPickerDelegate {
                                     this.child(Icon::new(IconName::Check).color(Color::Accent))
                                 }))
                                 .end_slot_on_hover(div().pr_1p5().child({
-                                    let (icon, color, tooltip) = if is_favorite {
-                                        (IconName::StarFilled, Color::Accent, "取消收藏")
+                                    // VIBEDEV: repurpose the (unused) favorite button into an
+                                    // explicit "set as default" toggle — one click pins this
+                                    // option as the default for new sessions (no modifier key
+                                    // needed); accent color = it is the current default.
+                                    let (color, tooltip) = if is_default {
+                                        (Color::Accent, "取消默认")
                                     } else {
-                                        (IconName::Star, Color::Default, "收藏")
+                                        (Color::Default, "设为默认")
                                     };
 
                                     let config_id = self.config_id.clone();
-                                    let value_id = option.value.clone();
+                                    let value = option.value.clone();
                                     let agent_server = self.agent_server.clone();
                                     let fs = self.fs.clone();
 
-                                    IconButton::new(("toggle-favorite-config-option", ix), icon)
+                                    IconButton::new(("set-default-config-option", ix), IconName::Pin)
                                         .layer(ElevationIndex::ElevatedSurface)
                                         .icon_color(color)
                                         .icon_size(IconSize::Small)
                                         .tooltip(Tooltip::text(tooltip))
                                         .on_click(move |_, _, cx| {
-                                            agent_server.toggle_favorite_config_option_value(
-                                                config_id.clone(),
-                                                value_id.clone(),
-                                                !is_favorite,
+                                            agent_server.set_default_config_option(
+                                                config_id.0.as_ref(),
+                                                if is_default {
+                                                    None
+                                                } else {
+                                                    Some(value.0.as_ref())
+                                                },
                                                 fs.clone(),
                                                 cx,
                                             );

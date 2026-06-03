@@ -53,6 +53,8 @@ pub struct ModelSelectorListItem {
     is_latest: bool,
     is_favorite: bool,
     on_toggle_favorite: Option<Box<dyn Fn(&ClickEvent, &mut Window, &mut App) + 'static>>,
+    is_default: bool,
+    on_set_default: Option<Box<dyn Fn(&ClickEvent, &mut Window, &mut App) + 'static>>,
     cost_info: Option<SharedString>,
 }
 
@@ -67,6 +69,8 @@ impl ModelSelectorListItem {
             is_latest: false,
             is_favorite: false,
             on_toggle_favorite: None,
+            is_default: false,
+            on_set_default: None,
             cost_info: None,
         }
     }
@@ -109,6 +113,19 @@ impl ModelSelectorListItem {
         self
     }
 
+    pub fn is_default(mut self, is_default: bool) -> Self {
+        self.is_default = is_default;
+        self
+    }
+
+    pub fn on_set_default(
+        mut self,
+        handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
+    ) -> Self {
+        self.on_set_default = Some(Box::new(handler));
+        self
+    }
+
     pub fn cost_info(mut self, cost_info: Option<SharedString>) -> Self {
         self.cost_info = cost_info;
         self
@@ -124,6 +141,7 @@ impl RenderOnce for ModelSelectorListItem {
         };
 
         let is_favorite = self.is_favorite;
+        let is_default = self.is_default;
 
         ListItem::new(self.index)
             .inset(true)
@@ -160,8 +178,28 @@ impl RenderOnce for ModelSelectorListItem {
             .end_slot(div().pr_2().when(self.is_selected, |this| {
                 this.child(Icon::new(IconName::Check).color(Color::Accent))
             }))
-            .end_slot_on_hover(div().pr_1p5().when_some(self.on_toggle_favorite, {
-                |this, handle_click| {
+            .end_slot_on_hover(div().pr_1p5().map(|this| {
+                // VIBEDEV: when a set-default handler is provided (VibeDev model
+                // selector) the hover button is an explicit "set as default" toggle
+                // (Pin; accent = current default). Otherwise fall back to the
+                // favorite star (upstream language-model selector still uses it).
+                if let Some(handle_set_default) = self.on_set_default {
+                    let (color, tooltip) = if is_default {
+                        (Color::Accent, "取消默认")
+                    } else {
+                        (Color::Default, "设为默认")
+                    };
+                    this.child(
+                        IconButton::new(("set-default-model", self.index), IconName::Pin)
+                            .layer(ElevationIndex::ElevatedSurface)
+                            .icon_color(color)
+                            .icon_size(IconSize::Small)
+                            .tooltip(Tooltip::text(tooltip))
+                            .on_click(move |event, window, cx| {
+                                (handle_set_default)(event, window, cx)
+                            }),
+                    )
+                } else if let Some(handle_click) = self.on_toggle_favorite {
                     let (icon, color, tooltip) = if is_favorite {
                         (IconName::StarFilled, Color::Accent, "取消收藏模型")
                     } else {
@@ -175,6 +213,8 @@ impl RenderOnce for ModelSelectorListItem {
                             .tooltip(Tooltip::text(tooltip))
                             .on_click(move |event, window, cx| (handle_click)(event, window, cx)),
                     )
+                } else {
+                    this
                 }
             }))
     }

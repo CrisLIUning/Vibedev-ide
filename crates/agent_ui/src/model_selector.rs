@@ -325,16 +325,22 @@ impl PickerDelegate for ModelPickerDelegate {
                 let default_model = self.agent_server.default_model(cx);
                 let is_default = default_model.as_ref() == Some(&model_info.id);
 
-                let is_favorite = *is_favorite;
-                let handle_action_click = {
+                let _is_favorite = *is_favorite;
+                // VIBEDEV: repurpose the row's hover action button into an explicit
+                // "set as default" toggle (no modifier needed); reuses the same
+                // set_default_model path as the Cmd/Ctrl-click gesture.
+                let handle_set_default = {
                     let model_id = model_info.id.clone();
                     let fs = self.fs.clone();
                     let agent_server = self.agent_server.clone();
 
                     cx.listener(move |_, _, _, cx| {
-                        agent_server.toggle_favorite_model(
-                            model_id.clone(),
-                            !is_favorite,
+                        agent_server.set_default_model(
+                            if is_default {
+                                None
+                            } else {
+                                Some(model_id.clone())
+                            },
                             fs.clone(),
                             cx,
                         );
@@ -367,8 +373,8 @@ impl PickerDelegate for ModelPickerDelegate {
                                 .is_selected(is_selected)
                                 .is_focused(selected)
                                 .is_latest(model_info.is_latest)
-                                .is_favorite(is_favorite)
-                                .on_toggle_favorite(handle_action_click)
+                                .is_default(is_default)
+                                .on_set_default(handle_set_default)
                                 .cost_info(model_cost)
                         )
                         .into_any_element(),
