@@ -239,17 +239,19 @@ pub fn init(client: Arc<Client>, cx: &mut App) {
     // VIBEDEV: this body runs (the prior early-return was removed) so the
     // GlobalAutoUpdate is registered — required by SSH remote-server download
     // (download_remote_server_release / get_remote_server_release_url) AND by
-    // future app self-update, which share get_release_asset. That asset URL is
+    // app self-update, which share get_release_asset. That asset URL is
     // repointed at VibeDev's own server (see get_release_asset below); it never
     // hits zed.dev.
     //
-    // App self-update POLLING stays OFF without any extra guard here: the
-    // `auto_update` setting in assets/settings/default.json is `false`, and the
-    // polling loop below is only armed when `AutoUpdateSetting::get_global(cx).0`
-    // is true. With the setting false, `start_polling` is never called and the
-    // SettingsStore observer only ever arms polling if the user explicitly flips
-    // the setting on. So registering the global here does NOT start any app
-    // self-update download/install.
+    // App self-update POLLING is gated by two conditions (see below): the
+    // release channel's `poll_for_updates()` (false on `dev`, true on
+    // `stable`/`nightly`/`preview`) AND the `auto_update` setting
+    // (`AutoUpdateSetting::get_global(cx).0`, which defaults to `true` in
+    // assets/settings/default.json). So a `dev` build never polls for app
+    // self-update regardless of the setting, while a `stable` build polls
+    // VibeDev's own server (never zed.dev) unless the user sets
+    // `auto_update: false`. The SettingsStore observer arms/disarms polling
+    // live when the user toggles the setting.
     cx.observe_new(|workspace: &mut Workspace, _window, _cx| {
         workspace.register_action(|_, action, window, cx| check(action, window, cx));
 

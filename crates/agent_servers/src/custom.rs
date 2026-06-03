@@ -98,7 +98,7 @@ impl AgentServer for CustomAgentServer {
                 .agent_servers
                 .get_or_insert_default()
                 .entry(agent_id.0.to_string())
-                .or_insert_with(default_settings_for_agent);
+                .or_insert_with(|| default_settings_for_agent(&agent_id, _cx));
 
             match settings {
                 settings::CustomAgentServerSettings::Custom {
@@ -135,7 +135,7 @@ impl AgentServer for CustomAgentServer {
                 .agent_servers
                 .get_or_insert_default()
                 .entry(agent_id.0.to_string())
-                .or_insert_with(default_settings_for_agent);
+                .or_insert_with(|| default_settings_for_agent(&agent_id, _cx));
 
             match settings {
                 settings::CustomAgentServerSettings::Custom { default_mode, .. }
@@ -166,7 +166,7 @@ impl AgentServer for CustomAgentServer {
                 .agent_servers
                 .get_or_insert_default()
                 .entry(agent_id.0.to_string())
-                .or_insert_with(default_settings_for_agent);
+                .or_insert_with(|| default_settings_for_agent(&agent_id, _cx));
 
             match settings {
                 settings::CustomAgentServerSettings::Custom { default_model, .. }
@@ -209,7 +209,7 @@ impl AgentServer for CustomAgentServer {
                 .agent_servers
                 .get_or_insert_default()
                 .entry(agent_id.0.to_string())
-                .or_insert_with(default_settings_for_agent);
+                .or_insert_with(|| default_settings_for_agent(&agent_id, _cx));
 
             let favorite_models = match settings {
                 settings::CustomAgentServerSettings::Custom {
@@ -259,7 +259,7 @@ impl AgentServer for CustomAgentServer {
                 .agent_servers
                 .get_or_insert_default()
                 .entry(agent_id.0.to_string())
-                .or_insert_with(default_settings_for_agent);
+                .or_insert_with(|| default_settings_for_agent(&agent_id, _cx));
 
             match settings {
                 settings::CustomAgentServerSettings::Custom {
@@ -512,14 +512,55 @@ fn is_registry_agent(agent_id: impl Into<AgentId>, cx: &App) -> bool {
     is_in_registry || is_settings_registry
 }
 
-fn default_settings_for_agent() -> settings::CustomAgentServerSettings {
-    settings::CustomAgentServerSettings::Registry {
-        default_model: None,
-        default_mode: None,
-        env: Default::default(),
-        favorite_models: Vec::new(),
-        default_config_options: Default::default(),
-        favorite_config_option_values: Default::default(),
+fn default_settings_for_agent(
+    agent_id: &AgentId,
+    cx: &App,
+) -> settings::CustomAgentServerSettings {
+    // VIBEDEV: when first creating the user-settings entry for an agent whose
+    // CURRENT (baked/effective) definition is `Custom` — i.e. the baked VibeDev
+    // agent from default.json — produce a `Custom` entry that PRESERVES that
+    // command. The settings merge replaces the whole enum wholesale, so the old
+    // code (always `Registry`) silently dropped the baked command, turning the
+    // agent into a command-less registry entry that fails to register (the
+    // "VibeDev not registered" / model-"未知" trap, with defaults never applying).
+    // Genuinely registry-based agents still default to `Registry`.
+    let resolved = cx.read_global(|store: &SettingsStore, _| {
+        store
+            .get::<AllAgentServersSettings>(None)
+            .get(agent_id.as_ref())
+            .cloned()
+    });
+    if let Some(project::agent_server_store::CustomAgentServerSettings::Custom {
+        command,
+        default_mode,
+        default_model,
+        favorite_models,
+        default_config_options,
+        favorite_config_option_values,
+    }) = resolved
+    {
+        // Preserve the baked command AND any baked defaults/favorites. Dropping the
+        // latter (the old `None`/empty here) would silently erase a default_model or
+        // favorites that a baked `Custom` agent could ship with in default.json.
+        settings::CustomAgentServerSettings::Custom {
+            path: command.path,
+            args: command.args,
+            env: command.env.unwrap_or_default().into_iter().collect(),
+            default_mode,
+            default_model,
+            favorite_models,
+            default_config_options: default_config_options.into_iter().collect(),
+            favorite_config_option_values: favorite_config_option_values.into_iter().collect(),
+        }
+    } else {
+        settings::CustomAgentServerSettings::Registry {
+            default_model: None,
+            default_mode: None,
+            env: Default::default(),
+            favorite_models: Vec::new(),
+            default_config_options: Default::default(),
+            favorite_config_option_values: Default::default(),
+        }
     }
 }
 

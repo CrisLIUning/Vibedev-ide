@@ -411,6 +411,12 @@ fn enqueue_notification<Notif>(
     }
 }
 
+// VIBEDEV: the `default_mode` / `default_model` / `default_config_options` fields
+// below are populated at connect() but are now read FRESH from settings per new
+// session (see `current_defaults`), so a default the user pins mid-session takes
+// effect without an agent restart. The fields are retained for the constructor
+// wiring; `allow(dead_code)` covers them now that they are written but not read.
+#[allow(dead_code)]
 pub struct AcpConnection {
     id: AgentId,
     telemetry_id: SharedString,
@@ -1225,13 +1231,22 @@ impl AcpConnection {
         session_id: &acp::SessionId,
         models: Option<&Rc<RefCell<acp::SessionModelState>>>,
         config_options: Option<&Rc<RefCell<Vec<acp::SessionConfigOption>>>>,
+        // VIBEDEV: an explicitly-set default (settings.json) WINS over the
+        // last-session pick. New sessions always start at the user's default;
+        // the last-session pref only seeds options that have NO default set.
+        default_model: Option<acp::ModelId>,
+        default_config_options: &HashMap<String, String>,
         cx: &mut AsyncApp,
     ) {
         let Some(prefs) = vibedev_account::session_prefs::load() else {
             return;
         };
 
-        if let (Some(model_id_str), Some(models)) = (prefs.model.as_ref(), models) {
+        // VIBEDEV: skip the last-session model pick when an explicit default_model
+        // is set — the explicit default wins for every new session.
+        if default_model.is_none()
+            && let (Some(model_id_str), Some(models)) = (prefs.model.as_ref(), models)
+        {
             let model_id = acp::ModelId::new(model_id_str.clone());
             let mut models_ref = models.borrow_mut();
             let has_model = models_ref
@@ -1276,6 +1291,11 @@ impl AcpConnection {
                 ("context", prefs.context.as_deref()),
             ] {
                 let Some(value_str) = value_str else { continue };
+                // VIBEDEV: explicit default for this option (settings.json) wins —
+                // skip the last-session pick when a default is set.
+                if default_config_options.contains_key(config_id_str) {
+                    continue;
+                }
                 let config_id = acp::SessionConfigId::new(config_id_str.to_string());
                 let value_id = acp::SessionConfigValueId::new(value_str.to_string());
                 let (is_valid, initial_value) = {
@@ -1347,6 +1367,43 @@ impl AcpConnection {
         }
     }
 
+    /// VIBEDEV: read the user's CURRENT defaults (mode / model / config options)
+    /// fresh from settings, keyed by this connection's agent id. The connection
+    /// caches these at connect()-time and never refreshes them, so a default the
+    /// user pins MID-session was previously ignored until the agent restarted.
+    /// Re-reading per new session makes "set as default" take effect immediately.
+    fn current_defaults(
+        id: &AgentId,
+        cx: &App,
+    ) -> (
+        Option<acp::SessionModeId>,
+        Option<acp::ModelId>,
+        HashMap<String, String>,
+    ) {
+        cx.global::<settings::SettingsStore>()
+            .get::<project::agent_server_store::AllAgentServersSettings>(None)
+            .get(id.0.as_ref())
+            .map(|s| match s {
+                project::agent_server_store::CustomAgentServerSettings::Custom {
+                    default_mode,
+                    default_model,
+                    default_config_options,
+                    ..
+                }
+                | project::agent_server_store::CustomAgentServerSettings::Registry {
+                    default_mode,
+                    default_model,
+                    default_config_options,
+                    ..
+                } => (
+                    default_mode.clone().map(acp::SessionModeId::new),
+                    default_model.clone().map(acp::ModelId::new),
+                    default_config_options.clone(),
+                ),
+            })
+            .unwrap_or_default()
+    }
+
     fn apply_default_config_options(
         &self,
         session_id: &acp::SessionId,
@@ -1354,12 +1411,16 @@ impl AcpConnection {
         cx: &mut AsyncApp,
     ) {
         let id = self.id.clone();
+        // VIBEDEV: read defaults fresh (see `current_defaults`) instead of the
+        // connection's cached field, so a mid-session change applies next session.
+        let default_config_options =
+            cx.update(|cx| Self::current_defaults(&self.id, cx).2);
         let defaults_to_apply: Vec<_> = {
             let config_opts_ref = config_options.borrow();
             config_opts_ref
                 .iter()
                 .filter_map(|config_option| {
-                    let default_value = self.default_config_options.get(&*config_option.id.0)?;
+                    let default_value = default_config_options.get(&*config_option.id.0)?;
 
                     let is_valid = match &config_option.kind {
                         acp::SessionConfigKind::Select(select) => match &select.options {
@@ -1632,7 +1693,14 @@ impl AgentConnection for AcpConnection {
             let (modes, models, config_options) =
                 config_state(response.modes, response.models, response.config_options);
 
-            if let Some(default_mode) = self.default_mode.clone() {
+            // VIBEDEV: read the user's CURRENT defaults fresh from settings (see
+            // `current_defaults`) — the connection cached them at connect(); reading
+            // fresh makes a default pinned mid-session apply to the next new session
+            // without restarting the agent.
+            let (default_mode, default_model, default_config_options) =
+                cx.update(|cx| Self::current_defaults(&self.id, cx));
+
+            if let Some(default_mode) = default_mode.clone() {
                 if let Some(modes) = modes.as_ref() {
                     let mut modes_ref = modes.borrow_mut();
                     let has_mode = modes_ref
@@ -1681,7 +1749,7 @@ impl AgentConnection for AcpConnection {
                 }
             }
 
-            if let Some(default_model) = self.default_model.clone() {
+            if let Some(default_model) = default_model.clone() {
                 if let Some(models) = models.as_ref() {
                     let mut models_ref = models.borrow_mut();
                     let has_model = models_ref
@@ -1734,19 +1802,21 @@ impl AgentConnection for AcpConnection {
                 self.apply_default_config_options(&response.session_id, config_opts, cx);
             }
 
-            // VIBEDEV: re-apply the user's last-session picks (model, thinking,
-            // context) on top of the agent's defaults so a new session feels
-            // like the previous one continued. claude-code-best resets these
-            // per-session by design (`src/services/acp/agent.ts:710-714`), so
-            // the IDE has to do the seeding. Persisted pref takes precedence
-            // over the agent-level `self.default_model` / `default_config_options`
-            // — those are user intent too, but the last-session pref is the
-            // most recent expression of it.
+            // VIBEDEV: seed a new session from the user's last-session picks
+            // (model, thinking, context) so it feels like the previous one
+            // continued — claude-code-best resets these per-session by design
+            // (`src/services/acp/agent.ts:710-714`), so the IDE re-seeds. But an
+            // EXPLICIT default (settings.json `default_model` / `default_config_options`,
+            // applied just above) WINS: `apply_vibedev_session_prefs` skips any
+            // option that has an explicit default, so the last-session pick only
+            // fills options the user never pinned a default for.
             Self::apply_vibedev_session_prefs(
                 self.connection.clone(),
                 &response.session_id,
                 models.as_ref(),
                 config_options.as_ref(),
+                default_model.clone(),
+                &default_config_options,
                 cx,
             );
 
