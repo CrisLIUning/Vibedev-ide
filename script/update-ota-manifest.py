@@ -52,7 +52,17 @@ def main():
     if args.restore:
         with open(args.restore, encoding="utf-8") as f:
             json.load(f)  # validate the backup parses
-        shutil.copy2(args.restore, args.manifest)
+        # Lock + atomic-replace, same as the write path: a rollback must not race a
+        # concurrent deploy or leave a truncated manifest.
+        lock = open(f"{args.manifest}.lock", "w")
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            tmp = f"{args.manifest}.tmp.{os.getpid()}"
+            shutil.copy2(args.restore, tmp)
+            os.replace(tmp, args.manifest)
+        finally:
+            fcntl.flock(lock, fcntl.LOCK_UN)
+            lock.close()
         print(f"restored {args.manifest} <- {args.restore}")
         return
 

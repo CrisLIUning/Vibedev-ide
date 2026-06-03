@@ -61,7 +61,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 ENTRIES_TSV="$WORK/entries.tsv"; : > "$ENTRIES_TSV"
 
-# rows: localfile <TAB> primary_dl_name <TAB> alias_csv <TAB> product <TAB> version
+# rows (pipe-delimited): localfile | primary_dl_name | alias_csv | product | version
 plan() {
   case "$PLATFORM" in
     macos-aarch64)
@@ -136,7 +136,7 @@ fi
 
 echo "== atomic manifest update =="
 scp_to "$SCRIPT_DIR/update-ota-manifest.py" "/tmp/update-ota-manifest.py"
-echo "$ENTRIES_JSON" | ssh_do "python3 /tmp/update-ota-manifest.py --manifest '$MANIFEST_PATH' --channel '$CHANNEL'; rm -f /tmp/update-ota-manifest.py"
+echo "$ENTRIES_JSON" | ssh_do "python3 /tmp/update-ota-manifest.py --manifest '$MANIFEST_PATH' --channel '$CHANNEL'; rc=\$?; rm -f /tmp/update-ota-manifest.py; exit \$rc"
 
 echo "== verify =="
 rc=0
@@ -144,7 +144,14 @@ while IFS='|' read -r product os arch version url; do
   [ -z "${product:-}" ] && continue
   ep="$OTA_BASE/$CHANNEL/$version/asset?os=$os&arch=$arch&asset=$product"
   resp="$(curl -fsS "$ep" 2>/dev/null || true)"
-  if printf '%s' "$resp" | grep -qF "$url"; then
+  # Parse the JSON url field (don't grep the raw body — a JSON encoder may escape
+  # slashes, which would make a fixed-string match false-fail a good deploy).
+  got_url="$(printf '%s' "$resp" | python3 -c 'import json,sys
+try:
+    print(json.load(sys.stdin).get("url", ""))
+except Exception:
+    print("")' 2>/dev/null)"
+  if [ "$got_url" = "$url" ]; then
     echo "  OK  OTA $product/$os/$arch@$version resolves correctly"
   else
     echo "  !!  OTA $product/$os/$arch@$version BAD: $resp"; rc=1
