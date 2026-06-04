@@ -53,7 +53,7 @@ use crate::{
     conversation_view::{
         AcpThreadViewEvent, RootThreadUpdated, ThreadView, reset_fast_mode_warnings,
     },
-    ui::{AgentNotification, AgentNotificationEvent, EndTrialUpsell},
+    ui::{AgentNotification, AgentNotificationEvent},
 
 };
 use crate::{

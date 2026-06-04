@@ -177,6 +177,7 @@ pub fn vibedev_configure_inline_assistant(
                     OpenAiCompatibleSettingsContent {
                         api_url,
                         available_models,
+                        custom_headers: None,
                     },
                 );
             });

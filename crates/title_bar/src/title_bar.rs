@@ -23,8 +23,7 @@ use crate::application_menu::{
 
 use auto_update::AutoUpdateStatus;
 use call::ActiveCall;
-use client::{Client, UserStore, zed_urls};
-use cloud_api_types::Plan;
+use client::{Client, UserStore};
 use command_palette_hooks::CommandPaletteFilter;
 
 

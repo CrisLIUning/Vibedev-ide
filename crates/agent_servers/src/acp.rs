@@ -1300,61 +1300,13 @@ impl AcpConnection {
     fn apply_vibedev_session_prefs(
         connection: ConnectionTo<Agent>,
         session_id: &acp::SessionId,
-        models: Option<&Rc<RefCell<acp::SessionModelState>>>,
         config_options: Option<&Rc<RefCell<Vec<acp::SessionConfigOption>>>>,
-        // VIBEDEV: an explicitly-set default (settings.json) WINS over the
-        // last-session pick. New sessions always start at the user's default;
-        // the last-session pref only seeds options that have NO default set.
-        default_model: Option<acp::ModelId>,
         default_config_options: &HashMap<String, String>,
         cx: &mut AsyncApp,
     ) {
         let Some(prefs) = vibedev_account::session_prefs::load() else {
             return;
         };
-
-        // VIBEDEV: skip the last-session model pick when an explicit default_model
-        // is set — the explicit default wins for every new session.
-        if default_model.is_none()
-            && let (Some(model_id_str), Some(models)) = (prefs.model.as_ref(), models)
-        {
-            let model_id = acp::ModelId::new(model_id_str.clone());
-            let mut models_ref = models.borrow_mut();
-            let has_model = models_ref
-                .available_models
-                .iter()
-                .any(|m| m.model_id == model_id);
-            if has_model {
-                let initial_model_id = models_ref.current_model_id.clone();
-                if initial_model_id != model_id {
-                    cx.spawn({
-                        let session_id = session_id.clone();
-                        let model_id_for_request = model_id.clone();
-                        let conn = connection.clone();
-                        let models = models.clone();
-                        async move |_| {
-                            let result = into_foreground_future(conn.send_request(
-                                acp::SetSessionModelRequest::new(
-                                    session_id,
-                                    model_id_for_request,
-                                ),
-                            ))
-                            .await
-                            .log_err();
-                            if result.is_none() {
-                                models.borrow_mut().current_model_id = initial_model_id;
-                            }
-                        }
-                    })
-                    .detach();
-                    models_ref.current_model_id = model_id;
-                }
-            } else {
-                log::info!(
-                    "vibedev persisted model `{model_id_str}` is not in this session's available_models; leaving agent default in place"
-                );
-            }
-        }
 
         if let Some(config_opts) = config_options {
             for (config_id_str, value_str) in [
@@ -1481,7 +1433,7 @@ impl AcpConnection {
         // VIBEDEV: read defaults fresh (see `current_defaults`) instead of the
         // connection's cached field, so a mid-session change applies next session.
         let default_config_options =
-            cx.update(|cx| Self::current_defaults(&self.id, cx).2);
+            cx.update(|cx| Self::current_defaults(&self.id, cx).1);
         let defaults_to_apply: Vec<_> = {
             let config_opts_ref = config_options.borrow();
             config_opts_ref
@@ -1563,7 +1515,7 @@ impl AcpConnection {
             let mut opts = config_options.borrow_mut();
             if let Some(opt) = opts.iter_mut().find(|o| o.id == config_id) {
                 if let acp::SessionConfigKind::Select(select) = &mut opt.kind {
-                    select.current_value = acp::SessionConfigValueId::new(default_value);
+                    select.current_value = acp::SessionConfigValueId::new(default_value.clone());
                 }
             }
         }
@@ -1828,10 +1780,7 @@ impl AgentConnection for AcpConnection {
             Self::apply_vibedev_session_prefs(
                 self.connection.clone(),
                 &response.session_id,
-                models.as_ref(),
                 config_options.as_ref(),
-                // model selector removed upstream (ACP 0.13); no explicit model default
-                None,
                 &default_config_options,
                 cx,
             );
