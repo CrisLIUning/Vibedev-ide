@@ -33,7 +33,7 @@ impl RenderOnce for HoldForDefault {
             .gap_0p5()
             .text_sm()
             .text_color(Color::Muted.color(cx))
-            .child("按住")
+            .child("Hold")
             .child(h_flex().flex_shrink_0().children(render_modifiers(
                 &Modifiers::secondary_key(),
                 PlatformStyle::platform(),
@@ -43,9 +43,9 @@ impl RenderOnce for HoldForDefault {
             )))
             .child(div().map(|this| {
                 if self.is_default {
-                    this.child("取消默认设置")
+                    this.child("to unset as default")
                 } else {
-                    this.child("设为默认")
+                    this.child("to set as default")
                 }
             }))
     }

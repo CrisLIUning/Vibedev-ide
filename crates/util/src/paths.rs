@@ -444,7 +444,7 @@ impl PathStyle {
             .ok_or_else(|| anyhow::anyhow!("Path contains invalid UTF-8"))?;
         let joined = self
             .join(left, right_string)
-            .ok_or_else(|| anyhow::anyhow!("路径必须是相对路径: {right:?}"))?;
+            .ok_or_else(|| anyhow::anyhow!("Path must be relative: {right:?}"))?;
         Ok(PathBuf::from(self.normalize(&joined)))
     }
 

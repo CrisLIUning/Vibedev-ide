@@ -207,11 +207,11 @@ impl Item for ReplSessionsPage {
     type Event = ItemEvent;
 
     fn tab_content_text(&self, _detail: usize, _cx: &App) -> SharedString {
-        "REPL 会话".into()
+        "REPL Sessions".into()
     }
 
     fn telemetry_event_text(&self) -> Option<&'static str> {
-        Some("REPL 会话已启动")
+        Some("REPL Session Started")
     }
 
     fn show_toolbar(&self) -> bool {
@@ -242,9 +242,9 @@ impl Render for ReplSessionsPage {
         // install kernels. It can be assumed they don't have a running kernel if we have no
         // specifications.
         if kernel_specifications.is_empty() {
-            let instructions = "要在编辑器中交互式运行代码,您需要安装并配置 Jupyter 内核。";
+            let instructions = "To start interactively running code in your editor, you need to install and configure Jupyter kernels.";
 
-            return ReplSessionsContainer::new("无可用 Jupyter 内核")
+            return ReplSessionsContainer::new("No Jupyter Kernels Available")
                 .child(Label::new(instructions))
                 .child(
                     h_flex().w_full().p_4().justify_center().gap_2().child(
@@ -252,7 +252,7 @@ impl Render for ReplSessionsPage {
                             .style(ButtonStyle::Filled)
                             .size(ButtonSize::Large)
                             .layer(ElevationIndex::ModalSurface)
-                            .child(Label::new("安装内核"))
+                            .child(Label::new("Install Kernels"))
                             .on_click(move |_, _, cx| {
                                 cx.open_url(
                                     "https://zed.dev/docs/repl#language-specific-instructions",
@@ -266,14 +266,14 @@ impl Render for ReplSessionsPage {
         if sessions.is_empty() {
             let instructions = "To run code in a Jupyter kernel, select some code and use the 'repl::Run' command.";
 
-            return ReplSessionsContainer::new("无 Jupyter 内核会话").child(
+            return ReplSessionsContainer::new("No Jupyter Kernel Sessions").child(
                 v_flex()
                     .child(Label::new(instructions))
                     .child(KeyBinding::for_action(&Run, cx)),
             );
         }
 
-        ReplSessionsContainer::new("Jupyter 内核会话").children(sessions)
+        ReplSessionsContainer::new("Jupyter Kernel Sessions").children(sessions)
     }
 }
 

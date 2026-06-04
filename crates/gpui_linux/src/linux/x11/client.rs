@@ -341,7 +341,7 @@ impl X11Client {
                 }
             })
             .map_err(|err| {
-                anyhow!("初始化前台任务的事件循环处理失败: {err:?}")
+                anyhow!("Failed to initialize event loop handling of foreground tasks: {err:?}")
             })?;
 
         let (xcb_connection, x_root_index) = XCBConnection::connect(None)?;
@@ -360,12 +360,12 @@ impl X11Client {
         )?;
         assert!(
             xinput_version.major_version >= 2,
-            "需要 XInput 版本 >= 2。"
+            "XInput version >= 2 required."
         );
         let supports_xinput_gestures = xinput_version.major_version > 2
             || (xinput_version.major_version == 2 && xinput_version.minor_version >= 4);
         log::info!(
-            "XInput 版本: {}.{}, 手势支持: {}",
+            "XInput version: {}.{}, gesture support: {}",
             xinput_version.major_version,
             xinput_version.minor_version,
             supports_xinput_gestures,
@@ -375,9 +375,9 @@ impl X11Client {
             current_pointer_device_states(&xcb_connection, &BTreeMap::new()).unwrap_or_default();
 
         let atoms = XcbAtoms::new(&xcb_connection)
-            .context("获取 XCB 原子失败")?
+            .context("Failed to get XCB atoms")?
             .reply()
-            .context("获取 XCB 原子失败")?;
+            .context("Failed to get XCB atoms")?;
 
         let root = xcb_connection.setup().roots[0].root;
         let compositor_present = check_compositor_present(&xcb_connection, root);
@@ -385,13 +385,13 @@ impl X11Client {
             check_gtk_frame_extents_supported(&xcb_connection, &atoms, root);
         let client_side_decorations_supported = compositor_present && gtk_frame_extents_supported;
         log::info!(
-            "x11: 混成器存在: {}, gtk_frame_extents_supported: {}",
+            "x11: compositor present: {}, gtk_frame_extents_supported: {}",
             compositor_present,
             gtk_frame_extents_supported
         );
 
         let xkb = get_reply(
-            || "初始化 XKB 扩展失败",
+            || "Failed to initialize XKB extension",
             xcb_connection
                 .xkb_use_extension(XKB_X11_MIN_MAJOR_XKB_VERSION, XKB_X11_MIN_MINOR_XKB_VERSION),
         )?;
@@ -409,7 +409,7 @@ impl X11Client {
             | xkb::MapPart::VIRTUAL_MODS
             | xkb::MapPart::VIRTUAL_MOD_MAP;
         check_reply(
-            || "选择 XKB 事件失败",
+            || "Failed to select XKB events",
             xcb_connection.xkb_select_events(
                 xkb::ID::USE_CORE_KBD.into(),
                 0u8.into(),
@@ -440,14 +440,14 @@ impl X11Client {
         let keyboard_layout = LinuxKeyboardLayout::new(layout_name.into());
 
         let resource_database = x11rb::resource_manager::new_from_default(&xcb_connection)
-            .context("创建资源数据库失败")?;
+            .context("Failed to create resource database")?;
         let scale_factor = get_scale_factor(&xcb_connection, &resource_database, x_root_index);
         let cursor_handle = cursor::Handle::new(&xcb_connection, x_root_index, &resource_database)
-            .context("初始化光标主题处理器失败")?
+            .context("Failed to initialize cursor theme handler")?
             .reply()
-            .context("初始化光标主题处理器失败")?;
+            .context("Failed to initialize cursor theme handler")?;
 
-        let clipboard = Clipboard::new().context("初始化剪贴板失败")?;
+        let clipboard = Clipboard::new().context("Failed to initialize clipboard")?;
 
         let screen = &xcb_connection.setup().roots[x_root_index];
         let compositor_gpu = detect_compositor_gpu(&xcb_connection, screen);
@@ -479,7 +479,7 @@ impl X11Client {
                     }
                 },
             )
-            .map_err(|err| anyhow!("初始化 X11 事件源失败: {err:?}"))?;
+            .map_err(|err| anyhow!("Failed to initialize X11 event source: {err:?}"))?;
 
         handle
             .insert_source(XDPEventSource::new(&common.background_executor), {
@@ -504,7 +504,7 @@ impl X11Client {
                     }
                 }
             })
-            .map_err(|err| anyhow!("初始化 XDP 事件源失败: {err:?}"))?;
+            .map_err(|err| anyhow!("Failed to initialize XDP event source: {err:?}"))?;
 
         xcb_flush(&xcb_connection);
 
@@ -639,7 +639,7 @@ impl X11Client {
                     }
                     Err(err) => {
                         let err = handle_connection_error(err);
-                        log::warn!("轮询 X11 事件时出错: {err:?}");
+                        log::warn!("error while polling for X11 events: {err:?}");
                         break;
                     }
                 }
@@ -735,7 +735,7 @@ impl X11Client {
         drop(state);
         if let Some(window_id) = window_id {
             let Some(window) = self.get_window(window_id) else {
-                log::error!("获取 IME 定位窗口失败");
+                log::error!("Failed to get window for IME positioning");
                 let mut state = self.0.borrow_mut();
                 state.ximc = Some(ximc);
                 state.xim_handler = Some(xim_handler);
@@ -849,7 +849,7 @@ impl X11Client {
                     self.0.borrow_mut().xdnd_state = Xdnd::default();
                 } else if event.type_ == state.atoms.XdndPosition {
                     if let Ok(pos) = get_reply(
-                        || "查询指针位置失败",
+                        || "Failed to query pointer position",
                         state.xcb_connection.query_pointer(event.window),
                     ) {
                         state.xdnd_state.position =
@@ -857,7 +857,7 @@ impl X11Client {
                     }
                     if !state.xdnd_state.retrieved {
                         check_reply(
-                            || "转换拖放选择失败",
+                            || "Failed to convert selection for drag and drop",
                             state.xcb_connection.convert_selection(
                                 event.window,
                                 state.atoms.XdndSelection,
@@ -918,7 +918,7 @@ impl X11Client {
                         .filter_map(|url| match url.to_file_path() {
                             Ok(url) => Some(url),
                             Err(()) => {
-                                log::error!("无法将 {url:?} 转换为文件路径");
+                                log::error!("Failed turn {url:?} into a file path");
                                 None
                             }
                         })
@@ -946,14 +946,14 @@ impl X11Client {
                 let window = self.get_window(event.window)?;
                 window
                     .set_bounds(bounds)
-                    .context("X11: 设置窗口边界失败")
+                    .context("X11: Failed to set window bounds")
                     .log_err();
             }
             Event::PropertyNotify(event) => {
                 let window = self.get_window(event.window)?;
                 window
                     .property_notify(event)
-                    .context("X11: 处理属性通知失败")
+                    .context("X11: Failed to handle property notify")
                     .log_err();
             }
             Event::FocusIn(event) => {
@@ -1200,7 +1200,7 @@ impl X11Client {
                         }
                     }
                     None => {
-                        log::error!("未知的 X11 按钮: {}", event.detail);
+                        log::error!("Unknown x11 button: {}", event.detail);
                     }
                 }
             }
@@ -1247,7 +1247,7 @@ impl X11Client {
                     {
                         state.cursor_styles.insert(window.x_window, style);
                         check_reply(
-                            || "设置光标样式失败",
+                            || "Failed to set cursor style",
                             state.xcb_connection.change_window_attributes(
                                 window.x_window,
                                 &ChangeWindowAttributesAux {
@@ -1438,7 +1438,7 @@ impl X11Client {
                     xim::ForwardEventFlag::empty(),
                     &event,
                 )
-                .context("X11: 转发 XIM 事件失败")
+                .context("X11: Failed to forward XIM event")
                 .log_err();
                 let mut state = self.0.borrow_mut();
                 state.restore_xim(ximc, xim_handler);
@@ -1599,7 +1599,7 @@ impl LinuxClient for X11Client {
         let x_window = state
             .xcb_connection
             .generate_id()
-            .context("X11: 生成窗口 ID 失败")?;
+            .context("X11: Failed to generate window ID")?;
 
         let xcb_connection = state.xcb_connection.clone();
         let client_side_decorations_supported = state.client_side_decorations_supported;
@@ -1632,7 +1632,7 @@ impl LinuxClient for X11Client {
             is_bgr,
         )?;
         check_reply(
-            || "设置 XdndAware 属性失败",
+            || "Failed to set XdndAware property",
             state.xcb_connection.change_property32(
                 xproto::PropMode::REPLACE,
                 x_window,
@@ -1689,7 +1689,7 @@ impl LinuxClient for X11Client {
         };
 
         check_reply(
-            || "设置光标样式失败",
+            || "Failed to set cursor style",
             state.xcb_connection.change_window_attributes(
                 focused_window,
                 &ChangeWindowAttributesAux {
@@ -1737,7 +1737,7 @@ impl LinuxClient for X11Client {
                 clipboard::ClipboardKind::Primary,
                 clipboard::WaitConfig::None,
             )
-            .context("X11 写入剪贴板 (主选区) 失败")
+            .context("X11 Failed to write to clipboard (primary)")
             .log_with_level(log::Level::Debug);
     }
 
@@ -1750,7 +1750,7 @@ impl LinuxClient for X11Client {
                 clipboard::ClipboardKind::Clipboard,
                 clipboard::WaitConfig::None,
             )
-            .context("X11: 写入剪贴板失败")
+            .context("X11: Failed to write to clipboard (clipboard)")
             .log_with_level(log::Level::Debug);
         state.clipboard_item.replace(item);
     }
@@ -1760,7 +1760,7 @@ impl LinuxClient for X11Client {
         state
             .clipboard
             .get_any(clipboard::ClipboardKind::Primary)
-            .context("X11: 读取剪贴板 (主选区) 失败")
+            .context("X11: Failed to read from clipboard (primary)")
             .log_with_level(log::Level::Debug)
     }
 
@@ -1777,7 +1777,7 @@ impl LinuxClient for X11Client {
         state
             .clipboard
             .get_any(clipboard::ClipboardKind::Clipboard)
-            .context("X11: 读取剪贴板失败")
+            .context("X11: Failed to read from clipboard (clipboard)")
             .log_with_level(log::Level::Debug)
     }
 
@@ -1918,7 +1918,7 @@ impl X11ClientState {
             }
             (true, None) => {
                 let Some(screen_resources) = get_reply(
-                    || "获取屏幕资源失败",
+                    || "Failed to get screen resources",
                     self.xcb_connection
                         .randr_get_screen_resources_current(x_window),
                 )
@@ -2002,7 +2002,7 @@ impl X11ClientState {
                     calloop::timer::TimeoutAction::ToInstant(instant)
                 }
             })
-            .expect("初始化窗口刷新计时器失败")
+            .expect("Failed to initialize window refresh timer")
     }
 
     fn get_cursor_icon(&mut self, style: CursorStyle) -> Option<xproto::Cursor> {
@@ -2036,7 +2036,7 @@ impl X11ClientState {
                     errors
                 ))
             } else {
-                Err(anyhow!("未找到光标图标 {:?}", cursor_icon_names))
+                Err(anyhow!("did not find cursor icons {:?}", cursor_icon_names))
             }
         };
 
@@ -2049,14 +2049,14 @@ impl X11ClientState {
                 {
                     Ok(default) => {
                         log_cursor_icon_warning(err.context(format!(
-                            "X11: 加载光标图标出错,回退到默认图标 '{}'",
+                            "X11: error loading cursor icon, falling back on default icon '{}'",
                             DEFAULT_CURSOR_ICON_NAME
                         )));
                         Some(default)
                     }
                     Err(default_err) => {
                         log_cursor_icon_warning(err.context(default_err).context(format!(
-                            "X11: 加载默认回退光标 '{}' 出错",
+                            "X11: error loading default cursor fallback '{}'",
                             DEFAULT_CURSOR_ICON_NAME
                         )));
                         None
@@ -2074,7 +2074,7 @@ impl X11ClientState {
             return Some(cursor);
         }
         let cursor = create_invisible_cursor(&self.xcb_connection)
-            .context("X11: 创建不可见光标时出错")
+            .context("X11: error while creating invisible cursor")
             .log_err()?;
         self.invisible_cursor_cache = Some(cursor);
         Some(cursor)
@@ -2092,7 +2092,7 @@ impl X11ClientState {
             return;
         };
         check_reply(
-            || "无法隐藏光标",
+            || "Failed to hide cursor",
             self.xcb_connection.change_window_attributes(
                 focused_window,
                 &ChangeWindowAttributesAux {
@@ -2117,13 +2117,13 @@ impl X11ClientState {
             .unwrap_or(CursorStyle::Arrow);
         let Some(cursor) = self.get_cursor_icon(style) else {
             log::warn!(
-                "X11: 隐藏后没有可用的光标图标来恢复 {:?};光标可能保持不可见",
+                "X11: no cursor icon available to restore {:?} after hide; cursor may stay invisible",
                 style
             );
             return;
         };
         check_reply(
-            || "无法恢复隐藏后的光标样式",
+            || "Failed to restore cursor style after hide",
             self.xcb_connection.change_window_attributes(
                 hidden_window,
                 &ChangeWindowAttributesAux {
@@ -2146,7 +2146,7 @@ pub fn mode_refresh_rate(mode: &randr::ModeInfo) -> Duration {
 
     let millihertz = mode.dot_clock as u64 * 1_000 / (mode.htotal as u64 * mode.vtotal as u64);
     let micros = 1_000_000_000 / millihertz;
-    log::info!("每 {}ms 刷新一次", micros / 1_000);
+    log::info!("Refreshing every {}ms", micros / 1_000);
     Duration::from_micros(micros)
 }
 
@@ -2237,7 +2237,7 @@ fn check_compositor_present(xcb_connection: &XCBConnection, root: xproto::Window
     };
 
     log::debug!(
-        "混成器检测: _NET_WM_CM_S?={}, _NET_WM_CM_OWNER={}, _NET_SUPPORTING_WM_CHECK={}",
+        "Compositor detection: _NET_WM_CM_S?={}, _NET_WM_CM_OWNER={}, _NET_SUPPORTING_WM_CHECK={}",
         method1,
         method2,
         method3
@@ -2290,7 +2290,7 @@ fn xdnd_get_supported_atom(
     target: xproto::Window,
 ) -> u32 {
     if let Some(reply) = get_reply(
-        || "获取 XDnD 支持的原子失败",
+        || "Failed to get XDnD supported atoms",
         xcb_connection.get_property(
             false,
             target,
@@ -2327,7 +2327,7 @@ fn xdnd_send_finished(
         response_type: xproto::CLIENT_MESSAGE_EVENT,
     };
     check_reply(
-        || "发送 XDnD 完成事件失败",
+        || "Failed to send XDnD finished event",
         xcb_connection.send_event(false, target, EventMask::default(), message),
     )
     .log_err();
@@ -2350,7 +2350,7 @@ fn xdnd_send_status(
         response_type: xproto::CLIENT_MESSAGE_EVENT,
     };
     check_reply(
-        || "发送 XDnD 状态事件失败",
+        || "Failed to send XDnD status event",
         xcb_connection.send_event(false, target, EventMask::default(), message),
     )
     .log_err();
@@ -2364,7 +2364,7 @@ fn current_pointer_device_states(
     scroll_values_to_preserve: &BTreeMap<xinput::DeviceId, PointerDeviceState>,
 ) -> Option<BTreeMap<xinput::DeviceId, PointerDeviceState>> {
     let devices_query_result = get_reply(
-        || "查询 XInput 设备失败",
+        || "Failed to query XInput devices",
         xcb_connection.xinput_xi_query_device(XINPUT_ALL_DEVICES),
     )
     .log_err()?;
@@ -2408,7 +2408,7 @@ fn current_pointer_device_states(
             }),
     );
     if pointer_device_states.is_empty() {
-        log::error!("未找到 XInput 鼠标指针。");
+        log::error!("Found no xinput mouse pointers.");
     }
     Some(pointer_device_states)
 }
@@ -2469,7 +2469,7 @@ fn get_axis_scroll_delta_and_update_state(
         axis.scroll_value = Some(new_scroll);
         delta_scroll
     } else {
-        log::error!("遇到无效的 XInput valuator_mask,滚动可能无法正常工作。");
+        log::error!("Encountered invalid XInput valuator_mask, scrolling may not work properly.");
         None
     }
 }
@@ -2533,7 +2533,7 @@ fn get_scale_factor(
                     DpiMode::Scale(scale)
                 } else {
                     panic!(
-                        "`{}` 必须是正整数或 `randr`。收到 `{}`",
+                        "`{}` must be a positive normal number or `randr`. Got `{}`",
                         GPUI_X11_SCALE_FACTOR_ENV, var
                     );
                 }
@@ -2541,7 +2541,7 @@ fn get_scale_factor(
                 DpiMode::NotSet
             } else {
                 panic!(
-                    "`{}` 必须是正数或 `randr`。收到 `{}`",
+                    "`{}` must be a positive number or `randr`. Got `{}`",
                     GPUI_X11_SCALE_FACTOR_ENV, var
                 );
             }
@@ -2551,7 +2551,7 @@ fn get_scale_factor(
     match env_dpi {
         DpiMode::Scale(scale) => {
             log::info!(
-                "使用来自 {} 的缩放因子: {}",
+                "Using scale factor from {}: {}",
                 GPUI_X11_SCALE_FACTOR_ENV,
                 scale
             );
@@ -2560,13 +2560,13 @@ fn get_scale_factor(
         DpiMode::Randr => {
             if let Some(scale) = get_randr_scale_factor(connection, screen_index) {
                 log::info!(
-                    "使用来自 {}=randr 的 RandR 缩放因子: {}",
+                    "Using RandR scale factor from {}=randr: {}",
                     GPUI_X11_SCALE_FACTOR_ENV,
                     scale
                 );
                 return scale;
             }
-            log::warn!("计算 RandR 缩放因子失败,回退到默认值");
+            log::warn!("Failed to calculate RandR scale factor, falling back to default");
             return 1.0;
         }
         DpiMode::NotSet => {}
@@ -2580,16 +2580,16 @@ fn get_scale_factor(
         .flatten()
     {
         let scale = dpi / 96.0; // base dpi
-        log::info!("使用来自 Xft.dpi 的缩放因子: {}", scale);
+        log::info!("Using scale factor from Xft.dpi: {}", scale);
         return scale;
     }
 
     if let Some(scale) = get_randr_scale_factor(connection, screen_index) {
-        log::info!("使用 RandR 缩放因子: {}", scale);
+        log::info!("Using RandR scale factor: {}", scale);
         return scale;
     }
 
-    log::info!("使用默认缩放因子: 1.0");
+    log::info!("Using default scale factor: 1.0");
     1.0
 }
 
@@ -2752,7 +2752,7 @@ fn get_dpi_factor((width_px, height_px): (u32, u32), (width_mm, height_mm): (u64
         validated_factor as f32
     } else {
         log::warn!(
-            "计算出的 DPI 因子 {} 无效,使用 1.0",
+            "Calculated DPI factor {} is invalid, using 1.0",
             validated_factor
         );
         1.0

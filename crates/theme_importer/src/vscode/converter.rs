@@ -239,7 +239,7 @@ impl VsCodeThemeConverter {
             };
 
             log::info!(
-                "已将 '{syntax_token}' 匹配到 '{}'",
+                "Matched '{syntax_token}' to '{}'",
                 token_color
                     .name
                     .clone()
@@ -247,7 +247,7 @@ impl VsCodeThemeConverter {
                         .scope
                         .as_ref()
                         .map(|scope| format!("{:?}", scope)))
-                    .unwrap_or_else(|| "无标识符".to_string())
+                    .unwrap_or_else(|| "no identifier".to_string())
             );
 
             let highlight_style = HighlightStyleContent {

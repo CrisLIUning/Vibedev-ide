@@ -398,7 +398,7 @@ async fn test_open_in_active_pane_deduplicates_files_by_path(cx: &mut gpui::Test
         assert_eq!(
             picker.delegate.matches.len(),
             2,
-            "尽管有 3 个标签页,但应显示 2 个唯一文件"
+            "should show 2 unique files despite 3 tabs"
         );
     });
 }
@@ -441,19 +441,19 @@ async fn test_open_in_active_pane_clones_files_to_current_pane(cx: &mut gpui::Te
     let editor_1 = panes[0].read_with(cx, |pane, cx| {
         pane.active_item()
             .and_then(|item| item.act_as::<Editor>(cx))
-            .expect("窗格 1 应包含编辑器")
+            .expect("pane 1 should have editor")
     });
 
     let editor_2 = panes[1].read_with(cx, |pane, cx| {
         pane.active_item()
             .and_then(|item| item.act_as::<Editor>(cx))
-            .expect("窗格 2 应包含编辑器")
+            .expect("pane 2 should have editor")
     });
 
     assert_ne!(
         editor_1.entity_id(),
         editor_2.entity_id(),
-        "应克隆到新实例"
+        "should clone to new instance"
     );
 }
 
@@ -494,14 +494,14 @@ async fn test_open_in_active_pane_moves_terminals_to_current_pane(cx: &mut gpui:
             pane.items()
                 .any(|item| item.item_id() == test_item.item_id())
         }),
-        "应从窗格 1 中移除"
+        "should be removed from pane 1"
     );
     assert!(
         panes[1].read_with(cx, |pane, _| {
             pane.items()
                 .any(|item| item.item_id() == test_item.item_id())
         }),
-        "应移动到窗格 2"
+        "should be moved to pane 2"
     );
 }
 
@@ -545,7 +545,7 @@ async fn test_open_in_active_pane_closes_file_in_all_panes(cx: &mut gpui::TestAp
         assert_eq!(
             pane.read_with(cx, |pane, _| pane.items_len()),
             0,
-            "所有窗格应为空"
+            "all panes should be empty"
         );
     }
 }

@@ -290,7 +290,7 @@ impl Component for Icon {
 
     fn description() -> Option<&'static str> {
         Some(
-            "一个通用的图标组件,支持 SVG 和基于图像的图标,可自定义大小、颜色和变换。",
+            "A versatile icon component that supports SVG and image-based icons with customizable size, color, and transformations.",
         )
     }
 
@@ -300,9 +300,9 @@ impl Component for Icon {
                 .gap_6()
                 .children(vec![
                     example_group_with_title(
-                        "尺寸",
+                        "Sizes",
                         vec![single_example(
-                            "超小, 小, 默认, 大",
+                            "XSmall, Small, Default, Large",
                             h_flex()
                                 .gap_1()
                                 .child(Icon::new(IconName::Star).size(IconSize::XSmall))
@@ -313,7 +313,7 @@ impl Component for Icon {
                         )],
                     ),
                     example_group(vec![single_example(
-                        "所有图标",
+                        "All Icons",
                         h_flex()
                             .image_cache(gpui::retain_all("all icons"))
                             .flex_wrap()

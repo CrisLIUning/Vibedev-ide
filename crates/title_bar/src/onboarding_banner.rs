@@ -1,5 +1,5 @@
 // This module provides infrastructure for showing onboarding banners in the title bar.
-// Currently used by the "技能已取代规则" announcement; older usages
+// Currently used by the "Skills have replaced Rules" announcement; older usages
 // (Claude Agent, ACP) lived here previously and were removed.
 #![allow(dead_code)]
 
@@ -164,9 +164,9 @@ impl Render for OnboardingBanner {
                         }))
                         .tooltip(|_window, cx| {
                             Tooltip::with_meta(
-                                "关闭公告横幅",
+                                "Close Announcement Banner",
                                 None,
-                                "此功能的横幅将不再显示",
+                                "It won't show again for this feature",
                                 cx,
                             )
                         }),

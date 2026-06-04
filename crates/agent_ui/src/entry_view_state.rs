@@ -89,7 +89,7 @@ impl EntryViewState {
                             self.prompt_store.clone(),
                             self.session_capabilities.clone(),
                             self.agent_id.clone(),
-                            "编辑消息 - @ 添加上下文",
+                            "Edit message - @ to include context",
                             editor::EditorMode::AutoHeight {
                                 min_lines: 1,
                                 max_lines: None,

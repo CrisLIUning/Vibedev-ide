@@ -119,7 +119,7 @@ impl CodestralEditPredictionDelegate {
         let start_time = Instant::now();
 
         log::debug!(
-            "Codestral: 正在请求补全 (模型: {}, max_tokens: {:?})",
+            "Codestral: Requesting completion (model: {}, max_tokens: {:?})",
             model,
             max_tokens
         );
@@ -161,7 +161,7 @@ impl CodestralEditPredictionDelegate {
             let mut body = String::new();
             response.body_mut().read_to_string(&mut body).await?;
             return Err(anyhow::anyhow!(
-                "Codestral API 错误: {} - {}",
+                "Codestral API error: {} - {}",
                 status,
                 body
             ));
@@ -178,7 +178,7 @@ impl CodestralEditPredictionDelegate {
             let completion = &choice.message.content;
 
             log::debug!(
-                "Codestral: 已收到补全 ({} tokens, {:.2}s)",
+                "Codestral: Completion received ({} tokens, {:.2}s)",
                 codestral_response.usage.completion_tokens,
                 elapsed.as_secs_f64()
             );

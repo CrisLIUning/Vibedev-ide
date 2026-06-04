@@ -484,7 +484,7 @@ fn resolve_outcome_from_selection(
         }
     }
 
-    // Use the selected granularity choice ("始终允许终端" or "仅此一次").
+    // Use the selected granularity choice ("Always for terminal" or "Only this time").
     let selected_index = selection
         .and_then(|s| s.choice_index())
         .unwrap_or_else(|| choices.len().saturating_sub(1));
@@ -1058,7 +1058,7 @@ impl ConversationView {
         {
             return ServerState::LoadError {
                 error: LoadError::Other(
-                    "共享项目中尚不支持外部代理。".into(),
+                    "External agents are not yet supported in shared projects.".into(),
                 ),
             };
         }
@@ -1128,7 +1128,7 @@ impl ConversationView {
                         )
                     } else {
                         Task::ready(Err(anyhow!(LoadError::Other(
-                            "此代理不支持加载或恢复会话。".into()
+                            "Loading or resuming sessions is not supported by this agent.".into()
                         ))))
                     }
                 })
@@ -1572,16 +1572,16 @@ impl ConversationView {
                 .active_view()
                 .and_then(|v| v.read(cx).thread.read(cx).title())
                 .unwrap_or_else(|| DEFAULT_THREAD_TITLE.into()),
-            ServerState::Loading { .. } => "加载中…".into(),
+            ServerState::Loading { .. } => "Loading…".into(),
             ServerState::LoadError { error, .. } => match error {
                 LoadError::Unsupported { .. } => {
-                    format!("升级 {}", self.agent.agent_id()).into()
+                    format!("Upgrade {}", self.agent.agent_id()).into()
                 }
                 LoadError::FailedToInstall(_) => {
-                    format!("安装 {} 失败", self.agent.agent_id()).into()
+                    format!("Failed to Install {}", self.agent.agent_id()).into()
                 }
-                LoadError::Exited { .. } => format!("{} 已退出", self.agent.agent_id()).into(),
-                LoadError::Other(_) => format!("加载 {} 时出错", self.agent.agent_id()).into(),
+                LoadError::Exited { .. } => format!("{} Exited", self.agent.agent_id()).into(),
+                LoadError::Other(_) => format!("Error Loading {}", self.agent.agent_id()).into(),
             },
         }
     }
@@ -1704,7 +1704,7 @@ impl ConversationView {
                 self.load_subagent_session(subagent_session_id.clone(), session_id, window, cx)
             }
             AcpThreadEvent::ToolAuthorizationRequested(_) => {
-                self.notify_with_sound("等待工具确认", IconName::Info, window, cx);
+                self.notify_with_sound("Waiting for tool confirmation", IconName::Info, window, cx);
             }
             AcpThreadEvent::ToolAuthorizationReceived(_) => {}
             AcpThreadEvent::Retry(retry) => {
@@ -1769,9 +1769,9 @@ impl ConversationView {
                     let used_tools = thread.read(cx).used_tools_since_last_user_message();
                     self.notify_with_sound(
                         if used_tools {
-                            "工具运行完成"
+                            "Finished running tools"
                         } else {
-                            "新消息"
+                            "New message"
                         },
                         IconName::ZedAssistant,
                         window,
@@ -1792,7 +1792,7 @@ impl ConversationView {
                 if !is_subagent {
                     let model_or_agent_name = self.current_model_name(cx);
                     let notification_message =
-                        format!("{} 拒绝响应此请求", model_or_agent_name);
+                        format!("{} refused to respond to this request", model_or_agent_name);
                     self.notify_with_sound(&notification_message, IconName::Warning, window, cx);
                 }
             }
@@ -1812,7 +1812,7 @@ impl ConversationView {
                 }
                 if !is_subagent {
                     self.notify_with_sound(
-                        "代理因错误停止",
+                        "Agent stopped due to an error",
                         IconName::Warning,
                         window,
                         cx,
@@ -2161,7 +2161,7 @@ impl ConversationView {
         cx: &mut App,
     ) -> Task<Result<()>> {
         let Some(terminal_panel) = workspace.read(cx).panel::<TerminalPanel>(cx) else {
-            return Task::ready(Err(anyhow!("终端面板不可用")));
+            return Task::ready(Err(anyhow!("Terminal panel is unavailable")));
         };
 
         window.spawn(cx, async move |cx| {
@@ -2199,8 +2199,8 @@ impl ConversationView {
 
             let success_patterns = match method.0.as_ref() {
                 "claude-login" | GEMINI_TERMINAL_AUTH_METHOD_ID => vec![
-                    "登录成功".to_string(),
-                    "输入您的消息".to_string(),
+                    "Login successful".to_string(),
+                    "Type your message".to_string(),
                 ],
                 _ => Vec::new(),
             };
@@ -2213,10 +2213,10 @@ impl ConversationView {
                 match exit_status {
                     Some(status) if status.success() => Ok(()),
                     Some(status) => Err(anyhow!(
-                        "登录命令失败,退出码:{:?}",
+                        "Login command failed with exit code: {:?}",
                         status.code()
                     )),
-                    None => Err(anyhow!("登录命令终止,无退出状态")),
+                    None => Err(anyhow!("Login command terminated without exit status")),
                 }
             } else {
                 // Look for specific output patterns to detect successful login
@@ -2247,7 +2247,7 @@ impl ConversationView {
                     result = logged_in => {
                         if let Err(e) = result {
                             log::error!("{e}");
-                            return Err(anyhow!("登录前已退出"));
+                            return Err(anyhow!("exited before logging in"));
                         }
                     }
                     _ = exit_status => {
@@ -2269,7 +2269,7 @@ impl ConversationView {
                                 })?
                                 .await;
                         }
-                        return Err(anyhow!("登录前已退出"));
+                        return Err(anyhow!("exited before logging in"));
                     }
                 }
                 terminal.update(cx, |terminal, _| terminal.kill_active_task())?;
@@ -2357,7 +2357,7 @@ impl ConversationView {
         if pending_auth_method.is_some() {
             return Callout::new()
                 .icon(IconName::Info)
-                .title(format!("正在认证到 {}…", agent_display_name))
+                .title(format!("Authenticating to {}…", agent_display_name))
                 .actions_slot(
                     Icon::new(IconName::ArrowCircle)
                         .size(IconSize::Small)
@@ -2370,7 +2370,7 @@ impl ConversationView {
 
         Callout::new()
             .icon(IconName::Info)
-            .title(format!("认证到 {}", agent_display_name))
+            .title(format!("Authenticate to {}", agent_display_name))
             .when(auth_methods.len() == 1, |this| {
                 this.actions_slot(auth_buttons())
             })
@@ -2380,7 +2380,7 @@ impl ConversationView {
                     .map(|this| {
                         if show_fallback_description {
                             this.child(
-                                Label::new("选择以下认证选项之一:")
+                                Label::new("Choose one of the following authentication options:")
                                     .size(LabelSize::Small)
                                     .color(Color::Muted),
                             )
@@ -2439,12 +2439,12 @@ impl ConversationView {
                 return self.render_unsupported(path, current_version, minimum_version, window, cx);
             }
             LoadError::FailedToInstall(msg) => (
-                "安装失败",
+                "Failed to Install",
                 msg.into(),
                 Some(self.create_copy_button(msg.to_string()).into_any_element()),
             ),
             LoadError::Exited { status, stderr } => {
-                let mut message = format!("服务器已退出,状态:{status}");
+                let mut message = format!("Server exited with status {status}");
                 if let Some(stderr) = stderr {
                     message.push_str("\n");
                     message.push_str(stderr);
@@ -2452,10 +2452,10 @@ impl ConversationView {
                 let action_slot = stderr
                     .is_some()
                     .then(|| self.create_copy_button(message.clone()).into_any_element());
-                ("启动失败", message.into(), action_slot)
+                ("Failed to Launch", message.into(), action_slot)
             }
             LoadError::Other(msg) => (
-                "启动失败",
+                "Failed to Launch",
                 msg.into(),
                 Some(self.create_copy_button(msg.to_string()).into_any_element()),
             ),
@@ -2479,15 +2479,15 @@ impl ConversationView {
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let (heading_label, description_label) = (
-            format!("升级 {} 以配合 VibeDev 工作", self.agent.agent_id()),
+            format!("Upgrade {} to work with Zed", self.agent.agent_id()),
             if version.is_empty() {
                 format!(
-                    "当前使用 {},它未报告有效的 --version",
+                    "Currently using {}, which does not report a valid --version",
                     path,
                 )
             } else {
                 format!(
-                    "当前使用 {},版本仅为 {}(至少需要 {minimum_version})",
+                    "Currently using {}, which is only version {} (need at least {minimum_version})",
                     path, version
                 )
             },
@@ -3105,7 +3105,7 @@ impl ConversationView {
                 .and_then(|active| active.read(cx).model_selector.clone())
                 .and_then(|selector| selector.read(cx).active_model(cx))
                 .map(|model| model.name.clone())
-                .unwrap_or_else(|| SharedString::from("模型"))
+                .unwrap_or_else(|| SharedString::from("The model"))
         } else {
             // ACP agent - use the agent name (e.g., "Claude Agent", "Gemini CLI")
             self.agent.agent_id().0
@@ -3115,7 +3115,7 @@ impl ConversationView {
     fn create_copy_button(&self, message: impl Into<String>) -> impl IntoElement {
         let message = message.into();
 
-        CopyButton::new("copy-error-message", message).tooltip_label("复制错误消息")
+        CopyButton::new("copy-error-message", message).tooltip_label("Copy Error Message")
     }
 
     pub(crate) fn reauthenticate(&mut self, window: &mut Window, cx: &mut Context<Self>) {
@@ -3125,7 +3125,7 @@ impl ConversationView {
         }
         let this = cx.weak_entity();
         let Some(connection) = self.as_connected().map(|c| c.connection.clone()) else {
-            debug_panic!("这不应该发生");
+            debug_panic!("This should not be possible");
             return;
         };
         window.defer(cx, |window, cx| {
@@ -3210,16 +3210,16 @@ fn native_available_skills(
 fn placeholder_text(agent_name: &str, has_commands: bool) -> String {
     if agent_name == agent::ZED_AGENT_ID.as_ref() {
         format!(
-            "发送消息给 {},@ 包含上下文,/ 使用命令",
+            "Message the {}, @ to include context, / for commands",
             agent_name
         )
     } else if has_commands {
         format!(
-            "给 {} 发消息 — @ 包含上下文,/ 使用命令",
+            "Message {} — @ to include context, / for commands",
             agent_name
         )
     } else {
-        format!("给 {} 发消息 — @ 包含上下文", agent_name)
+        format!("Message the {} — @ to include context", agent_name)
     }
 }
 
@@ -3272,7 +3272,7 @@ impl Render for ConversationView {
                     .items_center()
                     .justify_center()
                     .child(
-                        Label::new("加载中…").color(Color::Muted).with_animation(
+                        Label::new("Loading…").color(Color::Muted).with_animation(
                             "loading-agent-label",
                             Animation::new(Duration::from_secs(2))
                                 .repeat()
@@ -3580,7 +3580,7 @@ pub(crate) mod tests {
     async fn test_external_source_prompt_requires_manual_send(cx: &mut TestAppContext) {
         init_test(cx);
 
-        let Some(prompt) = crate::ExternalSourcePrompt::new("给我写一个脚本") else {
+        let Some(prompt) = crate::ExternalSourcePrompt::new("Write me a script") else {
             panic!("expected prompt from external source to sanitize successfully");
         };
         let initial_content = AgentInitialContent::FromExternalSource(prompt);
@@ -3595,7 +3595,7 @@ pub(crate) mod tests {
         active_thread(&conversation_view, cx).read_with(cx, |view, cx| {
             assert!(view.show_external_source_prompt_warning);
             assert_eq!(view.thread.read(cx).entries().len(), 0);
-            assert_eq!(view.message_editor.read(cx).text(cx), "给我写一个脚本");
+            assert_eq!(view.message_editor.read(cx).text(cx), "Write me a script");
         });
     }
 
@@ -3603,7 +3603,7 @@ pub(crate) mod tests {
     async fn test_external_source_prompt_warning_clears_after_send(cx: &mut TestAppContext) {
         init_test(cx);
 
-        let Some(prompt) = crate::ExternalSourcePrompt::new("给我写一个脚本") else {
+        let Some(prompt) = crate::ExternalSourcePrompt::new("Write me a script") else {
             panic!("expected prompt from external source to sanitize successfully");
         };
         let initial_content = AgentInitialContent::FromExternalSource(prompt);
@@ -3774,7 +3774,7 @@ pub(crate) mod tests {
             connection.send_update(
                 session_id.clone(),
                 acp::SessionUpdate::AgentMessageChunk(acp::ContentChunk::new(
-                    "第一条回复".into(),
+                    "first response".into(),
                 )),
                 cx,
             );
@@ -3789,7 +3789,7 @@ pub(crate) mod tests {
                 .filter(|window| window.downcast::<AgentNotification>().is_some())
                 .count(),
             0,
-            "排队消息将在停止时自动发送,不应触发通知"
+            "No notification should fire when a queued message will be auto-sent on Stopped"
         );
     }
 
@@ -4041,7 +4041,7 @@ pub(crate) mod tests {
 
         assert_eq!(
             placeholder,
-            Some("向 Test 发送消息 — @ 引入上下文, / 使用命令".to_string())
+            Some("Message Test — @ to include context, / for commands".to_string())
         );
 
         message_editor.update_in(cx, |editor, window, cx| {
@@ -4402,7 +4402,7 @@ pub(crate) mod tests {
                 tool_call_id,
                 PermissionOptions::Flat(vec![acp::PermissionOption::new(
                     "1",
-                    "允许",
+                    "Allow",
                     acp::PermissionOptionKind::AllowOnce,
                 )]),
             )]));
@@ -4829,7 +4829,7 @@ pub(crate) mod tests {
                 .filter(|window| window.downcast::<AgentNotification>().is_some())
                 .count(),
             1,
-            "当线程不可见时,应该显示通知"
+            "Expected a notification while the thread is not visible"
         );
 
         multi_workspace_handle
@@ -4846,7 +4846,7 @@ pub(crate) mod tests {
                 .filter(|window| window.downcast::<AgentNotification>().is_some())
                 .count(),
             0,
-            "当侧边栏打开并使线程可见时,通知应该自动关闭"
+            "Notification should auto-dismiss when the sidebar opens and makes the thread visible"
         );
     }
 
@@ -4979,7 +4979,7 @@ pub(crate) mod tests {
             "Expected notification when workspace is in background within MultiWorkspace"
         );
 
-        // Also verify: clicking "查看面板" should switch to workspace1.
+        // Also verify: clicking "View Panel" should switch to workspace1.
         cx.windows()
             .iter()
             .find_map(|window| window.downcast::<AgentNotification>())
@@ -5481,7 +5481,7 @@ pub(crate) mod tests {
         ) -> Task<gpui::Result<Entity<AcpThread>>> {
             if !*self.authenticated.lock() {
                 return Task::ready(Err(acp_thread::AuthRequired::new()
-                    .with_description("登录以继续".to_string())
+                    .with_description("Sign in to continue".to_string())
                     .into()));
             }
 
@@ -5520,7 +5520,7 @@ pub(crate) mod tests {
                 *self.authenticated.lock() = true;
                 Task::ready(Ok(()))
             } else {
-                Task::ready(Err(anyhow::anyhow!("未知认证方式")))
+                Task::ready(Err(anyhow::anyhow!("Unknown auth method")))
             }
         }
 
@@ -6927,15 +6927,15 @@ pub(crate) mod tests {
                     .map(|choice| choice.allow.name.as_ref())
                     .collect();
                 assert!(
-                    labels.contains(&"始终允许终端"),
+                    labels.contains(&"Always for terminal"),
                     "Missing 'Always for terminal' option"
                 );
                 assert!(
-                    labels.contains(&"始终允许 `cargo build` 命令"),
+                    labels.contains(&"Always for `cargo build` commands"),
                     "Missing pattern option"
                 );
                 assert!(
-                    labels.contains(&"仅此一次"),
+                    labels.contains(&"Only this time"),
                     "Missing 'Only this time' option"
                 );
             }
@@ -7019,11 +7019,11 @@ pub(crate) mod tests {
                     .map(|choice| choice.allow.name.as_ref())
                     .collect();
                 assert!(
-                    labels.contains(&"始终允许编辑文件"),
+                    labels.contains(&"Always for edit file"),
                     "Missing 'Always for edit file' option"
                 );
                 assert!(
-                    labels.contains(&"始终允许 `src/`"),
+                    labels.contains(&"Always for `src/`"),
                     "Missing path pattern option"
                 );
             } else {
@@ -7109,11 +7109,11 @@ pub(crate) mod tests {
                     .map(|choice| choice.allow.name.as_ref())
                     .collect();
                 assert!(
-                    labels.contains(&"始终允许获取"),
+                    labels.contains(&"Always for fetch"),
                     "Missing 'Always for fetch' option"
                 );
                 assert!(
-                    labels.contains(&"始终允许 `docs.rs`"),
+                    labels.contains(&"Always for `docs.rs`"),
                     "Missing domain pattern option"
                 );
             } else {
@@ -7208,11 +7208,11 @@ pub(crate) mod tests {
                     .map(|choice| choice.allow.name.as_ref())
                     .collect();
                 assert!(
-                    labels.contains(&"始终允许终端"),
+                    labels.contains(&"Always for terminal"),
                     "Missing 'Always for terminal' option"
                 );
                 assert!(
-                    labels.contains(&"仅此一次"),
+                    labels.contains(&"Only this time"),
                     "Missing 'Only this time' option"
                 );
                 // Should NOT contain a pattern option
@@ -7358,7 +7358,7 @@ pub(crate) mod tests {
             _ => panic!("Expected dropdown permission options"),
         };
 
-        // Dispatch action with the pattern option (simulating "始终允许 `npm` 命令")
+        // Dispatch action with the pattern option (simulating "Always allow `npm` commands")
         conversation_view.update_in(cx, |_, window, cx| {
             window.dispatch_action(
                 crate::AuthorizeToolCall {
@@ -7425,7 +7425,7 @@ pub(crate) mod tests {
 
         cx.run_until_parked();
 
-        // Verify default granularity is the last option (index 2 = "仅此一次")
+        // Verify default granularity is the last option (index 2 = "Only this time")
         thread_view.read_with(cx, |thread_view, cx| {
             let state = thread_view.active_thread().unwrap();
             let selected = state.read(cx).permission_selections.get(&tool_call_id);
@@ -7435,7 +7435,7 @@ pub(crate) mod tests {
             );
         });
 
-        // Select the first option (index 0 = "始终允许终端")
+        // Select the first option (index 0 = "Always for terminal")
         thread_view.update_in(cx, |_, window, cx| {
             window.dispatch_action(
                 crate::SelectPermissionGranularity {
@@ -7602,7 +7602,7 @@ pub(crate) mod tests {
 
         cx.run_until_parked();
 
-        // Use default granularity (last option = "仅此一次")
+        // Use default granularity (last option = "Only this time")
         // Simulate clicking the Deny button
         active_thread(&conversation_view, cx).update_in(cx, |view, window, cx| {
             view.reject_once(&RejectOnce, window, cx)
@@ -7680,12 +7680,12 @@ pub(crate) mod tests {
         PermissionOptions::Flat(vec![
             acp::PermissionOption::new(
                 acp::PermissionOptionId::new("allow"),
-                "是",
+                "Yes",
                 acp::PermissionOptionKind::AllowOnce,
             ),
             acp::PermissionOption::new(
                 acp::PermissionOptionId::new("deny"),
-                "否",
+                "No",
                 acp::PermissionOptionKind::RejectOnce,
             ),
         ])
@@ -7731,7 +7731,7 @@ pub(crate) mod tests {
 
         let outcome = super::resolve_outcome_from_selection(&options, None, true).unwrap();
 
-        // Last choice is "仅此一次" → option_id "allow".
+        // Last choice is "Only this time" → option_id "allow".
         assert_eq!(outcome.option_id.0.as_ref(), "allow");
         assert_eq!(outcome.option_kind, acp::PermissionOptionKind::AllowOnce);
     }
@@ -7746,7 +7746,7 @@ pub(crate) mod tests {
         let outcome =
             super::resolve_outcome_from_selection(&options, Some(&selection), true).unwrap();
 
-        // Choice 0 = "始终允许终端".
+        // Choice 0 = "Always for terminal".
         assert!(outcome.option_id.0.contains("always_allow:terminal"));
         assert_eq!(outcome.option_kind, acp::PermissionOptionKind::AllowAlways);
     }
@@ -7761,7 +7761,7 @@ pub(crate) mod tests {
         let outcome =
             super::resolve_outcome_from_selection(&options, Some(&selection), true).unwrap();
 
-        // choices.get(999) is None, falls back to choices.last() → "仅此一次".
+        // choices.get(999) is None, falls back to choices.last() → "Only this time".
         assert_eq!(outcome.option_id.0.as_ref(), "allow");
     }
 
@@ -7809,7 +7809,7 @@ pub(crate) mod tests {
         assert_eq!(outcome.option_kind, acp::PermissionOptionKind::AllowAlways);
         assert!(
             outcome.params.is_some(),
-            "选中的模式应附加终端参数"
+            "checked patterns should attach terminal params"
         );
     }
 
@@ -7931,7 +7931,7 @@ pub(crate) mod tests {
                             .into(),
                         PermissionOptions::Flat(vec![acp::PermissionOption::new(
                             option_id,
-                            "允许",
+                            "Allow",
                             acp::PermissionOptionKind::AllowOnce,
                         )]),
                         acp_thread::AuthorizationKind::PermissionGrant,
@@ -8183,7 +8183,7 @@ pub(crate) mod tests {
                 tool_call_id_value.clone(),
                 PermissionOptions::Flat(vec![acp::PermissionOption::new(
                     "allow",
-                    "允许",
+                    "Allow",
                     acp::PermissionOptionKind::AllowOnce,
                 )]),
             )]));

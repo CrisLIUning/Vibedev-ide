@@ -65,15 +65,15 @@ pub enum InfoStyle {
 impl Step {
     pub fn label(&self) -> &'static str {
         match self {
-            Step::LoadProject => "加载",
-            Step::Context => "上下文",
-            Step::FormatPrompt => "格式化",
-            Step::Predict => "预测",
-            Step::Score => "评分",
+            Step::LoadProject => "Load",
+            Step::Context => "Context",
+            Step::FormatPrompt => "Format",
+            Step::Predict => "Predict",
+            Step::Score => "Score",
             Step::Qa => "QA",
-            Step::Repair => "修复",
-            Step::Synthesize => "合成",
-            Step::PullExamples => "拉取",
+            Step::Repair => "Repair",
+            Step::Synthesize => "Synthesize",
+            Step::PullExamples => "Pull",
         }
     }
 
@@ -424,7 +424,7 @@ impl Progress {
             lines_printed += 1;
         }
 
-        // Show "+N 更多" on its own line if there are more tasks
+        // Show "+N more" on its own line if there are more tasks
         if total_tasks > MAX_STATUS_LINES {
             let remaining = total_tasks - MAX_STATUS_LINES;
             eprintln!("{:>12} +{remaining} more", "");
@@ -547,11 +547,11 @@ impl Log for ProgressLogger {
         let bold = "\x1b[1m";
 
         let level_label = match record.level() {
-            Level::Error => "错误",
-            Level::Warn => "警告",
-            Level::Info => "信息",
-            Level::Debug => "调试",
-            Level::Trace => "跟踪",
+            Level::Error => "Error",
+            Level::Warn => "Warn",
+            Level::Info => "Info",
+            Level::Debug => "Debug",
+            Level::Trace => "Trace",
         };
 
         let message = format!(

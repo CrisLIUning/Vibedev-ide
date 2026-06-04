@@ -70,9 +70,9 @@ fn notify_release_notes_failed_to_show(
         |cx| {
             cx.new(move |cx| {
                 let url = release_notes_url(cx);
-                let mut prompt = ErrorMessagePrompt::new("无法加载更新日志", cx);
+                let mut prompt = ErrorMessagePrompt::new("Couldn't load release notes", cx);
                 if let Some(url) = url {
-                    prompt = prompt.with_link_button("在浏览器中查看".to_string(), url);
+                    prompt = prompt.with_link_button("View in Browser".to_string(), url);
                 }
                 prompt
             })
@@ -215,20 +215,20 @@ fn announcement_for_version(version: &Version, cx: &App) -> Option<AnnouncementC
 
         let mut bullet_items: Vec<SharedString> = Vec::with_capacity(3);
         bullet_items
-            .push(format!("技能位于 {GLOBAL_SKILLS_DIR_DISPLAY}/<name>/SKILL.md").into());
+            .push(format!("Skills live in {GLOBAL_SKILLS_DIR_DISPLAY}/<name>/SKILL.md").into());
         if migrated_anything {
             bullet_items.push(
-                "默认规则将转换为您的全局 AGENTS.md;其他规则将转换为技能".into(),
+                "Default Rules are converted into your global AGENTS.md; all other rules become skills".into(),
             );
         }
-        bullet_items.push("输入 / 手动调用技能".into());
+        bullet_items.push("Type / to manually invoke a skill".into());
 
         Some(AnnouncementContent {
-            heading: "推出技能支持".into(),
-            description: "使用针对性指令和领域知识扩展助手功能。".into(),
+            heading: "Introducing Skills Support".into(),
+            description: "Extend the agent with focused instructions and domain knowledge.".into(),
             bullet_items,
-            primary_action_label: "立即体验".into(),
-            secondary_action_label: "阅读文档".into(),
+            primary_action_label: "Try Now".into(),
+            secondary_action_label: "Read Documentation".into(),
             primary_action_url: None,
             primary_action_callback: Some(Arc::new(move |window, cx| {
                 window.dispatch_action(Box::new(zed_actions::assistant::FocusAgent), cx);
@@ -343,8 +343,8 @@ fn show_update_notification(cx: &mut App) {
             move |cx| {
                 let workspace_handle = cx.entity().downgrade();
                 cx.new(|cx| {
-                    MessageNotification::new(format!("已更新至 {app_name} {}", version), cx)
-                        .primary_message("查看更新日志")
+                    MessageNotification::new(format!("Updated to {app_name} {}", version), cx)
+                        .primary_message("View Release Notes")
                         .primary_on_click(move |window, cx| {
                             if let Some(workspace) = workspace_handle.upgrade() {
                                 workspace.update(cx, |workspace, cx| {

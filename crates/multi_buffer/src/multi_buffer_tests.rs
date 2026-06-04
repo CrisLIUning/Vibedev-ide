@@ -6070,7 +6070,7 @@ fn test_cannot_seek_backward_after_excerpt_replacement(cx: &mut TestAppContext) 
     let (anchor_in_e_b2, anchor_in_e_b3) = multibuffer.read_with(cx, |multibuffer, cx| {
         let snapshot = multibuffer.snapshot(cx);
         let excerpt_infos = snapshot.excerpts().collect::<Vec<_>>();
-        assert_eq!(excerpt_infos.len(), 4, "预期 4 个摘录 (3×B + 1×C)");
+        assert_eq!(excerpt_infos.len(), 4, "expected 4 excerpts (3×B + 1×C)");
 
         let e_b2_info = excerpt_infos[1].clone();
         let e_b3_info = excerpt_infos[2].clone();
@@ -6253,7 +6253,7 @@ fn test_is_valid_anchor_past_last_excerpt_for_buffer(cx: &mut TestAppContext) {
 
         assert!(
             !mb_anchor.is_valid(&snapshot),
-            "超出缓冲区最后一个摘录的锚点应该无效"
+            "anchor past the last excerpt for its buffer should not be valid"
         );
     });
 }

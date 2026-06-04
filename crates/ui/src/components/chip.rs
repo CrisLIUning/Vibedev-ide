@@ -8,7 +8,7 @@ use gpui::{AnyElement, AnyView, Hsla, IntoElement, ParentElement, Styled};
 /// ```
 /// use ui::Chip;
 ///
-/// let chip = Chip::new("此标签");
+/// let chip = Chip::new("This Chip");
 /// ```
 #[derive(IntoElement, RegisterComponent)]
 pub struct Chip {
@@ -140,23 +140,23 @@ impl Component for Chip {
 
     fn preview(_window: &mut Window, cx: &mut App) -> Option<AnyElement> {
         let chip_examples = vec![
-            single_example("默认", Chip::new("标签示例").into_any_element()),
+            single_example("Default", Chip::new("Chip Example").into_any_element()),
             single_example(
-                "自定义标签颜色",
-                Chip::new("标签示例")
+                "Customized Label Color",
+                Chip::new("Chip Example")
                     .label_color(Color::Accent)
                     .into_any_element(),
             ),
             single_example(
-                "自定义标签大小",
-                Chip::new("标签示例")
+                "Customized Label Size",
+                Chip::new("Chip Example")
                     .label_size(LabelSize::Large)
                     .label_color(Color::Accent)
                     .into_any_element(),
             ),
             single_example(
-                "自定义背景颜色",
-                Chip::new("标签示例")
+                "Customized Background Color",
+                Chip::new("Chip Example")
                     .bg_color(cx.theme().colors().text_accent.opacity(0.1))
                     .into_any_element(),
             ),

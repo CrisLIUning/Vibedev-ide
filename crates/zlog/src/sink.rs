@@ -195,7 +195,7 @@ pub fn submit(mut record: Record) {
                 Ok(Some(file)) => *file_guard = Some(file),
                 Ok(None) => {}
                 Err(e) => {
-                    eprintln!("无法打开日志文件: {e}")
+                    eprintln!("Failed to open log file: {e}")
                 }
             }
             SINK_FILE_SIZE_BYTES.store(0, Ordering::Release);

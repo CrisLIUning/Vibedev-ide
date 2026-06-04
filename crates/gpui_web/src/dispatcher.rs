@@ -51,7 +51,7 @@ impl MainThreadMailbox {
 
     fn post(&self, priority: Priority, item: MainThreadItem) {
         if self.sender.spin_send(priority, item).is_err() {
-            log::error!("MainThreadMailbox::send 失败:接收端已断开连接");
+            log::error!("MainThreadMailbox::send failed: receiver disconnected");
         }
 
         // TODO-Wasm: Verify this lock-free protocol
@@ -81,7 +81,7 @@ impl MainThreadMailbox {
 
     fn run_waker_loop(self: &Arc<Self>, window: web_sys::Window) {
         if !shared_memory_supported() {
-            log::warn!("SharedArrayBuffer 不可用;主线程邮箱唤醒循环已禁用");
+            log::warn!("SharedArrayBuffer not available; main thread mailbox waker loop disabled");
             return;
         }
 
@@ -89,12 +89,12 @@ impl MainThreadMailbox {
         wasm_bindgen_futures::spawn_local(async move {
             let view = mailbox.signal_view();
             loop {
-                js_sys::Atomics::store(&view, 0, 0).expect("Atomics.store 失败");
+                js_sys::Atomics::store(&view, 0, 0).expect("Atomics.store failed");
 
                 let result = match js_sys::Atomics::wait_async(&view, 0, 0) {
                     Ok(result) => result,
                     Err(error) => {
-                        log::error!("Atomics.waitAsync 失败:{error:?}");
+                        log::error!("Atomics.waitAsync failed: {error:?}");
                         break;
                     }
                 };
@@ -105,13 +105,13 @@ impl MainThreadMailbox {
                     .unwrap_or(false);
 
                 if !is_async {
-                    log::error!("Atomics.waitAsync 同步返回;唤醒循环正在退出");
+                    log::error!("Atomics.waitAsync returned synchronously; waker loop exiting");
                     break;
                 }
 
                 let promise: js_sys::Promise =
                     js_sys::Reflect::get(&result, &JsValue::from_str("value"))
-                        .expect("waitAsync 结果缺少 'value'")
+                        .expect("waitAsync result missing 'value'")
                         .unchecked_into();
 
                 let _ = wasm_bindgen_futures::JsFuture::from(promise).await;
@@ -155,7 +155,7 @@ impl WebDispatcher {
             main_thread_mailbox.run_waker_loop(browser_window.clone());
         } else {
             log::warn!(
-                "SharedArrayBuffer 不可用;回退到单线程调度器"
+                "SharedArrayBuffer not available; falling back to single-threaded dispatcher"
             );
         }
 
@@ -178,7 +178,7 @@ impl WebDispatcher {
                                     Ok(runnable) => runnable,
                                     Err(_) => {
                                         log::info!(
-                                            "background-worker-{i}:通道已断开,正在退出"
+                                            "background-worker-{i}: channel disconnected, exiting"
                                         );
                                         break;
                                     }
@@ -187,7 +187,7 @@ impl WebDispatcher {
                                 runnable.run();
                             }
                         })
-                        .expect("无法生成后台工作线程")
+                        .expect("failed to spawn background worker thread")
                 })
                 .collect::<Vec<_>>()
         } else {
@@ -242,7 +242,7 @@ impl PlatformDispatcher for WebDispatcher {
         };
 
         if let Err(error) = result {
-            log::error!("dispatch:发送到后台队列失败:{error:?}");
+            log::error!("dispatch: failed to send to background queue: {error:?}");
         }
     }
 

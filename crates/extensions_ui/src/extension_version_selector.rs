@@ -93,7 +93,7 @@ impl PickerDelegate for ExtensionVersionSelectorDelegate {
     type ListItem = ui::ListItem;
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
-        "选择扩展版本...".into()
+        "Select extension version...".into()
     }
 
     fn match_count(&self) -> usize {
@@ -234,7 +234,7 @@ impl PickerDelegate for ExtensionVersionSelectorDelegate {
                     h_flex()
                         .gap_2()
                         .when(!is_version_compatible, |this| {
-                            this.child(Label::new("不兼容").color(Color::Muted))
+                            this.child(Label::new("Incompatible").color(Color::Muted))
                         })
                         .child(
                             Label::new(

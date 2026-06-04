@@ -292,11 +292,11 @@ pub async fn download_adapter_from_github(
     }
 
     log::debug!(
-        "正在从 {} 下载适配器 {}",
+        "Downloading adapter {} from {}",
         adapter_name,
         &github_version.url,
     );
-    delegate.output_to_console(format!("正在从 {} 下载...", github_version.url));
+    delegate.output_to_console(format!("Downloading from {}...", github_version.url));
 
     let mut response = delegate
         .http_client()
@@ -305,11 +305,11 @@ pub async fn download_adapter_from_github(
         .context("Error downloading release")?;
     anyhow::ensure!(
         response.status().is_success(),
-        "下载失败,状态码为 {}",
+        "download failed with status {}",
         response.status()
     );
 
-    delegate.output_to_console("下载完成".to_owned());
+    delegate.output_to_console("Download complete".to_owned());
     match file_type {
         DownloadedFileType::GzipTar => {
             let decompressed_bytes = GzipDecoder::new(BufReader::new(response.body_mut()));
@@ -377,7 +377,7 @@ pub trait DebugAdapter: 'static + Send + Sync {
             Some(val) if val == "launch" => Ok(StartDebuggingRequestArgumentsRequest::Launch),
             Some(val) if val == "attach" => Ok(StartDebuggingRequestArgumentsRequest::Attach),
             _ => Err(anyhow!(
-                "配置中缺少或无效的 `request` 字段。应为 'launch' 或 'attach'"
+                "missing or invalid `request` field in config. Expected 'launch' or 'attach'"
             )),
         }
     }

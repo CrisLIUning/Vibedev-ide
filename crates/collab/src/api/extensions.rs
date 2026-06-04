@@ -166,7 +166,7 @@ async fn download_extension(
         ))
         .presigned(PresigningConfig::expires_in(EXTENSION_DOWNLOAD_URL_LIFETIME).unwrap())
         .await
-        .context("创建预签名扩展下载 URL")?;
+        .context("creating presigned extension download url")?;
 
     Ok(Redirect::temporary(url.uri()))
 }
@@ -176,11 +176,11 @@ const EXTENSION_DOWNLOAD_URL_LIFETIME: Duration = Duration::from_secs(3 * 60);
 
 pub fn fetch_extensions_from_blob_store_periodically(app_state: Arc<AppState>) {
     let Some(blob_store_client) = app_state.blob_store_client.clone() else {
-        log::info!("没有 blob store 客户端");
+        log::info!("no blob store client");
         return;
     };
     let Some(blob_store_bucket) = app_state.config.blob_store_bucket.clone() else {
-        log::info!("没有 blob store 存储桶");
+        log::info!("no blob store bucket");
         return;
     };
 
@@ -207,7 +207,7 @@ async fn fetch_extensions_from_blob_store(
     blob_store_bucket: &String,
     app_state: &Arc<AppState>,
 ) -> anyhow::Result<()> {
-    log::info!("正在从 blob store 获取扩展");
+    log::info!("fetching extensions from blob store");
 
     let mut next_marker = None;
     let mut published_versions = HashMap::<String, Vec<String>>::default();
@@ -221,7 +221,7 @@ async fn fetch_extensions_from_blob_store(
             .send()
             .await?;
         let objects = list.contents.unwrap_or_default();
-        log::info!("从 blob store 获取了 {} 个对象", objects.len());
+        log::info!("fetched {} object(s) from blob store", objects.len());
 
         for object in &objects {
             let Some(key) = object.key.as_ref() else {
@@ -252,7 +252,7 @@ async fn fetch_extensions_from_blob_store(
         }
     }
 
-    log::info!("发现 {} 个已发布的扩展", published_versions.len());
+    log::info!("found {} published extensions", published_versions.len());
 
     let known_versions = app_state.db.get_known_extension_versions().await?;
 
@@ -288,7 +288,7 @@ async fn fetch_extensions_from_blob_store(
         .await?;
 
     log::info!(
-        "从 blob store 获取了 {} 个新扩展",
+        "fetched {} new extensions from blob store",
         new_versions.values().map(|v| v.len()).sum::<usize>()
     );
 

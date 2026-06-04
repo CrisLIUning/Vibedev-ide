@@ -54,10 +54,10 @@ use util::{ResultExt, maybe};
 
 pub(crate) fn semantic_token_rules() -> SemanticTokenRules {
     let content = grammars::get_file("python/semantic_token_rules.json")
-        .expect("缺少 python/semantic_token_rules.json");
-    let json = std::str::from_utf8(&content.data).expect("semantic_token_rules 中包含无效的 UTF-8 字符");
+        .expect("missing python/semantic_token_rules.json");
+    let json = std::str::from_utf8(&content.data).expect("invalid utf-8 in semantic_token_rules");
     settings::parse_json_with_comments::<SemanticTokenRules>(json)
-        .expect("解析 python semantic_token_rules.json 失败")
+        .expect("failed to parse python semantic_token_rules.json")
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -156,7 +156,7 @@ fn process_pyright_completions(items: &mut [lsp::CompletionItem]) {
         let is_external = item
             .detail
             .as_ref()
-            .is_some_and(|detail| detail == "自动导入");
+            .is_some_and(|detail| detail == "Auto-import");
 
         let source_priority = if is_external { '1' } else { '0' };
 
@@ -507,7 +507,7 @@ impl LspInstaller for TyLspAdapter {
                         }
                     } else {
                         log::info!(
-                            "{destination_path:?} 资源的 SHA-256 不匹配,正在下载新资源。期望值: {expected_digest}, 实际值: {actual_digest}"
+                            "SHA-256 mismatch for {destination_path:?} asset, downloading new asset. Expected: {expected_digest}, Got: {actual_digest}"
                         );
                     }
                 } else if validity_check().await.is_ok() {
@@ -923,7 +923,7 @@ impl ContextProvider for PythonContextProvider {
         let mut tasks = vec![
             // Execute a selection
             TaskTemplate {
-                label: "执行选中内容".to_owned(),
+                label: "execute selection".to_owned(),
                 command: PYTHON_ACTIVE_TOOLCHAIN_PATH.template_value(),
                 args: vec![
                     "-c".to_owned(),
@@ -934,7 +934,7 @@ impl ContextProvider for PythonContextProvider {
             },
             // Execute an entire file
             TaskTemplate {
-                label: format!("运行 '{}'", VariableName::File.template_value()),
+                label: format!("run '{}'", VariableName::File.template_value()),
                 command: PYTHON_ACTIVE_TOOLCHAIN_PATH.template_value(),
                 args: vec![VariableName::File.template_value_with_whitespace()],
                 cwd: Some(VariableName::WorktreeRoot.template_value()),
@@ -942,7 +942,7 @@ impl ContextProvider for PythonContextProvider {
             },
             // Execute a file as module
             TaskTemplate {
-                label: format!("运行模块 '{}'", VariableName::File.template_value()),
+                label: format!("run module '{}'", VariableName::File.template_value()),
                 command: PYTHON_ACTIVE_TOOLCHAIN_PATH.template_value(),
                 args: vec![
                     "-m".to_owned(),
@@ -1405,9 +1405,9 @@ impl ToolchainLister for PythonToolchainProvider {
     }
     fn meta(&self) -> ToolchainMetadata {
         ToolchainMetadata {
-            term: SharedString::new_static("虚拟环境"),
+            term: SharedString::new_static("Virtual Environment"),
             new_toolchain_placeholder: SharedString::new_static(
-                "虚拟环境中的 python3 可执行文件路径,或虚拟环境本身的路径",
+                "A path to the python3 executable within a virtual environment, or path to virtual environment itself",
             ),
             manifest_name: ManifestName::from(SharedString::new_static("pyproject.toml")),
         }
@@ -1500,7 +1500,7 @@ impl ToolchainLister for PythonToolchainProvider {
                             activation_script.push(format!("{manager} activate {quoted_name}"));
                         } else {
                             log::warn!(
-                                "无法安全引用环境名称 {:?},回退到 base",
+                                "Could not safely quote environment name {:?}, falling back to base",
                                 name
                             );
                             activation_script.push(format!("{manager} activate base"));
@@ -1718,9 +1718,9 @@ impl PyLspAdapter {
         let python_path = Self::find_base_python(delegate)
             .await
             .with_context(|| {
-                let mut message = "找不到 PyLSP 的 Python 安装".to_owned();
+                let mut message = "Could not find Python installation for PyLSP".to_owned();
                 if cfg!(windows){
-                    message.push_str("。请从 Microsoft Store 安装 Python,或手动从 https://www.python.org/downloads/windows/ 安装。")
+                    message.push_str(". Install Python from the Microsoft Store, or manually from https://www.python.org/downloads/windows.")
                 }
                 message
             })?;
@@ -1919,7 +1919,7 @@ impl LspInstaller for PyLspAdapter {
                 })
                 .await
                 .inspect_err(|err| {
-                    log::warn!("无法验证位于 {pylsp_bin:?} 的用户安装 pylsp:{err:#}")
+                    log::warn!("failed to validate user-installed pylsp at {pylsp_bin:?}: {err:#}")
                 })
                 .ok()?;
             Some(LanguageServerBinary {
@@ -1941,7 +1941,7 @@ impl LspInstaller for PyLspAdapter {
                 })
                 .await
                 .inspect_err(|err| {
-                    log::warn!("无法验证位于 {pylsp_path:?} 的工具链 pylsp:{err:#}")
+                    log::warn!("failed to validate toolchain pylsp at {pylsp_path:?}: {err:#}")
                 })
                 .ok()?;
             Some(LanguageServerBinary {
@@ -1981,7 +1981,7 @@ impl LspInstaller for PyLspAdapter {
                     .await?
                     .status
                     .success(),
-                "python-lsp-server[all] 安装失败"
+                "python-lsp-server[all] installation failed"
             );
             ensure!(
                 util::command::new_command(pip_path)
@@ -1992,12 +1992,12 @@ impl LspInstaller for PyLspAdapter {
                     .await?
                     .status
                     .success(),
-                "pylsp-mypy 安装失败"
+                "pylsp-mypy installation failed"
             );
             let pylsp = venv.join(BINARY_DIR).join("pylsp");
             ensure!(
                 delegate.which(pylsp.as_os_str()).await.is_some(),
-                "pylsp 安装未完成"
+                "pylsp installation was incomplete"
             );
             Ok(LanguageServerBinary {
                 path: pylsp,
@@ -2643,7 +2643,7 @@ impl LspInstaller for RuffLspAdapter {
                         }
                     } else {
                         log::info!(
-                            "{destination_path:?} 资源的 SHA-256 不匹配,正在下载新资源。期望值: {expected_digest}, 实际值: {actual_digest}"
+                            "SHA-256 mismatch for {destination_path:?} asset, downloading new asset. Expected: {expected_digest}, Got: {actual_digest}"
                         );
                     }
                 } else if validity_check().await.is_ok() {
@@ -2788,7 +2788,7 @@ mod tests {
             script
                 .iter()
                 .any(|s| s.contains("conda activate 'foo; rm -rf /'")),
-            "脚本应包含已引用的恶意名称,实际为 {:?}",
+            "Script should contain quoted malicious name, actual: {:?}",
             script
         );
     }
@@ -2959,7 +2959,7 @@ mod tests {
 
         let raw_schema = serde_json::json!({
             "line-length": {
-                "doc": "强制执行长行违规时使用的行长",
+                "doc": "The line length to use when enforcing long-lines violations",
                 "default": "88",
                 "value_type": "int",
                 "scope": null,
@@ -2967,7 +2967,7 @@ mod tests {
                 "deprecated": null
             },
             "lint.select": {
-                "doc": "要启用的规则代码或前缀列表",
+                "doc": "A list of rule codes or prefixes to enable",
                 "default": "[\"E4\", \"E7\", \"E9\", \"F\"]",
                 "value_type": "list[RuleSelector]",
                 "scope": null,
@@ -2975,7 +2975,7 @@ mod tests {
                 "deprecated": null
             },
             "lint.isort.case-sensitive": {
-                "doc": "排序导入时考虑大小写。",
+                "doc": "Sort imports taking into account case sensitivity.",
                 "default": "false",
                 "value_type": "bool",
                 "scope": null,
@@ -2983,7 +2983,7 @@ mod tests {
                 "deprecated": null
             },
             "format.quote-style": {
-                "doc": "配置字符串的首选引号字符。",
+                "doc": "Configures the preferred quote character for strings.",
                 "default": "\"double\"",
                 "value_type": "\"double\" | \"single\" | \"preserve\"",
                 "scope": null,

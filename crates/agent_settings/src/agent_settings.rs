@@ -712,7 +712,7 @@ fn compile_tool_permissions(content: Option<settings::ToolPermissionsContent>) -
             // attempt to use a tool with invalid patterns in their settings.
             for invalid in &invalid_patterns {
                 log::error!(
-                    "tool_permissions 中 '{}' 工具的无效正则表达式模式 ({}): '{}' - {}",
+                    "Invalid regex pattern in tool_permissions for '{}' tool ({}): '{}' - {}",
                     tool_name,
                     invalid.rule_type,
                     invalid.pattern,
@@ -750,7 +750,7 @@ fn compile_regex_rules(
             errors.push(InvalidRegexPattern {
                 pattern: rule.pattern,
                 rule_type: rule_type.to_string(),
-                error: "不允许使用空的正则表达式模式".to_string(),
+                error: "empty regex patterns are not allowed".to_string(),
             });
             continue;
         }

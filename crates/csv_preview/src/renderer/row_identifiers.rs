@@ -113,8 +113,8 @@ impl CsvPreviewView {
     ) -> AnyElement {
         // First column: row identifier (clickable to toggle between Lines and Rows)
         let row_identifier_text = match self.settings.numbering_type {
-            RowIdentifiers::SrcLines => "行号",
-            RowIdentifiers::RowNum => "行",
+            RowIdentifiers::SrcLines => "Lines",
+            RowIdentifiers::RowNum => "Rows",
         };
 
         let view = cx.entity();
@@ -128,7 +128,7 @@ impl CsvPreviewView {
                 .style(ButtonStyle::Subtle)
                 .size(ButtonSize::Compact)
                 .tooltip(Tooltip::text(
-                    "切换:文件行号或顺序行号",
+                    "Toggle between: file line numbers or sequential row numbers",
                 ))
                 .on_click(move |_event, _window, cx| {
                     view.update(cx, |this, cx| {

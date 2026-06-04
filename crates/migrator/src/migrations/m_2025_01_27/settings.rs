@@ -21,7 +21,7 @@ fn migrate_auto_indent(value: &mut Value, _path: &[&str]) -> Result<()> {
         Value::String(s) if s == "syntax_aware" || s == "preserve_indent" || s == "none" => {
             return Ok(());
         }
-        _ => anyhow::bail!("auto_indent 应为布尔值或有效的枚举值"),
+        _ => anyhow::bail!("Expected auto_indent to be a boolean or valid enum value"),
     };
     Ok(())
 }

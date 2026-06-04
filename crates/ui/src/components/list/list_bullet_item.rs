@@ -72,35 +72,35 @@ impl Component for ListBulletItem {
     }
 
     fn description() -> Option<&'static str> {
-        Some("带有短横线指示符的无序列表项。")
+        Some("A list item with a dash indicator for unordered lists.")
     }
 
     fn preview(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
         let basic_examples = vec![
             single_example(
-                "简单",
-                ListBulletItem::new("第一个项目符号项").into_any_element(),
+                "Simple",
+                ListBulletItem::new("First bullet item").into_any_element(),
             ),
             single_example(
-                "多行",
+                "Multiple Lines",
                 v_flex()
-                    .child(ListBulletItem::new("第一项"))
-                    .child(ListBulletItem::new("第二项"))
-                    .child(ListBulletItem::new("第三项"))
+                    .child(ListBulletItem::new("First item"))
+                    .child(ListBulletItem::new("Second item"))
+                    .child(ListBulletItem::new("Third item"))
                     .into_any_element(),
             ),
             single_example(
-                "长文本",
+                "Long Text",
                 ListBulletItem::new(
-                    "一个较长的项目符号项,用于演示文本换行行为",
+                    "A longer bullet item that demonstrates text wrapping behavior",
                 )
                 .into_any_element(),
             ),
             single_example(
-                "带链接",
+                "With Link",
                 ListBulletItem::new("")
-                    .child(Label::new("创建 VibeDev 账户,请"))
-                    .child(ButtonLink::new("访问网站", "https://zed.dev"))
+                    .child(Label::new("Create a Zed account by"))
+                    .child(ButtonLink::new("visiting the website", "https://zed.dev"))
                     .into_any_element(),
             ),
         ];

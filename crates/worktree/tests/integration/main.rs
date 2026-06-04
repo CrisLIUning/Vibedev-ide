@@ -3279,7 +3279,7 @@ async fn test_root_repo_common_dir(executor: BackgroundExecutor, cx: &mut TestAp
     assert_eq!(
         event_count.get(),
         1,
-        "移除时应已触发 UpdatedRootRepoCommonDir"
+        "should have emitted UpdatedRootRepoCommonDir on removal"
     );
 }
 
@@ -3535,7 +3535,7 @@ async fn test_dot_git_dir_event_does_not_suppress_children(
         let got_git_update = drain_git_repo_updates(&mut events);
         assert!(
             !got_git_update,
-            "当 .git 批次仅包含 index.lock 时不应发出 UpdatedGitRepositories"
+            "should NOT emit UpdatedGitRepositories when .git batch only contains index.lock"
         );
     }
 
@@ -3550,7 +3550,7 @@ async fn test_dot_git_dir_event_does_not_suppress_children(
         let got_git_update = drain_git_repo_updates(&mut events);
         assert!(
             !got_git_update,
-            "对于纯 .git 目录事件不应发出 UpdatedGitRepositories"
+            "should NOT emit UpdatedGitRepositories for a bare .git directory event"
         );
     }
 
@@ -3566,7 +3566,7 @@ async fn test_dot_git_dir_event_does_not_suppress_children(
         let got_git_update = drain_git_repo_updates(&mut events);
         assert!(
             got_git_update,
-            "当 .git 批次包含 index 时应发出 UpdatedGitRepositories"
+            "should emit UpdatedGitRepositories when .git batch contains index"
         );
     }
 
@@ -3581,7 +3581,7 @@ async fn test_dot_git_dir_event_does_not_suppress_children(
         let got_git_update = drain_git_repo_updates(&mut events);
         assert!(
             got_git_update,
-            "对于 .git/index 事件应发出 UpdatedGitRepositories"
+            "should emit UpdatedGitRepositories for a .git/index event"
         );
     }
 
@@ -3595,7 +3595,7 @@ async fn test_dot_git_dir_event_does_not_suppress_children(
         let got_git_update = drain_git_repo_updates(&mut events);
         assert!(
             got_git_update,
-            "当 .git 重新扫描时应发出 UpdatedGitRepositories 事件"
+            "should emit UpdatedGitRepositories for a .git rescan event"
         );
     }
 
@@ -3609,7 +3609,7 @@ async fn test_dot_git_dir_event_does_not_suppress_children(
         let got_git_update = drain_git_repo_updates(&mut events);
         assert!(
             got_git_update,
-            "当 .git 重新扫描时应发出 UpdatedGitRepositories 事件"
+            "should emit UpdatedGitRepositories for a .git rescan event"
         );
     }
 }

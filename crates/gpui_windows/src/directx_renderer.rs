@@ -117,7 +117,7 @@ impl DirectXRendererDevices {
         let dxgi_device = if disable_direct_composition {
             None
         } else {
-            Some(device.cast().context("创建 DXGI 设备")?)
+            Some(device.cast().context("Creating DXGI device")?)
         };
 
         Ok(Self {
@@ -137,28 +137,28 @@ impl DirectXRenderer {
         disable_direct_composition: bool,
     ) -> Result<Self> {
         if disable_direct_composition {
-            log::info!("Direct Composition 已禁用。");
+            log::info!("Direct Composition is disabled.");
         }
 
         let devices = DirectXRendererDevices::new(directx_devices, disable_direct_composition)
-            .context("创建 DirectX 设备")?;
+            .context("Creating DirectX devices")?;
         let atlas = Arc::new(DirectXAtlas::new(&devices.device, &devices.device_context));
 
         let resources = DirectXResources::new(&devices, 1, 1, hwnd, disable_direct_composition)
-            .context("创建 DirectX 资源")?;
+            .context("Creating DirectX resources")?;
         let globals = DirectXGlobalElements::new(&devices.device)
-            .context("创建 DirectX 全局元素")?;
+            .context("Creating DirectX global elements")?;
         let pipelines = DirectXRenderPipelines::new(&devices.device)
-            .context("创建 DirectX 渲染管线")?;
+            .context("Creating DirectX render pipelines")?;
 
         let direct_composition = if disable_direct_composition {
             None
         } else {
             let composition = DirectComposition::new(devices.dxgi_device.as_ref().unwrap(), hwnd)
-                .context("创建 DirectComposition")?;
+                .context("Creating DirectComposition")?;
             composition
                 .set_swap_chain(&resources.swap_chain)
-                .context("为 DirectComposition 设置交换链")?;
+                .context("Setting swap chain for DirectComposition")?;
             Some(composition)
         };
 
@@ -182,11 +182,11 @@ impl DirectXRenderer {
     }
 
     fn pre_draw(&self, clear_color: &[f32; 4]) -> Result<()> {
-        let resources = self.resources.as_ref().expect("资源缺失");
+        let resources = self.resources.as_ref().expect("resources missing");
         let device_context = &self
             .devices
             .as_ref()
-            .expect("设备缺失")
+            .expect("devices missing")
             .device_context;
         update_buffer(
             device_context,
@@ -205,7 +205,7 @@ impl DirectXRenderer {
                 resources
                     .render_target_view
                     .as_ref()
-                    .context("缺少渲染目标视图")?,
+                    .context("missing render target view")?,
                 clear_color,
             );
             device_context
@@ -220,17 +220,17 @@ impl DirectXRenderer {
         let result = unsafe {
             self.resources
                 .as_ref()
-                .expect("资源缺失")
+                .expect("resources missing")
                 .swap_chain
                 .Present(0, DXGI_PRESENT(0))
         };
-        result.ok().context("呈现交换链失败")
+        result.ok().context("Presenting swap chain failed")
     }
 
     pub(crate) fn handle_device_lost(&mut self, directx_devices: &DirectXDevices) -> Result<()> {
         try_to_recover_from_device_lost(|| {
             self.handle_device_lost_impl(directx_devices)
-                .context("DirectXRenderer 正在处理设备丢失")
+                .context("DirectXRenderer handling device lost")
         })
     }
 
@@ -241,7 +241,7 @@ impl DirectXRenderer {
             #[cfg(debug_assertions)]
             if let Some(devices) = &self.devices {
                 report_live_objects(&devices.device)
-                    .context("设备丢失后报告活动对象失败")
+                    .context("Failed to report live objects after device lost")
                     .log_err();
             }
 
@@ -252,7 +252,7 @@ impl DirectXRenderer {
                 devices.device_context.Flush();
                 #[cfg(debug_assertions)]
                 report_live_objects(&devices.device)
-                    .context("设备丢失后报告活动对象失败")
+                    .context("Failed to report live objects after device lost")
                     .log_err();
             }
 
@@ -261,7 +261,7 @@ impl DirectXRenderer {
         }
 
         let devices = DirectXRendererDevices::new(directx_devices, disable_direct_composition)
-            .context("重建 DirectX 设备")?;
+            .context("Recreating DirectX devices")?;
         let resources = DirectXResources::new(
             &devices,
             self.width,
@@ -269,11 +269,11 @@ impl DirectXRenderer {
             self.hwnd,
             disable_direct_composition,
         )
-        .context("创建 DirectX 资源")?;
+        .context("Creating DirectX resources")?;
         let globals = DirectXGlobalElements::new(&devices.device)
-            .context("创建 DirectXGlobalElements")?;
+            .context("Creating DirectXGlobalElements")?;
         let pipelines = DirectXRenderPipelines::new(&devices.device)
-            .context("创建 DirectXRenderPipelines")?;
+            .context("Creating DirectXRenderPipelines")?;
 
         let direct_composition = if disable_direct_composition {
             None
@@ -365,9 +365,9 @@ impl DirectXRenderer {
         self.height = height;
 
         // Clear the render target before resizing
-        let devices = self.devices.as_ref().context("设备缺失")?;
+        let devices = self.devices.as_ref().context("devices missing")?;
         unsafe { devices.device_context.OMSetRenderTargets(None, None) };
-        let resources = self.resources.as_mut().context("资源缺失")?;
+        let resources = self.resources.as_mut().context("resources missing")?;
         resources.render_target.take();
         resources.render_target_view.take();
 
@@ -385,7 +385,7 @@ impl DirectXRenderer {
                     RENDER_TARGET_FORMAT,
                     DXGI_SWAP_CHAIN_FLAG(0),
                 )
-                .context("调整交换链大小失败")?;
+                .context("Failed to resize swap chain")?;
         }
 
         resources.recreate_resources(devices, width, height)?;
@@ -400,7 +400,7 @@ impl DirectXRenderer {
     }
 
     fn upload_scene_buffers(&mut self, scene: &Scene) -> Result<()> {
-        let devices = self.devices.as_ref().context("设备缺失")?;
+        let devices = self.devices.as_ref().context("devices missing")?;
 
         if !scene.shadows.is_empty() {
             self.pipelines.shadow_pipeline.update_buffer(
@@ -457,7 +457,7 @@ impl DirectXRenderer {
         if len == 0 {
             return Ok(());
         }
-        let devices = self.devices.as_ref().context("设备缺失")?;
+        let devices = self.devices.as_ref().context("devices missing")?;
         self.pipelines.shadow_pipeline.draw_range(
             &devices.device,
             &devices.device_context,
@@ -465,7 +465,7 @@ impl DirectXRenderer {
                 &self
                     .resources
                     .as_ref()
-                    .context("资源缺失")?
+                    .context("resources missing")?
                     .viewport,
             ),
             slice::from_ref(&self.globals.global_params_buffer),
@@ -479,7 +479,7 @@ impl DirectXRenderer {
         if len == 0 {
             return Ok(());
         }
-        let devices = self.devices.as_ref().context("设备缺失")?;
+        let devices = self.devices.as_ref().context("devices missing")?;
         self.pipelines.quad_pipeline.draw_range(
             &devices.device,
             &devices.device_context,
@@ -487,7 +487,7 @@ impl DirectXRenderer {
                 &self
                     .resources
                     .as_ref()
-                    .context("资源缺失")?
+                    .context("resources missing")?
                     .viewport,
             ),
             slice::from_ref(&self.globals.global_params_buffer),
@@ -502,8 +502,8 @@ impl DirectXRenderer {
             return Ok(());
         }
 
-        let devices = self.devices.as_ref().context("设备缺失")?;
-        let resources = self.resources.as_ref().context("资源缺失")?;
+        let devices = self.devices.as_ref().context("devices missing")?;
+        let resources = self.resources.as_ref().context("resources missing")?;
         // Clear intermediate MSAA texture
         unsafe {
             devices.device_context.ClearRenderTargetView(
@@ -589,8 +589,8 @@ impl DirectXRenderer {
             vec![PathSprite { bounds }]
         };
 
-        let devices = self.devices.as_ref().context("设备缺失")?;
-        let resources = self.resources.as_ref().context("资源缺失")?;
+        let devices = self.devices.as_ref().context("devices missing")?;
+        let resources = self.resources.as_ref().context("resources missing")?;
         self.pipelines.path_sprite_pipeline.update_buffer(
             &devices.device,
             &devices.device_context,
@@ -612,8 +612,8 @@ impl DirectXRenderer {
         if len == 0 {
             return Ok(());
         }
-        let devices = self.devices.as_ref().context("设备缺失")?;
-        let resources = self.resources.as_ref().context("资源缺失")?;
+        let devices = self.devices.as_ref().context("devices missing")?;
+        let resources = self.resources.as_ref().context("resources missing")?;
         self.pipelines.underline_pipeline.draw_range(
             &devices.device,
             &devices.device_context,
@@ -634,8 +634,8 @@ impl DirectXRenderer {
         if len == 0 {
             return Ok(());
         }
-        let devices = self.devices.as_ref().context("设备缺失")?;
-        let resources = self.resources.as_ref().context("资源缺失")?;
+        let devices = self.devices.as_ref().context("devices missing")?;
+        let resources = self.resources.as_ref().context("resources missing")?;
         let texture_view = self.atlas.get_texture_view(texture_id);
         self.pipelines.mono_sprites.draw_range_with_texture(
             &devices.device,
@@ -658,8 +658,8 @@ impl DirectXRenderer {
         if len == 0 {
             return Ok(());
         }
-        let devices = self.devices.as_ref().context("设备缺失")?;
-        let resources = self.resources.as_ref().context("资源缺失")?;
+        let devices = self.devices.as_ref().context("devices missing")?;
+        let resources = self.resources.as_ref().context("resources missing")?;
         let texture_view = self.atlas.get_texture_view(texture_id);
         self.pipelines.subpixel_sprites.draw_range_with_texture(
             &devices.device,
@@ -682,8 +682,8 @@ impl DirectXRenderer {
         if len == 0 {
             return Ok(());
         }
-        let devices = self.devices.as_ref().context("设备缺失")?;
-        let resources = self.resources.as_ref().context("资源缺失")?;
+        let devices = self.devices.as_ref().context("devices missing")?;
+        let resources = self.resources.as_ref().context("resources missing")?;
         let texture_view = self.atlas.get_texture_view(texture_id);
         self.pipelines.poly_sprites.draw_range_with_texture(
             &devices.device,
@@ -705,7 +705,7 @@ impl DirectXRenderer {
     }
 
     pub(crate) fn gpu_specs(&self) -> Result<GpuSpecs> {
-        let devices = self.devices.as_ref().context("设备缺失")?;
+        let devices = self.devices.as_ref().context("devices missing")?;
         let desc = unsafe { devices.adapter.GetDesc1() }?;
         let is_software_emulated = (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE.0 as u32) != 0;
         let device_name = String::from_utf16_lossy(&desc.Description)
@@ -715,7 +715,7 @@ impl DirectXRenderer {
             0x10DE => "NVIDIA Corporation".to_string(),
             0x1002 => "AMD Corporation".to_string(),
             0x8086 => "Intel Corporation".to_string(),
-            id => format!("未知供应商 (ID: {:#X})", id),
+            id => format!("Unknown Vendor (ID: {:#X})", id),
         };
         let driver_version = match desc.VendorId {
             0x10DE => nvidia::get_driver_version(),
@@ -723,9 +723,9 @@ impl DirectXRenderer {
             // For Intel and other vendors, we use the DXGI API to get the driver version.
             _ => dxgi::get_driver_version(&devices.adapter),
         }
-        .context("获取 GPU 驱动信息失败")
+        .context("Failed to get gpu driver info")
         .log_err()
-        .unwrap_or("未知驱动".to_string());
+        .unwrap_or("Unknown Driver".to_string());
         Ok(GpuSpecs {
             is_software_emulated,
             device_name,
@@ -1020,7 +1020,7 @@ impl<T> PipelineState<T> {
         if self.buffer_size < data.len() {
             let new_buffer_size = data.len().next_power_of_two();
             log::debug!(
-                "正在将 {} 缓冲区大小从 {} 更新为 {}",
+                "Updating {} buffer size from {} to {}",
                 self.label,
                 self.buffer_size,
                 new_buffer_size
@@ -1745,8 +1745,8 @@ pub(crate) mod shader_resources {
                 let error_string =
                     std::ffi::CStr::from_ptr(error_blob.GetBufferPointer() as *const i8)
                         .to_string_lossy();
-                log::error!("着色器编译错误: {}", error_string);
-                return Err(anyhow::anyhow!("编译错误: {}", error_string));
+                log::error!("Shader compile error: {}", error_string);
+                return Err(anyhow::anyhow!("Compile error: {}", error_string));
             }
             Ok(compile_blob.unwrap())
         }
@@ -1806,13 +1806,13 @@ mod nvidia {
 
         with_dll_library(nvidia_dll_name, |nvidia_dll| unsafe {
             let nvapi_query_addr = GetProcAddress(nvidia_dll, s!("nvapi_QueryInterface"))
-                .ok_or_else(|| anyhow::anyhow!("获取 nvapi_QueryInterface 地址失败"))?;
+                .ok_or_else(|| anyhow::anyhow!("Failed to get nvapi_QueryInterface address"))?;
             let nvapi_query: extern "C" fn(u32) -> *mut () = std::mem::transmute(nvapi_query_addr);
 
             // https://github.com/NVIDIA/nvapi/blob/7cb76fce2f52de818b3da497af646af1ec16ce27/nvapi_interface.h#L41
             let nvapi_get_driver_version_ptr = nvapi_query(0x2926aaad);
             if nvapi_get_driver_version_ptr.is_null() {
-                anyhow::bail!("获取 NVIDIA 驱动版本函数指针失败");
+                anyhow::bail!("Failed to get NVIDIA driver version function pointer");
             }
             let nvapi_get_driver_version: NvAPI_SYS_GetDriverAndBranchVersion_t =
                 std::mem::transmute(nvapi_get_driver_version_ptr);
@@ -1826,7 +1826,7 @@ mod nvidia {
 
             if result != 0 {
                 anyhow::bail!(
-                    "获取 NVIDIA 驱动版本失败,错误码: {}",
+                    "Failed to get NVIDIA driver version, error code: {}",
                     result
                 );
             }
@@ -1890,9 +1890,9 @@ mod amd {
 
         with_dll_library(amd_dll_name, |amd_dll| unsafe {
             let ags_initialize_addr = GetProcAddress(amd_dll, s!("agsInitialize"))
-                .ok_or_else(|| anyhow::anyhow!("获取 agsInitialize 地址失败"))?;
+                .ok_or_else(|| anyhow::anyhow!("Failed to get agsInitialize address"))?;
             let ags_deinitialize_addr = GetProcAddress(amd_dll, s!("agsDeInitialize"))
-                .ok_or_else(|| anyhow::anyhow!("获取 agsDeInitialize 地址失败"))?;
+                .ok_or_else(|| anyhow::anyhow!("Failed to get agsDeInitialize address"))?;
 
             let ags_initialize: agsInitialize_t = std::mem::transmute(ags_initialize_addr);
             let ags_deinitialize: agsDeInitialize_t = std::mem::transmute(ags_deinitialize_addr);
@@ -1912,7 +1912,7 @@ mod amd {
                 &mut gpu_info,
             );
             if result != 0 {
-                anyhow::bail!("初始化 AMD AGS 失败,错误码: {}", result);
+                anyhow::bail!("Failed to initialize AMD AGS, error code: {}", result);
             }
 
             // Vulkan actually returns this as the driver version
@@ -1921,7 +1921,7 @@ mod amd {
                     .to_string_lossy()
                     .into_owned()
             } else {
-                "未知 Radeon 软件版本".to_string()
+                "Unknown Radeon Software Version".to_string()
             };
 
             let driver_version = if !gpu_info.driver_version.is_null() {
@@ -1929,7 +1929,7 @@ mod amd {
                     .to_string_lossy()
                     .into_owned()
             } else {
-                "未知 Radeon 驱动版本".to_string()
+                "Unknown Radeon Driver Version".to_string()
             };
 
             ags_deinitialize(context);

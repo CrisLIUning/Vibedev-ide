@@ -256,7 +256,7 @@ pub struct StripPrefixError;
 
 impl std::fmt::Display for StripPrefixError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("未找到前缀")
+        f.write_str("prefix not found")
     }
 }
 

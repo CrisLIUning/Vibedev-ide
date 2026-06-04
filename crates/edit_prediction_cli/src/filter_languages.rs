@@ -238,7 +238,7 @@ pub fn run_filter_languages(
 
     if args.list {
         let languages = get_all_languages(&extension_map);
-        println!("可用语言 ({}):", languages.len());
+        println!("Available languages ({}):", languages.len());
         println!();
         for (lang, extensions) in languages {
             println!("  {}: {}", lang, extensions.join(", "));
@@ -260,7 +260,7 @@ pub fn run_filter_languages(
 
     if args.languages.is_none() && args.extensions.is_none() {
         bail!(
-            "需要 --languages 和/或 --extensions(使用 --list 查看可用语言,或使用 --stats 查看输入分布)"
+            "--languages and/or --extensions is required (use --list to see available languages, or --stats to see input distribution)"
         );
     }
 
@@ -289,7 +289,7 @@ pub fn run_filter_languages(
         for lang in &allowed_languages {
             if !language_name_lower_map.contains_key(lang) {
                 eprintln!(
-                    "警告: '{}' 不是可识别的语言名称。使用 --list 查看可用语言。",
+                    "Warning: '{}' is not a recognized language name. Use --list to see available languages.",
                     lang
                 );
             }
@@ -303,7 +303,7 @@ pub fn run_filter_languages(
             if let Some(parent) = path.parent() {
                 if !parent.as_os_str().is_empty() {
                     std::fs::create_dir_all(parent).with_context(|| {
-                        format!("无法创建目录 '{}'", parent.display())
+                        format!("failed to create directory '{}'", parent.display())
                     })?;
                 }
             }
@@ -373,7 +373,7 @@ pub fn run_filter_languages(
     writer.flush()?;
 
     eprintln!(
-        "已将 {} 个示例筛选为 {} 个({} 个未知语言)",
+        "Filtered {} examples to {} ({} unknown language)",
         total_count, included_count, unknown_count
     );
 
@@ -430,7 +430,7 @@ fn run_stats(input: &Path, extension_map: &HashMap<String, String>) -> Result<()
                             .file_name()
                             .and_then(OsStr::to_str)
                             .map(|s| s.to_string())
-                            .unwrap_or_else(|| "<无扩展名>".to_string())
+                            .unwrap_or_else(|| "<no extension>".to_string())
                     });
                 *unknown_extensions.entry(ext).or_default() += 1;
                 *language_counts.entry("<unknown>".to_string()).or_default() += 1;
@@ -441,7 +441,7 @@ fn run_stats(input: &Path, extension_map: &HashMap<String, String>) -> Result<()
     let mut sorted_counts: Vec<_> = language_counts.into_iter().collect();
     sorted_counts.sort_by_key(|res| std::cmp::Reverse(res.1));
 
-    println!("语言分布(共 {} 个示例):", total_count);
+    println!("Language distribution ({} total examples):", total_count);
     println!();
     for (lang, count) in &sorted_counts {
         let pct = (*count as f64 / total_count as f64) * 100.0;
@@ -450,14 +450,14 @@ fn run_stats(input: &Path, extension_map: &HashMap<String, String>) -> Result<()
 
     if !unknown_extensions.is_empty() {
         println!();
-        println!("未知扩展名:");
+        println!("Unknown extensions:");
         let mut sorted_unknown: Vec<_> = unknown_extensions.into_iter().collect();
         sorted_unknown.sort_by_key(|res| std::cmp::Reverse(res.1));
         for (ext, count) in sorted_unknown.iter().take(30) {
             println!("  {:>6}  .{}", count, ext);
         }
         if sorted_unknown.len() > 30 {
-            println!("  ... 以及其他 {} 个", sorted_unknown.len() - 30);
+            println!("  ... and {} more", sorted_unknown.len() - 30);
         }
     }
 

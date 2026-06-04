@@ -78,7 +78,7 @@ impl PickerDelegate for IconThemePickerDelegate {
     }
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
-        "搜索图标主题…".into()
+        "Search icon themes…".into()
     }
 
     fn update_matches(

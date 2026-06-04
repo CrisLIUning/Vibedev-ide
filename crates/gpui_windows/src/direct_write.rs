@@ -195,7 +195,7 @@ impl DirectWriteTextSystem {
             components
                 .factory
                 .GetSystemFontCollection(false, &mut result, true)?;
-            result.context("获取系统字体集合失败")?
+            result.context("Failed to get system font collection")?
         };
         let custom_font_set = unsafe { components.builder.CreateFontSet()? };
         let custom_font_collection = unsafe {
@@ -239,7 +239,7 @@ impl PlatformTextSystem for DirectWriteTextSystem {
         } else {
             RwLockUpgradableReadGuard::upgrade(lock)
                 .select_and_cache_font(&self.components, font)
-                .with_context(|| format!("选择字体失败: {:?}", font))
+                .with_context(|| format!("Failed to select font: {:?}", font))
         }
     }
 
@@ -790,7 +790,7 @@ impl DirectWriteState {
         glyph_bounds: Bounds<DevicePixels>,
     ) -> Result<(Size<DevicePixels>, Vec<u8>)> {
         if glyph_bounds.size.width.0 == 0 || glyph_bounds.size.height.0 == 0 {
-            anyhow::bail!("字形边界为空");
+            anyhow::bail!("glyph bounds are empty");
         }
 
         let bitmap_data = if params.is_emoji {
@@ -1252,7 +1252,7 @@ impl DirectWriteState {
 
     fn handle_gpu_lost(&mut self, directx_devices: &DirectXDevices) -> Result<()> {
         try_to_recover_from_device_lost(|| {
-            GPUState::new(directx_devices).context("正在为 DirectWrite 重建 GPU 状态")
+            GPUState::new(directx_devices).context("Recreating GPU state for DirectWrite")
         })
         .map(|gpu_state| self.gpu_state = gpu_state)
     }
@@ -1485,7 +1485,7 @@ impl IDWriteTextRenderer_Impl for TextRenderer_Impl {
         let Ok(font_face) = &font_face.cast::<IDWriteFontFace3>() else {
             return Err(Error::new(
                 DWRITE_E_UNSUPPORTEDOPERATION,
-                "字体对象转换失败",
+                "Failed to cast font face",
             ));
         };
 
@@ -1500,13 +1500,13 @@ impl IDWriteTextRenderer_Impl for TextRenderer_Impl {
             .map_or_else(
                 || {
                     let font = font_face_to_font(font_face, &self.locale)
-                        .ok_or_else(|| Error::new(DWRITE_E_NOFONT, "创建字体失败"))?;
+                        .ok_or_else(|| Error::new(DWRITE_E_NOFONT, "Failed to create font"))?;
                     let font_id = match context.text_system.font_to_font_id.get(&font) {
                         Some(&font_id) => font_id,
                         None => context
                             .text_system
                             .select_and_cache_font(context.components, &font)
-                            .ok_or_else(|| Error::new(DWRITE_E_NOFONT, "创建字体失败"))?,
+                            .ok_or_else(|| Error::new(DWRITE_E_NOFONT, "Failed to create font"))?,
                     };
                     context
                         .text_system
@@ -1784,7 +1784,7 @@ fn get_name(string: IDWriteLocalizedStrings, locale: &HSTRING) -> Result<String>
                 &mut exists as _,
             )?
         };
-        anyhow::ensure!(exists.as_bool(), "没有 {locale} 的本地化字符串");
+        anyhow::ensure!(exists.as_bool(), "No localised string for {locale}");
     }
 
     let name_length = unsafe { string.GetStringLength(locale_name_index) }? as usize;
@@ -1832,7 +1832,7 @@ fn get_system_ui_font_name() -> SharedString {
             let font_name = String::from_utf16_lossy(&info.lfFaceName);
             font_name.trim_matches(char::from(0)).to_owned().into()
         };
-        log::info!("使用 {} 作为界面字体。", font_family);
+        log::info!("Use {} as UI font.", font_family);
         font_family
     }
 }

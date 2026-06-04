@@ -388,7 +388,7 @@ where
     fn assert_did_seek(&self) {
         assert!(
             self.did_seek,
-            "调用此方法前必须先调用 `seek`、`next` 或 `prev`"
+            "Must call `seek`, `next` or `prev` before calling this method"
         );
     }
 
@@ -470,7 +470,7 @@ where
     ) -> bool {
         assert!(
             target.cmp(&self.position, self.cx).is_ge(),
-            "无法向后查找",
+            "cannot seek backward",
         );
 
         if !self.did_seek {

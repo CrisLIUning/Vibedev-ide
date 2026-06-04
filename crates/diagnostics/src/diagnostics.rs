@@ -104,9 +104,9 @@ impl Render for ProjectDiagnosticsEditor {
         let child =
             if warning_count + self.summary.error_count == 0 && self.editor.read(cx).is_empty(cx) {
                 let label = if self.summary.warning_count == 0 {
-                    SharedString::new_static("工作区无问题")
+                    SharedString::new_static("No problems in workspace")
                 } else {
-                    SharedString::new_static("工作区无错误")
+                    SharedString::new_static("No errors in workspace")
                 };
                 v_flex()
                     .key_context("EmptyPane")
@@ -124,7 +124,7 @@ impl Render for ProjectDiagnosticsEditor {
                             ""
                         };
                         let label = format!(
-                            "显示 {} 个警告{}",
+                            "Show {} warning{}",
                             self.summary.warning_count, plural_suffix
                         );
                         this.child(
@@ -749,7 +749,7 @@ impl Item for ProjectDiagnosticsEditor {
     }
 
     fn tab_tooltip_text(&self, _: &App) -> Option<SharedString> {
-        Some("项目诊断".into())
+        Some("Project Diagnostics".into())
     }
 
     fn tab_content_text(&self, _detail: usize, _: &App) -> SharedString {
@@ -766,7 +766,7 @@ impl Item for ProjectDiagnosticsEditor {
                         h_flex()
                             .gap_1()
                             .child(Icon::new(IconName::Check).color(Color::Success))
-                            .child(Label::new("无问题").color(params.text_color())),
+                            .child(Label::new("No problems").color(params.text_color())),
                     )
                 },
             )

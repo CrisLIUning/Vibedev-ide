@@ -107,7 +107,7 @@ impl ConfigOptionsView {
 
         cx.spawn(async move |_, _| {
             if let Err(err) = task.await {
-                log::error!("设置配置选项失败: {:?}", err);
+                log::error!("Failed to set config option: {:?}", err);
             }
         })
         .detach();
@@ -317,21 +317,21 @@ impl ConfigOptionSelector {
 
     fn current_value_name(&self) -> String {
         let Some(option) = self.current_option() else {
-            return "未知".to_string();
+            return "Unknown".to_string();
         };
 
         match &option.kind {
             acp::SessionConfigKind::Select(select) => {
                 find_option_name(&select.options, &select.current_value)
-                    .unwrap_or_else(|| "未知".to_string())
+                    .unwrap_or_else(|| "Unknown".to_string())
             }
-            _ => "未知".to_string(),
+            _ => "Unknown".to_string(),
         }
     }
 
     fn render_trigger_button(&self, _window: &mut Window, _cx: &mut Context<Self>) -> Button {
         let Some(option) = self.current_option() else {
-            return Button::new("config-option-trigger", "未知")
+            return Button::new("config-option-trigger", "Unknown")
                 .label_size(LabelSize::Small)
                 .color(Color::Muted)
                 .disabled(true);
@@ -497,7 +497,7 @@ impl PickerDelegate for ConfigOptionPickerDelegate {
     }
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
-        "选择选项…".into()
+        "Select an option…".into()
     }
 
     fn update_matches(
@@ -574,7 +574,7 @@ impl PickerDelegate for ConfigOptionPickerDelegate {
 
             cx.spawn(async move |_, _| {
                 if let Err(err) = task.await {
-                    log::error!("设置配置选项失败: {:?}", err);
+                    log::error!("Failed to set config option: {:?}", err);
                 }
             })
             .detach();
@@ -790,7 +790,7 @@ fn options_to_picker_entries(
     }
 
     if !favorite_options.is_empty() {
-        entries.push(ConfigOptionPickerEntry::Separator("收藏".into()));
+        entries.push(ConfigOptionPickerEntry::Separator("Favorite".into()));
         for option in favorite_options {
             entries.push(ConfigOptionPickerEntry::Option(option));
         }
@@ -800,7 +800,7 @@ fn options_to_picker_entries(
         if let Some(option) = options.first()
             && option.group.is_none()
         {
-            entries.push(ConfigOptionPickerEntry::Separator("所有选项".into()));
+            entries.push(ConfigOptionPickerEntry::Separator("All Options".into()));
         }
     }
 

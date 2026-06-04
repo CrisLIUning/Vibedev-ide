@@ -93,11 +93,11 @@ impl TimeBucket {
 
     fn label(&self) -> &'static str {
         match self {
-            TimeBucket::Today => "今天",
-            TimeBucket::Yesterday => "昨天",
-            TimeBucket::ThisWeek => "本周",
-            TimeBucket::PastWeek => "过去一周",
-            TimeBucket::Older => "更早",
+            TimeBucket::Today => "Today",
+            TimeBucket::Yesterday => "Yesterday",
+            TimeBucket::ThisWeek => "This Week",
+            TimeBucket::PastWeek => "Past Week",
+            TimeBucket::Older => "Older",
         }
     }
 }
@@ -170,7 +170,7 @@ impl ThreadsArchiveView {
 
         let filter_editor = cx.new(|cx| {
             let mut editor = Editor::single_line(window, cx);
-            editor.set_placeholder_text("搜索所有对话线程…", window, cx);
+            editor.set_placeholder_text("Search all threads…", window, cx);
             editor
         });
 
@@ -682,7 +682,7 @@ impl ThreadsArchiveView {
                             IconButton::new("cancel-restore", IconName::Close)
                                 .icon_size(IconSize::Small)
                                 .icon_color(Color::Muted)
-                                .tooltip(Tooltip::text("取消恢复"))
+                                .tooltip(Tooltip::text("Cancel Restore"))
                                 .on_click({
                                     let thread_id = thread.thread_id;
                                     cx.listener(move |this, _, _, cx| {
@@ -703,7 +703,7 @@ impl ThreadsArchiveView {
                             .tooltip({
                                 move |_window, cx| {
                                     Tooltip::for_action_in(
-                                        "删除对话线程",
+                                        "Delete Thread",
                                         &RemoveSelectedThread,
                                         &focus_handle,
                                         cx,
@@ -741,7 +741,7 @@ impl ThreadsArchiveView {
                             .tooltip({
                                 move |_window, cx| {
                                     Tooltip::for_action_in(
-                                        "归档对话线程",
+                                        "Archive Thread",
                                         &ArchiveSelectedThread,
                                         &focus_handle,
                                         cx,
@@ -899,7 +899,7 @@ impl ThreadsArchiveView {
                 this.child(
                     IconButton::new("clear-filter", IconName::Close)
                         .icon_size(IconSize::Small)
-                        .tooltip(Tooltip::text("清除搜索"))
+                        .tooltip(Tooltip::text("Clear Search"))
                         .on_click(cx.listener(|this, _, window, cx| {
                             this.reset_filter_editor_text(window, cx);
                             this.update_items(cx);
@@ -940,9 +940,9 @@ impl ThreadsArchiveView {
         };
 
         let count_label = if entry_count == 1 {
-            "1 个对话线程".to_string()
+            "1 thread".to_string()
         } else {
-            format!("{} 个对话线程", entry_count)
+            format!("{} threads", entry_count)
         };
 
         h_flex()
@@ -964,7 +964,7 @@ impl ThreadsArchiveView {
                     .child(
                         IconButton::new("thread-import", IconName::Download)
                             .icon_size(IconSize::Small)
-                            .tooltip(Tooltip::text("导入对话线程"))
+                            .tooltip(Tooltip::text("Import Threads"))
                             .on_click(cx.listener(|_this, _, _, cx| {
                                 cx.emit(ThreadsArchiveViewEvent::Import);
                             })),
@@ -976,9 +976,9 @@ impl ThreadsArchiveView {
                             .toggle_state(self.thread_filter == ThreadFilter::ArchivedOnly)
                             .tooltip(Tooltip::text(
                                 if self.thread_filter == ThreadFilter::ArchivedOnly {
-                                    "显示全部对话线程"
+                                    "Show All Threads"
                                 } else {
-                                    "仅显示已归档的对话线程"
+                                    "Show Only Archived Threads"
                                 },
                             ))
                             .on_click(cx.listener(|this, _, _, cx| {
@@ -1006,15 +1006,15 @@ pub fn format_history_entry_timestamp(entry_time: DateTime<Utc>) -> String {
     let months = days / 30;
 
     if minutes < 60 {
-        format!("{}分钟", minutes.max(1))
+        format!("{}m", minutes.max(1))
     } else if hours < 24 {
-        format!("{}小时", hours.max(1))
+        format!("{}h", hours.max(1))
     } else if days < 7 {
-        format!("{}天", days.max(1))
+        format!("{}d", days.max(1))
     } else if weeks < 4 {
-        format!("{}周", weeks.max(1))
+        format!("{}w", weeks.max(1))
     } else {
-        format!("{}个月", months.max(1))
+        format!("{}mo", months.max(1))
     }
 }
 
@@ -1031,9 +1031,9 @@ impl Render for ThreadsArchiveView {
 
         let content = if is_empty {
             let message = if has_query {
-                "没有匹配的对话线程。"
+                "No threads match your search."
             } else {
-                "暂无对话线程"
+                "No threads yet."
             };
 
             v_flex()
@@ -1407,7 +1407,7 @@ impl PickerDelegate for ProjectPickerDelegate {
         };
 
         if has_siblings_to_show {
-            entries.push(ProjectPickerEntry::Header("当前窗口".into()));
+            entries.push(ProjectPickerEntry::Header("This Window".into()));
 
             if is_empty_query {
                 for (id, workspace) in self.workspaces.iter().enumerate() {
@@ -1434,7 +1434,7 @@ impl PickerDelegate for ProjectPickerDelegate {
         };
 
         if has_recent_to_show {
-            entries.push(ProjectPickerEntry::Header("最近的项目".into()));
+            entries.push(ProjectPickerEntry::Header("Recent Projects".into()));
 
             if is_empty_query {
                 for (id, workspace) in self.workspaces.iter().enumerate() {
@@ -1484,9 +1484,9 @@ impl PickerDelegate for ProjectPickerDelegate {
 
     fn no_matches_text(&self, _window: &mut Window, _cx: &mut App) -> Option<SharedString> {
         let text = if self.workspaces.is_empty() {
-            "未找到最近的项目"
+            "No recent projects found"
         } else {
-            "无匹配项"
+            "No matches"
         };
         Some(text.into())
     }
@@ -1603,7 +1603,7 @@ impl PickerDelegate for ProjectPickerDelegate {
                 .border_t_1()
                 .border_color(cx.theme().colors().border_variant)
                 .child(
-                    Button::new("open_local_folder", "从本地文件夹选择")
+                    Button::new("open_local_folder", "Choose from Local Folders")
                         .key_binding(KeyBinding::for_action_in(
                             &workspace::Open::default(),
                             &focus_handle,
@@ -1614,7 +1614,7 @@ impl PickerDelegate for ProjectPickerDelegate {
                         })),
                 )
                 .child(
-                    Button::new("select_project", "选择")
+                    Button::new("select_project", "Select")
                         .disabled(!has_selection)
                         .key_binding(KeyBinding::for_action_in(&menu::Confirm, &focus_handle, cx))
                         .on_click(cx.listener(move |picker, _, window, cx| {

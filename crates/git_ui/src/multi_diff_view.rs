@@ -240,11 +240,11 @@ impl MultiDiffView {
 
     fn title(&self) -> SharedString {
         let suffix = if self.file_count == 1 {
-            "1 个文件".to_string()
+            "1 file".to_string()
         } else {
-            format!("{} 个文件", self.file_count)
+            format!("{} files", self.file_count)
         };
-        format!("差异 ({suffix})").into()
+        format!("Diff ({suffix})").into()
     }
 }
 

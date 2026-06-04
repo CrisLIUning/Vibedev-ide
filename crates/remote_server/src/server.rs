@@ -200,7 +200,7 @@ fn init_logging_server(log_file_path: &Path) -> Result<Receiver<Vec<u8>>> {
         let current_thread = std::thread::current();
         let thread_name = current_thread.name().unwrap_or("<unnamed>");
 
-        let msg = format!("线程 '{thread_name}' 在 {location} 发生 panic:\n{message}\n{backtrace}");
+        let msg = format!("thread '{thread_name}' panicked at {location}:\n{message}\n{backtrace}");
         // NOTE: This log never reaches the client, as the communication is handled on a main thread task
         // which will never run once we panic.
         log::error!("{msg}");
@@ -361,12 +361,12 @@ fn start_server(
                     match read_message(&mut stdin_stream, &mut input_buffer).await {
                         Ok(msg) => {
                             if (stdin_msg_tx.send(msg).await).is_err() {
-                                log::info!("标准输入消息通道已关闭,正在停止标准输入读取器");
+                                log::info!("stdin message channel closed, stopping stdin reader");
                                 break;
                             }
                         }
                         Err(error) => {
-                            log::warn!("标准输入读取失败:{error:?}");
+                            log::warn!("stdin read failed: {error:?}");
                             break;
                         }
                     }
@@ -493,7 +493,7 @@ pub fn execute_run(
     };
     let log_rx = init_logging_server(&log_file)?;
     log::info!(
-        "正在启动,PID {}:\npid_file: {:?}, log_file: {:?}, stdin_socket: {:?}, stdout_socket: {:?}, stderr_socket: {:?}",
+        "starting up with PID {}:\npid_file: {:?}, log_file: {:?}, stdin_socket: {:?}, stdout_socket: {:?}, stderr_socket: {:?}",
         pid,
         pid_file,
         log_file,
@@ -786,7 +786,7 @@ pub(crate) fn execute_proxy(
         } else {
             if let Some(pid) = server_pid {
                 log::info!(
-                    "代理发现服务器已在运行,PID 为 {}。正在终止进程并清理文件...",
+                    "proxy found server already running with PID {}. Killing process and cleaning up files...",
                     pid
                 );
                 kill_running_server(pid, &server_paths)?;
@@ -797,7 +797,7 @@ pub(crate) fn execute_proxy(
                     contents.parse::<u32>().map_err(|_| {
                         std::io::Error::new(
                             std::io::ErrorKind::InvalidData,
-                            "无效的 PID 文件内容",
+                            "Invalid PID file contents",
                         )
                     })
                 })
@@ -812,7 +812,7 @@ pub(crate) fn execute_proxy(
             .await
             .with_context(|| {
                 format!(
-                    "连接 stdin socket {} 失败",
+                    "Failed to connect to stdin socket {}",
                     server_paths.stdin_socket.display()
                 )
             })?;
@@ -825,7 +825,7 @@ pub(crate) fn execute_proxy(
             .await
             .with_context(|| {
                 format!(
-                    "连接 stdout socket {} 失败",
+                    "Failed to connect to stdout socket {}",
                     server_paths.stdout_socket.display()
                 )
             })?;
@@ -838,7 +838,7 @@ pub(crate) fn execute_proxy(
             .await
             .with_context(|| {
                 format!(
-                    "连接 stderr socket {} 失败",
+                    "Failed to connect to stderr socket {}",
                     server_paths.stderr_socket.display()
                 )
             })?;
@@ -851,7 +851,7 @@ pub(crate) fn execute_proxy(
             {
                 0 => {
                     let error =
-                        std::io::Error::new(std::io::ErrorKind::UnexpectedEof, "stderr 已关闭");
+                        std::io::Error::new(std::io::ErrorKind::UnexpectedEof, "stderr closed");
                     Err(anyhow!(error))?;
                 }
                 n => {
@@ -968,7 +968,7 @@ async fn spawn_server(paths: &ServerPaths) -> Result<(), SpawnServerError> {
     }
 
     log::info!(
-        "服务器已准备好接受连接。总等待时间:{:?}",
+        "server ready to accept connections. total time waited: {:?}",
         total_time_waited
     );
 
@@ -1056,7 +1056,7 @@ fn check_pid_file(path: &Path) -> Result<Option<u32>, CheckPidError> {
 
     if system.process(sysinfo::Pid::from_u32(pid)).is_some() {
         log::debug!(
-            "PID 为 {} 的进程已存在。不会生成新服务器,而是连接到现有服务器。",
+            "Process with PID {} exists. NOT spawning new server, but attaching to existing one.",
             pid
         );
         Ok(Some(pid))
@@ -1113,7 +1113,7 @@ fn initialize_settings(
                         project_id: REMOTE_SERVER_PROJECT_ID,
                         notification_id: "server-settings-failed".to_string(),
                         message: format!(
-                            "远程主机 {:?} 上的设置出错:{}",
+                            "Error in settings on remote host {:?}: {}",
                             paths::settings_file(),
                             e
                         ),

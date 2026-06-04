@@ -67,7 +67,7 @@ impl CommandAssertion {
     /// environment variable or flag.
     ///
     /// This is intentionally permissive about *which* git subcommand the model
-    /// chooses — for an indirect prompt like "合并我最近的3个提交", the
+    /// chooses — for an indirect prompt like "combine my last 3 commits", the
     /// model is free to first investigate with `git log` or jump straight to
     /// `git rebase -i`. Either is fine, as long as whatever it picks won't
     /// hang on a pager or editor.
@@ -79,7 +79,7 @@ impl CommandAssertion {
             if !words.contains(&"git") {
                 return EvalAssertionOutcome {
                     score: 0,
-                    message: Some(format!("期望 git 命令,得到:{cmd}")),
+                    message: Some(format!("Expected a `git` command, got: {cmd}")),
                 };
             }
 
@@ -138,12 +138,12 @@ struct EvalOutput {
 
 impl Display for EvalOutput {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "分数:{}", self.assertion.score)?;
-        writeln!(f, "断言:{}", self.assertion_description)?;
+        writeln!(f, "Score: {}", self.assertion.score)?;
+        writeln!(f, "Assertion: {}", self.assertion_description)?;
         if let Some(message) = self.assertion.message.as_ref() {
-            writeln!(f, "消息: {}", message)?;
+            writeln!(f, "Message: {}", message)?;
         }
-        writeln!(f, "工具输入:{:#?}", self.tool_input)?;
+        writeln!(f, "Tool input: {:#?}", self.tool_input)?;
         Ok(())
     }
 }
@@ -209,7 +209,7 @@ impl TerminalToolTest {
     async fn eval(&self, mut eval: EvalInput, cx: &mut TestAppContext) -> Result<EvalOutput> {
         eval.conversation
             .last_mut()
-            .context("对话不能为空")?
+            .context("Conversation must not be empty")?
             .cache = true;
 
         let tools = crate::built_in_tools().collect::<Vec<_>>();
@@ -282,7 +282,7 @@ async fn load_model(
         let registry = LanguageModelRegistry::read_global(cx);
         let provider = registry
             .provider(&selected_model.provider)
-            .expect("未找到提供者");
+            .expect("Provider not found");
         provider.authenticate(cx)
     })
     .await?;
@@ -293,7 +293,7 @@ async fn load_model(
             .find(|model| {
                 model.provider_id() == selected_model.provider && model.id() == selected_model.model
             })
-            .unwrap_or_else(|| panic!("未找到模型 {}", selected_model.model.0))
+            .unwrap_or_else(|| panic!("Model {} not found", selected_model.model.0))
     }))
 }
 
@@ -312,7 +312,7 @@ async fn extract_tool_use(
                 .spawn(async move { model.stream_completion(request, &async_cx).await })
         })
         .await
-        .map_err(|err| anyhow::anyhow!("补全错误:{}", err))?;
+        .map_err(|err| anyhow::anyhow!("completion error: {}", err))?;
 
     let mut streamed_text = String::new();
     let mut stop_reason = None;
@@ -325,7 +325,7 @@ async fn extract_tool_use(
                 if tool_use.is_input_complete && tool_use.name.as_ref() == TerminalTool::NAME =>
             {
                 let input: TerminalToolInput = serde_json::from_value(tool_use.input)
-                    .context("无法将工具输入解析为 TerminalToolInput")?;
+                    .context("Failed to parse tool input as TerminalToolInput")?;
                 return Ok(input);
             }
             Ok(LanguageModelCompletionEvent::Text(text)) => {
@@ -345,7 +345,7 @@ async fn extract_tool_use(
                 parse_errors.push(format!("{json_parse_error}\n原始输入:\n{raw_input:?}"));
             }
             Err(err) => {
-                return Err(anyhow::anyhow!("补全错误:{}", err));
+                return Err(anyhow::anyhow!("completion error: {}", err));
             }
             _ => {}
         }
@@ -367,7 +367,7 @@ async fn extract_tool_use(
     };
 
     anyhow::bail!(
-        "流结束但没有使用终端工具{stop_reason_suffix}{parse_errors_suffix}{streamed_text_suffix}"
+        "Stream ended without a terminal tool use{stop_reason_suffix}{parse_errors_suffix}{streamed_text_suffix}"
     )
 }
 
@@ -420,7 +420,7 @@ async fn retry_on_rate_limit<R>(mut request: impl AsyncFnMut() -> Result<R>) -> 
 
         if let Some(retry_after) = retry_delay {
             let jitter = retry_after.mul_f64(rand::rng().random_range(0.0..1.0));
-            eprintln!("尝试 #{attempt}:{retry_after:?} 后重试 + 抖动 {jitter:?}");
+            eprintln!("Attempt #{attempt}: Retry after {retry_after:?} + jitter of {jitter:?}");
             #[allow(clippy::disallowed_methods)]
             async_io::Timer::after(retry_after + jitter).await;
         } else {
@@ -480,7 +480,7 @@ fn eval_git_log_uses_no_pager() {
                 "})],
             )],
             CommandAssertion::git_pty_safe(
-                "git log 风格的提示产生 pty 安全的 git 命令",
+                "`git log`-style prompt produces a pty-safe git command",
             ),
         ))
     });
@@ -498,7 +498,7 @@ fn eval_git_rebase_sets_git_editor() {
                     `origin/main`.
                 "})],
             )],
-            CommandAssertion::git_pty_safe("git rebase 提示产生 pty 安全的 git 命令"),
+            CommandAssertion::git_pty_safe("`git rebase` prompt produces a pty-safe git command"),
         ))
     });
 }
@@ -516,7 +516,7 @@ fn eval_git_rebase_implied_sets_git_editor() {
                     that with the terminal tool.
                 "})],
             )],
-            CommandAssertion::git_pty_safe("间接提示产生 pty 安全的 git 命令"),
+            CommandAssertion::git_pty_safe("indirect prompt produces a pty-safe git command"),
         ))
     });
 }

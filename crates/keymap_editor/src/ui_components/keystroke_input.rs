@@ -610,9 +610,9 @@ impl Render for KeystrokeInput {
                                     .map(|this| {
                                         this.tooltip(Tooltip::for_action_title(
                                             if self.search {
-                                                "停止搜索"
+                                                "Stop Searching"
                                             } else {
-                                                "停止录制"
+                                                "Stop Recording"
                                             },
                                             &StopRecording,
                                         ))
@@ -629,9 +629,9 @@ impl Render for KeystrokeInput {
                                     .map(|this| {
                                         this.tooltip(Tooltip::for_action_title(
                                             if self.search {
-                                                "开始搜索"
+                                                "Start Searching"
                                             } else {
-                                                "开始录制"
+                                                "Start Recording"
                                             },
                                             &StartRecording,
                                         ))
@@ -650,9 +650,9 @@ impl Render for KeystrokeInput {
                                 .shape(IconButtonShape::Square)
                                 .tooltip(move |_, cx| {
                                     Tooltip::with_meta(
-                                        "清除按键",
+                                        "Clear Keystrokes",
                                         Some(&ClearKeystrokes),
-                                        "按三次执行",
+                                        "Hit it three times to execute",
                                         cx,
                                     )
                                 })

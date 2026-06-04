@@ -990,7 +990,7 @@ mod test {
     fn error_text(content: LanguageModelToolResultContent) -> String {
         match content {
             LanguageModelToolResultContent::Text(text) => text.to_string(),
-            other => panic!("预期文本错误,得到: {other:?}"),
+            other => panic!("Expected text error, got: {other:?}"),
         }
     }
 
@@ -1280,8 +1280,8 @@ mod test {
                 .fields
                 .title
                 .as_deref()
-                .is_some_and(|title| title.contains("指向项目外部")),
-            "读取图像前应收到符号链接逃逸授权"
+                .is_some_and(|title| title.contains("points outside the project")),
+            "Expected symlink escape authorization before reading the image"
         );
         authorization
             .response
@@ -1572,8 +1572,8 @@ mod test {
         let auth = event_rx.expect_authorization().await;
         let title = auth.tool_call.fields.title.as_deref().unwrap_or("");
         assert!(
-            title.contains("指向项目外部"),
-            "标题: {title}"
+            title.contains("points outside the project"),
+            "title: {title}"
         );
 
         auth.response
@@ -1584,7 +1584,7 @@ mod test {
             .unwrap();
 
         let result = task.await;
-        assert!(result.is_ok(), "批准后应成功: {result:?}");
+        assert!(result.is_ok(), "should succeed after approval: {result:?}");
     }
 
     #[gpui::test]
@@ -1637,7 +1637,7 @@ mod test {
         let result = task.await;
         assert!(
             result.is_err(),
-            "授权被拒绝时工具应失败"
+            "Tool should fail when authorization is denied"
         );
     }
 
@@ -1698,12 +1698,12 @@ mod test {
 
         assert!(
             result.is_err(),
-            "预期 read_file 在私有路径上失败"
+            "Expected read_file to fail on private path"
         );
         let error = error_text(result.unwrap_err());
         assert!(
             error.contains("private_files"),
-            "预期私有文件验证错误,得到: {error}"
+            "Expected private-files validation error, got: {error}"
         );
 
         let event = event_rx.try_recv();
@@ -1712,7 +1712,7 @@ mod test {
                 event,
                 Ok(Ok(crate::thread::ThreadEvent::ToolCallAuthorization(_)))
             ),
-            "读取前验证失败时不应请求授权",
+            "No authorization should be requested when validation fails before read",
         );
     }
 

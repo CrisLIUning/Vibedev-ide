@@ -225,17 +225,17 @@ mod sys {
                 let mut display_link: *mut CVDisplayLink = 0 as _;
 
                 let code = CVDisplayLinkCreateWithActiveCGDisplays(&mut display_link);
-                anyhow::ensure!(code == 0, "无法创建显示链接,代码: {}", code);
+                anyhow::ensure!(code == 0, "could not create display link, code: {}", code);
 
                 let mut display_link = DisplayLink::from_ptr(display_link);
 
                 let code = CVDisplayLinkSetOutputCallback(&mut display_link, callback, user_info);
-                anyhow::ensure!(code == 0, "无法设置输出回调,代码: {}", code);
+                anyhow::ensure!(code == 0, "could not set output callback, code: {}", code);
 
                 let code = CVDisplayLinkSetCurrentCGDisplay(&mut display_link, display_id);
                 anyhow::ensure!(
                     code == 0,
-                    "无法将显示器分配给显示链接,代码: {}",
+                    "could not assign display to display link, code: {}",
                     code
                 );
 
@@ -249,7 +249,7 @@ mod sys {
         pub unsafe fn start(&mut self) -> Result<()> {
             unsafe {
                 let code = CVDisplayLinkStart(self);
-                anyhow::ensure!(code == 0, "无法启动显示链接,代码: {}", code);
+                anyhow::ensure!(code == 0, "could not start display link, code: {}", code);
                 Ok(())
             }
         }
@@ -258,7 +258,7 @@ mod sys {
         pub unsafe fn stop(&mut self) -> Result<()> {
             unsafe {
                 let code = CVDisplayLinkStop(self);
-                anyhow::ensure!(code == 0, "无法停止显示链接,代码: {}", code);
+                anyhow::ensure!(code == 0, "could not stop display link, code: {}", code);
                 Ok(())
             }
         }

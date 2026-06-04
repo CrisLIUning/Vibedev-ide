@@ -695,14 +695,14 @@ async fn test_switching_projects_with_sidebar_closed_retains_old_active_workspac
         assert_eq!(
             mw.workspaces().count(),
             2,
-            "关闭侧边栏切换后,之前活动的工作区应保持打开"
+            "the previous active workspace should remain open after switching with the sidebar closed"
         );
         assert_eq!(mw.project_groups(cx).len(), 2);
     });
 
     assert!(
         workspace_a.read_with(cx, |workspace, _cx| workspace.session_id().is_some()),
-        "关闭侧边栏切换时,之前活动的工作区应保持连接"
+        "the previous active workspace should remain attached when switching away with the sidebar closed"
     );
 }
 
@@ -855,7 +855,7 @@ async fn test_open_project_closes_empty_workspace_but_not_non_empty_ones(cx: &mu
 
     // Cancelling keeps the empty workspace.
     assert!(cx.has_pending_prompt(),);
-    cx.simulate_prompt_answer("取消");
+    cx.simulate_prompt_answer("Cancel");
     cx.run_until_parked();
     assert_eq!(open_task.await.unwrap(), empty_workspace);
     window
@@ -881,7 +881,7 @@ async fn test_open_project_closes_empty_workspace_but_not_non_empty_ones(cx: &mu
     cx.run_until_parked();
 
     assert!(cx.has_pending_prompt(),);
-    cx.simulate_prompt_answer("不保存");
+    cx.simulate_prompt_answer("Don't Save");
     cx.run_until_parked();
 
     let workspace_a = open_task.await.unwrap();

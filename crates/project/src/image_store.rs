@@ -720,7 +720,7 @@ impl ImageStoreImpl for Entity<RemoteImageStore> {
         _cx: &mut Context<ImageStore>,
     ) -> Task<Result<()>> {
         Task::ready(Err(anyhow::anyhow!(
-            "不支持从远程重新加载图片"
+            "Reloading images from remote is not supported"
         )))
     }
 

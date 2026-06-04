@@ -50,12 +50,12 @@ fn register_clipboard_format(format: PCWSTR) -> u32 {
     let ret = unsafe { RegisterClipboardFormatW(format) };
     if ret == 0 {
         panic!(
-            "注册剪贴板格式时出错: {}",
+            "Error when registering clipboard format: {}",
             std::io::Error::last_os_error()
         );
     }
     log::debug!(
-        "已注册剪贴板格式 {} 为 {}",
+        "Registered clipboard format {} as {}",
         unsafe { format.display() },
         ret
     );
@@ -85,7 +85,7 @@ pub(crate) fn write_to_clipboard(item: ClipboardItem) {
     })();
 
     if let Err(e) = result {
-        log::error!("写入剪贴板失败: {e}");
+        log::error!("Failed to write to clipboard: {e}");
     }
 }
 
@@ -137,12 +137,12 @@ where
         let mut buffer = vec![0u16; filename_length + 1];
         let ret = unsafe { DragQueryFileW(hdrop, file_index, Some(buffer.as_mut_slice())) };
         if ret == 0 {
-            log::error!("无法读取拖拽文件的文件名");
+            log::error!("unable to read file name of dragged file");
             continue;
         }
         match String::from_utf16(&buffer[0..filename_length]) {
             Ok(file_name) => f(file_name),
-            Err(e) => log::error!("拖拽文件的文件名不是 UTF-16 编码: {}", e),
+            Err(e) => log::error!("dragged file name is not UTF-16: {}", e),
         }
     }
 }
@@ -151,7 +151,7 @@ fn set_clipboard_bytes<T>(data: &[T], format: u32) -> Result<()> {
     unsafe {
         let global = Owned::new(GlobalAlloc(GMEM_MOVEABLE, std::mem::size_of_val(data))?);
         let ptr = GlobalLock(*global);
-        anyhow::ensure!(!ptr.is_null(), "GlobalLock 返回了 null");
+        anyhow::ensure!(!ptr.is_null(), "GlobalLock returned null");
         std::ptr::copy_nonoverlapping(data.as_ptr(), ptr as _, data.len());
         GlobalUnlock(*global).ok();
         SetClipboardData(format, Some(HANDLE(global.0)))?;
@@ -216,12 +216,12 @@ fn write_image(item: &Image) -> Result<()> {
 fn convert_to_png(bytes: &[u8], format: ImageFormat) -> Option<Vec<u8>> {
     let img_format = gpui_to_image_format(format)?;
     let image = image::load_from_memory_with_format(bytes, img_format)
-        .map_err(|e| log::warn!("解码图像以进行 PNG 转换失败: {e}"))
+        .map_err(|e| log::warn!("Failed to decode image for PNG conversion: {e}"))
         .ok()?;
     let mut buf = Vec::new();
     image
         .write_to(&mut std::io::Cursor::new(&mut buf), image::ImageFormat::Png)
-        .map_err(|e| log::warn!("编码 PNG 失败: {e}"))
+        .map_err(|e| log::warn!("Failed to encode PNG: {e}"))
         .ok()?;
     Some(buf)
 }
@@ -312,7 +312,7 @@ fn log_unsupported_clipboard_formats() {
         unsafe { GetClipboardFormatNameW(format, &mut buffer) };
         let format_name = String::from_utf16_lossy(&buffer);
         log::warn!(
-            "尝试以不支持的剪贴板格式粘贴: {}, {}。",
+            "Try to paste with unsupported clipboard format: {}, {}.",
             format,
             format_name
         );
@@ -328,7 +328,7 @@ fn gpui_to_image_format(value: ImageFormat) -> Option<image::ImageFormat> {
         ImageFormat::Bmp => Some(image::ImageFormat::Bmp),
         ImageFormat::Tiff => Some(image::ImageFormat::Tiff),
         other => {
-            log::warn!("格式 {other:?} 在 image crate 中无对应项");
+            log::warn!("No image crate equivalent for format: {other:?}");
             None
         }
     }
@@ -341,7 +341,7 @@ impl ClipboardGuard {
         match unsafe { OpenClipboard(None) } {
             Ok(()) => Some(Self),
             Err(e) => {
-                log::error!("打开剪贴板失败: {e}");
+                log::error!("Failed to open clipboard: {e}");
                 None
             }
         }
@@ -351,7 +351,7 @@ impl ClipboardGuard {
 impl Drop for ClipboardGuard {
     fn drop(&mut self) {
         if let Err(e) = unsafe { CloseClipboard() } {
-            log::error!("关闭剪贴板失败: {e}");
+            log::error!("Failed to close clipboard: {e}");
         }
     }
 }

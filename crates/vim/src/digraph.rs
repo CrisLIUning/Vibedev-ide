@@ -76,7 +76,7 @@ impl Vim {
             }
             Some(_) => self.insert_literal(Some(action.1), "", window, cx),
             None => log::error!(
-                "在操作符栈为空时调用了 Literal。这可能意味着存在无效的键位映射配置"
+                "Literal called when no operator was on the stack. This likely means there is an invalid keymap config"
             ),
         }
     }

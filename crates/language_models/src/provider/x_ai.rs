@@ -361,7 +361,7 @@ impl ConfigurationView {
                 cx,
                 "xai-0000000000000000000000000000000000000000000000000",
             )
-            .label("API 密钥")
+            .label("API key")
         });
 
         cx.observe(&state, |_, _, cx| {
@@ -432,13 +432,13 @@ impl Render for ConfigurationView {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let env_var_set = self.state.read(cx).api_key_state.is_from_env_var();
         let configured_card_label = if env_var_set {
-            format!("API 密钥已在 {API_KEY_ENV_VAR_NAME} 环境变量中设置")
+            format!("API key set in {API_KEY_ENV_VAR_NAME} environment variable")
         } else {
             let api_url = XAiLanguageModelProvider::api_url(cx);
             if api_url == XAI_API_URL {
-                "API 密钥已配置".to_string()
+                "API key configured".to_string()
             } else {
-                format!("已为 {} 配置 API 密钥", api_url)
+                format!("API key configured for {}", api_url)
             }
         };
 
@@ -450,11 +450,11 @@ impl Render for ConfigurationView {
                     List::new()
                         .child(
                             ListBulletItem::new("")
-                                .child(Label::new("访问以下地址创建一个"))
-                                .child(ButtonLink::new("xAI 控制台", "https://console.x.ai/team/default/api-keys"))
+                                .child(Label::new("Create one by visiting"))
+                                .child(ButtonLink::new("xAI console", "https://console.x.ai/team/default/api-keys"))
                         )
                         .child(
-                            ListBulletItem::new("在下方粘贴您的 API 密钥并按回车键以开始使用该代理")
+                            ListBulletItem::new("Paste your API key below and hit enter to start using the agent")
                         ),
                 )
                 .child(self.api_key_editor.clone())
@@ -466,7 +466,7 @@ impl Render for ConfigurationView {
                     .color(Color::Muted),
                 )
                 .child(
-                    Label::new("请注意,xAI 是一个自定义的 OpenAI 兼容提供商。")
+                    Label::new("Note that xAI is a custom OpenAI-compatible provider.")
                         .size(LabelSize::Small)
                         .color(Color::Muted),
                 )
@@ -475,14 +475,14 @@ impl Render for ConfigurationView {
             ConfiguredApiCard::new(configured_card_label)
                 .disabled(env_var_set)
                 .when(env_var_set, |this| {
-                    this.tooltip_label(format!("要重置 API 密钥,请取消设置 {API_KEY_ENV_VAR_NAME} 环境变量。"))
+                    this.tooltip_label(format!("To reset your API key, unset the {API_KEY_ENV_VAR_NAME} environment variable."))
                 })
                 .on_click(cx.listener(|this, _, window, cx| this.reset_api_key(window, cx)))
                 .into_any_element()
         };
 
         if self.load_credentials_task.is_some() {
-            div().child(Label::new("正在加载凭据…")).into_any()
+            div().child(Label::new("Loading credentials…")).into_any()
         } else {
             v_flex().size_full().child(api_key_section).into_any()
         }

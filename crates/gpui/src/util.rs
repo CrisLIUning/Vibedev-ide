@@ -230,7 +230,7 @@ mod tests {
         Task::ready(())
             .with_timeout(Duration::from_secs(1), &cx.executor())
             .await
-            .expect("超时应为空操作");
+            .expect("Timeout should be noop");
 
         let long_duration = Duration::from_secs(6000);
         let short_duration = Duration::from_secs(1);
@@ -238,7 +238,7 @@ mod tests {
             .timer(long_duration)
             .with_timeout(short_duration, &cx.executor())
             .await
-            .expect_err("超时应该已触发");
+            .expect_err("timeout should have triggered");
 
         let fut = cx
             .executor()
@@ -246,7 +246,7 @@ mod tests {
             .with_timeout(short_duration, &cx.executor());
         cx.executor().advance_clock(short_duration * 2);
         futures::FutureExt::now_or_never(fut)
-            .unwrap_or_else(|| panic!("超时应该已触发"))
+            .unwrap_or_else(|| panic!("timeout should have triggered"))
             .expect_err("timeout");
     }
 }

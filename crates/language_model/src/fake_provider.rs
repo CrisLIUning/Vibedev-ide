@@ -319,7 +319,7 @@ impl LanguageModel for FakeLanguageModel {
         if self.forbid_requests.load(SeqCst) {
             async move {
                 Err(LanguageModelCompletionError::Other(anyhow!(
-                    "请求被禁止"
+                    "requests are forbidden"
                 )))
             }
             .boxed()

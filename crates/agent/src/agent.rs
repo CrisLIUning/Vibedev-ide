@@ -730,7 +730,7 @@ impl NativeAgent {
                 let state = this
                     .projects
                     .get(&project_id)
-                    .context("未找到项目状态")?;
+                    .context("project state not found")?;
                 anyhow::Ok(Self::build_project_context(
                     &state.project,
                     this.prompt_store.as_ref(),
@@ -1342,7 +1342,7 @@ impl NativeAgent {
                 let project_state = this
                     .projects
                     .get(&project_id)
-                    .context("未找到项目状态")?;
+                    .context("project state not found")?;
                 let summarization_model = LanguageModelRegistry::read_global(cx)
                     .thread_summary_model(cx)
                     .map(|c| c.model);
@@ -1547,7 +1547,7 @@ impl NativeAgent {
         cx: &mut Context<Self>,
     ) -> Task<Result<acp::PromptResponse>> {
         let Some(state) = self.session_project_state(&session_id) else {
-            return Task::ready(Err(anyhow!("未找到会话的项目状态")));
+            return Task::ready(Err(anyhow!("Project state not found for session")));
         };
         let server_store = state
             .context_server_registry
@@ -1656,7 +1656,7 @@ impl NativeAgent {
         cx: &mut Context<Self>,
     ) -> Task<Result<acp::PromptResponse>> {
         let Some(state) = self.session_project_state(&session_id) else {
-            return Task::ready(Err(anyhow!("未找到会话的项目状态")));
+            return Task::ready(Err(anyhow!("Project state not found for session")));
         };
         let path_style = state.project.read(cx).path_style(cx);
         let fs = self.fs.clone();
@@ -1687,7 +1687,7 @@ impl NativeAgent {
                     .await
                     .with_context(|| {
                         format!(
-                            "读取技能内容失败:{}",
+                            "Failed to read skill body from {}",
                             skill.skill_file_path.display()
                         )
                     })?
@@ -1817,7 +1817,7 @@ impl NativeAgentConnection {
                 .get_mut(&session_id)
                 .map(|s| (s.thread.clone(), s.acp_thread.clone()))
         }) else {
-            log::error!("在 run_turn 中未找到会话: {}", session_id);
+            log::error!("Session not found in run_turn: {}", session_id);
             return Task::ready(Err(anyhow!("Session not found")));
         };
         log::debug!("Found session for: {}", session_id);
@@ -2153,7 +2153,7 @@ impl acp_thread::AgentConnection for NativeAgentConnection {
         work_dirs: PathList,
         cx: &mut App,
     ) -> Task<Result<Entity<acp_thread::AcpThread>>> {
-        log::debug!("正在为项目创建新对话线程,位置:{work_dirs:?}");
+        log::debug!("Creating new thread for project at: {work_dirs:?}");
         Task::ready(Ok(self
             .0
             .update(cx, |agent, cx| agent.new_session(project, cx))))
@@ -2214,10 +2214,10 @@ impl acp_thread::AgentConnection for NativeAgentConnection {
         log::debug!("Prompt blocks count: {}", params.prompt.len());
 
         let Some(project_state) = self.0.read(cx).session_project_state(&session_id) else {
-            log::error!("在 提示词 中未找到会话: {}", session_id);
+            log::error!("Session not found in prompt: {}", session_id);
             if self.0.read(cx).sessions.contains_key(&session_id) {
                 log::error!(
-                    "在 sessions 映射中找到了会话,但在项目状态中未找到: {}",
+                    "Session found in sessions map, but not in project state: {}",
                     session_id
                 );
             }
@@ -2574,7 +2574,7 @@ impl NativeThreadEnvironment {
         cx: &mut App,
     ) -> Result<Rc<dyn SubagentHandle>> {
         let Some(parent_thread_entity) = self.thread.upgrade() else {
-            anyhow::bail!("父对话线程已不存在".to_string());
+            anyhow::bail!("Parent thread no longer exists".to_string());
         };
         let parent_thread = parent_thread_entity.read(cx);
         let current_depth = parent_thread.depth();
@@ -2582,7 +2582,7 @@ impl NativeThreadEnvironment {
 
         if current_depth >= MAX_SUBAGENT_DEPTH {
             return Err(anyhow!(
-                "已达到最大子代理深度({})",
+                "Maximum subagent depth ({}) reached",
                 MAX_SUBAGENT_DEPTH
             ));
         }
@@ -2602,14 +2602,14 @@ impl NativeThreadEnvironment {
                     .sessions
                     .get(&parent_session_id)
                     .map(|s| s.project_id)
-                    .context("未找到父会话")?;
+                    .context("parent session not found")?;
                 Ok(agent.register_session(subagent_thread.clone(), project_id, 1, cx))
             })??;
 
         let depth = current_depth + 1;
 
         telemetry::event!(
-            "子代理已启动",
+            "Subagent Started",
             session = parent_thread_entity.read(cx).id().to_string(),
             subagent_session = session_id.to_string(),
             depth,
@@ -2628,7 +2628,7 @@ impl NativeThreadEnvironment {
             let session = agent
                 .sessions
                 .get(&session_id)
-                .ok_or_else(|| anyhow!("未找到 ID 为 {session_id} 的子代理会话"))?;
+                .ok_or_else(|| anyhow!("No subagent session found with id {session_id}"))?;
             anyhow::Ok((session.thread.clone(), session.acp_thread.clone()))
         })??;
 
@@ -2636,7 +2636,7 @@ impl NativeThreadEnvironment {
 
         if let Some(parent_thread_entity) = self.thread.upgrade() {
             telemetry::event!(
-                "子代理已启动",
+                "Subagent Started",
                 session = parent_thread_entity.read(cx).id().to_string(),
                 subagent_session = session_id.to_string(),
                 depth,
@@ -2654,7 +2654,7 @@ impl NativeThreadEnvironment {
         acp_thread: Entity<acp_thread::AcpThread>,
     ) -> Result<Rc<dyn SubagentHandle>> {
         let Some(parent_thread_entity) = self.thread.upgrade() else {
-            anyhow::bail!("父对话线程已不存在".to_string());
+            anyhow::bail!("Parent thread no longer exists".to_string());
         };
         Ok(Rc::new(NativeSubagentHandle::new(
             session_id,
@@ -2804,13 +2804,13 @@ impl SubagentHandle for NativeSubagentHandle {
                                 Ok(Some(response)) => {
                                     match response.stop_reason {
                                         acp::StopReason::Cancelled => SubagentPromptResult::Cancelled,
-                                        acp::StopReason::MaxTokens => SubagentPromptResult::Error("代理已达到最大 Token 数。".into()),
-                                        acp::StopReason::MaxTurnRequests => SubagentPromptResult::Error("代理已达到用户轮次间允许的最大请求数。请再次发送提示词。".into()),
-                                        acp::StopReason::Refusal => SubagentPromptResult::Error("代理拒绝处理该提示词。请重试。".into()),
+                                        acp::StopReason::MaxTokens => SubagentPromptResult::Error("The agent reached the maximum number of tokens.".into()),
+                                        acp::StopReason::MaxTurnRequests => SubagentPromptResult::Error("The agent reached the maximum number of allowed requests between user turns. Try prompting again.".into()),
+                                        acp::StopReason::Refusal => SubagentPromptResult::Error("The agent refused to process that prompt. Try again.".into()),
                                         acp::StopReason::EndTurn | _ => SubagentPromptResult::Completed,
                                     }
                                 }
-                                Ok(None) => SubagentPromptResult::Error("代理未响应。请尝试再次发送消息。".into()),
+                                Ok(None) => SubagentPromptResult::Error("No response from the agent. You can try messaging again.".into()),
                                 Err(error) => SubagentPromptResult::Error(error.to_string()),
                             },
                             _ = token_limit_rx.fuse() => SubagentPromptResult::ContextWindowWarning,
@@ -2839,9 +2839,9 @@ impl SubagentHandle for NativeSubagentHandle {
                                 Some( content)
                             }
                         })
-                        .context("子代理无响应")
+                        .context("No response from subagent")
                 }),
-                SubagentPromptResult::Cancelled => Err(anyhow!("用户已取消")),
+                SubagentPromptResult::Cancelled => Err(anyhow!("User cancelled")),
                 SubagentPromptResult::Error(message) => Err(anyhow!("{message}")),
                 SubagentPromptResult::ContextWindowWarning => {
                     thread.update(cx, |thread, cx| thread.cancel(cx)).await;
@@ -2942,14 +2942,14 @@ fn select_catalog_skills(skills: &[Skill]) -> (Vec<SkillSummary>, Vec<SkillLoadE
         let message = if dropped.len() == 1 {
             let entry_size = first.name.len() + first.description.len();
             format!(
-                "技能 '{}'({:.1}KB 描述)已从目录中移除,因为之前的技能已用完整个 {}KB 描述预算。",
+                "Skill '{}' ({:.1}KB description) was dropped from the catalog because the previous skills already used the entire {}KB description budget.",
                 first.name,
                 entry_size as f64 / 1024.0,
                 budget_kb,
             )
         } else {
             let mut message = format!(
-                "已从目录中移除 {} 个技能,因为它们超过了 {}KB 描述预算:",
+                "{} skills were dropped from the catalog because they exceeded the {}KB description budget:",
                 dropped.len(),
                 budget_kb,
             );
@@ -2957,7 +2957,7 @@ fn select_catalog_skills(skills: &[Skill]) -> (Vec<SkillSummary>, Vec<SkillLoadE
                 let entry_size = skill.name.len() + skill.description.len();
                 message.push('\n');
                 message.push_str(&format!(
-                    "- {}({:.1}KB 描述)",
+                    "- {} ({:.1}KB description)",
                     skill.name,
                     entry_size as f64 / 1024.0,
                 ));
@@ -3035,7 +3035,7 @@ fn log_skill_conflicts(skills: &[Skill]) {
             Some(existing) => {
                 if skill.source.precedence() > existing.source.precedence() {
                     log::warn!(
-                        "技能 '{}' 在 '{}' 覆盖了模型在 '{}' 的技能;两者都以其来源显示在斜杠命令弹出窗口中",
+                        "Skill '{}' at '{}' overrides skill at '{}' for the model; both appear in the slash-command popup with their source",
                         skill.name,
                         skill.skill_file_path.display(),
                         existing.skill_file_path.display(),
@@ -3043,7 +3043,7 @@ fn log_skill_conflicts(skills: &[Skill]) {
                     by_name.insert(skill.name.as_str(), skill);
                 } else {
                     log::warn!(
-                        "技能 '{}' 在 '{}' 与 '{}' 的技能冲突;模型将看到第一个,但两者都以其来源显示在斜杠命令弹出窗口中",
+                        "Skill '{}' at '{}' conflicts with skill at '{}'; the model will see the first one, but both appear in the slash-command popup with their source",
                         skill.name,
                         skill.skill_file_path.display(),
                         existing.skill_file_path.display(),
@@ -3158,8 +3158,8 @@ mod internal_tests {
         // The autocomplete popup needs both same-named entries so the
         // source label can disambiguate them. `combine_skills` must not
         // drop the global when a project-local shares its name.
-        let global = make_global_skill("review", "全局审查");
-        let project = make_project_skill("review", "项目审查", "project");
+        let global = make_global_skill("review", "Global review");
+        let project = make_project_skill("review", "Project review", "project");
 
         let (skills, errors) = combine_skills(vec![Ok(global)], vec![Ok(project)].into_iter());
 
@@ -3176,13 +3176,13 @@ mod internal_tests {
         // single entry, with the project-local winning. This is what
         // `select_catalog_skills`, `SkillTool`, and the slash-command
         // resolver all see.
-        let global = make_global_skill("review", "全局审查");
-        let project = make_project_skill("review", "项目审查", "project");
+        let global = make_global_skill("review", "Global review");
+        let project = make_project_skill("review", "Project review", "project");
 
         let resolved = apply_skill_overrides(&[global, project]);
 
         assert_eq!(resolved.len(), 1);
-        assert_eq!(resolved[0].description, "项目审查");
+        assert_eq!(resolved[0].description, "Project review");
         assert!(matches!(
             resolved[0].source,
             SkillSource::ProjectLocal { .. }
@@ -3193,14 +3193,14 @@ mod internal_tests {
     fn test_apply_skill_overrides_same_source_collision_keeps_first() {
         // Two globals (or two project-locals from different worktrees)
         // colliding don't have a clear winner; preserve the historical
-        // "先到先得" behavior.
-        let first = make_global_skill("review", "第一");
-        let second = make_global_skill("review", "第二");
+        // "first one wins" behavior.
+        let first = make_global_skill("review", "First");
+        let second = make_global_skill("review", "Second");
 
         let resolved = apply_skill_overrides(&[first, second]);
 
         assert_eq!(resolved.len(), 1);
-        assert_eq!(resolved[0].description, "第一");
+        assert_eq!(resolved[0].description, "First");
     }
 
     #[test]
@@ -3208,25 +3208,25 @@ mod internal_tests {
         // A global skill with the same name as a built-in must shadow
         // the built-in in the model-facing projection, regardless of
         // iteration order.
-        let built_in = make_builtin_skill("create-skill", "内置版本");
-        let global = make_global_skill("create-skill", "用户覆盖");
+        let built_in = make_builtin_skill("create-skill", "Built-in version");
+        let global = make_global_skill("create-skill", "User override");
 
         let resolved = apply_skill_overrides(&[built_in, global]);
 
         assert_eq!(resolved.len(), 1);
-        assert_eq!(resolved[0].description, "用户覆盖");
+        assert_eq!(resolved[0].description, "User override");
         assert!(matches!(resolved[0].source, SkillSource::Global));
     }
 
     #[test]
     fn test_apply_skill_overrides_project_wins_over_builtin() {
-        let built_in = make_builtin_skill("create-skill", "内置版本");
-        let project = make_project_skill("create-skill", "项目覆盖", "my-project");
+        let built_in = make_builtin_skill("create-skill", "Built-in version");
+        let project = make_project_skill("create-skill", "Project override", "my-project");
 
         let resolved = apply_skill_overrides(&[built_in, project]);
 
         assert_eq!(resolved.len(), 1);
-        assert_eq!(resolved[0].description, "项目覆盖");
+        assert_eq!(resolved[0].description, "Project override");
         assert!(matches!(
             resolved[0].source,
             SkillSource::ProjectLocal { .. }
@@ -3238,14 +3238,14 @@ mod internal_tests {
         // All three sources present — the project-local must win and
         // both lower-precedence entries must be dropped from the
         // model-facing projection.
-        let built_in = make_builtin_skill("create-skill", "内置");
-        let global = make_global_skill("create-skill", "全局");
-        let project = make_project_skill("create-skill", "项目", "my-project");
+        let built_in = make_builtin_skill("create-skill", "Built-in");
+        let global = make_global_skill("create-skill", "Global");
+        let project = make_project_skill("create-skill", "Project", "my-project");
 
         let resolved = apply_skill_overrides(&[built_in, global, project]);
 
         assert_eq!(resolved.len(), 1);
-        assert_eq!(resolved[0].description, "项目");
+        assert_eq!(resolved[0].description, "Project");
     }
 
     #[test]
@@ -3327,14 +3327,14 @@ mod internal_tests {
 
         assert!(
             kept.len() < skills.len(),
-            "由于预算限制,部分技能应被丢弃(保留 {} / 共 {})",
+            "some skills should be dropped due to the budget (kept {} of {})",
             kept.len(),
             skills.len(),
         );
         assert_eq!(
             errors.len(),
             1,
-            "所有丢弃的技能应合并为单个错误,得到 {errors:?}",
+            "all dropped skills should be consolidated into a single error, got {errors:?}",
         );
 
         let kept_size: usize = kept
@@ -3343,26 +3343,26 @@ mod internal_tests {
             .sum();
         assert!(
             kept_size <= MAX_SKILL_DESCRIPTIONS_SIZE,
-            "保留的技能必须符合预算(得到 {kept_size} 字节)",
+            "kept skills must fit in the budget (got {kept_size} bytes)",
         );
 
         let error = &errors[0];
         assert!(
             error.message.contains("50KB") && error.message.contains("budget"),
-            "错误消息 {:?} 应描述预算",
+            "error message {:?} should describe the budget",
             error.message,
         );
         assert_eq!(
             error.path,
             skills[kept.len()].skill_file_path,
-            "错误路径应匹配第一个被丢弃的技能",
+            "error path should match the first dropped skill",
         );
 
         for dropped_skill in &skills[kept.len()..total] {
             let name = &dropped_skill.name;
             assert!(
                 error.message.contains(name.as_str()),
-                "错误消息 {:?} 应提及被丢弃的技能名称 {name:?}",
+                "error message {:?} should mention the dropped skill name {name:?}",
                 error.message,
             );
             let bullet_line = format!("- {name}");
@@ -3371,7 +3371,7 @@ mod internal_tests {
                     .message
                     .lines()
                     .any(|line| line.starts_with(&bullet_line)),
-                "错误消息 {:?} 应包含以 {bullet_line:?} 开头的列表项",
+                "error message {:?} should contain a bullet line starting with {bullet_line:?}",
                 error.message,
             );
         }
@@ -3422,7 +3422,7 @@ mod internal_tests {
             MAX_SKILL_DESCRIPTIONS_SIZE - (first.name.len() + first.description.len());
         assert!(
             third.name.len() + third.description.len() <= leftover_after_first,
-            "第三个技能必须能放入剩余空间才有意义",
+            "third skill must fit in the leftover sliver for this test to be meaningful",
         );
 
         let skills = vec![first.clone(), second.clone(), third.clone()];
@@ -3431,23 +3431,23 @@ mod internal_tests {
         let kept_names: Vec<&str> = kept.iter().map(|s| s.name.as_str()).collect();
         assert_eq!(kept_names, vec![first.name.as_str()]);
 
-        assert_eq!(errors.len(), 1, "预期单个合并错误");
+        assert_eq!(errors.len(), 1, "expected a single consolidated error");
         assert_eq!(errors[0].path, second.skill_file_path);
         assert!(
             errors[0].message.contains(second.name.as_str()),
-            "错误消息 {:?} 应提及 {:?}",
+            "error message {:?} should mention {:?}",
             errors[0].message,
             second.name,
         );
         assert!(
             errors[0].message.contains(third.name.as_str()),
-            "错误消息 {:?} 应提及 {:?}",
+            "error message {:?} should mention {:?}",
             errors[0].message,
             third.name,
         );
         assert!(
             errors[0].message.contains("- "),
-            "错误消息 {:?} 应在多个技能被丢弃时使用列表形式",
+            "error message {:?} should use bullet form when multiple skills are dropped",
             errors[0].message,
         );
     }
@@ -3482,7 +3482,7 @@ mod internal_tests {
 
         let (kept, errors) = select_catalog_skills(&[hidden, visible]);
 
-        assert!(errors.is_empty(), "预期无错误,得到:{errors:?}");
+        assert!(errors.is_empty(), "expected no errors, got: {errors:?}");
         let kept_names: Vec<&str> = kept.iter().map(|s| s.name.as_str()).collect();
         assert_eq!(kept_names, vec!["visible"]);
     }
@@ -3620,7 +3620,7 @@ mod internal_tests {
             let user = user_skills(&state.skills);
             assert_eq!(user.len(), 1);
             assert_eq!(user[0].name, "my-skill");
-            assert_eq!(user[0].description, "第一版");
+            assert_eq!(user[0].description, "First version");
         });
 
         // Modify the SKILL.md and verify the project context refreshes.
@@ -3636,7 +3636,7 @@ mod internal_tests {
             let state = agent.projects.get(&project.entity_id()).unwrap();
             let user = user_skills(&state.skills);
             assert_eq!(user.len(), 1);
-            assert_eq!(user[0].description, "第二版");
+            assert_eq!(user[0].description, "Second version");
         });
     }
 
@@ -3680,7 +3680,7 @@ mod internal_tests {
             let state = agent.projects.get(&project.entity_id()).unwrap();
             assert!(
                 user_skills(&state.skills).is_empty(),
-                "预期在全局技能目录存在之前没有用户技能,但得到 {:?}",
+                "expected no user skills before the global skills dir exists, got {:?}",
                 state.skills
             );
         });
@@ -3708,7 +3708,7 @@ mod internal_tests {
             let user = user_skills(&state.skills);
             assert_eq!(user.len(), 1);
             assert_eq!(user[0].name, "late-skill");
-            assert_eq!(user[0].description, "启动后创建");
+            assert_eq!(user[0].description, "Created after startup");
         });
     }
 
@@ -3718,7 +3718,7 @@ mod internal_tests {
     /// up the new skill automatically. The `SkillTool` registered on the
     /// thread used to hold a stale snapshot of `state.skills` taken at
     /// thread-construction time, which meant the model would see the new
-    /// skill in `<available_skills>` but get "未找到" when it tried to
+    /// skill in `<available_skills>` but get "not found" when it tried to
     /// invoke it. The fix wires the tool to a dynamic resolver closure
     /// that re-reads `state.skills` for the project on every invocation.
     #[gpui::test]
@@ -3757,7 +3757,7 @@ mod internal_tests {
             let state = agent.projects.get(&project_id).unwrap();
             assert!(
                 user_skills(&state.skills).is_empty(),
-                "预期在全局技能目录存在之前没有用户技能,但得到 {:?}",
+                "expected no user skills before the global skills dir exists, got {:?}",
                 state.skills
             );
         });
@@ -3821,10 +3821,10 @@ mod internal_tests {
             assert_eq!(
                 snapshot.len(),
                 1,
-                "动态解析器应能看到新技能"
+                "dynamic resolver should see the new skill"
             );
             assert_eq!(snapshot[0].name, "my-skill");
-            assert_eq!(snapshot[0].description, "会话后创建");
+            assert_eq!(snapshot[0].description, "Created after session");
         });
 
         // And rendering the envelope through the same path the tool uses
@@ -3836,15 +3836,15 @@ mod internal_tests {
                 .iter()
                 .find(|s| s.name == "my-skill" && !s.disable_model_invocation)
                 .cloned()
-                .expect("my-skill 应可被模型调用")
+                .expect("my-skill should be model-invocable")
         });
         let body = agent_skills::read_skill_body(fs.as_ref(), &skill_for_render.skill_file_path)
             .await
-            .expect("技能内容应能加载");
+            .expect("skill body should load");
         let rendered = render_skill_envelope(&skill_for_render, &body);
         assert!(
             rendered.contains("<skill_content name=\"my-skill\">"),
-            "渲染的信封缺少 skill_content 标签:{rendered}"
+            "rendered envelope missing skill_content tag: {rendered}"
         );
     }
 
@@ -3920,7 +3920,7 @@ mod internal_tests {
                 .sessions
                 .values()
                 .next()
-                .expect("父会话应存在");
+                .expect("parent session should exist");
             (session.thread.clone(), session.project_id)
         });
         assert_eq!(parent_project_id, project_id);
@@ -3941,7 +3941,7 @@ mod internal_tests {
             assert!(thread.is_subagent());
             assert!(
                 thread.has_registered_tool(SkillTool::NAME),
-                "register_session 后子代理应注册 SkillTool"
+                "subagent should have SkillTool registered after register_session"
             );
         });
 
@@ -4017,11 +4017,11 @@ mod internal_tests {
             let names: Vec<&str> = commands.iter().map(|c| c.name.as_str()).collect();
             assert!(
                 !names.contains(&"visible-skill"),
-                "技能不应作为 ACP 斜杠命令公开:{names:?}"
+                "skills should not be exposed as ACP slash commands: {names:?}"
             );
             assert!(
                 !names.contains(&"deploy"),
-                "仅斜杠技能不应作为 ACP 斜杠命令公开:{names:?}"
+                "slash-only skills should not be exposed as ACP slash commands: {names:?}"
             );
         });
 
@@ -4030,11 +4030,11 @@ mod internal_tests {
             let names: Vec<&str> = skills.iter().map(|skill| skill.name.as_str()).collect();
             assert!(
                 names.contains(&"visible-skill"),
-                "可见技能在可用技能中缺失:{names:?}"
+                "visible skill missing from available skills: {names:?}"
             );
             assert!(
                 names.contains(&"deploy"),
-                "仅斜杠技能在可用技能中缺失:{names:?}"
+                "slash-only skill missing from available skills: {names:?}"
             );
         });
 
@@ -4051,11 +4051,11 @@ mod internal_tests {
                 .collect();
             assert!(
                 catalog.contains(&"visible-skill"),
-                "可见技能在目录中缺失:{catalog:?}"
+                "visible skill missing from catalog: {catalog:?}"
             );
             assert!(
                 !catalog.contains(&"deploy"),
-                "deploy 应从目录中排除:{catalog:?}"
+                "deploy should be excluded from catalog: {catalog:?}"
             );
         });
     }
@@ -4123,7 +4123,7 @@ mod internal_tests {
             let state = agent.projects.get(&project_id).unwrap();
             assert!(
                 user_skills(&state.skills).is_empty(),
-                "不受信任的工作树技能不应加载:{:?}",
+                "untrusted worktree skills should not load: {:?}",
                 state
                     .skills
                     .iter()
@@ -4134,7 +4134,7 @@ mod internal_tests {
             let names: Vec<&str> = commands.iter().map(|c| c.name.as_str()).collect();
             assert!(
                 !names.contains(&"my-skill"),
-                "不受信任的技能泄露到斜杠命令中:{names:?}"
+                "untrusted skill leaked into slash commands: {names:?}"
             );
         });
 
@@ -4142,7 +4142,7 @@ mod internal_tests {
         // appears in both the catalog and the slash-command list.
         cx.update(|cx| {
             let trusted_worktrees = TrustedWorktrees::try_get_global(cx)
-                .expect("test_with_worktree_trust 初始化了受信任工作树全局");
+                .expect("trusted worktrees global initialized by test_with_worktree_trust");
             trusted_worktrees.update(cx, |trusted_worktrees, cx| {
                 trusted_worktrees.trust(
                     &project.read(cx).worktree_store(),
@@ -4165,7 +4165,7 @@ mod internal_tests {
             let skill_names: Vec<&str> = skills.iter().map(|s| s.name.as_str()).collect();
             assert!(
                 skill_names.contains(&"my-skill"),
-                "受信任技能应出现在可用技能中:{skill_names:?}"
+                "trusted skill should appear in available skills: {skill_names:?}"
             );
         });
     }

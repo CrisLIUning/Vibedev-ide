@@ -317,12 +317,12 @@ impl Render for TitleBar {
                 .children(self.render_call_controls(window, cx))
                 .children(self.render_connection_status(status, cx))
                 .child(self.update_version.clone())
-                // VIBEDEV: removed Zed Cloud "登录" button — we ship the
+                // VIBEDEV: removed Zed Cloud "Sign In" button — we ship the
                 // vibedev_account panel + sub2 gateway. render_sign_in_button is
                 // left as dead code (cargo will warn) until we delete it on rebase.
                 .when(is_signing_in, |this| {
                     this.child(
-                        Label::new("正在登录…")
+                        Label::new("Signing in…")
                             .size(LabelSize::Small)
                             .color(Color::Muted)
                             .with_animation(
@@ -533,12 +533,12 @@ impl TitleBar {
         let (nickname, tooltip_title, icon) = match options {
             RemoteConnectionOptions::Ssh(options) => (
                 options.nickname.map(|nick| nick.into()),
-                "远程项目",
+                "Remote Project",
                 IconName::Server,
             ),
-            RemoteConnectionOptions::Wsl(_) => (None, "远程项目", IconName::Linux),
+            RemoteConnectionOptions::Wsl(_) => (None, "Remote Project", IconName::Linux),
             RemoteConnectionOptions::Docker(_dev_container_connection) => {
-                (None, "开发容器", IconName::Box)
+                (None, "Dev Container", IconName::Box)
             }
             #[cfg(any(test, feature = "test-support"))]
             RemoteConnectionOptions::Mock(_) => (None, "Mock Remote Project", IconName::Server),
@@ -547,18 +547,18 @@ impl TitleBar {
         let nickname = nickname.unwrap_or_else(|| host.clone());
 
         let (indicator_color, meta) = match self.project.read(cx).remote_connection_state(cx)? {
-            remote::ConnectionState::Connecting => (Color::Info, format!("正在连接到:{host}")),
-            remote::ConnectionState::Connected => (Color::Success, format!("已连接到:{host}")),
+            remote::ConnectionState::Connecting => (Color::Info, format!("Connecting to: {host}")),
+            remote::ConnectionState::Connected => (Color::Success, format!("Connected to: {host}")),
             remote::ConnectionState::HeartbeatMissed => (
                 Color::Warning,
-                format!("连接到 {host} 失败。正在重试..."),
+                format!("Connection attempt to {host} missed. Retrying..."),
             ),
             remote::ConnectionState::Reconnecting => (
                 Color::Warning,
-                format!("与 {host} 失去连接。正在重新连接..."),
+                format!("Lost connection to {host}. Reconnecting..."),
             ),
             remote::ConnectionState::Disconnected => {
-                (Color::Error, format!("已从 {host} 断开连接"))
+                (Color::Error, format!("Disconnected from {host}"))
             }
         };
 
@@ -628,7 +628,7 @@ impl TitleBar {
             return None;
         }
 
-        let button = Button::new("restricted_mode_trigger", "受限模式")
+        let button = Button::new("restricted_mode_trigger", "Restricted Mode")
             .style(ButtonStyle::Tinted(TintColor::Warning))
             .label_size(LabelSize::Small)
             .color(Color::Warning)
@@ -639,9 +639,9 @@ impl TitleBar {
             )
             .tooltip(|_, cx| {
                 Tooltip::with_meta(
-                    "您处于受限模式",
+                    "You're in Restricted Mode",
                     Some(&ToggleWorktreeSecurity),
-                    "将此项目标记为受信任并解锁所有功能",
+                    "Mark this project as trusted and unlock all features",
                     cx,
                 )
             })
@@ -670,7 +670,7 @@ impl TitleBar {
 
         if self.project.read(cx).is_disconnected(cx) {
             return Some(
-                Button::new("disconnected", "未连接")
+                Button::new("disconnected", "Disconnected")
                     .disabled(true)
                     .color(Color::Disabled)
                     .label_size(LabelSize::Small)
@@ -692,11 +692,11 @@ impl TitleBar {
                 .label_size(LabelSize::Small)
                 .tooltip(move |_, cx| {
                     let tooltip_title = format!(
-                        "{} 正在共享此项目。点击以跟随。",
+                        "{} is sharing this project. Click to follow.",
                         host_user.github_login
                     );
 
-                    Tooltip::with_meta(tooltip_title, None, "点击以跟随", cx)
+                    Tooltip::with_meta(tooltip_title, None, "Click to Follow", cx)
                 })
                 .on_click({
                     let host_peer_id = host.peer_id;
@@ -725,7 +725,7 @@ impl TitleBar {
         let display_name = if let Some(ref name) = name {
             util::truncate_and_trailoff(name, MAX_PROJECT_NAME_LENGTH)
         } else {
-            "打开最近的项目".to_string()
+            "Open Recent Project".to_string()
         };
 
         let is_sidebar_open = self
@@ -786,7 +786,7 @@ impl TitleBar {
                     .when(!is_project_selected, |s| s.color(Color::Muted)),
                 move |_window, cx| {
                     Tooltip::for_action(
-                        "最近的项目",
+                        "Recent Projects",
                         &zed_actions::OpenRecent {
                             create_new_window: false,
                         },
@@ -843,7 +843,7 @@ impl TitleBar {
                     .when(!is_project_selected, |s| s.color(Color::Muted)),
                 move |_window, cx| {
                     Tooltip::for_action(
-                        "最近的项目",
+                        "Recent Projects",
                         &zed_actions::OpenRecent {
                             create_new_window: false,
                         },
@@ -916,9 +916,9 @@ impl TitleBar {
 
         let display_label: SharedString = if let Some(ref name) = creation_in_progress {
             if is_switch {
-                format!("正在加载 {}…", name).into()
+                format!("Loading {}…", name).into()
             } else {
-                format!("正在创建 {}…", name).into()
+                format!("Creating {}…", name).into()
             }
         } else {
             worktree_label.clone()
@@ -949,9 +949,9 @@ impl TitleBar {
                         ),
                     move |_window, cx| {
                         Tooltip::with_meta(
-                            "工作树",
+                            "Worktree",
                             Some(&zed_actions::git::Worktree),
-                            format!("当前使用: {}", worktree_label),
+                            format!("Currently In Use: {}", worktree_label),
                             cx,
                         )
                     },
@@ -969,7 +969,7 @@ impl TitleBar {
                 };
 
                 let trigger = if is_detached_head {
-                    Button::new("project_branch_trigger", "创建分支")
+                    Button::new("project_branch_trigger", "Create Branch")
                         .selected_style(ButtonStyle::Tinted(TintColor::Accent))
                         .label_size(LabelSize::Small)
                         .start_icon(
@@ -1002,12 +1002,12 @@ impl TitleBar {
                     })
                     .trigger_with_tooltip(trigger, move |_window, cx| {
                         let meta = if is_detached_head {
-                            format!("分离头指针: {}", branch_tooltip_label)
+                            format!("Detached HEAD: {}", branch_tooltip_label)
                         } else {
-                            format!("当前检出: {}", branch_tooltip_label)
+                            format!("Currently Checked Out: {}", branch_tooltip_label)
                         };
                         Tooltip::with_meta(
-                            "分支与暂存",
+                            "Branch & Stash",
                             Some(&zed_actions::git::Branch),
                             meta,
                             cx,
@@ -1099,7 +1099,7 @@ impl TitleBar {
                 div()
                     .id("disconnected")
                     .child(Icon::new(IconName::Disconnected).size(IconSize::Small))
-                    .tooltip(Tooltip::text("未连接"))
+                    .tooltip(Tooltip::text("Disconnected"))
                     .into_any_element(),
             ),
             client::Status::UpgradeRequired => {
@@ -1108,7 +1108,7 @@ impl TitleBar {
                     Some(AutoUpdateStatus::Updated { .. }) => "Please restart VibeDev to Collaborate",
                     Some(AutoUpdateStatus::Installing { .. })
                     | Some(AutoUpdateStatus::Downloading { .. })
-                    | Some(AutoUpdateStatus::Checking) => "正在更新...",
+                    | Some(AutoUpdateStatus::Checking) => "Updating...",
                     Some(AutoUpdateStatus::Idle)
                     | Some(AutoUpdateStatus::Errored { .. })
                     | None => "Please update VibeDev to Collaborate",
@@ -1136,7 +1136,7 @@ impl TitleBar {
     pub fn render_sign_in_button(&mut self, _: &mut Context<Self>) -> Button {
         let client = self.client.clone();
         let workspace = self.workspace.clone();
-        Button::new("sign_in", "登录")
+        Button::new("sign_in", "Sign In")
             .label_size(LabelSize::Small)
             .on_click(move |_, window, cx| {
                 let client = client.clone();
@@ -1258,7 +1258,7 @@ impl TitleBar {
                         .separator()
                     })
                     .when(has_organization, |this| {
-                        let mut this = this.header("组织");
+                        let mut this = this.header("Organizations");
 
                         for (organization, plan) in &organizations {
                             let organization = organization.clone();
@@ -1311,27 +1311,27 @@ impl TitleBar {
 
                         this.separator()
                     })
-                    .action("设置", zed_actions::OpenSettings.boxed_clone())
-                    .action("键位映射", Box::new(zed_actions::OpenKeymap))
+                    .action("Settings", zed_actions::OpenSettings.boxed_clone())
+                    .action("Keymap", Box::new(zed_actions::OpenKeymap))
                     .action(
-                        "主题…",
+                        "Themes…",
                         zed_actions::theme_selector::Toggle::default().boxed_clone(),
                     )
                     .action(
-                        "图标主题…",
+                        "Icon Themes…",
                         zed_actions::icon_theme_selector::Toggle::default().boxed_clone(),
                     )
                     .action(
-                        "扩展",
+                        "Extensions",
                         zed_actions::Extensions::default().boxed_clone(),
                     )
                     .when(ai_enabled, |menu| {
                         let fs = fs.clone();
                         menu.separator()
-                            .submenu("面板布局", move |menu, _window, _cx| {
+                            .submenu("Panel Layout", move |menu, _window, _cx| {
                                 let fs = fs.clone();
                                 menu.toggleable_entry(
-                                    "经典布局",
+                                    "Classic",
                                     is_editor,
                                     IconPosition::Start,
                                     None,
@@ -1346,7 +1346,7 @@ impl TitleBar {
                                         }
                                     },
                                 )
-                                .toggleable_entry("助手布局", is_agent, IconPosition::Start, None, {
+                                .toggleable_entry("Agentic", is_agent, IconPosition::Start, None, {
                                     let fs = fs.clone();
                                     move |_window, cx| {
                                         drop(AgentSettings::set_layout(
@@ -1358,14 +1358,14 @@ impl TitleBar {
                                 })
                                 .when(is_custom, |menu| {
                                     menu.item(
-                                        ContextMenuEntry::new("自定义")
+                                        ContextMenuEntry::new("Custom")
                                             .toggleable(IconPosition::Start, true)
                                             .disabled(true),
                                     )
                                 })
                             })
                     })
-                    // VIBEDEV: removed Zed Cloud "退出登录" menu entry.
+                    // VIBEDEV: removed Zed Cloud "Sign Out" menu entry.
                 })
                 .into()
             })

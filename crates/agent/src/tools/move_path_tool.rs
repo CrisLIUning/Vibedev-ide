@@ -196,7 +196,7 @@ impl AgentTool for MovePathTool {
             })?;
 
             futures::select! {
-                result = rename_task.fuse() => result.map_err(|e| format!("将 {} 移动到 {} 时出错: {e}", input.source_path, input.destination_path))?,
+                result = rename_task.fuse() => result.map_err(|e| format!("Moving {} to {}: {e}", input.source_path, input.destination_path))?,
                 _ = event_stream.cancelled_by_user().fuse() => {
                     return Err("Move cancelled by user".to_string());
                 }
@@ -273,9 +273,9 @@ mod tests {
         let auth = event_rx.expect_authorization().await;
         let title = auth.tool_call.fields.title.as_deref().unwrap_or("");
         assert!(
-            title.contains("指向项目外部")
-                || title.contains("符号链接位于项目外部"),
-            "授权标题应提及符号链接逃逸,实际得到: {title}",
+            title.contains("points outside the project")
+                || title.contains("symlinks outside project"),
+            "Authorization title should mention symlink escape, got: {title}",
         );
 
         auth.response
@@ -286,7 +286,7 @@ mod tests {
             .unwrap();
 
         let result = task.await;
-        assert!(result.is_ok(), "批准后应成功: {result:?}");
+        assert!(result.is_ok(), "should succeed after approval: {result:?}");
     }
 
     #[gpui::test]
@@ -331,7 +331,7 @@ mod tests {
         drop(auth);
 
         let result = task.await;
-        assert!(result.is_err(), "拒绝时应失败");
+        assert!(result.is_err(), "should fail when denied");
     }
 
     #[gpui::test]
@@ -382,9 +382,9 @@ mod tests {
         let auth = event_rx.expect_authorization().await;
         let title = auth.tool_call.fields.title.as_deref().unwrap_or("");
         assert!(
-            title.contains("指向项目外部")
-                || title.contains("符号链接位于项目外部"),
-            "授权标题应提及符号链接逃逸,实际得到: {title}",
+            title.contains("points outside the project")
+                || title.contains("symlinks outside project"),
+            "Authorization title should mention symlink escape, got: {title}",
         );
 
         auth.response
@@ -399,13 +399,13 @@ mod tests {
                 event_rx.try_recv(),
                 Ok(Ok(crate::ThreadEvent::ToolCallAuthorization(_)))
             ),
-            "预期只有一个授权提示",
+            "Expected a single authorization prompt",
         );
 
         let result = task.await;
         assert!(
             result.is_ok(),
-            "一次授权后工具应成功: {result:?}"
+            "Tool should succeed after one authorization: {result:?}"
         );
     }
 
@@ -460,13 +460,13 @@ mod tests {
             .update(|cx| tool.run(ToolInput::resolved(input), event_stream, cx))
             .await;
 
-        assert!(result.is_err(), "策略拒绝时工具应失败");
+        assert!(result.is_err(), "Tool should fail when policy denies");
         assert!(
             !matches!(
                 event_rx.try_recv(),
                 Ok(Ok(crate::ThreadEvent::ToolCallAuthorization(_)))
             ),
-            "拒绝策略不应发出符号链接授权提示",
+            "Deny policy should not emit symlink authorization prompt",
         );
     }
 }

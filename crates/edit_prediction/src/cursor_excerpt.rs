@@ -376,7 +376,7 @@ mod tests {
                 context_token_limit: 24,
             },
             TestCase {
-                name: "上下文超出可编辑范围",
+                name: "context extends beyond editable",
                 marked_text: indoc! {r#"
                     [fn first() { let a = 1; }
                     «fn second() { let b = 2; }

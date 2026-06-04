@@ -99,7 +99,7 @@ pub fn install_ipykernel_and_assign(
             workspace.show_toast(
                 workspace::Toast::new(
                     notification_id.clone(),
-                    format!("正在 {} 中安装 ipykernel...", env_name),
+                    format!("Installing ipykernel in {}...", env_name),
                 ),
                 cx,
             );
@@ -121,7 +121,7 @@ pub fn install_ipykernel_and_assign(
                 ])
                 .output()
                 .await
-                .context("运行 uv pip 安装 ipykernel 失败")?
+                .context("failed to run uv pip install ipykernel")?
         } else {
             util::command::new_command(python_path.to_string_lossy().as_ref())
                 .args(&["-m", "pip", "install", "ipykernel"])
@@ -150,7 +150,7 @@ pub fn install_ipykernel_and_assign(
                             workspace.show_toast(
                                 workspace::Toast::new(
                                     notification_id.clone(),
-                                    format!("已在 {} 中安装 ipykernel", env_name),
+                                    format!("ipykernel installed in {}", env_name),
                                 )
                                 .autohide(),
                                 cx,
@@ -184,7 +184,7 @@ pub fn install_ipykernel_and_assign(
                                 workspace::Toast::new(
                                     notification_id.clone(),
                                     format!(
-                                        "在 {} 中安装 ipykernel 失败: {}",
+                                        "Failed to install ipykernel in {}: {}",
                                         env_name, error
                                     ),
                                 ),

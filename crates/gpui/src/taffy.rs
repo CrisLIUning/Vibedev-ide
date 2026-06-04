@@ -334,7 +334,7 @@ impl TaffyLayoutEngine {
                 let parent_origin = *self
                     .absolute_outer_origins
                     .get(&parent_id)
-                    .expect("父元素绝对外边原点应该已缓存");
+                    .expect("parent absolute outer origin should be cached");
                 parent_origin + Point::from(layout_location)
             }
             None => Point::from(layout_location),

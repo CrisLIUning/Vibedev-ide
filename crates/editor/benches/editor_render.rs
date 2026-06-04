@@ -131,7 +131,7 @@ pub fn benches() {
         (criterion::Criterion::default()).configure_from_args();
 
     // setup app context
-    let mut group = criterion.benchmark_group("渲染耗时");
+    let mut group = criterion.benchmark_group("Time to render");
     group.bench_with_input(
         BenchmarkId::new("editor_render", "TestAppContext"),
         &cx,
@@ -141,7 +141,7 @@ pub fn benches() {
     group.finish();
 
     let text = String::from_iter(["char"; 1000]);
-    let mut group = criterion.benchmark_group("构建单长行缓冲区");
+    let mut group = criterion.benchmark_group("Build buffer with one long line");
     group.bench_with_input(
         BenchmarkId::new("editor_with_one_long_line", "(String, TestAppContext )"),
         &(text, cx.clone()),
@@ -150,7 +150,7 @@ pub fn benches() {
 
     group.finish();
 
-    let mut group = criterion.benchmark_group("多光标编辑");
+    let mut group = criterion.benchmark_group("multi cursor edits");
     group.bench_with_input(
         BenchmarkId::new("editor_input_with_1000_cursors", "TestAppContext"),
         &cx,

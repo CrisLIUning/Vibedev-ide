@@ -60,7 +60,7 @@ impl MacDisplay {
                 displays.set_len(display_count as usize);
                 displays.into_iter().map(MacDisplay)
             } else {
-                panic!("获取活动显示器列表失败。结果: {result}");
+                panic!("Failed to get active display list. Result: {result}");
             }
         }
     }
@@ -80,7 +80,7 @@ impl PlatformDisplay for MacDisplay {
         let cfuuid = unsafe { CGDisplayCreateUUIDFromDisplayID(self.0 as CGDirectDisplayID) };
         anyhow::ensure!(
             !cfuuid.is_null(),
-            "AppKit 从 CGDisplayCreateUUIDFromDisplayID 返回了空值"
+            "AppKit returned a null from CGDisplayCreateUUIDFromDisplayID"
         );
 
         let bytes = unsafe { CFUUIDGetUUIDBytes(cfuuid) };

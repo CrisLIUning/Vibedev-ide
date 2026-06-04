@@ -78,9 +78,9 @@ async fn with_cancellation<T>(f: impl Future<Output = T>, s: &ToolCallEventStrea
 
 fn freshness_message(refreshed: bool) -> &'static str {
     if refreshed {
-        "诊断已成功刷新。"
+        "Diagnostics successfully refreshed."
     } else {
-        "诊断刷新失败。诊断可能已过期。"
+        "Failed to refresh diagnostics. Diagnostics may be stale."
     }
 }
 
@@ -99,7 +99,7 @@ async fn pull_diagnostics(
         Some(path) => {
             let open_buffer_task = project.update(cx, |project, cx| {
                 let Some(project_path) = project.find_project_path(path, cx) else {
-                    return Err(format!("在项目中找不到路径 {}", path.display()));
+                    return Err(format!("Could not find path {} in project", path.display()));
                 };
                 Ok(project.open_buffer(project_path, cx))
             })?;
@@ -209,7 +209,7 @@ impl AgentTool for DiagnosticsTool {
                     let freshness = freshness_message(refreshed);
                     if output.is_empty() {
                         Ok(format!(
-                            "{freshness}\n\n文件没有错误或警告!"
+                            "{freshness}\n\nFile doesn\'t have errors or warnings!"
                         ))
                     } else {
                         Ok(format!("{freshness}\n\n{output}"))
@@ -248,7 +248,7 @@ impl AgentTool for DiagnosticsTool {
                         Ok(format!("{freshness}\n\n{output}"))
                     } else {
                         Ok(format!(
-                            "{freshness}\n\n项目中未发现错误或警告。"
+                            "{freshness}\n\nNo errors or warnings found in the project."
                         ))
                     }
                 }

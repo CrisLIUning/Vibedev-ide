@@ -76,7 +76,7 @@ impl<'a> Statement<'a> {
                 let sql = unsafe { CStr::from_ptr(sqlite3_sql(raw_statement)) };
 
                 bail!(
-                    "使用不具备写入权限的连接准备了写入语句。SQL:\n{} ",
+                    "Write statement prepared with connection that is not write capable. SQL:\n{} ",
                     sql.to_str()?
                 )
             }
@@ -328,13 +328,13 @@ impl<'a> Statement<'a> {
             println!("{:?}", std::any::type_name::<R>());
             anyhow::ensure!(
                 this.step()? == StepResult::Row,
-                "single 被调用,但查询未返回任何行。"
+                "single called with query that returns no rows."
             );
             let result = callback(this)?;
 
             anyhow::ensure!(
                 this.step()? == StepResult::Done,
-                "single 被调用,但查询返回了多行。"
+                "single called with a query that returns more than one row."
             );
 
             Ok(result)
@@ -366,7 +366,7 @@ impl<'a> Statement<'a> {
 
             anyhow::ensure!(
                 this.step().context("Second step call")? == StepResult::Done,
-                "maybe 被调用,但查询返回了多行。"
+                "maybe called with a query that returns more than one row."
             );
 
             Ok(result)

@@ -593,7 +593,7 @@ impl ConfigureContextServerModal {
                     secret_editor: cx.new(|cx| {
                         let mut editor = Editor::single_line(window, cx);
                         editor.set_placeholder_text(
-                            "输入客户端密钥(公开客户端可留空)",
+                            "Enter client secret (leave empty for public clients)",
                             window,
                             cx,
                         );
@@ -778,7 +778,7 @@ impl ConfigureContextServerModal {
             .update(cx, {
                 |workspace, cx| {
                     let status_toast = StatusToast::new(
-                        format!("{} 配置成功。", id.0),
+                        format!("{} configured successfully.", id.0),
                         cx,
                         |this, _cx| {
                             this.icon(
@@ -786,7 +786,7 @@ impl ConfigureContextServerModal {
                                     .size(IconSize::Small)
                                     .color(Color::Muted),
                             )
-                            .action("关闭", |_, _| {})
+                            .action("Dismiss", |_, _| {})
                         },
                     );
 
@@ -826,16 +826,16 @@ impl EventEmitter<DismissEvent> for ConfigureContextServerModal {}
 impl ConfigureContextServerModal {
     fn render_modal_header(&self) -> ModalHeader {
         let text: SharedString = match &self.source {
-            ConfigurationSource::New { .. } => "添加 MCP 服务器".into(),
-            ConfigurationSource::Existing { .. } => "配置 MCP 服务器".into(),
-            ConfigurationSource::Extension { id, .. } => format!("配置 {}", id.0).into(),
+            ConfigurationSource::New { .. } => "Add MCP Server".into(),
+            ConfigurationSource::Existing { .. } => "Configure MCP Server".into(),
+            ConfigurationSource::Extension { id, .. } => format!("Configure {}", id.0).into(),
         };
         ModalHeader::new().headline(text)
     }
 
     fn render_modal_description(&self, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
         const MODAL_DESCRIPTION: &str =
-            "请查阅服务器文档以获取所需的参数和环境变量。";
+            "Check the server docs for required arguments and environment variables.";
 
         if let ConfigurationSource::Extension {
             installation_instructions: Some(installation_instructions),
@@ -889,7 +889,7 @@ impl ConfigureContextServerModal {
                 .border_b_1()
                 .border_color(cx.theme().colors().border.opacity(0.5))
                 .child(
-                    tab("本地", !is_http).on_click(cx.listener(|this, _, window, cx| {
+                    tab("Local", !is_http).on_click(cx.listener(|this, _, window, cx| {
                         if let ConfigurationSource::New { editor, is_http } = &mut this.source {
                             if *is_http {
                                 *is_http = false;
@@ -902,7 +902,7 @@ impl ConfigureContextServerModal {
                     })),
                 )
                 .child(
-                    tab("远程", is_http).on_click(cx.listener(|this, _, window, cx| {
+                    tab("Remote", is_http).on_click(cx.listener(|this, _, window, cx| {
                         if let ConfigurationSource::New { editor, is_http } = &mut this.source {
                             if !*is_http {
                                 *is_http = true;
@@ -973,7 +973,7 @@ impl ConfigureContextServerModal {
                 } = &self.source
                 {
                     Some(
-                        Button::new("open-repository", "打开仓库")
+                        Button::new("open-repository", "Open Repository")
                             .end_icon(
                                 Icon::new(IconName::ArrowUpRight)
                                     .size(IconSize::Small)
@@ -983,7 +983,7 @@ impl ConfigureContextServerModal {
                                 let repository_url = repository_url.clone();
                                 move |_window, cx| {
                                     Tooltip::with_meta(
-                                        "打开仓库",
+                                        "Open Repository",
                                         None,
                                         repository_url.clone(),
                                         cx,
@@ -1006,9 +1006,9 @@ impl ConfigureContextServerModal {
                         Button::new(
                             "cancel",
                             if self.source.has_configuration_options() {
-                                "取消"
+                                "Cancel"
                             } else {
-                                "关闭"
+                                "Dismiss"
                             },
                         )
                         .key_binding(
@@ -1023,9 +1023,9 @@ impl ConfigureContextServerModal {
                         Button::new(
                             "add-server",
                             if self.source.is_new() {
-                                "添加服务器"
+                                "Add Server"
                             } else {
-                                "配置服务器"
+                                "Configure Server"
                             },
                         )
                         .disabled(is_busy)
@@ -1072,13 +1072,13 @@ impl ConfigureContextServerModal {
                             .color(Color::Muted),
                     )
                     .child(
-                        Label::new("认证以连接此服务器")
+                        Label::new("Authenticate to connect this server")
                             .size(LabelSize::Small)
                             .color(Color::Muted),
                     ),
             )
             .child(
-                Button::new("authenticate-server", "认证")
+                Button::new("authenticate-server", "Authenticate")
                     .style(ButtonStyle::Outlined)
                     .label_size(LabelSize::Small)
                     .on_click({
@@ -1123,7 +1123,7 @@ impl ConfigureContextServerModal {
                     )
                     .child(
                         Label::new(
-                            "输入您的 OAuth 客户端密钥,或留空以使用公开客户端",
+                            "Enter your OAuth client secret, or leave empty for public clients",
                         )
                         .size(LabelSize::Small)
                         .color(Color::Muted),
@@ -1150,7 +1150,7 @@ impl ConfigureContextServerModal {
                         },
                     )))
                     .child(
-                        Button::new("submit-client-secret", "提交")
+                        Button::new("submit-client-secret", "Submit")
                             .style(ButtonStyle::Outlined)
                             .label_size(LabelSize::Small)
                             .on_click({
@@ -1178,13 +1178,13 @@ impl ConfigureContextServerModal {
                             .with_rotate_animation(3),
                     )
                     .child(
-                        Label::new("正在认证…")
+                        Label::new("Authenticating…")
                             .size(LabelSize::Small)
                             .color(Color::Muted),
                     ),
             )
             .child(
-                Button::new("cancel-authentication", "取消")
+                Button::new("cancel-authentication", "Cancel")
                     .style(ButtonStyle::Outlined)
                     .label_size(LabelSize::Small)
                     .on_click({
@@ -1250,7 +1250,7 @@ impl Render for ConfigureContextServerModal {
                                         .child(match &self.state {
                                             State::Idle => div(),
                                             State::Waiting => {
-                                                self.render_loading("正在连接服务器…")
+                                                self.render_loading("Connecting Server…")
                                             }
                                             State::AuthRequired { server_id } => {
                                                 self.render_auth_required(&server_id.clone(), cx)
@@ -1308,7 +1308,7 @@ fn wait_for_context_server(
             }
             ContextServerStatus::Stopped => {
                 if let Some(tx) = tx.lock().take() {
-                    let _ = tx.send(Err("上下文服务器已停止运行".into()));
+                    let _ = tx.send(Err("Context server stopped running".into()));
                 }
             }
             ContextServerStatus::Error(error) => {
@@ -1327,7 +1327,7 @@ fn wait_for_context_server(
         match result {
             futures::future::Either::Left((Ok(inner), _)) => inner,
             futures::future::Either::Left((Err(_), _)) => {
-                Err(Arc::from("上下文服务器存储已丢弃"))
+                Err(Arc::from("Context server store was dropped"))
             }
             futures::future::Either::Right(_) => Err(Arc::from(format!(
                 "Timed out waiting for context server `{}` to start. Check the VibeDev log for details.",

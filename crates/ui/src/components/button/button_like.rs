@@ -804,69 +804,69 @@ impl Component for ButtonLike {
                 .children(vec![
                     example_group(vec![
                         single_example(
-                            "默认",
+                            "Default",
                             ButtonLike::new("default")
-                                .child(Label::new("默认"))
+                                .child(Label::new("Default"))
                                 .into_any_element(),
                         ),
                         single_example(
-                            "填充",
+                            "Filled",
                             ButtonLike::new("filled")
                                 .style(ButtonStyle::Filled)
-                                .child(Label::new("填充"))
+                                .child(Label::new("Filled"))
                                 .into_any_element(),
                         ),
                         single_example(
-                            "淡雅",
+                            "Subtle",
                             ButtonLike::new("outline")
                                 .style(ButtonStyle::Subtle)
-                                .child(Label::new("淡雅"))
+                                .child(Label::new("Subtle"))
                                 .into_any_element(),
                         ),
                         single_example(
-                            "着色",
+                            "Tinted",
                             ButtonLike::new("tinted_accent_style")
                                 .style(ButtonStyle::Tinted(TintColor::Accent))
-                                .child(Label::new("强调"))
+                                .child(Label::new("Accent"))
                                 .into_any_element(),
                         ),
                         single_example(
-                            "透明",
+                            "Transparent",
                             ButtonLike::new("transparent")
                                 .style(ButtonStyle::Transparent)
-                                .child(Label::new("透明"))
+                                .child(Label::new("Transparent"))
                                 .into_any_element(),
                         ),
                     ]),
                     example_group_with_title(
-                        "按钮组构造器",
+                        "Button Group Constructors",
                         vec![
                             single_example(
-                                "左侧圆角",
+                                "Left Rounded",
                                 ButtonLike::new_rounded_left("left_rounded")
-                                    .child(Label::new("左侧圆角"))
+                                    .child(Label::new("Left Rounded"))
                                     .style(ButtonStyle::Filled)
                                     .into_any_element(),
                             ),
                             single_example(
-                                "右侧圆角",
+                                "Right Rounded",
                                 ButtonLike::new_rounded_right("right_rounded")
-                                    .child(Label::new("右侧圆角"))
+                                    .child(Label::new("Right Rounded"))
                                     .style(ButtonStyle::Filled)
                                     .into_any_element(),
                             ),
                             single_example(
-                                "按钮组",
+                                "Button Group",
                                 h_flex()
                                     .gap_px()
                                     .child(
                                         ButtonLike::new_rounded_left("bg_left")
-                                            .child(Label::new("左"))
+                                            .child(Label::new("Left"))
                                             .style(ButtonStyle::Filled),
                                     )
                                     .child(
                                         ButtonLike::new_rounded_right("bg_right")
-                                            .child(Label::new("右"))
+                                            .child(Label::new("Right"))
                                             .style(ButtonStyle::Filled),
                                     )
                                     .into_any_element(),

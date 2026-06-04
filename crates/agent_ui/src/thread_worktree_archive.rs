@@ -227,7 +227,7 @@ async fn remove_root_after_worktree_removal(
 ) -> Result<()> {
     for task in release_tasks {
         if let Err(error) = task.await {
-            log::error!("等待工作树释放失败: {error:#}");
+            log::error!("Failed waiting for worktree release: {error:#}");
         }
     }
 
@@ -245,12 +245,12 @@ async fn remove_root_after_worktree_removal(
     });
     let result = receiver
         .await
-        .map_err(|_| anyhow!("git 工作树 元数据清理已取消"))?;
+        .map_err(|_| anyhow!("git worktree metadata cleanup was canceled"))?;
     // `project` may be a live workspace project or a temporary one created
     // by `find_or_create_repository`. In the temporary case we must keep it
     // alive until the repo removes the worktree
     drop(project);
-    result.context("git 工作树 元数据清理失败")?;
+    result.context("git worktree metadata cleanup failed")?;
     Ok(())
 }
 
@@ -315,7 +315,7 @@ async fn find_or_create_repository(
     }
 
     let app_state =
-        current_app_state(cx).context("没有可用于临时项目的应用状态")?;
+        current_app_state(cx).context("no app state available for temporary project")?;
 
     // For remote paths, create a fresh RemoteClient through the connection
     // pool (reusing the existing SSH transport) and build a temporary
@@ -325,12 +325,12 @@ async fn find_or_create_repository(
         let remote_client = cx
             .update(|cx| {
                 if !remote::has_active_connection(&connection, cx) {
-                    anyhow::bail!("无法在已断开连接的远程机器上打开仓库");
+                    anyhow::bail!("cannot open repository on disconnected remote machine");
                 }
                 Ok(remote_connection::connect_reusing_pool(connection, cx))
             })?
             .await?
-            .context("远程连接已取消")?;
+            .context("remote connection was canceled")?;
 
         cx.update(|cx| {
             Project::remote(
@@ -379,12 +379,12 @@ async fn find_or_create_repository(
                 })
                 .cloned()
         })
-        .context("解析临时仓库句柄失败")?;
+        .context("failed to resolve temporary repository handle")?;
 
     let barrier = repo.update(cx, |repo: &mut Repository, _cx| repo.barrier());
     barrier
         .await
-        .map_err(|_| anyhow!("临时仓库屏障被取消"))?;
+        .map_err(|_| anyhow!("temporary repository barrier canceled"))?;
     Ok((repo, temp_project))
 }
 
@@ -404,8 +404,8 @@ async fn rollback_root(root: &RootPlan, cx: &mut AsyncApp) {
 /// This creates two detached commits (via [`create_archive_checkpoint`] on
 /// the `GitRepository` trait) that capture the staged and unstaged state
 /// without moving any branch ref. The commits are:
-///   - "WIP 已暂存": a tree matching the current index, parented on HEAD
-///   - "WIP 未暂存": a tree with all files (including untracked),
+///   - "WIP staged": a tree matching the current index, parented on HEAD
+///   - "WIP unstaged": a tree with all files (including untracked),
 ///     parented on the staged commit
 ///
 /// After creating the commits, this function:
@@ -420,16 +420,16 @@ pub async fn persist_worktree_state(root: &RootPlan, cx: &mut AsyncApp) -> Resul
     let original_commit_hash = worktree_repo
         .update(cx, |repo, _cx| repo.head_sha())
         .await
-        .map_err(|_| anyhow!("head_sha 被取消"))?
-        .context("读取原始 HEAD SHA 失败")?
-        .context("HEAD SHA 为 None")?;
+        .map_err(|_| anyhow!("head_sha canceled"))?
+        .context("failed to read original HEAD SHA")?
+        .context("HEAD SHA is None")?;
 
     // Create two detached WIP commits without moving the branch.
     let checkpoint_rx = worktree_repo.update(cx, |repo, _cx| repo.create_archive_checkpoint());
     let (staged_commit_hash, unstaged_commit_hash) = checkpoint_rx
         .await
-        .map_err(|_| anyhow!("create_archive_checkpoint 被取消"))?
-        .context("创建归档检查点失败")?;
+        .map_err(|_| anyhow!("create_archive_checkpoint canceled"))?
+        .context("failed to create archive checkpoint")?;
 
     // Create DB record
     let store = cx.update(|cx| ThreadMetadataStore::global(cx));
@@ -457,7 +457,7 @@ pub async fn persist_worktree_state(root: &RootPlan, cx: &mut AsyncApp) -> Resul
             )
         })
         .await
-        .context("创建已归档工作树数据库记录失败");
+        .context("failed to create archived worktree DB record");
     let archived_worktree_id = match db_result {
         Ok(id) => id,
         Err(error) => {
@@ -498,7 +498,7 @@ pub async fn persist_worktree_state(root: &RootPlan, cx: &mut AsyncApp) -> Resul
                      {delete_error:#}"
                 );
             }
-            return Err(error.context("关联对话线程到已归档工作树失败"));
+            return Err(error.context("failed to link thread to archived worktree"));
         }
     }
 
@@ -509,14 +509,14 @@ pub async fn persist_worktree_state(root: &RootPlan, cx: &mut AsyncApp) -> Resul
     let (main_repo, _temp_project) =
         find_or_create_repository(&root.main_repo_path, root.remote_connection.as_ref(), cx)
             .await
-            .context("无法打开主仓库以创建归档引用")?;
+            .context("could not open main repo to create archive ref")?;
     let rx = main_repo.update(cx, |repo, _cx| {
         repo.update_ref(ref_name.clone(), unstaged_commit_hash.clone())
     });
     rx.await
-        .map_err(|_| anyhow!("update_ref 被取消"))
+        .map_err(|_| anyhow!("update_ref canceled"))
         .and_then(|r| r)
-        .with_context(|| format!("在主仓库上创建引用 {ref_name} 失败"))?;
+        .with_context(|| format!("failed to create ref {ref_name} on main repo"))?;
     // See note in `remove_root_after_worktree_removal`: this may be a live
     // or temporary project; dropping only matters in the temporary case.
     drop(_temp_project);
@@ -550,7 +550,7 @@ pub async fn rollback_persist(archived_worktree_id: i64, root: &RootPlan, cx: &m
         })
         .await
     {
-        log::error!("回滚期间删除已归档工作树数据库记录失败: {error:#}");
+        log::error!("Failed to delete archived worktree DB record during rollback: {error:#}");
     }
 }
 
@@ -569,7 +569,7 @@ pub async fn restore_worktree_via_git(
         find_or_create_repository(&row.main_repo_path, remote_connection, cx).await?;
 
     let worktree_path = &row.worktree_path;
-    let app_state = current_app_state(cx).context("没有可用的应用状态")?;
+    let app_state = current_app_state(cx).context("no app state available")?;
     let already_exists = app_state.fs.metadata(worktree_path).await?.is_some();
 
     let created_new_worktree = if already_exists {
@@ -581,8 +581,8 @@ pub async fn restore_worktree_via_git(
         if !is_git_worktree {
             let rx = main_repo.update(cx, |repo, _cx| repo.repair_worktrees());
             rx.await
-                .map_err(|_| anyhow!("工作树修复被取消"))?
-                .context("修复工作树失败")?;
+                .map_err(|_| anyhow!("worktree repair was canceled"))?
+                .context("failed to repair worktrees")?;
         }
         false
     } else {
@@ -592,8 +592,8 @@ pub async fn restore_worktree_via_git(
             repo.create_worktree_detached(worktree_path.clone(), row.original_commit_hash.clone())
         });
         rx.await
-            .map_err(|_| anyhow!("工作树创建被取消"))?
-            .context("创建工作树失败")?;
+            .map_err(|_| anyhow!("worktree creation was canceled"))?
+            .context("failed to create worktree")?;
         true
     };
 
@@ -648,7 +648,7 @@ pub async fn restore_worktree_via_git(
 
                         if let Err(error) = detach_result.map_err(|e| anyhow!("{e}")).flatten() {
                             log::warn!(
-                                "在 {} 处分离 HEAD 失败: {error:#}",
+                                "Failed to detach HEAD at {}: {error:#}",
                                 row.original_commit_hash
                             );
                         }
@@ -670,7 +670,7 @@ pub async fn restore_worktree_via_git(
                 // We weren't able to check out the branch, most likely because it was deleted.
                 // This is fine; users will often delete old branches! We'll try to recreate it.
                 log::debug!(
-                    "change_branch('{branch_name}') 失败: {checkout_error:#}, 尝试 create_branch"
+                    "change_branch('{branch_name}') failed: {checkout_error:#}, trying create_branch"
                 );
                 let create_result = wt_repo
                     .update(cx, |repo, _cx| {
@@ -700,11 +700,11 @@ pub async fn restore_worktree_via_git(
     });
     if let Err(error) = restore_rx
         .await
-        .map_err(|_| anyhow!("restore_archive_checkpoint 被取消"))
+        .map_err(|_| anyhow!("restore_archive_checkpoint canceled"))
         .and_then(|r| r)
     {
         remove_new_worktree_on_error(created_new_worktree, &main_repo, worktree_path, cx).await;
-        return Err(error.context("恢复归档检查点失败"));
+        return Err(error.context("failed to restore archive checkpoint"));
     }
 
     Ok(worktree_path.clone())
@@ -739,8 +739,8 @@ pub async fn cleanup_archived_worktree_record(
         let rx = main_repo.update(cx, |repo, _cx| repo.delete_ref(ref_name));
         match rx.await {
             Ok(Ok(())) => {}
-            Ok(Err(error)) => log::warn!("删除归档引用失败: {error}"),
-            Err(_) => log::warn!("归档引用删除被取消"),
+            Ok(Err(error)) => log::warn!("Failed to delete archive ref: {error}"),
+            Err(_) => log::warn!("Archive ref deletion was canceled"),
         }
         // See note in `remove_root_after_worktree_removal`: this may be a
         // live or temporary project; dropping only matters in the temporary
@@ -777,7 +777,7 @@ pub async fn cleanup_thread_archived_worktrees(thread_id: ThreadId, cx: &mut Asy
     let archived_worktrees = match archived_worktrees {
         Ok(rows) => rows,
         Err(error) => {
-            log::error!("获取对话线程 {thread_id:?} 的已归档工作树失败: {error:#}");
+            log::error!("Failed to fetch archived worktrees for thread {thread_id:?}: {error:#}");
             return;
         }
     };
@@ -792,7 +792,7 @@ pub async fn cleanup_thread_archived_worktrees(thread_id: ThreadId, cx: &mut Asy
         })
         .await
     {
-        log::error!("将对话线程 {thread_id:?} 从已归档工作树中解除关联失败: {error:#}");
+        log::error!("Failed to unlink thread {thread_id:?} from archived worktrees: {error:#}");
         return;
     }
 
@@ -809,7 +809,7 @@ pub async fn cleanup_thread_archived_worktrees(thread_id: ThreadId, cx: &mut Asy
             }
             Err(error) => {
                 log::error!(
-                    "检查已归档工作树 {} 是否仍被引用失败: {error:#}",
+                    "Failed to check if archived worktree {} is still referenced: {error:#}",
                     row.id
                 );
             }
@@ -1410,7 +1410,7 @@ mod tests {
             .expect("should produce a root plan for the linked worktree");
 
         // Replace the worktree directory with a file so that fs.remove_dir
-        // fails with a "不是目录" error.
+        // fails with a "not a directory" error.
         let worktree_path = Path::new("/worktrees/project/feature/project");
         fs.remove_dir(
             worktree_path,
@@ -1438,7 +1438,7 @@ mod tests {
         );
         let error_message = format!("{:#}", result.unwrap_err());
         assert!(
-            error_message.contains("删除工作树目录失败"),
+            error_message.contains("failed to delete worktree directory"),
             "error should mention the directory deletion failure, got: {error_message}"
         );
 

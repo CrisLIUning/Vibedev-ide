@@ -123,7 +123,7 @@ impl ExtensionLanguageServerProxy for LanguageServerRegistryProxy {
         status: BinaryStatus,
     ) {
         log::debug!(
-            "正在将 {} 的二进制状态更新为 {:?}",
+            "updating binary status for {} to {:?}",
             language_server_id,
             status
         );
@@ -260,7 +260,7 @@ impl DynLspInstaller for ExtensionLspAdapter {
         _: bool,
         _: &mut AsyncApp,
     ) -> Result<LanguageServerBinary> {
-        unreachable!("get_language_server_command 已被重写")
+        unreachable!("get_language_server_command is overridden")
     }
 }
 
@@ -405,7 +405,7 @@ impl LspAdapter for ExtensionLspAdapter {
         Ok(if let Some(json_options) = json_options {
             serde_json::from_str(&json_options).with_context(|| {
                 format!(
-                    "无法解析来自扩展的 additional_initialization_options:{json_options}"
+                    "failed to parse additional_initialization_options from extension: {json_options}"
                 )
             })?
         } else {

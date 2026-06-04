@@ -219,7 +219,7 @@ impl AudioStack {
             let mut device_change_listener = DeviceChangeListener::new(false)?;
             let (output_device, output_config) =
                 crate::default_device(false, output_audio_device.as_ref())?;
-            info!("输出配置: {output_config:?}");
+            info!("Output config: {output_config:?}");
             let (end_on_drop_tx, end_on_drop_rx) = std::sync::mpsc::channel::<()>();
             let mixer = mixer.clone();
             let apm = apm.clone();
@@ -524,7 +524,7 @@ pub(crate) async fn capture_local_video_track(
 
     Ok((
         LocalVideoTrack(track::LocalVideoTrack::create_video_track(
-            "屏幕共享",
+            "screen share",
             RtcVideoSource::Native(track_source),
         )),
         capture_stream,
@@ -824,7 +824,7 @@ fn video_frame_buffer_to_webrtc(frame: ScreenCaptureFrame) -> Option<impl AsRef<
         }
         _ => {
             log::error!(
-                "预期来自 scap 屏幕捕获的 BGRx 或 YUV 帧,但得到了其他格式。"
+                "Expected BGRx or YUV frame from scap screen capture but got some other format."
             );
             None
         }
@@ -876,7 +876,7 @@ mod macos {
             unsafe {
                 let process_info = NSProcessInfo::processInfo(nil);
                 #[allow(clippy::disallowed_methods)]
-                let reason = NSString::alloc(nil).init_str("音频播放正在进行中");
+                let reason = NSString::alloc(nil).init_str("Audio playback in progress");
                 let activity: id = msg_send![process_info, beginActivityWithOptions:NS_ACTIVITY_USER_INITIATED_ALLOWING_IDLE_SYSTEM_SLEEP reason:reason];
                 let _: () = msg_send![reason, release];
                 let _: () = msg_send![activity, retain];

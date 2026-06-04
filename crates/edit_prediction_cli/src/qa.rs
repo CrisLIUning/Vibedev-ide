@@ -66,20 +66,20 @@ pub fn build_prompt(example: &Example) -> Result<String> {
     let prediction = example
         .predictions
         .first()
-        .context("没有可用的预测")?;
+        .context("no predictions available")?;
     let actual_patch = prediction
         .actual_patch
         .as_ref()
-        .context("没有可用的 actual_patch(请先运行 predict)")?;
+        .context("no actual_patch available (run predict first)")?;
     let prompt_inputs = example
         .prompt_inputs
         .as_ref()
-        .context("缺少 prompt_inputs(请先运行上下文检索)")?;
+        .context("prompt_inputs missing (run context retrieval first)")?;
 
     let actual_patch_word_diff = unified_to_word_diff(actual_patch);
 
     let cursor_excerpt =
-        extract_cursor_excerpt_from_example(example).context("提取光标摘录失败")?;
+        extract_cursor_excerpt_from_example(example).context("failed to extract cursor excerpt")?;
 
     let mut edit_history = String::new();
     for event in &prompt_inputs.events {
@@ -175,16 +175,16 @@ pub async fn run_qa(
         return Ok(());
     }
 
-    run_parse_output(example).context("执行 run_parse_output 失败")?;
+    run_parse_output(example).context("Failed to execute run_parse_output")?;
 
     if example.prompt_inputs.is_none() {
-        anyhow::bail!("缺少 prompt_inputs(请先运行上下文检索)");
+        anyhow::bail!("prompt_inputs missing (run context retrieval first)");
     }
 
     let step_progress = example_progress.start(Step::Qa);
 
     let model = model_for_backend(args.backend);
-    let prompt = build_prompt(example).context("构建 QA 提示词失败")?;
+    let prompt = build_prompt(example).context("Failed to build QA prompt")?;
 
     step_progress.set_substatus("generating");
 
@@ -192,12 +192,12 @@ pub async fn run_qa(
         BatchProvider::Anthropic => {
             let client = if args.no_batch {
                 ANTHROPIC_CLIENT_PLAIN.get_or_init(|| {
-                    AnthropicClient::plain().expect("无法创建 Anthropic 客户端")
+                    AnthropicClient::plain().expect("Failed to create Anthropic client")
                 })
             } else {
                 ANTHROPIC_CLIENT_BATCH.get_or_init(|| {
                     AnthropicClient::batch(&LLM_CACHE_DB)
-                        .expect("无法创建 Anthropic 客户端")
+                        .expect("Failed to create Anthropic client")
                 })
             };
 
@@ -226,10 +226,10 @@ pub async fn run_qa(
         BatchProvider::Openai => {
             let client = if args.no_batch {
                 OPENAI_CLIENT_PLAIN
-                    .get_or_init(|| OpenAiClient::plain().expect("无法创建 OpenAI 客户端"))
+                    .get_or_init(|| OpenAiClient::plain().expect("Failed to create OpenAI client"))
             } else {
                 OPENAI_CLIENT_BATCH.get_or_init(|| {
-                    OpenAiClient::batch(&LLM_CACHE_DB).expect("无法创建 OpenAI 客户端")
+                    OpenAiClient::batch(&LLM_CACHE_DB).expect("Failed to create OpenAI client")
                 })
             };
 
@@ -286,13 +286,13 @@ pub async fn sync_batches(args: &QaArgs) -> Result<()> {
     match args.backend {
         BatchProvider::Anthropic => {
             let client = ANTHROPIC_CLIENT_BATCH.get_or_init(|| {
-                AnthropicClient::batch(&LLM_CACHE_DB).expect("无法创建 Anthropic 客户端")
+                AnthropicClient::batch(&LLM_CACHE_DB).expect("Failed to create Anthropic client")
             });
             client.sync_batches().await?;
         }
         BatchProvider::Openai => {
             let client = OPENAI_CLIENT_BATCH.get_or_init(|| {
-                OpenAiClient::batch(&LLM_CACHE_DB).expect("无法创建 OpenAI 客户端")
+                OpenAiClient::batch(&LLM_CACHE_DB).expect("Failed to create OpenAI client")
             });
             client.sync_batches().await?;
         }

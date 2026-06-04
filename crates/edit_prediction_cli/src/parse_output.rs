@@ -47,7 +47,7 @@ pub fn parse_prediction_output(
         PredictionProvider::Zeta2(version) => parse_zeta2_output(example, actual_output, version),
         PredictionProvider::Repair => repair::parse(example, actual_output),
         _ => anyhow::bail!(
-            "parse-output 仅支持 Teacher 和 Zeta2 提供者,但得到 {:?}",
+            "parse-output only supports Teacher and Zeta2 providers, got {:?}",
             provider
         ),
     }

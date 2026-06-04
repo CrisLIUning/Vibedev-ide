@@ -45,7 +45,7 @@ pub async fn download_server_binary(
 ) -> Result<(), anyhow::Error> {
     log::info!("downloading github artifact from {url}");
     let Some(destination_parent) = destination_path.parent() else {
-        anyhow::bail!("目标路径没有父目录: {destination_path:?}");
+        anyhow::bail!("destination path has no parent: {destination_path:?}");
     };
 
     let staging_path = staging_path(destination_parent, asset_kind)?;
@@ -87,30 +87,30 @@ async fn extract_to_staging(
             futures::io::copy(&mut BufReader::new(body), &mut writer)
                 .await
                 .with_context(|| {
-                    format!("正在将归档内容保存到 {url} 的临时文件中")
+                    format!("saving archive contents into the temporary file for {url}")
                 })?;
             let asset_sha_256 = format!("{:x}", writer.hasher.finalize());
 
             anyhow::ensure!(
                 asset_sha_256 == expected_sha_256,
-                "{url} 资产 SHA-256 校验和不匹配。预期: {expected_sha_256}, 实际: {asset_sha_256}",
+                "{url} asset got SHA-256 mismatch. Expected: {expected_sha_256}, Got: {asset_sha_256}",
             );
             writer
                 .writer
                 .seek(std::io::SeekFrom::Start(0))
                 .await
-                .with_context(|| format!("查找 {url} 的临时文件"))?;
+                .with_context(|| format!("seeking temporary file for {url}"))?;
             stream_file_archive(&mut writer.writer, url, staging_path, asset_kind)
                 .await
                 .with_context(|| {
-                    format!("将 {url} 的下载资源解压到 {staging_path:?}")
+                    format!("extracting downloaded asset for {url} into {staging_path:?}")
                 })?;
         }
         None => {
             stream_response_archive(body, url, staging_path, asset_kind)
                 .await
                 .with_context(|| {
-                    format!("将资源 {url} 的响应解压到 {staging_path:?}")
+                    format!("extracting response for asset {url} into {staging_path:?}")
                 })?;
         }
     }
@@ -123,17 +123,17 @@ fn staging_path(parent: &Path, asset_kind: AssetKind) -> Result<PathBuf> {
             let dir = tempfile::Builder::new()
                 .prefix(".tmp-github-download-")
                 .tempdir_in(parent)
-                .with_context(|| format!("在 {parent:?} 中创建暂存目录"))?;
+                .with_context(|| format!("creating staging directory in {parent:?}"))?;
             Ok(dir.keep())
         }
         AssetKind::Gz => {
             let path = tempfile::Builder::new()
                 .prefix(".tmp-github-download-")
                 .tempfile_in(parent)
-                .with_context(|| format!("在 {parent:?} 中创建暂存文件"))?
+                .with_context(|| format!("creating staging file in {parent:?}"))?
                 .into_temp_path()
                 .keep()
-                .with_context(|| format!("在 {parent:?} 中持久化暂存文件"))?;
+                .with_context(|| format!("persisting staging file in {parent:?}"))?;
             Ok(path)
         }
     }
@@ -143,12 +143,12 @@ async fn cleanup_staging_path(staging_path: &Path, asset_kind: AssetKind) {
     match asset_kind {
         AssetKind::TarGz | AssetKind::TarBz2 | AssetKind::Zip => {
             if let Err(err) = async_fs::remove_dir_all(staging_path).await {
-                log::warn!("无法移除暂存目录 {staging_path:?}: {err:?}");
+                log::warn!("failed to remove staging directory {staging_path:?}: {err:?}");
             }
         }
         AssetKind::Gz => {
             if let Err(err) = async_fs::remove_file(staging_path).await {
-                log::warn!("无法移除暂存文件 {staging_path:?}: {err:?}");
+                log::warn!("failed to remove staging file {staging_path:?}: {err:?}");
             }
         }
     }
@@ -158,7 +158,7 @@ async fn finalize_download(staging_path: &Path, destination_path: &Path) -> Resu
     _ = async_fs::remove_dir_all(destination_path).await;
     async_fs::rename(staging_path, destination_path)
         .await
-        .with_context(|| format!("将 {staging_path:?} 重命名为 {destination_path:?}"))?;
+        .with_context(|| format!("renaming {staging_path:?} to {destination_path:?}"))?;
     Ok(())
 }
 
@@ -248,7 +248,7 @@ async fn extract_gz(
     let mut file = async_fs::File::create(&destination_path)
         .await
         .with_context(|| {
-            format!("正在创建文件 {destination_path:?} 以从 {url} 下载")
+            format!("creating a file {destination_path:?} for a download from {url}")
         })?;
     futures::io::copy(&mut decompressed_bytes, &mut file)
         .await

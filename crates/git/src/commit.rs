@@ -87,10 +87,10 @@ async fn get_messages_impl(git: &GitBinary, shas: &[Oid]) -> Result<Vec<String>>
         .args(shas.iter().map(ToString::to_string))
         .output()
         .await
-        .context("启动 git show 进程")?;
+        .context("starting git show process")?;
     anyhow::ensure!(
         output.status.success(),
-        "'git show' 失败,错误为 {:?}",
+        "'git show' failed with error {:?}",
         String::from_utf8_lossy(&output.stderr)
     );
     Ok(String::from_utf8_lossy(&output.stdout)

@@ -40,11 +40,11 @@ pub(crate) async fn get_oci_token(
     let url = format!(
         "https://{registry}/token?service={registry}&scope=repository:{repository_path}:pull",
     );
-    log::debug!("正在从 {} 获取 OCI 令牌", url);
+    log::debug!("Fetching OCI token from: {}", url);
     get_deserialized_response("", &url, client)
         .await
         .map_err(|e| {
-            log::error!("对 {} 的 OCI 令牌请求失败: {e}", url);
+            log::error!("OCI token request failed for {}: {e}", url);
             e
         })
 }
@@ -110,12 +110,12 @@ pub(crate) async fn download_oci_tarball(
         .header("Accept", accept_header)
         .body(AsyncBody::default())
         .map_err(|e| {
-            log::error!("创建 blob 请求失败: {e}");
+            log::error!("Failed to create blob request: {e}");
             DevContainerError::ResourceFetchFailed
         })?;
 
     let mut response = client.send(request).await.map_err(|e| {
-        log::error!("下载特性 blob 失败: {e}");
+        log::error!("Failed to download feature blob: {e}");
         DevContainerError::ResourceFetchFailed
     })?;
     let status = response.status();
@@ -125,7 +125,7 @@ pub(crate) async fn download_oci_tarball(
     if !status.is_success() {
         let body_text = String::from_utf8_lossy(body.buffer());
         log::error!(
-            "特性 blob 下载返回 HTTP {}: {}",
+            "Feature blob download returned HTTP {}: {}",
             status.as_u16(),
             body_text,
         );
@@ -136,7 +136,7 @@ pub(crate) async fn download_oci_tarball(
     let body: Pin<&mut (dyn AsyncRead + Send)> = body;
     let archive = async_tar::Archive::new(body);
     fs.extract_tar_file(dest_dir, archive).await.map_err(|e| {
-        log::error!("解压特性压缩包失败: {e}");
+        log::error!("Failed to extract feature tarball: {e}");
         DevContainerError::FilesystemError
     })?;
 
@@ -157,12 +157,12 @@ where
         .body(AsyncBody::default())
     {
         Ok(request) => request,
-        Err(e) => return Err(format!("创建请求失败: {}", e)),
+        Err(e) => return Err(format!("Failed to create request: {}", e)),
     };
     let response = match client.send(request).await {
         Ok(response) => response,
         Err(e) => {
-            return Err(format!("向 {} 发送请求失败: {}", url, e));
+            return Err(format!("Failed to send request to {}: {}", url, e));
         }
     };
 
@@ -170,12 +170,12 @@ where
     let mut output = String::new();
 
     if let Err(e) = response.into_body().read_to_string(&mut output).await {
-        return Err(format!("读取 {} 的响应体失败: {}", url, e));
+        return Err(format!("Failed to read response body from {}: {}", url, e));
     };
 
     if !status.is_success() {
         return Err(format!(
-            "对 {} 的 OCI 请求返回 HTTP {}: {}",
+            "OCI request to {} returned HTTP {}: {}",
             url,
             status.as_u16(),
             &output[..output.len().min(500)],
@@ -185,7 +185,7 @@ where
     match serde_json_lenient::from_str(&output) {
         Ok(response) => Ok(response),
         Err(e) => Err(format!(
-            "反序列化 {} 的响应失败: {} (响应体: {})",
+            "Failed to deserialize response from {}: {} (body: {})",
             url,
             e,
             &output[..output.len().min(500)],
@@ -280,11 +280,11 @@ mod test {
         let client = FakeHttpClient::create(|request| async move {
             let host = request.uri().host();
             if host.is_none() || host.unwrap() != test_oci_registry() {
-                return Err(anyhow!("意外的主机: {}", host.unwrap_or_default()));
+                return Err(anyhow!("Unexpected host: {}", host.unwrap_or_default()));
             }
             let path = request.uri().path();
             if path != "/token" {
-                return Err(anyhow!("意外的路径: {}", path));
+                return Err(anyhow!("Unexpected path: {}", path));
             }
             let query = request.uri().query();
             if query.is_none()
@@ -294,7 +294,7 @@ mod test {
                         test_oci_repository()
                     )
             {
-                return Err(anyhow!("意外的查询: {}", query.unwrap_or_default()));
+                return Err(anyhow!("Unexpected query: {}", query.unwrap_or_default()));
             }
             Ok(http_client::Response::builder()
                 .status(200)
@@ -313,11 +313,11 @@ mod test {
         let client = FakeHttpClient::create(|request| async move {
             let host = request.uri().host();
             if host.is_none() || host.unwrap() != test_oci_registry() {
-                return Err(anyhow!("意外的主机: {}", host.unwrap_or_default()));
+                return Err(anyhow!("Unexpected host: {}", host.unwrap_or_default()));
             }
             let path = request.uri().path();
             if path != format!("/v2/{}/manifests/latest", test_oci_repository()) {
-                return Err(anyhow!("意外的路径: {}", path));
+                return Err(anyhow!("Unexpected path: {}", path));
             }
             Ok(http_client::Response::builder()
                 .status(200)
@@ -374,11 +374,11 @@ mod test {
         let client = FakeHttpClient::create(|request| async move {
             let host = request.uri().host();
             if host.is_none() || host.unwrap() != test_oci_registry() {
-                return Err(anyhow!("意外的主机: {}", host.unwrap_or_default()));
+                return Err(anyhow!("Unexpected host: {}", host.unwrap_or_default()));
             }
             let path = request.uri().path();
             if path != format!("/v2/{}/blobs/blobdigest", test_oci_repository()) {
-                return Err(anyhow!("意外的路径: {}", path));
+                return Err(anyhow!("Unexpected path: {}", path));
             }
             Ok(http_client::Response::builder()
                 .status(200)
@@ -423,11 +423,11 @@ mod test {
             async move {
                 let host = request.uri().host();
                 if host.is_none() || host.unwrap() != test_oci_registry() {
-                    return Err(anyhow!("意外的主机: {}", host.unwrap_or_default()));
+                    return Err(anyhow!("Unexpected host: {}", host.unwrap_or_default()));
                 }
                 let path = request.uri().path();
                 if path != format!("/v2/{}/blobs/blobdigest", test_oci_repository()) {
-                    return Err(anyhow!("意外的路径: {}", path));
+                    return Err(anyhow!("Unexpected path: {}", path));
                 }
                 Ok(http_client::Response::builder()
                     .status(200)

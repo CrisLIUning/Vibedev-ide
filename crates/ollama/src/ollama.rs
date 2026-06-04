@@ -307,7 +307,7 @@ pub async fn stream_chat_completion(
         let mut body = String::new();
         response.body_mut().read_to_string(&mut body).await?;
         anyhow::bail!(
-            "连接 Ollama API 失败: {} {}",
+            "Failed to connect to Ollama API: {} {}",
             response.status(),
             body,
         );
@@ -336,7 +336,7 @@ pub async fn get_models(
 
     anyhow::ensure!(
         response.status().is_success(),
-        "连接 Ollama API 失败: {} {}",
+        "Failed to connect to Ollama API: {} {}",
         response.status(),
         body,
     );
@@ -370,7 +370,7 @@ pub async fn show_model(
 
     anyhow::ensure!(
         response.status().is_success(),
-        "连接 Ollama API 失败: {} {}",
+        "Failed to connect to Ollama API: {} {}",
         response.status(),
         body,
     );

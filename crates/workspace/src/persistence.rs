@@ -410,7 +410,7 @@ impl Column for Bookmark {
     fn column(statement: &mut Statement, start_index: i32) -> Result<(Self, i32)> {
         let row = statement
             .column_int(start_index)
-            .with_context(|| format!("读取索引 {start_index} 处的书签失败"))?
+            .with_context(|| format!("Failed to read bookmark at index {start_index}"))?
             as u32;
 
         Ok((Bookmark { row }, start_index + 1))
@@ -1308,7 +1308,7 @@ impl WorkspaceDb {
         match bookmarks {
             Ok(bookmarks) => {
                 if bookmarks.is_empty() {
-                    log::debug!("从数据库查询书签后结果为空");
+                    log::debug!("Bookmarks are empty after querying database for them");
                 }
 
                 let mut map: BTreeMap<_, Vec<_>> = BTreeMap::default();
@@ -1323,7 +1323,7 @@ impl WorkspaceDb {
                 map
             }
             Err(e) => {
-                log::error!("加载书签失败: {}", e);
+                log::error!("Failed to load bookmarks: {}", e);
                 BTreeMap::default()
             }
         }
@@ -1473,14 +1473,14 @@ impl WorkspaceDb {
                     sql!(
                         DELETE FROM bookmarks WHERE workspace_id = ?1;
                     )
-                )?(workspace.id).context("清除旧书签")?;
+                )?(workspace.id).context("Clearing old bookmarks")?;
 
                 for (path, bookmarks) in workspace.bookmarks {
                     for bookmark in bookmarks {
                         conn.exec_bound(sql!(
                             INSERT INTO bookmarks (workspace_id, path, row)
                             VALUES (?1, ?2, ?3);
-                        ))?((workspace.id, path.as_ref(), bookmark.0)).context("插入书签")?;
+                        ))?((workspace.id, path.as_ref(), bookmark.0)).context("Inserting bookmark")?;
                     }
                 }
 
@@ -4514,7 +4514,7 @@ mod tests {
         for session_workspace in &locations {
             assert!(
                 session_workspace.window_id.is_some(),
-                "工作区 {:?} 缺少 window_id",
+                "workspace {:?} missing window_id",
                 session_workspace.workspace_id
             );
         }
@@ -4534,7 +4534,7 @@ mod tests {
         assert_eq!(
             by_window.len(),
             3,
-            "预期 3 个窗口组,实际得到 {}: {:?}",
+            "Expected 3 window groups, got {}: {:?}",
             by_window.len(),
             by_window
         );
@@ -4679,7 +4679,7 @@ mod tests {
         let serialized = db.workspace_for_id(workspace_id);
         assert!(
             serialized.is_some(),
-            "flush_serialization 应已将工作区持久化到数据库"
+            "flush_serialization should have persisted the workspace to DB"
         );
     }
 
@@ -4714,14 +4714,14 @@ mod tests {
             multi_workspace.read_with(cx, |mw, cx| mw.workspace().read(cx).database_id());
         assert!(
             new_workspace_db_id.is_some(),
-            "run_until_parked 后新工作区应具有 database_id"
+            "New workspace should have a database_id after run_until_parked"
         );
 
         // The multi-workspace state should record it as the active workspace.
         let state = cx.update(|_, cx| read_multi_workspace_state(window_id, cx));
         assert_eq!(
             state.active_workspace_id, new_workspace_db_id,
-            "序列化的 active_workspace_id 应与新工作区的 database_id 匹配"
+            "Serialized active_workspace_id should match the new workspace's database_id"
         );
 
         // The individual workspace row should exist with real data
@@ -4731,7 +4731,7 @@ mod tests {
         let serialized = db.workspace_for_id(workspace_id);
         assert!(
             serialized.is_some(),
-            "分配 database_id 后,新创建的工作区应在数据库中完全序列化"
+            "Newly created workspace should be fully serialized in the DB after database_id assignment"
         );
     }
 
@@ -4790,7 +4790,7 @@ mod tests {
 
         assert!(
             db.workspace_for_id(workspace2_db_id).is_some(),
-            "移除前工作区 2 应存在于数据库中"
+            "Workspace2 should exist in DB before removal"
         );
 
         // Remove workspace at index 1 (the second workspace).
@@ -4807,7 +4807,7 @@ mod tests {
         // restored as part of any future session.
         assert!(
             db.workspace_for_id(workspace2_db_id).is_some(),
-            "已移除工作区的数据库行应保留以用于最近项目"
+            "Removed workspace's DB row should be preserved for recent projects"
         );
 
         let session_workspaces = db
@@ -4820,7 +4820,7 @@ mod tests {
             .collect();
         assert!(
             !restored_ids.contains(&workspace2_db_id),
-            "已移除的工作区不应出现在会话恢复中"
+            "Removed workspace should not appear in session restoration"
         );
     }
 
@@ -4921,12 +4921,12 @@ mod tests {
         let restored_ids: Vec<WorkspaceId> = locations.iter().map(|sw| sw.workspace_id).collect();
         assert!(
             !restored_ids.contains(&ws2_id),
-            "已移除的工作区不应出现在会话恢复列表中。发现: {:?}",
+            "Removed workspace should not appear in session restoration list. Found: {:?}",
             restored_ids
         );
         assert!(
             restored_ids.contains(&ws1_id),
-            "剩余的工作区仍应出现在会话恢复列表中"
+            "Remaining workspace should still appear in session restoration list"
         );
     }
 
@@ -5015,7 +5015,7 @@ mod tests {
         // binding should have been cleared by the pending removal task.
         assert!(
             db.workspace_for_id(workspace2_db_id).is_some(),
-            "工作区行应保留以用于最近项目"
+            "Workspace row should be preserved for recent projects"
         );
 
         let session_workspaces = db
@@ -5028,7 +5028,7 @@ mod tests {
             .collect();
         assert!(
             !restored_ids.contains(&workspace2_db_id),
-            "待处理的移除任务应已清除会话绑定"
+            "Pending removal task should have cleared the session binding"
         );
     }
 
@@ -5054,7 +5054,7 @@ mod tests {
             multi_workspace.read_with(cx, |mw, cx| mw.workspace().read(cx).database_id());
         assert!(
             new_workspace_db_id.is_some(),
-            "run_until_parked 后,工作区应具有 database_id"
+            "After run_until_parked, the workspace should have a database_id"
         );
 
         let workspace_id = new_workspace_db_id.unwrap();
@@ -5063,7 +5063,7 @@ mod tests {
 
         assert!(
             db.workspace_for_id(workspace_id).is_some(),
-            "该工作区行应存在于数据库中"
+            "The workspace row should exist in the DB"
         );
 
         cx.simulate_resize(gpui::size(px(1024.0), px(768.0)));
@@ -5075,7 +5075,7 @@ mod tests {
 
         let serialized = db
             .workspace_for_id(workspace_id)
-            .expect("工作区行应仍然存在");
+            .expect("workspace row should still exist");
         assert!(
             serialized.window_bounds.is_some(),
             "The bounds observer should write bounds for the workspace's real DB ID, \
@@ -5113,10 +5113,10 @@ mod tests {
 
         let after = db
             .workspace_for_id(workspace_id)
-            .expect("flush_serialization 后工作区行应存在");
+            .expect("workspace row should exist after flush_serialization");
         assert!(
             !after.paths.is_empty(),
-            "flush_serialization 应已通过 save_workspace 写入路径"
+            "flush_serialization should have written paths via save_workspace"
         );
         assert!(
             after.window_bounds.is_some(),

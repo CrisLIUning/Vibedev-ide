@@ -200,7 +200,7 @@ impl TabStopMap {
         let handle = self.insertion_history[order.node_insertion_index].focus_handle();
         debug_assert!(
             handle.is_some(),
-            "顺序节点未对应任何元素,这是 GPUI 的 bug"
+            "The order node did not correspond to an element, this is a GPUI bug"
         );
         handle.cloned()
     }

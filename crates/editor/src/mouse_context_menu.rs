@@ -247,44 +247,44 @@ pub fn deploy_context_menu(
             let builder = menu
                 .on_blur_subscription(Subscription::new(|| {}))
                 .when(run_to_cursor, |builder| {
-                    builder.action("运行到光标处", Box::new(RunToCursor))
+                    builder.action("Run to Cursor", Box::new(RunToCursor))
                 })
                 .when(evaluate_selection && has_selections, |builder| {
-                    builder.action("执行选中内容", Box::new(EvaluateSelectedText))
+                    builder.action("Evaluate Selection", Box::new(EvaluateSelectedText))
                 })
                 .when(
                     run_to_cursor || (evaluate_selection && has_selections),
                     |builder| builder.separator(),
                 )
-                .action("转到定义", Box::new(GoToDefinition))
-                .action("转到声明", Box::new(GoToDeclaration))
-                .action("转到类型定义", Box::new(GoToTypeDefinition))
-                .action("转到实现", Box::new(GoToImplementation))
+                .action("Go to Definition", Box::new(GoToDefinition))
+                .action("Go to Declaration", Box::new(GoToDeclaration))
+                .action("Go to Type Definition", Box::new(GoToTypeDefinition))
+                .action("Go to Implementation", Box::new(GoToImplementation))
                 .action(
-                    "查找所有引用",
+                    "Find All References",
                     Box::new(FindAllReferences::default()),
                 )
                 .separator()
-                .action("重命名符号", Box::new(Rename))
-                .action("格式化缓冲区", Box::new(Format))
+                .action("Rename Symbol", Box::new(Rename))
+                .action("Format Buffer", Box::new(Format))
                 .when(format_selections, |cx| {
-                    cx.action("格式化选中内容", Box::new(FormatSelections))
+                    cx.action("Format Selections", Box::new(FormatSelections))
                 })
                 .action(
-                    "显示代码操作",
+                    "Show Code Actions",
                     Box::new(ToggleCodeActions {
                         deployed_from: None,
                         quick_launch: false,
                     }),
                 )
                 .when(!disable_ai && has_selections, |this| {
-                    this.action("添加到 Agent 对话线程", Box::new(AddSelectionToThread))
+                    this.action("Add to Agent Thread", Box::new(AddSelectionToThread))
                 })
                 .separator()
-                .action("剪切", Box::new(Cut))
-                .action("复制", Box::new(Copy))
-                .action("复制并去除空白", Box::new(CopyAndTrim))
-                .action("粘贴", Box::new(Paste))
+                .action("Cut", Box::new(Cut))
+                .action("Copy", Box::new(Copy))
+                .action("Copy and Trim", Box::new(CopyAndTrim))
+                .action("Paste", Box::new(Paste))
                 .separator()
                 .action_disabled_when(
                     !has_reveal_target,
@@ -292,24 +292,24 @@ pub fn deploy_context_menu(
                     Box::new(RevealInFileManager),
                 )
                 .when(is_markdown, |builder| {
-                    builder.action("打开 Markdown 预览", Box::new(OpenMarkdownPreview))
+                    builder.action("Open Markdown Preview", Box::new(OpenMarkdownPreview))
                 })
                 .when(is_svg, |builder| {
-                    builder.action("打开 SVG 预览", Box::new(OpenSvgPreview))
+                    builder.action("Open SVG Preview", Box::new(OpenSvgPreview))
                 })
                 .action_disabled_when(
                     !has_reveal_target,
-                    "在终端中打开",
+                    "Open in Terminal",
                     Box::new(OpenInTerminal),
                 )
                 .action_disabled_when(
                     !has_git_repo,
-                    "复制永久链接",
+                    "Copy Permalink",
                     Box::new(CopyPermalinkToLine),
                 )
                 .action_disabled_when(
                     !has_git_repo,
-                    "查看文件历史",
+                    "View File History",
                     Box::new(git::FileHistory),
                 );
             match focus {

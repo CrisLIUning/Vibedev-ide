@@ -162,7 +162,7 @@ impl Component for TabBar {
     }
 
     fn description() -> Option<&'static str> {
-        Some("包含标签页的水平栏,用于在不同视图或部分之间进行导航。")
+        Some("A horizontal bar containing tabs for navigation between different views or sections.")
     }
 
     fn preview(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
@@ -171,14 +171,14 @@ impl Component for TabBar {
                 .gap_6()
                 .children(vec![
                     example_group_with_title(
-                        "基本用法",
+                        "Basic Usage",
                         vec![
                             single_example(
-                                "空标签页栏",
+                                "Empty TabBar",
                                 TabBar::new("empty_tab_bar").into_any_element(),
                             ),
                             single_example(
-                                "带标签页",
+                                "With Tabs",
                                 TabBar::new("tab_bar_with_tabs")
                                     .child(Tab::new("tab1"))
                                     .child(Tab::new("tab2"))
@@ -188,15 +188,15 @@ impl Component for TabBar {
                         ],
                     ),
                     example_group_with_title(
-                        "带起始和结尾子元素",
+                        "With Start and End Children",
                         vec![single_example(
-                            "完整标签页栏",
+                            "Full TabBar",
                             TabBar::new("full_tab_bar")
-                                .start_child(Button::new("start_button", "启动"))
+                                .start_child(Button::new("start_button", "Start"))
                                 .child(Tab::new("tab1"))
                                 .child(Tab::new("tab2"))
                                 .child(Tab::new("tab3"))
-                                .end_child(Button::new("end_button", "结束"))
+                                .end_child(Button::new("end_button", "End"))
                                 .into_any_element(),
                         )],
                     ),

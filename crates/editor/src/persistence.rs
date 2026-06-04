@@ -377,7 +377,7 @@ VALUES {placeholders};
         path: Arc<Path>,
         folds: Vec<(usize, usize, String, String)>,
     ) -> Result<()> {
-        log::debug!("正在保存工作区 {workspace_id:?} 中文件 {path:?} 的折叠信息");
+        log::debug!("Saving folds for file {path:?} in workspace {workspace_id:?}");
         self.write(move |conn| {
             // Clear existing folds for this file
             conn.exec_bound(sql!(

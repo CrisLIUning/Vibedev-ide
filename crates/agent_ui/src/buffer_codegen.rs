@@ -525,13 +525,13 @@ impl CodegenAlternative {
             let tools = vec![
                 LanguageModelRequestTool {
                     name: REWRITE_SECTION_TOOL_NAME.to_string(),
-                    description: "将 <rewrite_this></rewrite_this> 标签中的文本替换为你的 replacement_text。".to_string(),
+                    description: "Replaces text in <rewrite_this></rewrite_this> tags with your replacement_text.".to_string(),
                     input_schema: language_model::tool_schema::root_schema_for::<RewriteSectionInput>(tool_input_format).to_value(),
                     use_input_streaming: false,
                 },
                 LanguageModelRequestTool {
                     name: FAILURE_MESSAGE_TOOL_NAME.to_string(),
-                    description: "当你无法完成任务时,使用此工具向用户提供消息。".to_string(),
+                    description: "Use this tool to provide a message to the user when you're unable to complete a task.".to_string(),
                     input_schema: language_model::tool_schema::root_schema_for::<FailureMessageInput>(tool_input_format).to_value(),
                     use_input_streaming: false,
                 },
@@ -1963,7 +1963,7 @@ mod tests {
         // counter, processing tool_2 would attempt replacement_text[N..] where
         // N > replacement_text.len(), panicking with index out of bounds.
         events_tx
-            .unbounded_send(rewrite_tool_use("tool_1", "较长的替换文本", true))
+            .unbounded_send(rewrite_tool_use("tool_1", "longer replacement text", true))
             .unwrap();
         events_tx
             .unbounded_send(rewrite_tool_use("tool_2", "short", true))
@@ -1975,8 +1975,8 @@ mod tests {
         cx.run_until_parked();
 
         // VIBEDEV: expected text is the concatenation of tool_1's replacement
-        // ("较长的替换文本") and tool_2's ("short"). A prior i18n pass mistranslated
-        // the literal "short" → "短" in this assertion, breaking the test; the
+        // ("longer replacement text") and tool_2's ("short"). A prior i18n pass mistranslated
+        // the literal "short" → "short" in this assertion, breaking the test; the
         // input still feeds "short", so the output must contain "short".
         assert_eq!(
             buffer.read_with(cx, |buffer, cx| buffer.snapshot(cx).text()),

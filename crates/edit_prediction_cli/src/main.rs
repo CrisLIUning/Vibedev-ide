@@ -345,7 +345,7 @@ impl std::str::FromStr for TeacherBackend {
             "gpt52" | "gpt" | "openai" => Ok(TeacherBackend::Gpt52),
             "v0114180editableregion" => Ok(TeacherBackend::Sonnet45),
             _ => anyhow::bail!(
-                "未知的教师后端 `{s}`。有效选项: sonnet45, sonnet46, gpt52"
+                "unknown teacher backend `{s}`. Valid options: sonnet45, sonnet46, gpt52"
             ),
         }
     }
@@ -475,7 +475,7 @@ fn parse_teacher_args(arg: Option<&str>) -> Result<(TeacherBackend, ZetaFormat),
         } else if let Ok(parsed_format) = ZetaFormat::parse(arg) {
             format = parsed_format;
         } else {
-            anyhow::bail!("未知的教师后端或 zeta 格式 `{arg}`");
+            anyhow::bail!("unknown teacher backend or zeta format `{arg}`");
         }
     }
 
@@ -597,7 +597,7 @@ fn deduplicate_examples(examples: &mut Vec<Example>, max_per_cluster: usize) {
     let mut seen_positions = HashSet::default();
     examples.retain(|example| seen_positions.insert(example.spec.cursor_position.clone()));
     log::info!(
-        "精确重复过滤: {total_before_exact} 个示例 → {} 个示例 (移除 {} 个)",
+        "exact duplicate filter: {total_before_exact} examples → {} examples ({} removed)",
         examples.len(),
         total_before_exact - examples.len(),
     );
@@ -667,7 +667,7 @@ fn deduplicate_examples(examples: &mut Vec<Example>, max_per_cluster: usize) {
 
     *examples = retained;
     log::info!(
-        "近似重复过滤: {total} 个示例 → {} 个示例 (移除 {} 个)",
+        "near-duplicate filter: {total} examples → {} examples ({} removed)",
         examples.len(),
         total - examples.len(),
     );
@@ -782,7 +782,7 @@ async fn load_examples(
 
     if let Some(0) = remaining_limit_for_snowflake {
         log::info!(
-            "跳过 Snowflake 输入,因为 --limit 已被示例文件满足"
+            "skipping Snowflake inputs because --limit is already satisfied by example files"
         );
     } else {
         let max_rows_per_timestamp = remaining_limit_for_snowflake;
@@ -960,7 +960,7 @@ fn resume_from_output(path: &PathBuf, examples: &mut Vec<Example>, command: &Com
     let already_processed = kept_hashes.len();
 
     eprintln!(
-        "恢复中: {}/{} 个示例已处理",
+        "Resuming: {}/{} examples already processed",
         already_processed, total
     );
 
@@ -989,7 +989,7 @@ fn main() {
     let output = args.output_path();
 
     if args.markdown && output.is_none() {
-        eprintln!("--markdown 需要 -o 来指定输出目录");
+        eprintln!("--markdown requires -o to specify the output directory");
         std::process::exit(1);
     }
 
@@ -1023,7 +1023,7 @@ fn main() {
                     }
                 }
                 println!(
-                    "成功导入 {} 个批次",
+                    "Successfully imported {} batch(es)",
                     import_args.batch_ids.len()
                 );
             });
@@ -1148,10 +1148,10 @@ fn main() {
 
                 // For --markdown mode, create the output directory if it doesn't exist
                 if args.markdown {
-                    let dir = output.as_ref().expect("--markdown 需要 -o");
+                    let dir = output.as_ref().expect("--markdown requires -o");
                     if !dir.exists() {
                         std::fs::create_dir_all(dir)
-                            .expect("无法创建 markdown 输出目录");
+                            .expect("Failed to create markdown output directory");
                     }
                 }
 
@@ -1318,12 +1318,12 @@ fn main() {
                                 if should_write {
                                     if args.markdown {
                                         let markdown_dir =
-                                            output.as_ref().expect("--markdown 需要 -o");
+                                            output.as_ref().expect("--markdown requires -o");
                                         let filename = format!("{}.md", example.spec.filename());
                                         let path = markdown_dir.join(&filename);
                                         let markdown = example.spec.to_markdown();
                                         std::fs::write(&path, &markdown)
-                                            .expect("无法写入 markdown 文件");
+                                            .expect("Failed to write markdown file");
                                     } else if let Some(ref mut sender) = output_sender.clone() {
                                         let line = serde_json::to_string(&example).unwrap();
                                         sender
@@ -1439,7 +1439,7 @@ fn main() {
 
                 // For --in-place, atomically rename temp file to original
                 if let Some(temp_path) = &in_place_temp_path {
-                    let final_path = output.as_ref().expect("in_place_temp_path 需要输出");
+                    let final_path = output.as_ref().expect("in_place_temp_path requires output");
                     std::fs::rename(temp_path, final_path)
                         .expect("Failed to rename temp file to final output");
                 }
@@ -1464,12 +1464,12 @@ fn rewrite_output(
     markdown: bool,
 ) -> anyhow::Result<()> {
     if markdown {
-        let dir = output_path.context("--markdown 需要 -o")?;
+        let dir = output_path.context("--markdown requires -o")?;
         for example in examples {
             let filename = format!("{}.md", example.spec.filename());
             let path = dir.join(&filename);
             let markdown = example.spec.to_markdown();
-            std::fs::write(&path, &markdown).context("无法写入 markdown 文件")?;
+            std::fs::write(&path, &markdown).context("Failed to write markdown file")?;
         }
     } else if let Some(path) = output_path {
         let file = OpenOptions::new()

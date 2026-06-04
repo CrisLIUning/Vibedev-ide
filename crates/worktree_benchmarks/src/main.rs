@@ -40,7 +40,7 @@ fn main() {
             let (files, directories) =
                 worktree.read_with(cx, |this, _| (this.file_count(), this.dir_count()));
             println!(
-                "{:?},包含 {directories} 个目录和 {files} 个文件",
+                "{:?} for {directories} directories and {files} files",
                 elapsed
             );
             cx.update(|cx| {

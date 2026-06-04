@@ -132,7 +132,7 @@ impl WindowsWindowState {
         let border_offset = WindowBorderOffset::default();
         let restore_from_minimized = None;
         let renderer = DirectXRenderer::new(hwnd, directx_devices, disable_direct_composition)
-            .context("创建 DirectX 渲染器")?;
+            .context("Creating DirectX renderer")?;
         let callbacks = Callbacks::default();
         let input_handler = None;
         let pending_surrogate = None;
@@ -145,7 +145,7 @@ impl WindowsWindowState {
         let initial_placement = None;
 
         let direct_manipulation = DirectManipulationHandler::new(hwnd, scale_factor)
-            .context("初始化 Direct Manipulation")?;
+            .context("initializing Direct Manipulation")?;
 
         Ok(Self {
             origin: Cell::new(origin),
@@ -203,7 +203,7 @@ impl WindowsWindowState {
                 ..Default::default()
             };
             GetWindowPlacement(self.hwnd, &mut placement)
-                .context("获取窗口位置失败")
+                .context("failed to get window placement")
                 .log_err();
             placement
         };
@@ -289,7 +289,7 @@ impl WindowsWindowInner {
                             WINDOW_STYLE(unsafe { get_window_long(this.hwnd, GWL_STYLE) } as _);
                         let mut rc = RECT::default();
                         unsafe { GetWindowRect(this.hwnd, &mut rc) }
-                            .context("获取窗口矩形失败")
+                            .context("failed to get window rect")
                             .log_err();
                         let _ = this.state.fullscreen.set(Some(StyleAndBounds {
                             style,
@@ -339,19 +339,19 @@ impl WindowsWindowInner {
         match open_status.state {
             WindowOpenState::Maximized => unsafe {
                 SetWindowPlacement(self.hwnd, &open_status.placement)
-                    .context("设置窗口位置失败")?;
+                    .context("failed to set window placement")?;
                 ShowWindowAsync(self.hwnd, SW_MAXIMIZE).ok()?;
             },
             WindowOpenState::Fullscreen => {
                 unsafe {
                     SetWindowPlacement(self.hwnd, &open_status.placement)
-                        .context("设置窗口位置失败")?
+                        .context("failed to set window placement")?
                 };
                 self.toggle_fullscreen();
             }
             WindowOpenState::Windowed => unsafe {
                 SetWindowPlacement(self.hwnd, &open_status.placement)
-                    .context("设置窗口位置失败")?;
+                    .context("failed to set window placement")?;
             },
         }
         Ok(())
@@ -477,7 +477,7 @@ impl WindowsWindow {
             None
         }
         .or_else(WindowsDisplay::primary_monitor)
-        .context("无法找到任何显示器")?;
+        .context("failed to find any monitor")?;
         let appearance = system_appearance().unwrap_or_default();
         let mut context = WindowCreateContext {
             inner: None,
@@ -618,7 +618,7 @@ impl PlatformWindow for WindowsWindow {
                         rect.bottom - rect.top,
                         SWP_NOMOVE,
                     )
-                    .context("无法设置窗口内容大小")
+                    .context("unable to set window content size")
                     .log_err();
                 }
             })
@@ -642,7 +642,7 @@ impl PlatformWindow for WindowsWindow {
         let point = unsafe {
             let mut point: POINT = std::mem::zeroed();
             GetCursorPos(&mut point)
-                .context("无法获取光标位置")
+                .context("unable to get cursor position")
                 .log_err();
             ScreenToClient(self.0.hwnd, &mut point).ok().log_err();
             point
@@ -689,15 +689,15 @@ impl PlatformWindow for WindowsWindow {
                     let main_icon;
                     match level {
                         PromptLevel::Info => {
-                            title = windows::core::w!("信息");
+                            title = windows::core::w!("Info");
                             main_icon = TD_INFORMATION_ICON;
                         }
                         PromptLevel::Warning => {
-                            title = windows::core::w!("警告");
+                            title = windows::core::w!("Warning");
                             main_icon = TD_WARNING_ICON;
                         }
                         PromptLevel::Critical => {
-                            title = windows::core::w!("严重");
+                            title = windows::core::w!("Critical");
                             main_icon = TD_ERROR_ICON;
                         }
                     };
@@ -735,7 +735,7 @@ impl PlatformWindow for WindowsWindow {
                     config.pfCallback = None;
                     let mut res = std::mem::zeroed();
                     let _ = TaskDialogIndirect(&config, Some(&mut res), None, None)
-                        .context("无法创建任务对话框")
+                        .context("unable to create task dialog")
                         .log_err();
 
                     if let Some(clicked) =
@@ -822,7 +822,7 @@ impl PlatformWindow for WindowsWindow {
 
     fn set_title(&mut self, title: &str) {
         unsafe { SetWindowTextW(self.0.hwnd, &HSTRING::from(title)) }
-            .inspect_err(|e| log::error!("设置标题失败: {e}"))
+            .inspect_err(|e| log::error!("Set title failed: {e}"))
             .ok();
     }
 
@@ -1337,7 +1337,7 @@ fn get_module_handle() -> HMODULE {
             windows::core::w!("ZedModule"),
             &mut h_module,
         )
-        .expect("无法获取模块句柄"); // this should never fail
+        .expect("Unable to get module handle"); // this should never fail
 
         h_module
     }
@@ -1352,7 +1352,7 @@ fn register_drag_drop(window: &Rc<WindowsWindowInner>) -> Result<()> {
     let drag_drop_handler: IDropTarget = handler.into();
     unsafe {
         RegisterDragDrop(window_handle, &drag_drop_handler)
-            .context("无法注册拖放事件")?;
+            .context("unable to register drag-drop event")?;
     }
     Ok(())
 }
@@ -1462,7 +1462,7 @@ fn set_window_composition_attribute(hwnd: HWND, color: Option<Color>, state: u32
             unsafe extern "system" fn(HWND, *mut WINDOWCOMPOSITIONATTRIBDATA) -> BOOL;
         let module_name = PCSTR::from_raw(c"user32.dll".as_ptr() as *const u8);
         if let Some(user32) = GetModuleHandleA(module_name)
-            .context("无法获取 user32.dll 句柄")
+            .context("Unable to get user32.dll handle")
             .log_err()
         {
             let func_name = PCSTR::from_raw(c"SetWindowCompositionAttribute".as_ptr() as *const u8);

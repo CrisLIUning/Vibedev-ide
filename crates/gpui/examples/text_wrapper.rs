@@ -35,7 +35,7 @@ impl Render for HelloWorld {
                             .border_1()
                             .border_color(gpui::red())
                             .text_ellipsis()
-                            .child("flex 1 中的较长文本"),
+                            .child("longer text in flex 1"),
                     )
                     .child(
                         div()
@@ -43,7 +43,7 @@ impl Render for HelloWorld {
                             .border_1()
                             .border_color(gpui::red())
                             .text_ellipsis()
-                            .child("短 flex"),
+                            .child("short flex"),
                     )
                     .child(
                         div()
@@ -52,7 +52,7 @@ impl Render for HelloWorld {
                             .border_color(gpui::red())
                             .text_ellipsis()
                             .w_full()
-                            .child("普通 div 中的短文本"),
+                            .child("A short text in normal div"),
                     ),
             )
             .child(
@@ -62,7 +62,7 @@ impl Render for HelloWorld {
                     .truncate()
                     .border_1()
                     .border_color(gpui::blue())
-                    .child("省略号: ".to_owned() + text),
+                    .child("ELLIPSIS: ".to_owned() + text),
             )
             .child(
                 div()
@@ -73,7 +73,7 @@ impl Render for HelloWorld {
                     .line_clamp(2)
                     .border_1()
                     .border_color(gpui::blue())
-                    .child("省略号 2 行: ".to_owned() + text),
+                    .child("ELLIPSIS 2 lines: ".to_owned() + text),
             )
             .child(
                 div()
@@ -83,7 +83,7 @@ impl Render for HelloWorld {
                     .text_overflow(TextOverflow::Truncate("".into()))
                     .border_1()
                     .border_color(gpui::green())
-                    .child("截断: ".to_owned() + text),
+                    .child("TRUNCATE: ".to_owned() + text),
             )
             .child(
                 div()
@@ -94,7 +94,7 @@ impl Render for HelloWorld {
                     .line_clamp(3)
                     .border_1()
                     .border_color(gpui::green())
-                    .child("截断 3 行: ".to_owned() + text),
+                    .child("TRUNCATE 3 lines: ".to_owned() + text),
             )
             .child(
                 div()
@@ -104,7 +104,7 @@ impl Render for HelloWorld {
                     .overflow_hidden()
                     .border_1()
                     .border_color(gpui::black())
-                    .child("不换行: ".to_owned() + text),
+                    .child("NOWRAP: ".to_owned() + text),
             )
             .child(div().text_xl().w_full().child(text))
     }

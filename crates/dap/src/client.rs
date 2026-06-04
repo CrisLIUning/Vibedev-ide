@@ -115,7 +115,7 @@ impl DebugAdapterClient {
             .insert(sequence_id, callback_tx)?;
 
         log::debug!(
-            "客户端 {} 发送 `{}` 请求,序列号: {}",
+            "Client {} send `{}` request with sequence_id: {}",
             self.id.0,
             R::COMMAND,
             sequence_id
@@ -128,7 +128,7 @@ impl DebugAdapterClient {
 
         let response = callback_rx.await??;
         log::debug!(
-            "客户端 {} 收到 `{}` 的响应,序列号: {}",
+            "Client {} received response for: `{}` sequence_id: {}",
             self.id.0,
             command,
             sequence_id
@@ -396,7 +396,7 @@ mod tests {
 
         assert!(
             called_event_handler.load(std::sync::atomic::Ordering::SeqCst),
-            "事件处理器未被调用"
+            "Event handler was not called"
         );
     }
 
@@ -459,7 +459,7 @@ mod tests {
 
         assert!(
             called_event_handler.load(std::sync::atomic::Ordering::SeqCst),
-            "事件处理器未被调用"
+            "Event handler was not called"
         );
     }
 }

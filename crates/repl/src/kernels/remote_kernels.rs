@@ -79,7 +79,7 @@ pub async fn list_remote_kernelspecs(
 
     anyhow::ensure!(
         response.status().is_success(),
-        "获取内核规格失败: {}",
+        "Failed to fetch kernel specs: {}",
         response.status()
     );
     let mut body = response.into_body();
@@ -293,7 +293,7 @@ impl RunningKernel for RemoteRunningKernel {
 
             anyhow::ensure!(
                 response.status().is_success(),
-                "关闭内核失败: {}",
+                "Failed to shutdown kernel: {}",
                 response.status()
             );
             Ok(())

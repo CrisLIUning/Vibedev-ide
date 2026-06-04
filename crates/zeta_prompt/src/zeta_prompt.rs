@@ -812,7 +812,7 @@ pub fn format_prompt_with_budget_for_format(
             let edit_history_section = format_edit_history_within_budget(
                 &input.events,
                 "<|file_sep|>",
-                "编辑历史",
+                "edit history",
                 remaining_budget,
                 max_edit_event_count_for_format(&format),
             );
@@ -2655,7 +2655,7 @@ pub mod hashline {
                     &case.editable_range,
                     case.cursor_offset,
                 );
-                assert_eq!(prompt, case.expected, "用例失败: {}", case.name);
+                assert_eq!(prompt, case.expected, "failed case: {}", case.name);
             }
         }
 
@@ -3026,7 +3026,7 @@ pub mod hashline {
 
             for case in &cases {
                 let result = hashline::apply_edit_commands(case.original, &case.model_output);
-                assert_eq!(result, case.expected, "用例失败: {}", case.name);
+                assert_eq!(result, case.expected, "failed case: {}", case.name);
             }
         }
 
@@ -3337,11 +3337,11 @@ pub mod hashline {
 
                 let commands =
                     hashline::patch_to_edit_commands(case.old, case.patch, cursor_offset)
-                        .unwrap_or_else(|e| panic!("用例失败 {}: {e}", case.name));
+                        .unwrap_or_else(|e| panic!("failed case {}: {e}", case.name));
 
                 assert!(
                     hashline::output_has_edit_commands(&commands),
-                    "用例 {}: 期望编辑命令,得到: {commands:?}",
+                    "case {}: expected edit commands, got: {commands:?}",
                     case.name,
                 );
 
@@ -3636,7 +3636,7 @@ pub mod v0304_variable_edit {
         let (prefix_context, rest) = model_output
             .split_once("<|fim_middle|>\n")
             .or_else(|| model_output.split_once("<|fim_middle|>"))
-            .ok_or_else(|| anyhow::anyhow!("模型输出中缺少 <|fim_middle|>"))?;
+            .ok_or_else(|| anyhow::anyhow!("missing <|fim_middle|> in model output"))?;
 
         let (new_text, suffix_context) = rest
             .split_once("<|fim_suffix|>\n")
@@ -3650,13 +3650,13 @@ pub mod v0304_variable_edit {
         };
 
         let prefix_offset = find_substring_at_line_boundary(context, prefix_context)
-            .ok_or_else(|| anyhow!("无法定位前缀行"))?
+            .ok_or_else(|| anyhow!("could not locate prefix lines"))?
             + prefix_context.len();
         let suffix_offset = if suffix_context.is_empty() {
             context.len()
         } else {
             find_substring_at_line_boundary(&context[prefix_offset..], suffix_context)
-                .ok_or_else(|| anyhow!("无法定位后缀行"))?
+                .ok_or_else(|| anyhow!("could not locate suffix lines"))?
                 + prefix_offset
         };
 
@@ -3706,7 +3706,7 @@ pub mod v0304_variable_edit {
             let context_pos = new_text[search_from..]
                 .find(&hunk.old_context)
                 .map(|pos| pos + search_from)
-                .ok_or_else(|| anyhow::anyhow!("无法在文本中定位代码块上下文"))?;
+                .ok_or_else(|| anyhow::anyhow!("could not locate hunk context in text"))?;
 
             if first_hunk_pos.is_none() {
                 first_hunk_pos = Some(context_pos);
@@ -4507,23 +4507,23 @@ pub mod v0304_variable_edit {
                 let output =
                     patch_to_variable_edit_output(case.old, case.patch, case.cursor_offset)
                         .unwrap_or_else(|error| {
-                            panic!("为 {} 转换补丁失败:{error}", case.name)
+                            panic!("failed converting patch for {}: {error}", case.name)
                         });
                 assert_eq!(
                     output, case.expected_variable_edit,
-                    "{} 的 patch->variable_edit 不匹配",
+                    "patch->variable_edit mismatch for {}",
                     case.name
                 );
 
                 let (edit_range, replacement) = apply_variable_edit(case.old, &output)
                     .unwrap_or_else(|error| {
-                        panic!("为 {} 应用 variable_edit 失败:{error}", case.name)
+                        panic!("failed applying variable_edit for {}: {error}", case.name)
                     });
                 let mut edited_by_variable_edit = case.old.to_string();
                 edited_by_variable_edit.replace_range(edit_range, &replacement);
                 assert_eq!(
                     edited_by_variable_edit, case.expected_after_apply,
-                    "{} 的 variable_edit 应用不匹配",
+                    "variable_edit apply mismatch for {}",
                     case.name
                 );
 
@@ -4531,7 +4531,7 @@ pub mod v0304_variable_edit {
                     apply_variable_edit(case.old, case.expected_variable_edit).unwrap_or_else(
                         |error| {
                             panic!(
-                                "为 {} 应用预期的 variable_edit 失败:{error}",
+                                "failed applying expected variable_edit for {}: {error}",
                                 case.name
                             )
                         },
@@ -4541,7 +4541,7 @@ pub mod v0304_variable_edit {
                     .replace_range(expected_edit_range, &expected_replacement);
                 assert_eq!(
                     edited_by_expected_variable_edit, case.expected_after_apply,
-                    "{} 的预期 variable_edit 应用不匹配",
+                    "expected variable_edit apply mismatch for {}",
                     case.name
                 );
             }
@@ -5306,14 +5306,14 @@ mod tests {
         input.active_buffer_diagnostics = vec![
             ActiveBufferDiagnostic {
                 severity: Some(1),
-                message: "缺少分号".to_string(),
+                message: "missing semicolon".to_string(),
                 snippet: "let value = 1".to_string(),
                 snippet_buffer_row_range: 1..2,
                 diagnostic_range_in_snippet: 12..13,
             },
             ActiveBufferDiagnostic {
                 severity: Some(2),
-                message: "文件级警告".to_string(),
+                message: "file-level warning".to_string(),
                 snippet: String::new(),
                 snippet_buffer_row_range: 0..0,
                 diagnostic_range_in_snippet: 0..0,
@@ -5322,7 +5322,7 @@ mod tests {
 
         let prompt =
             format_prompt_with_budget_for_format(&input, ZetaFormat::V0420Diagnostics, 10000)
-                .expect("v0420 提示词格式化应该成功");
+                .expect("v0420 prompt formatting should succeed");
 
         assert_eq!(
             prompt,
@@ -5369,7 +5369,7 @@ mod tests {
             format_prompt_with_budget_for_format(&input, ZetaFormat::V0317SeedMultiRegions, 4096);
 
         assert!(prompt.is_some());
-        let prompt = prompt.expect("v0317 应在关联文件数量较多时生成提示词");
+        let prompt = prompt.expect("v0317 should produce a prompt under high related-file count");
         assert!(prompt.contains("test.rs"));
         assert!(prompt.contains(CURSOR_MARKER));
     }
@@ -5772,7 +5772,7 @@ mod tests {
         let edit_history_section = format_edit_history_within_budget(
             &input.events,
             "<|file_sep|>",
-            "编辑历史",
+            "edit history",
             usize::MAX,
             5,
         );
@@ -5801,7 +5801,7 @@ mod tests {
         let edit_history_section = format_edit_history_within_budget(
             &input.events,
             "<|file_sep|>",
-            "编辑历史",
+            "edit history",
             usize::MAX,
             2,
         );
@@ -5826,7 +5826,7 @@ mod tests {
         let edit_history_section = format_edit_history_within_budget(
             &input.events,
             "<|file_sep|>",
-            "编辑历史",
+            "edit history",
             usize::MAX,
             0,
         );

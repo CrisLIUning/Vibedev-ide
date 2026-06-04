@@ -31,7 +31,7 @@ impl Component for DecoratedIcon {
 
     fn description() -> Option<&'static str> {
         Some(
-            "带有可选装饰覆盖层(如 X、三角形或圆点)的图标,该覆盖层可相对于图标定位",
+            "An icon with an optional decoration overlay (like an X, triangle, or dot) that can be positioned relative to the icon",
         )
     }
 
@@ -73,20 +73,20 @@ impl Component for DecoratedIcon {
             v_flex()
                 .gap_6()
                 .children(vec![example_group_with_title(
-                    "装饰",
+                    "Decorations",
                     vec![
                         single_example(
-                            "无装饰",
+                            "No Decoration",
                             DecoratedIcon::new(Icon::new(IconName::FileDoc), None)
                                 .into_any_element(),
                         ),
                         single_example(
-                            "X 装饰",
+                            "X Decoration",
                             DecoratedIcon::new(Icon::new(IconName::FileDoc), Some(decoration_x))
                                 .into_any_element(),
                         ),
                         single_example(
-                            "三角形装饰",
+                            "Triangle Decoration",
                             DecoratedIcon::new(
                                 Icon::new(IconName::FileDoc),
                                 Some(decoration_triangle),
@@ -94,7 +94,7 @@ impl Component for DecoratedIcon {
                             .into_any_element(),
                         ),
                         single_example(
-                            "圆点装饰",
+                            "Dot Decoration",
                             DecoratedIcon::new(Icon::new(IconName::FileDoc), Some(decoration_dot))
                                 .into_any_element(),
                         ),

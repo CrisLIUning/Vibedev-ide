@@ -3274,7 +3274,7 @@ fn section_motion(
                 offset..map.buffer_snapshot().len()
             };
 
-            // we set a max start depth here because we want a section to only be "顶层"
+            // we set a max start depth here because we want a section to only be "top level"
             // similar to vim's default of '{' in the first column.
             // (and without it, ]] at the start of editor.rs is -very- slow)
             let mut possibilities = map

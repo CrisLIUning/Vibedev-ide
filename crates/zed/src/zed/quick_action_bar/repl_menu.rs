@@ -101,7 +101,7 @@ impl QuickActionBar {
                                 h_flex()
                                     .child(
                                         Label::new(format!(
-                                            "内核: {} ({})",
+                                            "kernel: {} ({})",
                                             menu_state.kernel_name, menu_state.kernel_language
                                         ))
                                         .size(LabelSize::Small)
@@ -135,9 +135,9 @@ impl QuickActionBar {
                     .custom_entry(
                         move |_window, _cx| {
                             Label::new(if has_nonempty_selection {
-                                "运行选中内容"
+                                "Run Selection"
                             } else {
-                                "运行当前行"
+                                "Run Line"
                             })
                             .into_any_element()
                         },
@@ -150,7 +150,7 @@ impl QuickActionBar {
                     )
                     .custom_entry(
                         move |_window, _cx| {
-                            Label::new("中断")
+                            Label::new("Interrupt")
                                 .size(LabelSize::Small)
                                 .color(Color::Error)
                                 .into_any_element()
@@ -164,7 +164,7 @@ impl QuickActionBar {
                     )
                     .custom_entry(
                         move |_window, _cx| {
-                            Label::new("清空输出")
+                            Label::new("Clear Outputs")
                                 .size(LabelSize::Small)
                                 .color(Color::Muted)
                                 .into_any_element()
@@ -179,7 +179,7 @@ impl QuickActionBar {
                     .separator()
                     .custom_entry(
                         move |_window, _cx| {
-                            Label::new("关闭内核")
+                            Label::new("Shut Down Kernel")
                                 .size(LabelSize::Small)
                                 .color(Color::Error)
                                 .into_any_element()
@@ -193,7 +193,7 @@ impl QuickActionBar {
                     )
                     .custom_entry(
                         move |_window, _cx| {
-                            Label::new("重启内核")
+                            Label::new("Restart Kernel")
                                 .size(LabelSize::Small)
                                 .color(Color::Error)
                                 .into_any_element()
@@ -205,9 +205,9 @@ impl QuickActionBar {
                         },
                     )
                     .separator()
-                    .action("查看会话", Box::new(repl::Sessions))
+                    .action("View Sessions", Box::new(repl::Sessions))
                     // TODO: Add shut down all kernels action
-                    // .action("关闭所有内核", Box::new(gpui::NoAction))
+                    // .action("Shut Down all Kernels", Box::new(gpui::NoAction))
                 })
                 .into()
             })
@@ -220,7 +220,7 @@ impl QuickActionBar {
                     )
                     .width(rems(1.))
                     .disabled(menu_state.popover_disabled),
-                Tooltip::text("REPL 菜单"),
+                Tooltip::text("REPL Menu"),
             );
 
         let button = ButtonLike::new_rounded_left("toggle_repl_icon")
@@ -257,7 +257,7 @@ impl QuickActionBar {
         cx: &mut Context<Self>,
     ) -> Option<AnyElement> {
         let tooltip: SharedString =
-            SharedString::from(format!("为 {} 启动 REPL", kernel_specification.name()));
+            SharedString::from(format!("Start REPL for {}", kernel_specification.name()));
 
         Some(
             h_flex()
@@ -403,7 +403,7 @@ fn session_state(session: Entity<Session>, cx: &mut App) -> ReplMenuState {
 
     let fill_fields = || {
         ReplMenuState {
-            tooltip: "无运行内容".into(),
+            tooltip: "Nothing running".into(),
             icon: IconName::ReplNeutral,
             icon_color: Color::Default,
             icon_is_animating: false,
@@ -428,33 +428,33 @@ fn session_state(session: Entity<Session>, cx: &mut App) -> ReplMenuState {
             ..fill_fields()
         };
 
-    let starting = || transitional(format!("{} 正在启动", kernel_name).into(), true, true);
-    let restarting = || transitional(format!("正在重启 {}", kernel_name).into(), true, true);
+    let starting = || transitional(format!("{} is starting", kernel_name).into(), true, true);
+    let restarting = || transitional(format!("Restarting {}", kernel_name).into(), true, true);
     let shutting_down = || {
         transitional(
-            format!("{} 正在关闭", kernel_name).into(),
+            format!("{} is shutting down", kernel_name).into(),
             false,
             true,
         )
     };
     let auto_restarting = || {
         transitional(
-            format!("正在自动重启 {}", kernel_name).into(),
+            format!("Auto-restarting {}", kernel_name).into(),
             true,
             true,
         )
     };
-    let unknown = || transitional(format!("{} 状态未知", kernel_name).into(), false, true);
+    let unknown = || transitional(format!("{} state unknown", kernel_name).into(), false, true);
     let other = |state: &str| {
         transitional(
-            format!("{} 状态: {}", kernel_name, state).into(),
+            format!("{} state: {}", kernel_name, state).into(),
             false,
             true,
         )
     };
 
     let shutdown = || ReplMenuState {
-        tooltip: "无运行内容".into(),
+        tooltip: "Nothing running".into(),
         icon: IconName::ReplNeutral,
         icon_color: Color::Default,
         icon_is_animating: false,
@@ -468,13 +468,13 @@ fn session_state(session: Entity<Session>, cx: &mut App) -> ReplMenuState {
         Kernel::Restarting => restarting(),
         Kernel::RunningKernel(kernel) => match &kernel.execution_state() {
             ExecutionState::Idle => ReplMenuState {
-                tooltip: format!("在 {} ({}) 上运行代码", kernel_name, kernel_language).into(),
+                tooltip: format!("Run code on {} ({})", kernel_name, kernel_language).into(),
                 indicator: Some(Indicator::dot().color(Color::Success)),
                 status: session.kernel.status(),
                 ..fill_fields()
             },
             ExecutionState::Busy => ReplMenuState {
-                tooltip: format!("中断 {} ({})", kernel_name, kernel_language).into(),
+                tooltip: format!("Interrupt {} ({})", kernel_name, kernel_language).into(),
                 icon_is_animating: true,
                 popover_disabled: false,
                 indicator: None,
@@ -491,7 +491,7 @@ fn session_state(session: Entity<Session>, cx: &mut App) -> ReplMenuState {
         },
         Kernel::StartingKernel(_) => starting(),
         Kernel::ErroredLaunch(e) => ReplMenuState {
-            tooltip: format!("内核 {} 出错: {}", kernel_name, e).into(),
+            tooltip: format!("Error with kernel {}: {}", kernel_name, e).into(),
             popover_disabled: false,
             indicator: Some(Indicator::dot().color(Color::Error)),
             status: session.kernel.status(),

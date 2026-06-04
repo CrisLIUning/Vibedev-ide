@@ -16,7 +16,7 @@ fn migrate_one(obj: &mut serde_json::Map<String, Value>) -> Result<()> {
         Value::Bool(true) => Value::String("enabled".to_string()),
         Value::Bool(false) => Value::String("disabled".to_string()),
         Value::String(s) if s == "enabled" || s == "disabled" || s == "wrapped" => return Ok(()),
-        _ => anyhow::bail!("预期 relative_line_numbers 为布尔值"),
+        _ => anyhow::bail!("Expected relative_line_numbers to be a boolean"),
     };
     Ok(())
 }

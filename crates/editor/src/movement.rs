@@ -1,5 +1,5 @@
 //! Movement module contains helper functions for calculating intended position
-//! in editor given a given motion (e.g. it handles converting a "向左移动" command into coordinates in editor). It is exposed mostly for use by vim crate.
+//! in editor given a given motion (e.g. it handles converting a "move left" command into coordinates in editor). It is exposed mostly for use by vim crate.
 
 use super::{Bias, DisplayPoint, DisplaySnapshot, SelectionGoal, ToDisplayPoint};
 use crate::{
@@ -954,7 +954,7 @@ mod tests {
             let expected = display_points[0];
             if actual != expected {
                 eprintln!(
-                    "previous_word_start 不匹配 '{}': 实际={:?}, 预期={:?}",
+                    "previous_word_start mismatch for '{}': actual={:?}, expected={:?}",
                     marked_text, actual, expected
                 );
             }
@@ -1124,7 +1124,7 @@ mod tests {
                 .buffer_snapshot()
                 .offset_to_point(MultiBufferOffset(5))
                 .to_display_point(&snapshot),
-            "查找边界时不应在嵌入层处停止"
+            "Should not stop at inlays when looking for boundaries"
         );
     }
 
@@ -1138,7 +1138,7 @@ mod tests {
             let expected = display_points[1];
             if actual != expected {
                 eprintln!(
-                    "next_word_end 不匹配 '{}': 实际={:?}, 预期={:?}",
+                    "next_word_end mismatch for '{}': actual={:?}, expected={:?}",
                     marked_text, actual, expected
                 );
             }

@@ -168,7 +168,7 @@ impl ApplicationMenu {
                         )
                         .style(ButtonStyle::Subtle)
                         .icon_size(IconSize::Small),
-                        Tooltip::text("打开应用程序菜单"),
+                        Tooltip::text("Open Application Menu"),
                     )
                     .with_handle(handle),
             )

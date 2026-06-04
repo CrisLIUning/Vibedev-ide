@@ -70,7 +70,7 @@ impl PackageJsonData {
     fn fill_task_templates(&self, task_templates: &mut TaskTemplates) {
         if self.jest_package_path.is_some() {
             task_templates.0.push(TaskTemplate {
-                label: "jest 文件测试".to_owned(),
+                label: "jest file test".to_owned(),
                 command: TYPESCRIPT_RUNNER_VARIABLE.template_value(),
                 args: vec![
                     "exec".to_owned(),
@@ -83,7 +83,7 @@ impl PackageJsonData {
                 ..TaskTemplate::default()
             });
             task_templates.0.push(TaskTemplate {
-                label: format!("jest 测试 {}", VariableName::Symbol.template_value()),
+                label: format!("jest test {}", VariableName::Symbol.template_value()),
                 command: TYPESCRIPT_RUNNER_VARIABLE.template_value(),
                 args: vec![
                     "exec".to_owned(),
@@ -109,7 +109,7 @@ impl PackageJsonData {
 
         if self.vitest_package_path.is_some() {
             task_templates.0.push(TaskTemplate {
-                label: format!("{} 文件测试", "vitest".to_owned()),
+                label: format!("{} file test", "vitest".to_owned()),
                 command: TYPESCRIPT_RUNNER_VARIABLE.template_value(),
                 args: vec![
                     "exec".to_owned(),
@@ -124,7 +124,7 @@ impl PackageJsonData {
             });
             task_templates.0.push(TaskTemplate {
                 label: format!(
-                    "{} 测试 {}",
+                    "{} test {}",
                     "vitest".to_owned(),
                     VariableName::Symbol.template_value(),
                 ),
@@ -154,7 +154,7 @@ impl PackageJsonData {
 
         if self.mocha_package_path.is_some() {
             task_templates.0.push(TaskTemplate {
-                label: format!("{} 文件测试", "mocha".to_owned()),
+                label: format!("{} file test", "mocha".to_owned()),
                 command: TYPESCRIPT_RUNNER_VARIABLE.template_value(),
                 args: vec![
                     "exec".to_owned(),
@@ -167,7 +167,7 @@ impl PackageJsonData {
             });
             task_templates.0.push(TaskTemplate {
                 label: format!(
-                    "{} 测试 {}",
+                    "{} test {}",
                     "mocha".to_owned(),
                     VariableName::Symbol.template_value(),
                 ),
@@ -192,7 +192,7 @@ impl PackageJsonData {
 
         if self.jasmine_package_path.is_some() {
             task_templates.0.push(TaskTemplate {
-                label: format!("{} 文件测试", "jasmine".to_owned()),
+                label: format!("{} file test", "jasmine".to_owned()),
                 command: TYPESCRIPT_RUNNER_VARIABLE.template_value(),
                 args: vec![
                     "exec".to_owned(),
@@ -205,7 +205,7 @@ impl PackageJsonData {
             });
             task_templates.0.push(TaskTemplate {
                 label: format!(
-                    "{} 测试 {}",
+                    "{} test {}",
                     "jasmine".to_owned(),
                     VariableName::Symbol.template_value(),
                 ),
@@ -229,14 +229,14 @@ impl PackageJsonData {
 
         if self.bun_package_path.is_some() {
             task_templates.0.push(TaskTemplate {
-                label: format!("{} 文件测试", "bun 测试".to_owned()),
+                label: format!("{} file test", "bun test".to_owned()),
                 command: "bun".to_owned(),
                 args: vec!["test".to_owned(), VariableName::File.template_value()],
                 cwd: Some(TYPESCRIPT_BUN_PACKAGE_PATH_VARIABLE.template_value()),
                 ..TaskTemplate::default()
             });
             task_templates.0.push(TaskTemplate {
-                label: format!("bun 测试 {}", VariableName::Symbol.template_value(),),
+                label: format!("bun test {}", VariableName::Symbol.template_value(),),
                 command: "bun".to_owned(),
                 args: vec![
                     "test".to_owned(),
@@ -256,7 +256,7 @@ impl PackageJsonData {
 
         if self.node_package_path.is_some() {
             task_templates.0.push(TaskTemplate {
-                label: format!("{} 文件测试", "node 测试".to_owned()),
+                label: format!("{} file test", "node test".to_owned()),
                 command: "node".to_owned(),
                 args: vec!["--test".to_owned(), VariableName::File.template_value()],
                 tags: vec![
@@ -268,7 +268,7 @@ impl PackageJsonData {
                 ..TaskTemplate::default()
             });
             task_templates.0.push(TaskTemplate {
-                label: format!("node 测试 {}", VariableName::Symbol.template_value()),
+                label: format!("node test {}", VariableName::Symbol.template_value()),
                 command: "node".to_owned(),
                 args: vec![
                     "--test".to_owned(),
@@ -379,11 +379,11 @@ impl TypeScriptContextProvider {
                 None => {
                     let package_json_string =
                         fs.load(&package_json_path).await.with_context(|| {
-                            format!("从 {package_json_path:?} 加载 package.json")
+                            format!("loading package.json from {package_json_path:?}")
                         })?;
                     let package_json: HashMap<String, serde_json_lenient::Value> =
                         serde_json_lenient::from_str(&package_json_string).with_context(|| {
-                            format!("解析 {package_json_path:?} 中的 package.json")
+                            format!("parsing package.json from {package_json_path:?}")
                         })?;
                     let new_data =
                         PackageJsonData::new(package_json_path.as_path().into(), package_json);
@@ -448,7 +448,7 @@ impl ContextProvider for TypeScriptContextProvider {
             let mut task_templates = TaskTemplates(Vec::new());
             task_templates.0.push(TaskTemplate {
                 label: format!(
-                    "执行选中内容 {}",
+                    "execute selection {}",
                     VariableName::SelectedText.template_value()
                 ),
                 command: "node".to_owned(),
@@ -465,7 +465,7 @@ impl ContextProvider for TypeScriptContextProvider {
                 }
                 Err(e) => {
                     log::error!(
-                        "读取工作树 {file_relative_path:?} 的 package.json 失败: {e:#}"
+                        "Failed to read package.json for worktree {file_relative_path:?}: {e:#}"
                     );
                 }
             }
@@ -1521,19 +1521,19 @@ mod tests {
             task_templates,
             [
                 (
-                    "vitest 文件测试".into(),
+                    "vitest file test".into(),
                     Some("$ZED_CUSTOM_TYPESCRIPT_VITEST_PACKAGE_PATH".into()),
                 ),
                 (
-                    "vitest 测试 $ZED_SYMBOL".into(),
+                    "vitest test $ZED_SYMBOL".into(),
                     Some("$ZED_CUSTOM_TYPESCRIPT_VITEST_PACKAGE_PATH".into()),
                 ),
                 (
-                    "mocha 文件测试".into(),
+                    "mocha file test".into(),
                     Some("$ZED_CUSTOM_TYPESCRIPT_MOCHA_PACKAGE_PATH".into()),
                 ),
                 (
-                    "mocha 测试 $ZED_SYMBOL".into(),
+                    "mocha test $ZED_SYMBOL".into(),
                     Some("$ZED_CUSTOM_TYPESCRIPT_MOCHA_PACKAGE_PATH".into()),
                 ),
                 (
@@ -1660,11 +1660,11 @@ mod tests {
 
         let node_test_index = test_tasks
             .iter()
-            .position(|label| label.contains("node 测试"));
+            .position(|label| label.contains("node test"));
         let jest_test_index = test_tasks.iter().position(|label| label.contains("jest"));
         let bun_test_index = test_tasks
             .iter()
-            .position(|label| label.contains("bun 测试"));
+            .position(|label| label.contains("bun test"));
 
         assert!(
             node_test_index.is_some(),

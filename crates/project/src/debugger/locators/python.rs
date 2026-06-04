@@ -91,6 +91,6 @@ impl DapLocator for PythonLocator {
     }
 
     async fn run(&self, _: SpawnInTerminal, _executor: BackgroundExecutor) -> Result<DebugRequest> {
-        bail!("Python 定位器不应要求运行 DapLocator::run");
+        bail!("Python locator should not require DapLocator::run to be ran");
     }
 }

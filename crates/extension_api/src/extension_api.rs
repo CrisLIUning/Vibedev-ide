@@ -79,7 +79,7 @@ pub trait Extension: Send + Sync {
         _language_server_id: &LanguageServerId,
         _worktree: &Worktree,
     ) -> Result<Command> {
-        Err("`language_server_command` 未实现".to_string())
+        Err("`language_server_command` not implemented".to_string())
     }
 
     /// Returns the initialization options to pass to the specified language server.
@@ -176,7 +176,7 @@ pub trait Extension: Send + Sync {
         _args: Vec<String>,
         _worktree: Option<&Worktree>,
     ) -> Result<SlashCommandOutput, String> {
-        Err("`run_slash_command` 未实现".to_string())
+        Err("`run_slash_command` not implemented".to_string())
     }
 
     /// Returns the command used to start a context server.
@@ -185,7 +185,7 @@ pub trait Extension: Send + Sync {
         _context_server_id: &ContextServerId,
         _project: &Project,
     ) -> Result<Command> {
-        Err("`context_server_command` 未实现".to_string())
+        Err("`context_server_command` not implemented".to_string())
     }
 
     /// Returns the configuration options for the specified context server.
@@ -213,7 +213,7 @@ pub trait Extension: Send + Sync {
         _package: String,
         _database: &KeyValueStore,
     ) -> Result<(), String> {
-        Err("`index_docs` 未实现".to_string())
+        Err("`index_docs` not implemented".to_string())
     }
 
     /// Returns the debug adapter binary for the specified adapter name and configuration.
@@ -224,7 +224,7 @@ pub trait Extension: Send + Sync {
         _user_provided_debug_adapter_path: Option<String>,
         _worktree: &Worktree,
     ) -> Result<DebugAdapterBinary, String> {
-        Err("`get_dap_binary` 未实现".to_string())
+        Err("`get_dap_binary` not implemented".to_string())
     }
 
     /// Determines whether the specified adapter configuration should *launch* a new debuggee process
@@ -235,14 +235,14 @@ pub trait Extension: Send + Sync {
         _adapter_name: String,
         _config: serde_json::Value,
     ) -> Result<StartDebuggingRequestArgumentsRequest, String> {
-        Err("`dap_request_kind` 未实现".to_string())
+        Err("`dap_request_kind` not implemented".to_string())
     }
     /// Converts a high-level definition of a debug scenario (originating in a new session UI) to a "low-level" configuration suitable for a particular adapter.
     ///
     /// In layman's terms: given a program, list of arguments, current working directory and environment variables,
     /// create a configuration that can be used to start a debug session.
     fn dap_config_to_scenario(&mut self, _config: DebugConfig) -> Result<DebugScenario, String> {
-        Err("`dap_config_to_scenario` 未实现".to_string())
+        Err("`dap_config_to_scenario` not implemented".to_string())
     }
 
     /// Locators are entities that convert a Zed task into a debug scenario.
@@ -279,7 +279,7 @@ pub trait Extension: Send + Sync {
         _locator_name: String,
         _build_task: TaskTemplate,
     ) -> Result<DebugRequest, String> {
-        Err("`run_dap_locator` 未实现".to_string())
+        Err("`run_dap_locator` not implemented".to_string())
     }
 }
 

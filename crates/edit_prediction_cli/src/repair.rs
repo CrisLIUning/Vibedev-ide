@@ -46,17 +46,17 @@ pub fn print_report(examples: &[Example], confidence_threshold: u8) {
     let needed_repair = total - no_repair_needed;
 
     eprintln!();
-    eprintln!("修复摘要({total} 个示例):");
+    eprintln!("Repair summary ({total} examples):");
     eprintln!(
-        "  {no_repair_needed}/{total} 无需修复(置信度 > {confidence_threshold})"
+        "  {no_repair_needed}/{total} didn't need repair (confidence > {confidence_threshold})"
     );
     if needed_repair > 0 {
-        eprintln!("  {needed_repair}/{total} 需要修复:");
+        eprintln!("  {needed_repair}/{total} needed repair:");
         if repaired > 0 {
-            eprintln!("    {repaired} 个修复成功");
+            eprintln!("    {repaired} repaired successfully");
         }
         if repair_failed > 0 {
-            eprintln!("    {repair_failed} 个修复失败");
+            eprintln!("    {repair_failed} failed to repair");
         }
     }
 }
@@ -91,7 +91,7 @@ fn model_for_backend(backend: BatchProvider) -> &'static str {
 fn build_qa_feedback(example: &Example) -> Option<String> {
     let qa = example.qa.first()?.as_ref()?;
 
-    let qa_reasoning = qa.reasoning.as_deref().unwrap_or("未提供推理");
+    let qa_reasoning = qa.reasoning.as_deref().unwrap_or("No reasoning provided");
     let reverts_edits = qa
         .reverts_edits
         .map_or("unknown", |v| if v { "yes" } else { "no" });
@@ -151,7 +151,7 @@ fn build_score_feedback(example: &Example) -> Option<String> {
     }
 
     let mut feedback = String::from(
-        "没有人工质量评估,但自动评分标记了潜在问题:\n\n",
+        "No human quality assessment is available, but automated scoring flagged potential issues:\n\n",
     );
     for issue in &issues {
         feedback.push_str(&format!("- {issue}\n"));
@@ -172,15 +172,15 @@ pub fn build_repair_message(example: &Example) -> Result<String> {
     let prediction = example
         .predictions
         .first()
-        .context("没有可用的预测")?;
+        .context("no predictions available")?;
     let actual_patch = prediction
         .actual_patch
         .as_ref()
-        .context("没有可用的 actual_patch(请先运行 predict)")?;
+        .context("no actual_patch available (run predict first)")?;
 
     let quality_feedback = build_qa_feedback(example)
         .or_else(|| build_score_feedback(example))
-        .context("没有可用的质量反馈(需要 QA 结果或计算得分)")?;
+        .context("no quality feedback available (need either QA results or computed scores)")?;
 
     let actual_patch_word_diff = unified_to_word_diff(actual_patch);
 
@@ -246,7 +246,7 @@ pub fn parse(example: &Example, actual_output: &str) -> Result<(String, Option<A
         let original = example
             .predictions
             .first()
-            .context("没有可保留的原始预测")?;
+            .context("no original prediction to keep")?;
         let patch = original.actual_patch.clone().unwrap_or_default();
         let cursor = original.actual_cursor.clone();
         return Ok((patch, cursor));
@@ -288,30 +288,30 @@ pub async fn run_repair(
         return Ok(());
     }
 
-    run_parse_output(example).context("执行 run_parse_output 失败")?;
+    run_parse_output(example).context("Failed to execute run_parse_output")?;
 
     if example.prompt_inputs.is_none() {
-        anyhow::bail!("缺少 prompt_inputs(请先运行上下文检索)");
+        anyhow::bail!("prompt_inputs missing (run context retrieval first)");
     }
 
     if example.predictions.is_empty() {
-        anyhow::bail!("没有可用的预测(请先运行 predict)");
+        anyhow::bail!("no predictions available (run predict first)");
     }
 
     let teacher_prompt = example
         .prompt
         .as_ref()
-        .context("缺少提示词(请先运行 format_prompt)")?;
+        .context("prompt missing (run format_prompt first)")?;
 
     let teacher_response = &example.predictions[0].actual_output;
     if teacher_response.is_empty() {
-        anyhow::bail!("教师响应为空(请先运行 predict)");
+        anyhow::bail!("teacher response is empty (run predict first)");
     }
 
     let step_progress = example_progress.start(Step::Repair);
 
     let model = model_for_backend(args.backend);
-    let repair_message = build_repair_message(example).context("构建修复消息失败")?;
+    let repair_message = build_repair_message(example).context("Failed to build repair message")?;
 
     step_progress.set_substatus("generating");
 
@@ -319,12 +319,12 @@ pub async fn run_repair(
         BatchProvider::Anthropic => {
             let client = if args.no_batch {
                 ANTHROPIC_CLIENT_PLAIN.get_or_init(|| {
-                    AnthropicClient::plain().expect("无法创建 Anthropic 客户端")
+                    AnthropicClient::plain().expect("Failed to create Anthropic client")
                 })
             } else {
                 ANTHROPIC_CLIENT_BATCH.get_or_init(|| {
                     AnthropicClient::batch(&LLM_CACHE_DB)
-                        .expect("无法创建 Anthropic 客户端")
+                        .expect("Failed to create Anthropic client")
                 })
             };
 
@@ -372,10 +372,10 @@ pub async fn run_repair(
         BatchProvider::Openai => {
             let client = if args.no_batch {
                 OPENAI_CLIENT_PLAIN
-                    .get_or_init(|| OpenAiClient::plain().expect("无法创建 OpenAI 客户端"))
+                    .get_or_init(|| OpenAiClient::plain().expect("Failed to create OpenAI client"))
             } else {
                 OPENAI_CLIENT_BATCH.get_or_init(|| {
-                    OpenAiClient::batch(&LLM_CACHE_DB).expect("无法创建 OpenAI 客户端")
+                    OpenAiClient::batch(&LLM_CACHE_DB).expect("Failed to create OpenAI client")
                 })
             };
 
@@ -455,13 +455,13 @@ pub async fn sync_batches(args: &RepairArgs) -> Result<()> {
     match args.backend {
         BatchProvider::Anthropic => {
             let client = ANTHROPIC_CLIENT_BATCH.get_or_init(|| {
-                AnthropicClient::batch(&LLM_CACHE_DB).expect("无法创建 Anthropic 客户端")
+                AnthropicClient::batch(&LLM_CACHE_DB).expect("Failed to create Anthropic client")
             });
             client.sync_batches().await?;
         }
         BatchProvider::Openai => {
             let client = OPENAI_CLIENT_BATCH.get_or_init(|| {
-                OpenAiClient::batch(&LLM_CACHE_DB).expect("无法创建 OpenAI 客户端")
+                OpenAiClient::batch(&LLM_CACHE_DB).expect("Failed to create OpenAI client")
             });
             client.sync_batches().await?;
         }
@@ -483,7 +483,7 @@ pub async fn reprocess_after_batch_wait(examples: &mut [Example], args: &RepairA
     }
 
     if reprocessed > 0 {
-        eprintln!("已使用批处理结果重新处理 {} 个示例", reprocessed);
+        eprintln!("Reprocessed {} example(s) with batch results", reprocessed);
     }
 
     Ok(())
@@ -503,7 +503,7 @@ pub async fn wait_for_batches(args: &RepairArgs) -> Result<()> {
         }
 
         eprintln!(
-            "正在等待 {} 个待处理的修复批处理请求完成...(每 {} 秒轮询一次)",
+            "Waiting for {} pending repair batch request(s) to complete... (polling every {}s)",
             pending,
             poll_interval.as_secs()
         );
@@ -519,13 +519,13 @@ fn pending_batch_count(args: &RepairArgs) -> Result<usize> {
     match args.backend {
         BatchProvider::Anthropic => {
             let client = ANTHROPIC_CLIENT_BATCH.get_or_init(|| {
-                AnthropicClient::batch(&LLM_CACHE_DB).expect("无法创建 Anthropic 客户端")
+                AnthropicClient::batch(&LLM_CACHE_DB).expect("Failed to create Anthropic client")
             });
             client.pending_batch_count()
         }
         BatchProvider::Openai => {
             let client = OPENAI_CLIENT_BATCH.get_or_init(|| {
-                OpenAiClient::batch(&LLM_CACHE_DB).expect("无法创建 OpenAI 客户端")
+                OpenAiClient::batch(&LLM_CACHE_DB).expect("Failed to create OpenAI client")
             });
             client.pending_batch_count()
         }

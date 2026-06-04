@@ -487,7 +487,7 @@ impl<T: 'static> PendingEntitySubscription<T> {
             let type_name = message.payload_type_name();
             let sender_id = message.original_sender_id();
             log::debug!(
-                "正在处理排队的 RPC 消息。客户端 ID:{}, 发送者 ID:{:?}, 类型:{}",
+                "handling queued rpc message. client_id:{}, sender_id:{:?}, type:{}",
                 client_id,
                 sender_id,
                 type_name
@@ -730,7 +730,7 @@ impl Client {
         let mut state = self.handler_set.lock();
         anyhow::ensure!(
             !state.entities_by_type_and_remote_id.contains_key(&id),
-            "已订阅该实体"
+            "already subscribed to entity"
         );
 
         state
@@ -794,7 +794,7 @@ impl Client {
         if prev_handler.is_some() {
             let location = std::panic::Location::caller();
             panic!(
-                "{}:{} 为同一消息 {} 注册了两次处理程序",
+                "{}:{} registered handler for the same message {} twice",
                 location.file(),
                 location.line(),
                 std::any::type_name::<M>()
@@ -1157,7 +1157,7 @@ impl Client {
                 .downcast::<TypedEnvelope<proto::Hello>>()
                 .map_err(|_| {
                     anyhow!(
-                        "收到无效的 Hello 消息: {:?}",
+                        "invalid hello message received: {:?}",
                         hello_message_type_name
                     )
                 })?;
@@ -1174,7 +1174,7 @@ impl Client {
         };
 
         log::debug!(
-            "将状态设置为已连接 (连接 ID: {:?}, 对等点 ID: {:?})",
+            "set status to connected (connection id: {:?}, peer id: {:?})",
             connection_id,
             peer_id
         );
@@ -1273,7 +1273,7 @@ impl Client {
             let response = http.get(&url, Default::default(), false).await?;
             anyhow::ensure!(
                 response.status().is_redirection(),
-                "意外的 /rpc 响应状态 {}",
+                "unexpected /rpc response status {}",
                 response.status()
             );
             let collab_url = response
@@ -1430,11 +1430,11 @@ impl Client {
 
                     // Start an HTTP server to receive the redirect from Zed's sign-in page.
                     let server = tiny_http::Server::http("127.0.0.1:0")
-                        .map_err(|e| anyhow!(e).context("绑定回调端口失败"))?;
+                        .map_err(|e| anyhow!(e).context("failed to bind callback port"))?;
                     let port = server
                         .server_addr()
                         .to_ip()
-                        .context("服务器未绑定到 TCP 地址")?
+                        .context("server not bound to a TCP address")?
                         .port();
 
                     #[derive(Serialize)]
@@ -1478,7 +1478,7 @@ impl Client {
                                     let callback_params: CallbackParams =
                                         serde_urlencoded::from_str(url.query().unwrap_or_default())
                                             .context(
-                                                "解析登录回调查询参数失败",
+                                                "failed to parse sign-in callback query parameters",
                                             )?;
 
                                     let post_auth_url =
@@ -1555,7 +1555,7 @@ impl Client {
         response.body_mut().read_to_string(&mut body).await?;
         anyhow::ensure!(
             response.status().is_success(),
-            "管理员用户请求失败 {} - {}",
+            "admin user request failed {} - {}",
             response.status().as_u16(),
             body,
         );
@@ -1581,7 +1581,7 @@ impl Client {
             Ok(token) => Ok(token),
             Err(ClientApiError::Unauthorized) => {
                 self.request_sign_out();
-                Err(ClientApiError::Unauthorized).context("创建 LLM 令牌失败")
+                Err(ClientApiError::Unauthorized).context("Failed to create LLM token")
             }
             Err(err) => Err(anyhow::Error::from(err)),
         }
@@ -1607,7 +1607,7 @@ impl Client {
         {
             return Ok(response);
         }
-        log::info!("LLM 令牌被拒绝,正在刷新并重试请求");
+        log::info!("LLM token rejected; refreshing and retrying request");
         let token = self.refresh_llm_token(llm_token, organization_id).await?;
         http_client.send(build_request(&token)?).await
     }
@@ -1626,7 +1626,7 @@ impl Client {
             Ok(token) => Ok(token),
             Err(ClientApiError::Unauthorized) => {
                 self.request_sign_out();
-                return Err(ClientApiError::Unauthorized).context("创建 LLM 令牌失败");
+                return Err(ClientApiError::Unauthorized).context("Failed to create LLM token");
             }
             Err(err) => return Err(anyhow::Error::from(err)),
         }
@@ -1646,7 +1646,7 @@ impl Client {
             Ok(token) => Ok(token),
             Err(ClientApiError::Unauthorized) => {
                 self.request_sign_out();
-                return Err(ClientApiError::Unauthorized).context("创建 LLM 令牌失败");
+                return Err(ClientApiError::Unauthorized).context("Failed to create LLM token");
             }
             Err(err) => return Err(anyhow::Error::from(err)),
         }
@@ -1709,7 +1709,7 @@ impl Client {
     ) -> impl Future<Output = Result<impl Stream<Item = Result<T::Response>>>> {
         let client_id = self.id.load(Ordering::SeqCst);
         log::debug!(
-            "RPC 请求开始。客户端 ID:{}, 名称:{}",
+            "rpc request start. client_id:{}. name:{}",
             client_id,
             T::NAME
         );
@@ -1719,7 +1719,7 @@ impl Client {
         async move {
             let response = response?.await;
             log::debug!(
-                "RPC 请求完成。客户端 ID:{}, 名称:{}",
+                "rpc request finish. client_id:{}. name:{}",
                 client_id,
                 T::NAME
             );
@@ -1733,7 +1733,7 @@ impl Client {
     ) -> impl Future<Output = Result<TypedEnvelope<T::Response>>> + use<T> {
         let client_id = self.id();
         log::debug!(
-            "RPC 请求开始。客户端 ID:{}, 名称:{}",
+            "rpc request start. client_id:{}. name:{}",
             client_id,
             T::NAME
         );
@@ -1743,7 +1743,7 @@ impl Client {
         async move {
             let response = response?.await;
             log::debug!(
-                "RPC 请求完成。客户端 ID:{}, 名称:{}",
+                "rpc request finish. client_id:{}. name:{}",
                 client_id,
                 T::NAME
             );
@@ -1758,7 +1758,7 @@ impl Client {
     ) -> impl Future<Output = Result<proto::Envelope>> + use<> {
         let client_id = self.id();
         log::debug!(
-            "RPC 请求开始。客户端 ID:{}, 名称:{}",
+            "rpc request start. client_id:{}. name:{}",
             client_id,
             request_type
         );
@@ -1768,7 +1768,7 @@ impl Client {
         async move {
             let response = response?.await;
             log::debug!(
-                "RPC 请求完成。客户端 ID:{}, 名称:{}",
+                "rpc request finish. client_id:{}. name:{}",
                 client_id,
                 request_type
             );
@@ -1790,7 +1790,7 @@ impl Client {
         ) {
             let client_id = self.id();
             log::debug!(
-                "收到 RPC 消息。客户端 ID:{}, 发送者 ID:{:?}, 类型:{}",
+                "rpc message received. client_id:{}, sender_id:{:?}, type:{}",
                 client_id,
                 original_sender_id,
                 type_name
@@ -1856,13 +1856,13 @@ impl ProtoClient for Client {
 
         async move {
             log::debug!(
-                "RPC 流请求开始。client_id:{},名称:{}",
+                "rpc stream request start. client_id:{}. name:{}",
                 client_id,
                 request_type
             );
             let response = response?.await;
             log::debug!(
-                "RPC 流请求已打开。client_id:{},名称:{}",
+                "rpc stream request opened. client_id:{}. name:{}",
                 client_id,
                 request_type
             );
@@ -1879,7 +1879,7 @@ impl ProtoClient for Client {
 
     fn send_response(&self, envelope: proto::Envelope, message_type: &'static str) -> Result<()> {
         log::debug!(
-            "RPC 响应。客户端 ID:{}, 名称:{}",
+            "rpc respond. client_id:{}, name:{}",
             self.id(),
             message_type
         );

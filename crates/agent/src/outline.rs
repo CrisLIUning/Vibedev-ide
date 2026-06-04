@@ -189,7 +189,7 @@ mod tests {
         let buffer = project
             .update(cx, |project, cx| project.create_buffer(None, true, cx))
             .await
-            .expect("创建缓冲区失败");
+            .expect("failed to create buffer");
 
         buffer.update(cx, |buffer, cx| buffer.set_text(content, cx));
 
@@ -201,7 +201,7 @@ mod tests {
         // Should contain some of the actual file content
         assert!(
             result.text.contains("⚡⚡⚡⚡⚡⚡⚡"),
-            "结果未包含内容子集"
+            "Result did not contain content subset"
         );
 
         // Should be marked synthetic: the returned text is not the file's full
@@ -216,14 +216,14 @@ mod tests {
         // Should be reasonably sized (much smaller than original)
         assert!(
             result.text.len() < 50 * 1024,
-            "结果大小 {} 应小于 50KB",
+            "Result size {} should be smaller than 50KB",
             result.text.len()
         );
 
         // Should be significantly smaller than the original content
         assert!(
             result.text.len() < content_len / 10,
-            "结果应远小于原始内容"
+            "Result should be much smaller than original content"
         );
     }
 }

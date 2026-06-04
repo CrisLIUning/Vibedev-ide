@@ -129,14 +129,14 @@ impl DockerExecConnection {
         {
             Ok(shell) => match shell.trim() {
                 "" => {
-                    log::info!("$Shell 未设置,正在检查用户 passwd");
+                    log::info!("$SHELL is not set, checking passwd for user");
                 }
                 shell => {
                     return shell.to_owned();
                 }
             },
             Err(e) => {
-                log::error!("获取 $Shell 失败: {e}。正在检查用户 passwd");
+                log::error!("Failed to get $SHELL: {e}. Checking passwd for user");
             }
         }
 
@@ -151,14 +151,14 @@ impl DockerExecConnection {
         {
             Ok(shell) => match shell.trim() {
                 "" => {
-                    log::info!("passwd 中未找到 Shell,回退到 {default_shell}");
+                    log::info!("No shell found in passwd, falling back to {default_shell}");
                 }
                 shell => {
                     return shell.to_owned();
                 }
             },
             Err(e) => {
-                log::info!("从 passwd 获取 Shell 时出错: {e}。回退到 {default_shell}");
+                log::info!("Error getting shell from passwd: {e}. Falling back to {default_shell}");
             }
         }
         default_shell.to_owned()
@@ -247,7 +247,7 @@ impl DockerExecConnection {
             ReleaseChannel::Nightly => Ok(None),
             ReleaseChannel::Dev => {
                 anyhow::bail!(
-                    "ZED_BUILD_REMOTE_SERVER 未设置且 ({:?}) 处不存在远程服务器",
+                    "ZED_BUILD_REMOTE_SERVER is not set and no remote server exists at ({:?})",
                     dst_path
                 )
             }
@@ -285,7 +285,7 @@ impl DockerExecConnection {
                 }
                 Err(e) => {
                     log::error!(
-                        "在服务器上下载二进制文件失败,尝试在本地下载后上传至服务器: {e:#}",
+                        "Failed to download binary on server, attempting to download locally and then upload it the server: {e:#}",
                     )
                 }
             }
@@ -335,7 +335,7 @@ impl DockerExecConnection {
         delegate: &Arc<dyn RemoteClientDelegate>,
         cx: &mut AsyncApp,
     ) -> Result<()> {
-        delegate.set_status(Some("正在解压远程开发服务器"), cx);
+        delegate.set_status(Some("Extracting remote development server"), cx);
         let server_mode = 0o755;
 
         let shell_kind = ShellKind::Posix;
@@ -343,21 +343,21 @@ impl DockerExecConnection {
         let server_mode = format!("{:o}", server_mode);
         let server_mode = shell_kind
             .try_quote(&server_mode)
-            .context("Shell 引用")?;
+            .context("shell quoting")?;
         let dst_path = dst_path.display(self.path_style());
-        let dst_path = shell_kind.try_quote(&dst_path).context("Shell 引用")?;
+        let dst_path = shell_kind.try_quote(&dst_path).context("shell quoting")?;
         let script = if let Some(tmp_path) = orig_tmp_path.strip_suffix(".gz") {
             let orig_tmp_path = shell_kind
                 .try_quote(&orig_tmp_path)
-                .context("Shell 引用")?;
-            let tmp_path = shell_kind.try_quote(&tmp_path).context("Shell 引用")?;
+                .context("shell quoting")?;
+            let tmp_path = shell_kind.try_quote(&tmp_path).context("shell quoting")?;
             format!(
                 "gunzip -f {orig_tmp_path} && chmod {server_mode} {tmp_path} && mv {tmp_path} {dst_path}",
             )
         } else {
             let orig_tmp_path = shell_kind
                 .try_quote(&orig_tmp_path)
-                .context("Shell 引用")?;
+                .context("shell quoting")?;
             format!("chmod {server_mode} {orig_tmp_path} && mv {orig_tmp_path} {dst_path}",)
         };
         let args = shell_kind.args_for_shell(false, script.to_string());
@@ -394,9 +394,9 @@ impl DockerExecConnection {
         let size = src_stat.len();
 
         let t0 = Instant::now();
-        delegate.set_status(Some("正在上传远程开发服务器"), cx);
+        delegate.set_status(Some("Uploading remote development server"), cx);
         log::info!(
-            "正在上传远程开发服务器至 {:?} ({}kb)",
+            "uploading remote development server to {:?} ({}kb)",
             tmp_path_gz,
             size / 1024
         );
@@ -423,9 +423,9 @@ impl DockerExecConnection {
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            log::debug!("通过 docker cp {src_path} -> {dst_path} 上传失败: {stderr}",);
+            log::debug!("failed to upload via docker cp {src_path} -> {dst_path}: {stderr}",);
             anyhow::bail!(
-                "通过 docker cp {} -> {} 上传失败: {}",
+                "failed to upload via docker cp {} -> {}: {}",
                 src_path,
                 dst_path,
                 stderr,
@@ -449,9 +449,9 @@ impl DockerExecConnection {
         }
 
         let stderr = String::from_utf8_lossy(&output.stderr);
-        log::debug!("通过 chown 更改所有权失败: {stderr}",);
+        log::debug!("failed to change ownership for via chown: {stderr}",);
         anyhow::bail!(
-            "通过 chown 更改 zed_remote_server 所有权失败: {}",
+            "failed to change ownership for zed_remote_server via chown: {}",
             stderr,
         );
     }
@@ -491,7 +491,7 @@ impl DockerExecConnection {
         log::debug!("{:?}: {:?}", command, output);
         anyhow::ensure!(
             output.status.success(),
-            "运行命令 {command:?} 失败: {}",
+            "failed to run command {command:?}: {}",
             String::from_utf8_lossy(&output.stderr)
         );
         Ok(String::from_utf8_lossy(&output.stdout).to_string())
@@ -549,7 +549,7 @@ impl DockerExecConnection {
             .await?;
         }
 
-        delegate.set_status(Some("正在主机上下载远程开发服务器"), cx);
+        delegate.set_status(Some("Downloading remote development server on host"), cx);
 
         match self
             .run_docker_exec(
@@ -642,7 +642,7 @@ impl RemoteConnection for DockerExecConnection {
             };
         }
 
-        delegate.set_status(Some("正在启动代理"), cx);
+        delegate.set_status(Some("Starting proxy"), cx);
 
         let Some(remote_binary_relpath) = self.remote_binary_relpath.clone() else {
             return Task::ready(Err(anyhow!("Remote binary path not set")));
@@ -690,7 +690,7 @@ impl RemoteConnection for DockerExecConnection {
 
         let Ok(child) = command.spawn() else {
             return Task::ready(Err(anyhow::anyhow!(
-                "启动远程服务器进程失败"
+                "Failed to start remote server process"
             )));
         };
 

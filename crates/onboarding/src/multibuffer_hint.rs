@@ -155,11 +155,11 @@ impl Render for MultibufferHint {
                                     .color(Color::Muted),
                             )
                             .child(Label::new(
-                                "直接在结果多重缓冲区中编辑和保存文件!",
+                                "Edit and save files directly in the results multibuffer!",
                             )),
                     )
                     .child(
-                        Button::new("open_docs", "了解更多")
+                        Button::new("open_docs", "Learn More")
                             .end_icon(
                                 Icon::new(IconName::ArrowUpRight)
                                     .size(IconSize::Small)
@@ -180,7 +180,7 @@ impl Render for MultibufferHint {
                             ToolbarItemLocation::Hidden,
                         ))
                     }))
-                    .tooltip(Tooltip::text("关闭提示")),
+                    .tooltip(Tooltip::text("Dismiss Hint")),
             )
             .into_any_element()
     }

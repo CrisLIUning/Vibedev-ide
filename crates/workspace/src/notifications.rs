@@ -163,7 +163,7 @@ impl Workspace {
         E: std::fmt::Debug + std::fmt::Display,
     {
         self.show_notification(workspace_error_notification_id(), cx, |cx| {
-            cx.new(|cx| ErrorMessagePrompt::new(format!("错误: {err}"), cx))
+            cx.new(|cx| ErrorMessagePrompt::new(format!("Error: {err}"), cx))
         });
     }
 
@@ -173,7 +173,7 @@ impl Workspace {
         self.show_notification(NotificationId::unique::<PortalError>(), cx, |cx| {
             cx.new(|cx| {
                 ErrorMessagePrompt::new(err.to_string(), cx).with_link_button(
-                    "查看文档",
+                    "See docs",
                     "https://zed.dev/docs/linux#i-cant-open-any-files",
                 )
             })
@@ -364,23 +364,23 @@ impl Render for LanguageServerPrompt {
                                             "copy-description",
                                             request.message.clone(),
                                         )
-                                        .tooltip_label("复制描述"),
+                                        .tooltip_label("Copy Description"),
                                     )
                                     .child(
                                         IconButton::new(close_id, close_icon)
                                             .tooltip(move |_window, cx| {
                                                 if suppress {
                                                     Tooltip::with_meta(
-                                                        "忽略",
+                                                        "Suppress",
                                                         Some(&SuppressNotification),
-                                                        "点击关闭",
+                                                        "Click to close",
                                                         cx,
                                                     )
                                                 } else {
                                                     Tooltip::with_meta(
-                                                        "关闭",
+                                                        "Close",
                                                         Some(&menu::Cancel),
-                                                        "Shift+点击以忽略",
+                                                        "Suppress with shift-click",
                                                         cx,
                                                     )
                                                 }
@@ -531,7 +531,7 @@ impl Render for ErrorMessagePrompt {
                                     .gap_1()
                                     .child(
                                         CopyButton::new("copy-error-message", self.message.clone())
-                                            .tooltip_label("复制错误消息"),
+                                            .tooltip_label("Copy Error Message"),
                                     )
                                     .child(
                                         ui::IconButton::new("close", ui::IconName::Close).on_click(
@@ -666,20 +666,20 @@ impl RenderOnce for NotificationFrame {
                                     .tooltip(move |_window, cx| {
                                         if suppress {
                                             Tooltip::with_meta(
-                                                "忽略",
+                                                "Suppress",
                                                 Some(&SuppressNotification),
-                                                "点击关闭",
+                                                "Click to close",
                                                 cx,
                                             )
                                         } else if show_suppress_button {
                                             Tooltip::with_meta(
-                                                "关闭",
+                                                "Close",
                                                 Some(&menu::Cancel),
-                                                "Shift-点击以屏蔽",
+                                                "Shift-click to Suppress",
                                                 cx,
                                             )
                                         } else {
-                                            Tooltip::for_action("关闭", &menu::Cancel, cx)
+                                            Tooltip::for_action("Close", &menu::Cancel, cx)
                                         }
                                     })
                                     .on_click({
@@ -1144,7 +1144,7 @@ where
         match self {
             Ok(value) => Some(value),
             Err(err) => {
-                let message: SharedString = format!("错误: {err}").into();
+                let message: SharedString = format!("Error: {err}").into();
                 log::error!("Showing error notification in app: {message}");
                 show_app_notification(workspace_error_notification_id(), cx, {
                     move |cx| {

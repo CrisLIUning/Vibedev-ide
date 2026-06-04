@@ -83,8 +83,8 @@ enum RatePredictionView {
 impl RatePredictionView {
     pub fn name(&self) -> &'static str {
         match self {
-            Self::SuggestedEdits => "建议的编辑",
-            Self::RawInput => "记录的事件与输入",
+            Self::SuggestedEdits => "Suggested Edits",
+            Self::RawInput => "Recorded Events & Input",
         }
     }
 }
@@ -97,7 +97,7 @@ impl RatePredictionsModal {
                 RatePredictionsModal::new(ep_store, language_registry, window, cx)
             });
 
-            telemetry::event!("Rate Prediction Modal Open", source = "编辑预测");
+            telemetry::event!("Rate Prediction Modal Open", source = "Edit Prediction");
         }
     }
 
@@ -393,7 +393,7 @@ impl RatePredictionsModal {
                         start_anchor,
                         &InlayHint {
                             position: start_hint_position,
-                            label: InlayHintLabel::String("╭─ 可编辑区域开始\n".into()),
+                            label: InlayHintLabel::String("╭─ editable region start\n".into()),
                             kind: Some(InlayHintKind::Parameter),
                             padding_left: false,
                             padding_right: false,
@@ -406,7 +406,7 @@ impl RatePredictionsModal {
                         end_anchor,
                         &InlayHint {
                             position: end_hint_position,
-                            label: InlayHintLabel::String("\n╰─ 可编辑区域结束".into()),
+                            label: InlayHintLabel::String("\n╰─ editable region end".into()),
                             kind: Some(InlayHintKind::Parameter),
                             padding_left: false,
                             padding_right: false,
@@ -684,7 +684,7 @@ impl RatePredictionsModal {
                     editor.set_show_wrap_guides(false, cx);
                     editor.set_show_indent_guides(false, cx);
                     editor.set_show_edit_predictions(Some(false), window, cx);
-                    editor.set_placeholder_text("添加您的反馈…", window, cx);
+                    editor.set_placeholder_text("Add your feedback…", window, cx);
                     editor.set_completion_provider(Some(Rc::new(FeedbackCompletionProvider)));
                     if focus {
                         cx.focus_self(window);
@@ -814,7 +814,7 @@ impl RatePredictionsModal {
                                 .px_2()
                                 .border_b_1()
                                 .border_color(border_color)
-                                .child(Label::new("预测补丁").size(LabelSize::Small)),
+                                .child(Label::new("Predicted Patch").size(LabelSize::Small)),
                         )
                         .child(
                             div()
@@ -844,9 +844,9 @@ impl RatePredictionsModal {
                                     Button::new(
                                         "expected-patch-preview",
                                         if expected_patch_preview {
-                                            "编辑"
+                                            "Edit"
                                         } else {
-                                            "预览"
+                                            "Preview"
                                         },
                                     )
                                     .label_size(LabelSize::Small)
@@ -856,7 +856,7 @@ impl RatePredictionsModal {
                                         },
                                     )),
                                 )
-                                .child(Label::new("预期补丁").size(LabelSize::Small)),
+                                .child(Label::new("Expected Patch").size(LabelSize::Small)),
                         )
                         .child(
                             div()
@@ -953,7 +953,7 @@ impl RatePredictionsModal {
                             .into_any_element()
                         } else {
                             div()
-                                .child("无活动的补全".to_string())
+                                .child("No active completion".to_string())
                                 .into_any_element()
                         }),
                 )
@@ -1047,7 +1047,7 @@ impl RatePredictionsModal {
                             .child(
                                 DropdownMenu::new(
                                         "failure-mode-dropdown",
-                                        "问题",
+                                        "Issue",
                                         failure_mode_menu,
                                     )
                                     .handle(self.failure_mode_menu_handle.clone())
@@ -1065,8 +1065,8 @@ impl RatePredictionsModal {
                                     .child(
                                         div().flex_wrap().child(
                                             Label::new(concat!(
-                                                "解释此补全为何好或坏。",
-                                                "如果是负面的,请描述您原本期望的内容。"
+                                                "Explain why this completion is good or bad. ",
+                                                "If it's negative, describe what you expected instead."
                                             ))
                                             .size(LabelSize::Small)
                                             .color(Color::Muted),
@@ -1101,7 +1101,7 @@ impl RatePredictionsModal {
                                             .size(IconSize::Small)
                                             .color(Color::Success),
                                     )
-                                    .child(Label::new("已评价的补全。").color(Color::Muted)),
+                                    .child(Label::new("Rated completion.").color(Color::Muted)),
                             )
                         } else if active_prediction.prediction.edits.is_empty() {
                             Some(
@@ -1111,7 +1111,7 @@ impl RatePredictionsModal {
                                             .size(IconSize::Small)
                                             .color(Color::Warning),
                                     )
-                                    .child(Label::new("未产生编辑。").color(Color::Muted)),
+                                    .child(Label::new("No edits produced.").color(Color::Muted)),
                             )
                         } else {
                             Some(label_container)
@@ -1120,12 +1120,12 @@ impl RatePredictionsModal {
                             h_flex()
                                 .gap_1()
                                 .child(
-                                    Button::new("bad", "糟糕的预测")
+                                    Button::new("bad", "Bad Prediction")
                                         .start_icon(Icon::new(IconName::ThumbsDown).size(IconSize::Small))
                                         .disabled(rated || feedback_empty)
                                         .when(feedback_empty, |this| {
                                             this.tooltip(Tooltip::text(
-                                                "在报告之前请解释其糟糕之处",
+                                                "Explain what's bad about it before reporting it",
                                             ))
                                         })
                                         .key_binding(KeyBinding::for_action_in(
@@ -1144,7 +1144,7 @@ impl RatePredictionsModal {
                                         })),
                                 )
                                 .child(
-                                    Button::new("good", "好的预测")
+                                    Button::new("good", "Good Prediction")
                                         .start_icon(Icon::new(IconName::ThumbsUp).size(IconSize::Small))
                                         .disabled(rated)
                                         .key_binding(KeyBinding::for_action_in(
@@ -1182,9 +1182,9 @@ impl RatePredictionsModal {
 
                 let (icon_name, icon_color, tooltip_text) =
                     match (rated, completion.edits.is_empty()) {
-                        (true, _) => (IconName::Check, Color::Success, "已评价的预测"),
-                        (false, true) => (IconName::File, Color::Muted, "未产生编辑"),
-                        (false, false) => (IconName::FileDiff, Color::Accent, "有可用编辑"),
+                        (true, _) => (IconName::Check, Color::Success, "Rated Prediction"),
+                        (false, true) => (IconName::File, Color::Muted, "No Edits Produced"),
+                        (false, false) => (IconName::FileDiff, Color::Accent, "Edits Available"),
                     };
 
                 let file = completion.buffer.read(cx).file();
@@ -1272,7 +1272,7 @@ impl Render for RatePredictionsModal {
                             .border_color(border_color)
                             .child(Icon::new(icons.base).size(IconSize::Small))
                             .child(
-                                Label::new("从最新到最旧")
+                                Label::new("From most recent to oldest")
                                     .color(Color::Muted)
                                     .size(LabelSize::Small),
                             )
@@ -1290,9 +1290,9 @@ impl Render for RatePredictionsModal {
                                             .p_2()
                                             .child(
                                                 Label::new(concat!(
-                                                    "尚无补全。",
-                                                    "使用编辑器生成一些,",
-                                                    "并确保对它们进行评价!"
+                                                    "No completions yet. ",
+                                                    "Use the editor to generate some, ",
+                                                    "and make sure to rate them!"
                                                 ))
                                                 .color(Color::Muted),
                                             )
@@ -1325,22 +1325,22 @@ struct FeedbackCompletionProvider;
 
 impl FeedbackCompletionProvider {
     const FAILURE_MODES: &'static [(&'static str, &'static str)] = &[
-        ("@location", "位置意外"),
-        ("@malformed", "不完整、截断或语法错误"),
+        ("@location", "Unexpected location"),
+        ("@malformed", "Incomplete, cut off, or syntax error"),
         (
             "@deleted",
-            "删除了应保留的代码(如果撤销了最近的编辑,请使用 `@reverted`)",
+            "Deleted code that should be kept (use `@reverted` if it undid a recent edit)",
         ),
-        ("@style", "编码风格或约定错误"),
-        ("@repetitive", "重复了现有代码"),
-        ("@hallucinated", "引用了不存在的符号"),
-        ("@formatting", "缩进或结构错误"),
-        ("@aggressive", "更改超出预期"),
-        ("@conservative", "过于谨慎,更改太少"),
-        ("@context", "忽略或误解了上下文"),
-        ("@reverted", "撤销了最近的编辑"),
-        ("@cursor_position", "光标置于无益位置"),
-        ("@whitespace", "不需要的空格或换行更改"),
+        ("@style", "Wrong coding style or conventions"),
+        ("@repetitive", "Repeated existing code"),
+        ("@hallucinated", "Referenced non-existent symbols"),
+        ("@formatting", "Wrong indentation or structure"),
+        ("@aggressive", "Changed more than expected"),
+        ("@conservative", "Too cautious, changed too little"),
+        ("@context", "Ignored or misunderstood context"),
+        ("@reverted", "Undid recent edits"),
+        ("@cursor_position", "Cursor placed in unhelpful position"),
+        ("@whitespace", "Unwanted whitespace or newline changes"),
     ];
 }
 

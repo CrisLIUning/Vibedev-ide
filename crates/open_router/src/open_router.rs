@@ -85,7 +85,7 @@ impl Model {
     pub fn default() -> Self {
         Self::new(
             "openrouter/auto",
-            Some("自动路由"),
+            Some("Auto Router"),
             Some(2000000),
             Some(true),
             Some(false),
@@ -786,7 +786,7 @@ impl From<ApiError> for language_model_core::LanguageModelCompletionError {
             },
             PaymentRequiredError => Self::AuthenticationError {
                 provider,
-                message: format!("需要付款: {}", error.message),
+                message: format!("Payment required: {}", error.message),
             },
             PermissionError => Self::PermissionError {
                 provider,

@@ -252,7 +252,7 @@ impl Editor {
                             }
                         }
                     }
-                    Err(e) => log::error!("获取文档颜色失败: {e}"),
+                    Err(e) => log::error!("Failed to retrieve document colors: {e}"),
                 }
             }
 

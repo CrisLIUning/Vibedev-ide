@@ -203,7 +203,7 @@ impl Render for InputField {
                             )
                             .icon_size(IconSize::Small)
                             .icon_color(Color::Muted)
-                            .tooltip(Tooltip::text(if is_masked { "显示" } else { "隐藏" }))
+                            .tooltip(Tooltip::text(if is_masked { "Show" } else { "Hide" }))
                             .on_click(cx.listener(
                                 |this, _, window, cx| {
                                     if let Some(ref mut masked) = this.masked {
@@ -226,11 +226,11 @@ impl Component for InputField {
 
     fn preview(window: &mut Window, cx: &mut App) -> Option<AnyElement> {
         let input_small =
-            cx.new(|cx| InputField::new(window, cx, "placeholder").label("小标签"));
+            cx.new(|cx| InputField::new(window, cx, "placeholder").label("Small Label"));
 
         let input_regular = cx.new(|cx| {
             InputField::new(window, cx, "placeholder")
-                .label("常规标签")
+                .label("Regular Label")
                 .label_size(LabelSize::Default)
         });
 
@@ -239,11 +239,11 @@ impl Component for InputField {
                 .gap_6()
                 .children(vec![example_group(vec![
                     single_example(
-                        "小标签 (默认)",
+                        "Small Label (Default)",
                         div().child(input_small).into_any_element(),
                     ),
                     single_example(
-                        "常规标签",
+                        "Regular Label",
                         div().child(input_regular).into_any_element(),
                     ),
                 ])])

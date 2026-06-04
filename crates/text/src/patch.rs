@@ -582,7 +582,7 @@ mod tests {
                     .map(|_| rng.random_range(b'A'..=b'Z') as char)
                     .collect::<Vec<_>>();
                 log::info!(
-                    "  正在编辑 {:?}: {:?}",
+                    "  editing {:?}: {:?}",
                     start..end,
                     new_chars.iter().collect::<String>()
                 );
@@ -636,7 +636,7 @@ mod tests {
         assert_eq!(
             actual.into_iter().collect::<String>(),
             expected.into_iter().collect::<String>(),
-            "预期补丁不正确"
+            "expected patch is incorrect"
         );
 
         assert_eq!(old.compose(&new), composed);

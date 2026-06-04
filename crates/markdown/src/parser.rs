@@ -1026,14 +1026,14 @@ mod tests {
                 End(MarkdownTagEnd::CodeBlock) => {
                     assert!(
                         code_block_depth > 0,
-                        "遇到了没有匹配起始的代码块结束"
+                        "encountered a code block end without a matching start"
                     );
                     code_block_depth -= 1;
                 }
                 Start(Link { .. }) | End(MarkdownTagEnd::Link) => {
                     assert_eq!(
                         code_block_depth, 0,
-                        "代码块不应发出链接事件"
+                        "code blocks should not emit link events"
                     );
                 }
                 Text | SubstitutedText(_) if code_block_depth > 0 => {
@@ -1043,11 +1043,11 @@ mod tests {
             }
         }
 
-        assert_eq!(code_block_count, 1, "预期恰好有一个代码块");
-        assert_eq!(code_block_depth, 0, "未终止的代码块");
+        assert_eq!(code_block_count, 1, "expected exactly one code block");
+        assert_eq!(code_block_depth, 0, "unterminated code block");
         assert!(
             saw_text_inside_code_block,
-            "预期代码块内有文本"
+            "expected text inside the code block"
         );
     }
 
@@ -1119,7 +1119,7 @@ mod tests {
 
         assert!(
             !saw_task_list_marker,
-            "表格复选框应保持为文本, 而不是任务列表标记"
+            "Table checkboxes should remain text, not task-list markers"
         );
         assert_eq!(checkbox_cells, vec!["[x]", "[ ]"]);
     }

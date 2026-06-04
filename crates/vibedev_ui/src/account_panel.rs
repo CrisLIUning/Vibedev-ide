@@ -248,7 +248,7 @@ impl VibedevAccountPanel {
         let email = snapshot
             .email
             .clone()
-            .unwrap_or_else(|| "已登录".into());
+            .unwrap_or_else(|| "Signed in".into());
         let role = snapshot
             .profile
             .as_ref()
@@ -288,7 +288,7 @@ impl VibedevAccountPanel {
             });
 
         Self::card(
-            "账户",
+            "Account",
             h_flex()
                 .w_full()
                 .items_start()
@@ -311,7 +311,7 @@ impl VibedevAccountPanel {
             cx,
         );
         let requests = Self::kpi_card(
-            "请求数",
+            "Requests",
             compact_count(usage.total_requests),
             format!(
                 "today {} · rpm {}",
@@ -321,13 +321,13 @@ impl VibedevAccountPanel {
             cx,
         );
         let cost = Self::kpi_card(
-            "费用",
+            "Cost",
             format_usd(usage.total_cost),
             format!("today {}", format_usd(usage.today_cost)),
             cx,
         );
         let latency = Self::kpi_card(
-            "延迟",
+            "Latency",
             format!("{} ms", compact_rate(usage.avg_latency_ms)),
             format!("tpm {}", compact_rate(usage.tpm)),
             cx,
@@ -359,15 +359,15 @@ impl VibedevAccountPanel {
             .iter()
             .map(|subscription| self.render_subscription_entry(subscription))
             .collect::<Vec<_>>();
-        Some(Self::card("订阅", v_flex().gap_2().children(entries), cx))
+        Some(Self::card("Subscription", v_flex().gap_2().children(entries), cx))
     }
 
     fn render_subscription_entry(&self, subscription: &AccountSubscription) -> impl IntoElement {
         let periods = [
-            ("每日", subscription.daily_used_usd, subscription.daily_limit_usd),
-            ("每周", subscription.weekly_used_usd, subscription.weekly_limit_usd),
+            ("Daily", subscription.daily_used_usd, subscription.daily_limit_usd),
+            ("Weekly", subscription.weekly_used_usd, subscription.weekly_limit_usd),
             (
-                "每月",
+                "Monthly",
                 subscription.monthly_used_usd,
                 subscription.monthly_limit_usd,
             ),
@@ -405,7 +405,7 @@ impl VibedevAccountPanel {
             .children(period_rows)
             .when_some(subscription.expires_at.clone(), |this, expires_at| {
                 this.child(
-                    Label::new(format!("{expires_at} 过期"))
+                    Label::new(format!("expires {expires_at}"))
                         .size(LabelSize::Small)
                         .color(Color::Muted),
                 )
@@ -532,19 +532,19 @@ impl Render for VibedevAccountPanel {
             .size_full()
             .p_4()
             .gap_2()
-            .child(Label::new("VibeDev 账户").size(LabelSize::Large));
+            .child(Label::new("VibeDev Account").size(LabelSize::Large));
 
         root = match self.status.clone() {
             AccountStatus::Connecting => {
-                root.child(Label::new("正在连接后端…").color(Color::Muted))
+                root.child(Label::new("Connecting to backend…").color(Color::Muted))
             }
             AccountStatus::BackendUnavailable => root.child(
-                Label::new("后端未就绪,正在重试…").color(Color::Muted),
+                Label::new("Backend not ready. Retrying…").color(Color::Muted),
             ),
             AccountStatus::Loaded(snapshot) if snapshot.signed_in => root
                 .child(self.render_signed_in(&snapshot, cx))
                 .child(
-                    Button::new("vibedev-sign-out", "退出登录")
+                    Button::new("vibedev-sign-out", "Sign Out")
                         .label_size(LabelSize::Small)
                         .on_click(cx.listener(|this, _event, _window, cx| {
                             this.sign_out(cx);
@@ -553,9 +553,9 @@ impl Render for VibedevAccountPanel {
             AccountStatus::Loaded(snapshot) => {
                 let hint = snapshot
                     .reason
-                    .unwrap_or_else(|| "登录以查看余额".into());
+                    .unwrap_or_else(|| "Sign in to view your balance.".into());
                 root.child(Label::new(hint).color(Color::Muted)).child(
-                    Button::new("vibedev-sign-in", "登录")
+                    Button::new("vibedev-sign-in", "Sign In")
                         .end_icon(Icon::new(IconName::ArrowUpRight).size(IconSize::Small))
                         .full_width()
                         .on_click(cx.listener(|this, _event, window, cx| {
@@ -565,7 +565,7 @@ impl Render for VibedevAccountPanel {
             }
         };
 
-        // Footer actions: "刷新" always pulls a fresh account snapshot;
+        // Footer actions: "Refresh" always pulls a fresh account snapshot;
         // "Refresh Models" additionally invalidates the model catalog cache
         // so a partial model list can be repaired without restarting the app.
         let signed_in = matches!(
@@ -576,7 +576,7 @@ impl Render for VibedevAccountPanel {
             h_flex()
                 .gap_2()
                 .child(
-                    Button::new("vibedev-account-refresh", "刷新")
+                    Button::new("vibedev-account-refresh", "Refresh")
                         .start_icon(Icon::new(IconName::ArrowCircle).size(IconSize::Small))
                         .label_size(LabelSize::Small)
                         .on_click(cx.listener(|this, _event, _window, cx| {
@@ -632,7 +632,7 @@ impl Panel for VibedevAccountPanel {
     }
 
     fn icon_tooltip(&self, _window: &Window, _cx: &App) -> Option<&'static str> {
-        Some("VibeDev 账户")
+        Some("VibeDev Account")
     }
 
     fn toggle_action(&self) -> Box<dyn gpui::Action> {

@@ -28,32 +28,32 @@ pub(crate) fn derive_action(input: TokenStream) -> TokenStream {
             attr.parse_nested_meta(|meta| {
                 if meta.path.is_ident("name") {
                     if name_argument.is_some() {
-                        return Err(meta.error("'name' 参数被多次指定"));
+                        return Err(meta.error("'name' argument specified multiple times"));
                     }
                     meta.input.parse::<Token![=]>()?;
                     let lit: LitStr = meta.input.parse()?;
                     name_argument = Some(lit.value());
                 } else if meta.path.is_ident("namespace") {
                     if namespace.is_some() {
-                        return Err(meta.error("'namespace' 参数被多次指定"));
+                        return Err(meta.error("'namespace' argument specified multiple times"));
                     }
                     meta.input.parse::<Token![=]>()?;
                     let ident: Ident = meta.input.parse()?;
                     namespace = Some(ident.to_string());
                 } else if meta.path.is_ident("no_json") {
                     if no_json {
-                        return Err(meta.error("'no_json' 参数被多次指定"));
+                        return Err(meta.error("'no_json' argument specified multiple times"));
                     }
                     no_json = true;
                 } else if meta.path.is_ident("no_register") {
                     if no_register {
-                        return Err(meta.error("'no_register' 参数被多次指定"));
+                        return Err(meta.error("'no_register' argument specified multiple times"));
                     }
                     no_register = true;
                 } else if meta.path.is_ident("deprecated_aliases") {
                     if !deprecated_aliases.is_empty() {
                         return Err(
-                            meta.error("'deprecated_aliases' 参数被多次指定")
+                            meta.error("'deprecated_aliases' argument specified multiple times")
                         );
                     }
                     meta.input.parse::<Token![=]>()?;
@@ -67,7 +67,7 @@ pub(crate) fn derive_action(input: TokenStream) -> TokenStream {
                     deprecated_aliases.extend(aliases.into_iter().map(|lit| lit.value()));
                 } else if meta.path.is_ident("deprecated") {
                     if deprecated.is_some() {
-                        return Err(meta.error("'deprecated' 参数被多次指定"));
+                        return Err(meta.error("'deprecated' argument specified multiple times"));
                     }
                     meta.input.parse::<Token![=]>()?;
                     let lit: LitStr = meta.input.parse()?;
@@ -119,7 +119,7 @@ pub(crate) fn derive_action(input: TokenStream) -> TokenStream {
     let is_unit_struct = matches!(&input.data, Data::Struct(data) if data.fields.is_empty());
 
     let build_fn_body = if no_json {
-        let error_msg = format!("{} 无法由 JSON 构建", full_name);
+        let error_msg = format!("{} cannot be built from JSON", full_name);
         quote! { Err(gpui::private::anyhow::anyhow!(#error_msg)) }
     } else if is_unit_struct {
         quote! { Ok(Box::new(Self)) }

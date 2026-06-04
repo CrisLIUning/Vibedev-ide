@@ -224,11 +224,11 @@ impl TrashedEntry {
 
 #[derive(Debug, thiserror::Error)]
 pub enum TrashRestoreError {
-    #[error("指定的 `path` ({}) 未在系统回收站中找到。", path.display())]
+    #[error("The specified `path` ({}) was not found in the system's trash.", path.display())]
     NotFound { path: PathBuf },
-    #[error("还原目标位置已存在文件或目录 ({})。", path.display())]
+    #[error("File or directory ({}) already exists at the restore destination.", path.display())]
     Collision { path: PathBuf },
-    #[error("未知错误 ({description})")]
+    #[error("Unknown error ({description})")]
     Unknown { description: String },
 }
 
@@ -606,7 +606,7 @@ fn path_to_c_string(path: &Path) -> io::Result<CString> {
     CString::new(path.as_os_str().as_bytes()).map_err(|_| {
         io::Error::new(
             io::ErrorKind::InvalidInput,
-            format!("路径包含内部 NUL 字符: {}", path.display()),
+            format!("path contains interior NUL: {}", path.display()),
         )
     })
 }
@@ -631,7 +631,7 @@ impl Fs for RealFs {
 
             if !status.success() {
                 return Err(anyhow::anyhow!(
-                    "无法创建从 {:?} 到 {:?} 的连接",
+                    "Failed to create junction from {:?} to {:?}",
                     path,
                     target
                 ));
@@ -805,7 +805,7 @@ impl Fs for RealFs {
         let path = self
             .canonicalize(path)
             .await
-            .context("无法获取文件路径的规范形式")?;
+            .context("Could not canonicalize the path of the file")?;
 
         let (tx, rx) = futures::channel::oneshot::channel();
         std::thread::Builder::new()
@@ -816,7 +816,7 @@ impl Fs for RealFs {
         Ok(rx
             .await
             .context("Tx dropped or fs.restore panicked")?
-            .context("无法移入回收站")?
+            .context("Could not trash file or dir")?
             .into())
     }
 
@@ -881,7 +881,7 @@ impl Fs for RealFs {
             // The system cannot move the file to a different disk drive. (os error 17)
             //
             // This is because `ReplaceFileW` does not support cross volume moves.
-            // See the remark section: "备份文件、被替换文件和替换文件必须位于同一卷上。"
+            // See the remark section: "The backup file, replaced file, and replacement file must all reside on the same volume."
             // https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-replacefilew#remarks
             //
             // So we use the directory of the destination as a temp dir to avoid it.
@@ -993,7 +993,7 @@ impl Fs for RealFs {
                     if err.kind() != io::ErrorKind::NotFound {
                         // TODO: Also FilesystemLoop when that's stable
                         log::warn!(
-                            "无法读取路径 {path:?} 的符号链接目标元数据: {err}"
+                            "Failed to read symlink target metadata for path {path:?}: {err}"
                         );
                     }
                     // For a broken or recursive symlink, return the symlink metadata. (Or
@@ -1114,7 +1114,7 @@ impl Fs for RealFs {
                     async move {
                         executor.timer(latency).await;
                         let paths = std::mem::take(&mut *pending_paths.lock());
-                        log::debug!("待处理路径事件: {:?}", paths);
+                        log::debug!("pending path events: {:?}", paths);
                         (!paths.is_empty()).then_some(paths)
                     }
                 }
@@ -1183,7 +1183,7 @@ impl Fs for RealFs {
 
         if !output.status.success() {
             anyhow::bail!(
-                "git clone 失败: {}",
+                "git clone failed: {}",
                 String::from_utf8_lossy(&output.stderr)
             );
         }
@@ -1267,7 +1267,7 @@ impl Fs for RealFs {
             case_sensitive
         }).await.unwrap_or_else(|e| {
             log::error!(
-                "由于错误无法确定文件系统是否区分大小写(回退为区分大小写): {e:#}"
+                "Failed to determine whether filesystem is case sensitive (falling back to true) due to error: {e:#}"
             );
             true
         });
@@ -1505,7 +1505,7 @@ impl FakeFsState {
             .skip_while(|component| matches!(component, Component::Prefix(_)));
         let Some(Component::RootDir) = components.next() else {
             panic!(
-                "路径 {:?} 未正确规范化 {:?}",
+                "the path {:?} was not canonicalized properly {:?}",
                 target, canonical_path
             )
         };
@@ -1522,7 +1522,7 @@ impl FakeFsState {
                 }
                 _ => {
                     panic!(
-                        "路径 {:?} 未正确规范化 {:?}",
+                        "the path {:?} was not canonicalized properly {:?}",
                         target, canonical_path
                     )
                 }
@@ -1538,7 +1538,7 @@ impl FakeFsState {
             .ok_or_else(|| {
                 anyhow!(io::Error::new(
                     io::ErrorKind::NotFound,
-                    format!("未找到: {target:?}")
+                    format!("not found: {target:?}")
                 ))
             })?
             .0)
@@ -2284,7 +2284,7 @@ impl FakeFs {
                         state
                             .unmerged_paths
                             .insert(repo_path.clone(), *unmerged_status);
-                        content.push_str(" (未合并)");
+                        content.push_str(" (unmerged)");
                         index_content = Some(content.clone());
                         head_content = Some(content);
                     }
@@ -2295,7 +2295,7 @@ impl FakeFs {
                         match worktree_status {
                             StatusCode::Modified => {
                                 let mut content = content.clone();
-                                content.push_str(" (在工作副本中已修改)");
+                                content.push_str(" (modified in working copy)");
                                 index_content = Some(content);
                             }
                             StatusCode::TypeChanged | StatusCode::Unmodified => {
@@ -2309,9 +2309,9 @@ impl FakeFs {
                         match index_status {
                             StatusCode::Modified => {
                                 let mut content = index_content.clone().expect(
-                                    "文件不能同时在索引中修改并在工作副本中创建",
+                                    "file cannot be both modified in index and created in working copy",
                                 );
-                                content.push_str(" (在索引中已修改)");
+                                content.push_str(" (modified in index)");
                                 head_content = Some(content);
                             }
                             StatusCode::TypeChanged | StatusCode::Unmodified => {
@@ -2628,13 +2628,13 @@ impl FileHandle for FakeHandle {
         let fs = fs.as_fake();
         let mut state = fs.state.lock();
         let Some(target) = state.moves.get(&self.inode).cloned() else {
-            anyhow::bail!("伪文件描述符未移动")
+            anyhow::bail!("fake fd not moved")
         };
 
         if state.try_entry(&target, false).is_some() {
             return Ok(target);
         }
-        anyhow::bail!("伪文件描述符目标未找到")
+        anyhow::bail!("fake fd target not found")
     }
 }
 
@@ -2883,7 +2883,7 @@ impl Fs for FakeFs {
                 state.trash.push((trashed_entry.clone(), fake_entry));
                 Ok(trashed_entry)
             }
-            None => anyhow::bail!("{normalized_path:?} 不存在"),
+            None => anyhow::bail!("{normalized_path:?} does not exist"),
         }
     }
 
@@ -3126,7 +3126,7 @@ impl Fs for FakeFs {
     }
 
     async fn git_config(&self, _abs_work_directory: &Path, _args: Vec<String>) -> Result<String> {
-        anyhow::bail!("虚拟文件系统中不支持 Git 配置")
+        anyhow::bail!("Git config is not supported in fake Fs")
     }
 
     fn is_fake(&self) -> bool {
@@ -3167,7 +3167,7 @@ impl Fs for FakeFs {
                 Ok(())
             }
             btree_map::Entry::Occupied(_) => {
-                anyhow::bail!("还原 {:?} 失败", path);
+                anyhow::bail!("Failed to restore {:?}", path);
             }
         });
 

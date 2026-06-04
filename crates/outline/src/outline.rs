@@ -262,7 +262,7 @@ impl PickerDelegate for OutlineViewDelegate {
     type ListItem = ListItem;
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
-        "搜索缓冲区符号...".into()
+        "Search buffer symbols...".into()
     }
 
     fn match_count(&self) -> usize {
@@ -1103,7 +1103,7 @@ mod tests {
         assert_eq!(
             tree_sitter_names,
             vec!["struct Foo", "bar", "baz"],
-            "步骤 1: 默认情况下应显示 tree-sitter 大纲"
+            "Step 1: tree-sitter outlines should be displayed by default"
         );
         cx.dispatch_action(menu::Cancel);
         cx.run_until_parked();
@@ -1122,12 +1122,12 @@ mod tests {
         assert_eq!(
             lsp_names,
             vec!["struct Foo", "bar", "lsp_only_field"],
-            "步骤 2: 应显示 LSP 提供的符号"
+            "Step 2: LSP-provided symbols should be displayed"
         );
         assert_eq!(
             highlighted_display_rows(&editor, cx),
             Vec::<u32>::new(),
-            "步骤 2: 初始打开的大纲视图不应有高亮"
+            "Step 2: initially opened outline view should have no highlights"
         );
         assert_single_caret_at_row(&editor, 0, cx);
 
@@ -1135,7 +1135,7 @@ mod tests {
         assert_eq!(
             highlighted_display_rows(&editor, cx),
             vec![1],
-            "步骤 2: SelectNext 后 bar 所在行应被高亮"
+            "Step 2: bar's row should be highlighted after SelectNext"
         );
         assert_single_caret_at_row(&editor, 0, cx);
 
@@ -1158,7 +1158,7 @@ mod tests {
         assert_eq!(
             restored_names,
             vec!["struct Foo", "bar", "baz"],
-            "步骤 3: 切换回后应恢复 tree-sitter 大纲"
+            "Step 3: tree-sitter outlines should be restored after switching back"
         );
     }
 

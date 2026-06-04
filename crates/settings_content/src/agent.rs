@@ -649,9 +649,9 @@ pub enum ToolPermissionMode {
 impl std::fmt::Display for ToolPermissionMode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ToolPermissionMode::Allow => write!(f, "允许"),
-            ToolPermissionMode::Deny => write!(f, "拒绝"),
-            ToolPermissionMode::Confirm => write!(f, "确认"),
+            ToolPermissionMode::Allow => write!(f, "Allow"),
+            ToolPermissionMode::Deny => write!(f, "Deny"),
+            ToolPermissionMode::Confirm => write!(f, "Confirm"),
         }
     }
 }
@@ -741,7 +741,7 @@ mod tests {
         assert_eq!(
             always_allow.0.len(),
             1,
-            "不应添加重复的模式"
+            "Duplicate patterns should not be added"
         );
     }
 
@@ -810,7 +810,7 @@ mod tests {
         assert_eq!(
             always_deny.0.len(),
             1,
-            "不应添加重复的模式"
+            "Duplicate patterns should not be added"
         );
     }
 

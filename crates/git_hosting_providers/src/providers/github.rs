@@ -78,7 +78,7 @@ fn build_cdn_avatar_url(email: &str) -> Result<Url> {
         "https://avatars.githubusercontent.com/u/e?email={}&s=128",
         encode(email)
     ))
-    .context("构建头像 URL 失败")
+    .context("failed to construct avatar URL")
 }
 
 fn build_cdn_avatar_url_for_author_email(email: &str) -> Result<Option<Url>> {
@@ -152,7 +152,7 @@ impl Github {
         if response.status().is_client_error() {
             let text = String::from_utf8_lossy(body.as_slice());
             bail!(
-                "状态错误 {}, 响应: {text:?}",
+                "status error {}, response: {text:?}",
                 response.status().as_u16()
             );
         }

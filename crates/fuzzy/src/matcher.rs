@@ -633,7 +633,7 @@ mod tests {
         let paths = vec!["İ/İ/İ/İ"];
         let query = "İ/İ";
 
-        // This panicked with "索引越界: 长度为 21 但索引为 22"
+        // This panicked with "index out of bounds: the len is 21 but the index is 22"
         let result = match_single_path_query(query, false, &paths);
         let _ = result;
     }

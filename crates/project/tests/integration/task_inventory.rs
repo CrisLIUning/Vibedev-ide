@@ -580,7 +580,7 @@ async fn test_zed_tasks_take_precedence_over_vscode(cx: &mut TestAppContext) {
     assert_eq!(
         task_template_names(&inventory, Some(worktree_id), cx).await,
         vec!["vscode_task"],
-        "仅有 .vscode 任务时,应显示这些任务"
+        "With only .vscode tasks, they should appear"
     );
 
     inventory.update(cx, |inventory, _| {
@@ -597,14 +597,14 @@ async fn test_zed_tasks_take_precedence_over_vscode(cx: &mut TestAppContext) {
     assert_eq!(
         task_template_names(&inventory, Some(worktree_id), cx).await,
         vec!["zed_task"],
-        "同时存在 .zed 和 .vscode 任务时,应仅显示 .zed 任务"
+        "With both .zed and .vscode tasks, only .zed tasks should appear"
     );
 
     register_worktree_task_used(&inventory, worktree_id, "zed_task", cx).await;
     let resolved = resolved_task_names(&inventory, Some(worktree_id), cx).await;
     assert!(
         !resolved.iter().any(|name| name == "vscode_task"),
-        "当存在 .zed 任务时,之前使用的 .vscode 任务不应出现,得到: {resolved:?}"
+        "Previously used .vscode tasks should not appear when .zed tasks exist, got: {resolved:?}"
     );
 }
 

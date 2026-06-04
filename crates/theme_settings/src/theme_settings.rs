@@ -210,7 +210,7 @@ pub fn load_bundled_themes(registry: &ThemeRegistry) {
     let theme_paths = registry
         .assets()
         .list("themes/")
-        .expect("列出主题资源失败")
+        .expect("failed to list theme assets")
         .into_iter()
         .filter(|path| path.ends_with(".json"));
 
@@ -251,7 +251,7 @@ pub fn deserialize_user_theme(bytes: &[u8]) -> Result<ThemeFamilyContent> {
             .is_some()
         {
             log::warn!(
-                r#"Theme "{theme_name}" 正在使用已弃用的样式属性: scrollbar_thumb.background。请改用 `scrollbar.thumb.background`。"#,
+                r#"Theme "{theme_name}" is using a deprecated style property: scrollbar_thumb.background. Use `scrollbar.thumb.background` instead."#,
                 theme_name = theme.name
             )
         }

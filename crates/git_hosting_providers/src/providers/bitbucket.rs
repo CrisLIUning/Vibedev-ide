@@ -93,7 +93,7 @@ impl Bitbucket {
         }
 
         Ok(Self::new(
-            "BitBucket 自托管",
+            "BitBucket Self-Hosted",
             Url::parse(&format!("https://{}", host))?,
         ))
     }
@@ -138,7 +138,7 @@ impl Bitbucket {
         if response.status().is_client_error() {
             let text = String::from_utf8_lossy(body.as_slice());
             bail!(
-                "状态错误 {}, 响应: {text:?}",
+                "status error {}, response: {text:?}",
                 response.status().as_u16()
             );
         }

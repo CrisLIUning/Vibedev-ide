@@ -19,15 +19,15 @@ impl Example {
         let items = vec![
             (
                 cx.focus_handle().tab_index(1).tab_stop(true),
-                "使用 .focus() 的按钮 - 获得焦点时始终显示边框",
+                "Button with .focus() - always shows border when focused",
             ),
             (
                 cx.focus_handle().tab_index(2).tab_stop(true),
-                "使用 .focus_visible() 的按钮 - 仅在使用键盘时显示边框",
+                "Button with .focus_visible() - only shows border with keyboard",
             ),
             (
                 cx.focus_handle().tab_index(3).tab_stop(true),
-                "同时使用 .focus() 和 .focus_visible() 的按钮",
+                "Button with both .focus() and .focus_visible()",
             ),
         ];
 
@@ -38,7 +38,7 @@ impl Example {
             focus_handle,
             items,
             message: SharedString::from(
-                "尝试点击或按 标签页 键!点击不显示边框,标签页 键显示边框。",
+                "Try clicking vs tabbing! Click shows no border, Tab shows border.",
             ),
         }
     }
@@ -94,7 +94,7 @@ impl Render for Example {
                     .text_2xl()
                     .font_weight(gpui::FontWeight::BOLD)
                     .text_color(gpui::rgb(0x111827))
-                    .child("CSS focus-visible 演示"),
+                    .child("CSS focus-visible Demo"),
             )
             .child(
                 div()
@@ -119,7 +119,7 @@ impl Render for Example {
                                     .text_sm()
                                     .font_weight(gpui::FontWeight::BOLD)
                                     .text_color(gpui::rgb(0x374151))
-                                    .child("1. 常规 .focus() - 始终可见:"),
+                                    .child("1. Regular .focus() - always visible:"),
                             )
                             .child(
                                 button_base("button1", self.items[0].1)
@@ -129,7 +129,7 @@ impl Render for Example {
                                     })
                                     .on_click(cx.listener(|this, _, _, cx| {
                                         this.message =
-                                            "点击了按钮 1 - 焦点边框可见!".into();
+                                            "Clicked button 1 - focus border is visible!".into();
                                         cx.notify();
                                     })),
                             ),
@@ -144,7 +144,7 @@ impl Render for Example {
                                     .text_sm()
                                     .font_weight(gpui::FontWeight::BOLD)
                                     .text_color(gpui::rgb(0x374151))
-                                    .child("2. 新的 .focus_visible() - 仅键盘:"),
+                                    .child("2. New .focus_visible() - only keyboard:"),
                             )
                             .child(
                                 button_base("button2", self.items[1].1)
@@ -154,7 +154,7 @@ impl Render for Example {
                                     })
                                     .on_click(cx.listener(|this, _, _, cx| {
                                         this.message =
-                                            "点击了按钮 2 - 无边框!请尝试 标签页 键。".into();
+                                            "Clicked button 2 - no border! Try Tab instead.".into();
                                         cx.notify();
                                     })),
                             ),
@@ -170,7 +170,7 @@ impl Render for Example {
                                     .font_weight(gpui::FontWeight::BOLD)
                                     .text_color(gpui::rgb(0x374151))
                                     .child(
-                                        "3. 同时使用 .focus()(黄色)和 .focus_visible()(绿色):",
+                                        "3. Both .focus() (yellow) and .focus_visible() (green):",
                                     ),
                             )
                             .child(
@@ -184,7 +184,7 @@ impl Render for Example {
                                     })
                                     .on_click(cx.listener(|this, _, _, cx| {
                                         this.message =
-                                            "点击了按钮 3 - 黄色边框。标签页 键显示绿色!"
+                                            "Clicked button 3 - yellow border. Tab shows green!"
                                                 .into();
                                         cx.notify();
                                     })),

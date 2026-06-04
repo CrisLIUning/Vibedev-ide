@@ -56,7 +56,7 @@ fn migrate(text: &str, patterns: MigrationPatterns, query: &Query) -> Result<Opt
         }
         if new_text == text {
             log::error!(
-                "为配置迁移计算的编辑未产生变更: {:?}",
+                "Edits computed for configuration migration do not cause a change: {:?}",
                 edits
             );
             Ok(None)

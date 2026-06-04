@@ -756,13 +756,13 @@ fn margin_box_style_prefixes() -> Vec<BoxStylePrefix> {
                 quote! { margin.left },
                 quote! { margin.right },
             ],
-            doc_string_prefix: "设置元素的外边距。[文档](https://tailwindcss.com/docs/margin)",
+            doc_string_prefix: "Sets the margin of the element. [Docs](https://tailwindcss.com/docs/margin)",
         },
         BoxStylePrefix {
             prefix: "mt",
             auto_allowed: true,
             fields: vec![quote! { margin.top }],
-            doc_string_prefix: "设置元素的顶部外边距。[文档](https://tailwindcss.com/docs/margin#add-margin-to-a-single-side)",
+            doc_string_prefix: "Sets the top margin of the element. [Docs](https://tailwindcss.com/docs/margin#add-margin-to-a-single-side)",
         },
         BoxStylePrefix {
             prefix: "mb",
@@ -774,25 +774,25 @@ fn margin_box_style_prefixes() -> Vec<BoxStylePrefix> {
             prefix: "my",
             auto_allowed: true,
             fields: vec![quote! { margin.top }, quote! { margin.bottom }],
-            doc_string_prefix: "设置元素的垂直外边距。[文档](https://tailwindcss.com/docs/margin#add-vertical-margin)",
+            doc_string_prefix: "Sets the vertical margin of the element. [Docs](https://tailwindcss.com/docs/margin#add-vertical-margin)",
         },
         BoxStylePrefix {
             prefix: "mx",
             auto_allowed: true,
             fields: vec![quote! { margin.left }, quote! { margin.right }],
-            doc_string_prefix: "设置元素的水平外边距。[文档](https://tailwindcss.com/docs/margin#add-horizontal-margin)",
+            doc_string_prefix: "Sets the horizontal margin of the element. [Docs](https://tailwindcss.com/docs/margin#add-horizontal-margin)",
         },
         BoxStylePrefix {
             prefix: "ml",
             auto_allowed: true,
             fields: vec![quote! { margin.left }],
-            doc_string_prefix: "设置元素的左侧外边距。[文档](https://tailwindcss.com/docs/margin#add-margin-to-a-single-side)",
+            doc_string_prefix: "Sets the left margin of the element. [Docs](https://tailwindcss.com/docs/margin#add-margin-to-a-single-side)",
         },
         BoxStylePrefix {
             prefix: "mr",
             auto_allowed: true,
             fields: vec![quote! { margin.right }],
-            doc_string_prefix: "设置元素的右侧外边距。[文档](https://tailwindcss.com/docs/margin#add-margin-to-a-single-side)",
+            doc_string_prefix: "Sets the right margin of the element. [Docs](https://tailwindcss.com/docs/margin#add-margin-to-a-single-side)",
         },
     ]
 }
@@ -808,13 +808,13 @@ fn padding_box_style_prefixes() -> Vec<BoxStylePrefix> {
                 quote! { padding.left },
                 quote! { padding.right },
             ],
-            doc_string_prefix: "设置元素的内边距。[文档](https://tailwindcss.com/docs/padding)",
+            doc_string_prefix: "Sets the padding of the element. [Docs](https://tailwindcss.com/docs/padding)",
         },
         BoxStylePrefix {
             prefix: "pt",
             auto_allowed: false,
             fields: vec![quote! { padding.top }],
-            doc_string_prefix: "设置元素的顶部内边距。[文档](https://tailwindcss.com/docs/padding#add-padding-to-a-single-side)",
+            doc_string_prefix: "Sets the top padding of the element. [Docs](https://tailwindcss.com/docs/padding#add-padding-to-a-single-side)",
         },
         BoxStylePrefix {
             prefix: "pb",
@@ -826,25 +826,25 @@ fn padding_box_style_prefixes() -> Vec<BoxStylePrefix> {
             prefix: "px",
             auto_allowed: false,
             fields: vec![quote! { padding.left }, quote! { padding.right }],
-            doc_string_prefix: "设置元素的水平内边距。[文档](https://tailwindcss.com/docs/padding#add-horizontal-padding)",
+            doc_string_prefix: "Sets the horizontal padding of the element. [Docs](https://tailwindcss.com/docs/padding#add-horizontal-padding)",
         },
         BoxStylePrefix {
             prefix: "py",
             auto_allowed: false,
             fields: vec![quote! { padding.top }, quote! { padding.bottom }],
-            doc_string_prefix: "设置元素的垂直内边距。[文档](https://tailwindcss.com/docs/padding#add-vertical-padding)",
+            doc_string_prefix: "Sets the vertical padding of the element. [Docs](https://tailwindcss.com/docs/padding#add-vertical-padding)",
         },
         BoxStylePrefix {
             prefix: "pl",
             auto_allowed: false,
             fields: vec![quote! { padding.left }],
-            doc_string_prefix: "设置元素的左侧内边距。[文档](https://tailwindcss.com/docs/padding#add-padding-to-a-single-side)",
+            doc_string_prefix: "Sets the left padding of the element. [Docs](https://tailwindcss.com/docs/padding#add-padding-to-a-single-side)",
         },
         BoxStylePrefix {
             prefix: "pr",
             auto_allowed: false,
             fields: vec![quote! { padding.right }],
-            doc_string_prefix: "设置元素的右侧内边距。[文档](https://tailwindcss.com/docs/padding#add-padding-to-a-single-side)",
+            doc_string_prefix: "Sets the right padding of the element. [Docs](https://tailwindcss.com/docs/padding#add-padding-to-a-single-side)",
         },
     ]
 }
@@ -860,31 +860,31 @@ fn position_box_style_prefixes() -> Vec<BoxStylePrefix> {
                 quote! { inset.bottom },
                 quote! { inset.left },
             ],
-            doc_string_prefix: "设置定位元素的顶部、右侧、底部和左侧的值。[文档](https://tailwindcss.com/docs/top-right-bottom-left)",
+            doc_string_prefix: "Sets the top, right, bottom, and left values of a positioned element. [Docs](https://tailwindcss.com/docs/top-right-bottom-left)",
         },
         BoxStylePrefix {
             prefix: "top",
             auto_allowed: true,
             fields: vec![quote! { inset.top }],
-            doc_string_prefix: "设置定位元素的顶部值。[文档](https://tailwindcss.com/docs/top-right-bottom-left)",
+            doc_string_prefix: "Sets the top value of a positioned element. [Docs](https://tailwindcss.com/docs/top-right-bottom-left)",
         },
         BoxStylePrefix {
             prefix: "bottom",
             auto_allowed: true,
             fields: vec![quote! { inset.bottom }],
-            doc_string_prefix: "设置定位元素的底部值。[文档](https://tailwindcss.com/docs/top-right-bottom-left)",
+            doc_string_prefix: "Sets the bottom value of a positioned element. [Docs](https://tailwindcss.com/docs/top-right-bottom-left)",
         },
         BoxStylePrefix {
             prefix: "left",
             auto_allowed: true,
             fields: vec![quote! { inset.left }],
-            doc_string_prefix: "设置定位元素的左侧值。[文档](https://tailwindcss.com/docs/top-right-bottom-left)",
+            doc_string_prefix: "Sets the left value of a positioned element. [Docs](https://tailwindcss.com/docs/top-right-bottom-left)",
         },
         BoxStylePrefix {
             prefix: "right",
             auto_allowed: true,
             fields: vec![quote! { inset.right }],
-            doc_string_prefix: "设置定位元素的右侧值。[文档](https://tailwindcss.com/docs/top-right-bottom-left)",
+            doc_string_prefix: "Sets the right value of a positioned element. [Docs](https://tailwindcss.com/docs/top-right-bottom-left)",
         },
     ]
 }
@@ -895,31 +895,31 @@ fn box_prefixes() -> Vec<BoxStylePrefix> {
             prefix: "w",
             auto_allowed: true,
             fields: vec![quote! { size.width }],
-            doc_string_prefix: "设置元素的宽度。[文档](https://tailwindcss.com/docs/width)",
+            doc_string_prefix: "Sets the width of the element. [Docs](https://tailwindcss.com/docs/width)",
         },
         BoxStylePrefix {
             prefix: "h",
             auto_allowed: true,
             fields: vec![quote! { size.height }],
-            doc_string_prefix: "设置元素的高度。[文档](https://tailwindcss.com/docs/height)",
+            doc_string_prefix: "Sets the height of the element. [Docs](https://tailwindcss.com/docs/height)",
         },
         BoxStylePrefix {
             prefix: "size",
             auto_allowed: true,
             fields: vec![quote! {size.width}, quote! {size.height}],
-            doc_string_prefix: "设置元素的宽度和高度。",
+            doc_string_prefix: "Sets the width and height of the element.",
         },
         BoxStylePrefix {
             prefix: "min_size",
             auto_allowed: true,
             fields: vec![quote! {min_size.width}, quote! {min_size.height}],
-            doc_string_prefix: "设置元素的最小宽度和高度。",
+            doc_string_prefix: "Sets the minimum width and height of the element.",
         },
         BoxStylePrefix {
             prefix: "min_w",
             auto_allowed: true,
             fields: vec![quote! { min_size.width }],
-            doc_string_prefix: "设置元素的最小宽度。[文档](https://tailwindcss.com/docs/min-width)",
+            doc_string_prefix: "Sets the minimum width of the element. [Docs](https://tailwindcss.com/docs/min-width)",
         },
         // TODO: These don't use the same size ramp as the others
         // see https://tailwindcss.com/docs/max-width
@@ -927,13 +927,13 @@ fn box_prefixes() -> Vec<BoxStylePrefix> {
             prefix: "min_h",
             auto_allowed: true,
             fields: vec![quote! { min_size.height }],
-            doc_string_prefix: "设置元素的最小高度。[文档](https://tailwindcss.com/docs/min-height)",
+            doc_string_prefix: "Sets the minimum height of the element. [Docs](https://tailwindcss.com/docs/min-height)",
         },
         BoxStylePrefix {
             prefix: "max_size",
             auto_allowed: true,
             fields: vec![quote! {max_size.width}, quote! {max_size.height}],
-            doc_string_prefix: "设置元素的最大宽度和高度。",
+            doc_string_prefix: "Sets the maximum width and height of the element.",
         },
         // TODO: These don't use the same size ramp as the others
         // see https://tailwindcss.com/docs/max-width
@@ -941,7 +941,7 @@ fn box_prefixes() -> Vec<BoxStylePrefix> {
             prefix: "max_w",
             auto_allowed: true,
             fields: vec![quote! { max_size.width }],
-            doc_string_prefix: "设置元素的最大宽度。[文档](https://tailwindcss.com/docs/max-width)",
+            doc_string_prefix: "Sets the maximum width of the element. [Docs](https://tailwindcss.com/docs/max-width)",
         },
         // TODO: These don't use the same size ramp as the others
         // see https://tailwindcss.com/docs/max-width
@@ -949,25 +949,25 @@ fn box_prefixes() -> Vec<BoxStylePrefix> {
             prefix: "max_h",
             auto_allowed: true,
             fields: vec![quote! { max_size.height }],
-            doc_string_prefix: "设置元素的最大高度。[文档](https://tailwindcss.com/docs/max-height)",
+            doc_string_prefix: "Sets the maximum height of the element. [Docs](https://tailwindcss.com/docs/max-height)",
         },
         BoxStylePrefix {
             prefix: "gap",
             auto_allowed: false,
             fields: vec![quote! { gap.width }, quote! { gap.height }],
-            doc_string_prefix: "设置 flex 布局中行和列之间的间距。[文档](https://tailwindcss.com/docs/gap)",
+            doc_string_prefix: "Sets the gap between rows and columns in flex layouts. [Docs](https://tailwindcss.com/docs/gap)",
         },
         BoxStylePrefix {
             prefix: "gap_x",
             auto_allowed: false,
             fields: vec![quote! { gap.width }],
-            doc_string_prefix: "设置 flex 布局中列之间的间距。[文档](https://tailwindcss.com/docs/gap#changing-row-and-column-gaps-independently)",
+            doc_string_prefix: "Sets the gap between columns in flex layouts. [Docs](https://tailwindcss.com/docs/gap#changing-row-and-column-gaps-independently)",
         },
         BoxStylePrefix {
             prefix: "gap_y",
             auto_allowed: false,
             fields: vec![quote! { gap.height }],
-            doc_string_prefix: "设置 flex 布局中行之间的间距。[文档](https://tailwindcss.com/docs/gap#changing-row-and-column-gaps-independently)",
+            doc_string_prefix: "Sets the gap between rows in flex layouts. [Docs](https://tailwindcss.com/docs/gap#changing-row-and-column-gaps-independently)",
         },
     ]
 }
@@ -1217,7 +1217,7 @@ fn corner_prefixes() -> Vec<CornerStylePrefix> {
                 quote! { corner_radii.bottom_right },
                 quote! { corner_radii.bottom_left },
             ],
-            doc_string_prefix: "设置元素的圆角。[文档](https://tailwindcss.com/docs/border-radius)",
+            doc_string_prefix: "Sets the border radius of the element. [Docs](https://tailwindcss.com/docs/border-radius)",
         },
         CornerStylePrefix {
             prefix: "rounded_t",
@@ -1225,7 +1225,7 @@ fn corner_prefixes() -> Vec<CornerStylePrefix> {
                 quote! { corner_radii.top_left },
                 quote! { corner_radii.top_right },
             ],
-            doc_string_prefix: "设置元素顶部的圆角。[文档](https://tailwindcss.com/docs/border-radius#rounding-sides-separately)",
+            doc_string_prefix: "Sets the border radius of the top side of the element. [Docs](https://tailwindcss.com/docs/border-radius#rounding-sides-separately)",
         },
         CornerStylePrefix {
             prefix: "rounded_b",
@@ -1241,7 +1241,7 @@ fn corner_prefixes() -> Vec<CornerStylePrefix> {
                 quote! { corner_radii.top_right },
                 quote! { corner_radii.bottom_right },
             ],
-            doc_string_prefix: "设置元素右侧的圆角。[文档](https://tailwindcss.com/docs/border-radius#rounding-sides-separately)",
+            doc_string_prefix: "Sets the border radius of the right side of the element. [Docs](https://tailwindcss.com/docs/border-radius#rounding-sides-separately)",
         },
         CornerStylePrefix {
             prefix: "rounded_l",
@@ -1249,22 +1249,22 @@ fn corner_prefixes() -> Vec<CornerStylePrefix> {
                 quote! { corner_radii.top_left },
                 quote! { corner_radii.bottom_left },
             ],
-            doc_string_prefix: "设置元素左侧的圆角。[文档](https://tailwindcss.com/docs/border-radius#rounding-sides-separately)",
+            doc_string_prefix: "Sets the border radius of the left side of the element. [Docs](https://tailwindcss.com/docs/border-radius#rounding-sides-separately)",
         },
         CornerStylePrefix {
             prefix: "rounded_tl",
             fields: vec![quote! { corner_radii.top_left }],
-            doc_string_prefix: "设置元素左上角的圆角。[文档](https://tailwindcss.com/docs/border-radius#rounding-corners-separately)",
+            doc_string_prefix: "Sets the border radius of the top left corner of the element. [Docs](https://tailwindcss.com/docs/border-radius#rounding-corners-separately)",
         },
         CornerStylePrefix {
             prefix: "rounded_tr",
             fields: vec![quote! { corner_radii.top_right }],
-            doc_string_prefix: "设置元素右上角的圆角。[文档](https://tailwindcss.com/docs/border-radius#rounding-corners-separately)",
+            doc_string_prefix: "Sets the border radius of the top right corner of the element. [Docs](https://tailwindcss.com/docs/border-radius#rounding-corners-separately)",
         },
         CornerStylePrefix {
             prefix: "rounded_bl",
             fields: vec![quote! { corner_radii.bottom_left }],
-            doc_string_prefix: "设置元素左下角的圆角。[文档](https://tailwindcss.com/docs/border-radius#rounding-corners-separately)",
+            doc_string_prefix: "Sets the border radius of the bottom left corner of the element. [Docs](https://tailwindcss.com/docs/border-radius#rounding-corners-separately)",
         },
         CornerStylePrefix {
             prefix: "rounded_br",
@@ -1334,12 +1334,12 @@ fn border_prefixes() -> Vec<BorderStylePrefix> {
                 quote! { border_widths.bottom },
                 quote! { border_widths.left },
             ],
-            doc_string_prefix: "设置元素的边框宽度。[文档](https://tailwindcss.com/docs/border-width)",
+            doc_string_prefix: "Sets the border width of the element. [Docs](https://tailwindcss.com/docs/border-width)",
         },
         BorderStylePrefix {
             prefix: "border_t",
             fields: vec![quote! { border_widths.top }],
-            doc_string_prefix: "设置元素顶部的边框宽度。[文档](https://tailwindcss.com/docs/border-width#individual-sides)",
+            doc_string_prefix: "Sets the border width of the top side of the element. [Docs](https://tailwindcss.com/docs/border-width#individual-sides)",
         },
         BorderStylePrefix {
             prefix: "border_b",
@@ -1349,12 +1349,12 @@ fn border_prefixes() -> Vec<BorderStylePrefix> {
         BorderStylePrefix {
             prefix: "border_r",
             fields: vec![quote! { border_widths.right }],
-            doc_string_prefix: "设置元素右侧的边框宽度。[文档](https://tailwindcss.com/docs/border-width#individual-sides)",
+            doc_string_prefix: "Sets the border width of the right side of the element. [Docs](https://tailwindcss.com/docs/border-width#individual-sides)",
         },
         BorderStylePrefix {
             prefix: "border_l",
             fields: vec![quote! { border_widths.left }],
-            doc_string_prefix: "设置元素左侧的边框宽度。[文档](https://tailwindcss.com/docs/border-width#individual-sides)",
+            doc_string_prefix: "Sets the border width of the left side of the element. [Docs](https://tailwindcss.com/docs/border-width#individual-sides)",
         },
         BorderStylePrefix {
             prefix: "border_x",
@@ -1362,7 +1362,7 @@ fn border_prefixes() -> Vec<BorderStylePrefix> {
                 quote! { border_widths.left },
                 quote! { border_widths.right },
             ],
-            doc_string_prefix: "设置元素垂直方向的边框宽度。[文档](https://tailwindcss.com/docs/border-width#horizontal-and-vertical-sides)",
+            doc_string_prefix: "Sets the border width of the vertical sides of the element. [Docs](https://tailwindcss.com/docs/border-width#horizontal-and-vertical-sides)",
         },
         BorderStylePrefix {
             prefix: "border_y",
@@ -1370,7 +1370,7 @@ fn border_prefixes() -> Vec<BorderStylePrefix> {
                 quote! { border_widths.top },
                 quote! { border_widths.bottom },
             ],
-            doc_string_prefix: "设置元素水平方向的边框宽度。[文档](https://tailwindcss.com/docs/border-width#horizontal-and-vertical-sides)",
+            doc_string_prefix: "Sets the border width of the horizontal sides of the element. [Docs](https://tailwindcss.com/docs/border-width#horizontal-and-vertical-sides)",
         },
     ]
 }

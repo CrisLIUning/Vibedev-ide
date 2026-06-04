@@ -1109,7 +1109,7 @@ mod tests {
     #[test]
     fn test_git_variables_resolution() {
         let task = TaskTemplate {
-            label: "在 $ZED_GIT_REPOSITORY_NAME 中显示 $ZED_GIT_SHA_".to_string(),
+            label: "Show $ZED_GIT_SHA_SHORT in $ZED_GIT_REPOSITORY_NAME".to_string(),
             command: "git".to_string(),
             args: vec!["show".to_string(), "$ZED_GIT_SHA".to_string()],
             cwd: Some("$ZED_GIT_REPOSITORY_PATH".to_string()),
@@ -1134,7 +1134,7 @@ mod tests {
         let task = task.resolve_task(TEST_ID_BASE, &context).unwrap();
         assert_eq!(
             task.resolved_label,
-            format!("在 {repo_name} 中显示 {sha_short}")
+            format!("Show {sha_short} in {repo_name}")
         );
         assert_eq!(task.resolved.command, Some("git".to_string()));
         assert_eq!(task.resolved.args, vec!["show".to_string(), sha.clone()]);

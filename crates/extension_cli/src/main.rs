@@ -103,7 +103,7 @@ async fn main() -> Result<()> {
         .context("failed to run tar")?;
     if !tar_output.status.success() {
         bail!(
-            "无法创建 archive.tar.gz: {}",
+            "failed to create archive.tar.gz: {}",
             String::from_utf8_lossy(&tar_output.stderr)
         );
     }
@@ -188,7 +188,7 @@ async fn copy_extension_resources(
                 ),
             )
             .with_context(|| {
-                format!("无法复制图标主题 '{}'", icon_theme_path.display())
+                format!("failed to copy icon theme '{}'", icon_theme_path.display())
             })?;
         }
 
@@ -224,7 +224,7 @@ async fn copy_extension_resources(
             )
             .await
             .with_context(|| {
-                format!("无法复制语言目录 '{}'", language_path.display())
+                format!("failed to copy language dir '{}'", language_path.display())
             })?;
         }
     }
@@ -249,7 +249,7 @@ async fn copy_extension_resources(
             .await
             .with_context(|| {
                 format!(
-                    "无法复制调试适配器 schema '{}'",
+                    "failed to copy debug adapter schema '{}'",
                     schema_path.display(),
                 )
             })?;
@@ -273,7 +273,7 @@ async fn copy_extension_resources(
             )
             .await
             .with_context(|| {
-                format!("无法从 '{}' 复制代码片段", snippets_path.display())
+                format!("failed to copy snippets from '{}'", snippets_path.display())
             })?;
         }
     }
@@ -285,17 +285,17 @@ async fn copy_extension_resources(
 enum ExtensionFeatureError {
     #[error("extension does not provide any features")]
     NoFeatures,
-    #[error("扩展不得与主题一起提供其他功能")]
+    #[error("extension must not provide other features along with themes")]
     ThemesMixedWithOtherFeatures,
-    #[error("扩展不得与图标主题一起提供其他功能")]
+    #[error("extension must not provide other features along with icon themes")]
     IconThemesMixedWithOtherFeatures,
     #[error(
         "Slash commands have been deprecated and \
         the slash command API will be removed in a future release. {}",
         if *.sole_feature {
-            "斜杠命令扩展目前不再可用。"
+            "Slash command extensions will no longer be accepted at this time."
         } else {
-            "请移除扩展中的斜杠命令相关代码。"
+            "Please remove any slash-command related code from your extension."
         }
     )]
     SlashCommandsDeprecated { sole_feature: bool },
@@ -386,7 +386,7 @@ fn test_languages(
                 TaskTemplates::FILE_NAME => {
                     let task_file_content = std::fs::read(&file_path).with_context(|| {
                         anyhow!(
-                            "无法读取位于 {path} 的任务文件",
+                            "Failed to read tasks file at {path}",
                             path = file_path.display()
                         )
                     })?;
@@ -394,7 +394,7 @@ fn test_languages(
                         serde_json_lenient::from_slice::<TaskTemplates>(&task_file_content)
                             .with_context(|| {
                                 anyhow!(
-                                    "无法解析位于 {path} 的任务文件",
+                                    "Failed to parse tasks file at {path}",
                                     path = file_path.display()
                                 )
                             })?;
@@ -402,7 +402,7 @@ fn test_languages(
                 _ if file_name.ends_with(".scm") => {
                     let grammar = grammar.with_context(|| {
                         format! {
-                            "语言 {} 提供了查询 {} 但没有文法",
+                            "language {} provides query {} but no grammar",
                             config.name,
                             file_path.display()
                         }
@@ -440,7 +440,7 @@ async fn test_themes(
                 .is_some()
             {
                 bail!(
-                    r#"主题 "{theme_name}" 正在使用已弃用的样式属性: scrollbar_thumb.background。请改用 `scrollbar.thumb.background`。"#,
+                    r#"Theme "{theme_name}" is using a deprecated style property: scrollbar_thumb.background. Use `scrollbar.thumb.background` instead."#,
                     theme_name = theme.name
                 )
             }
@@ -473,7 +473,7 @@ async fn test_snippets(
 
         anyhow::ensure!(
             error_count == 0,
-            "无法解析文件 {snippet_path:?} 中的 {error_count} 个代码片段{suffix}:\n\n{snippet_errors}",
+            "Could not parse {error_count} snippet{suffix} in file {snippet_path:?}:\n\n{snippet_errors}",
             suffix = if error_count == 1 { "" } else { "s" },
             snippet_errors = snippet_errors
                 .iter()

@@ -158,7 +158,7 @@ impl TerminalPanel {
                         PopoverMenu::new("terminal-tab-bar-popover-menu")
                             .trigger_with_tooltip(
                                 IconButton::new("plus", IconName::Plus).icon_size(IconSize::Small),
-                                Tooltip::text("新建…"),
+                                Tooltip::text("New…"),
                             )
                             .anchor(Anchor::TopRight)
                             .with_handle(pane.new_item_context_menu_handle.clone())
@@ -167,14 +167,14 @@ impl TerminalPanel {
                                 let menu = ContextMenu::build(window, cx, |menu, _, _| {
                                     menu.context(focus_handle.clone())
                                         .action(
-                                            "新建终端",
+                                            "New Terminal",
                                             workspace::NewTerminal::default().boxed_clone(),
                                         )
                                         // We want the focus to go back to terminal panel once task modal is dismissed,
                                         // hence we focus that first. Otherwise, we'd end up without a focused element, as
                                         // context menu will be gone the moment we spawn the modal.
                                         .action(
-                                            "生成任务",
+                                            "Spawn Task",
                                             zed_actions::Spawn::modal().boxed_clone(),
                                         )
                                 });
@@ -188,7 +188,7 @@ impl TerminalPanel {
                             .trigger_with_tooltip(
                                 IconButton::new("terminal-pane-split", IconName::Split)
                                     .icon_size(IconSize::Small),
-                                Tooltip::text("拆分窗格"),
+                                Tooltip::text("Split Pane"),
                             )
                             .anchor(Anchor::TopRight)
                             .with_handle(pane.split_item_context_menu_handle.clone())
@@ -199,10 +199,10 @@ impl TerminalPanel {
                                             split_context.clone(),
                                             |menu, split_context| menu.context(split_context),
                                         )
-                                        .action("向右拆分", SplitRight::default().boxed_clone())
-                                        .action("向左拆分", SplitLeft::default().boxed_clone())
-                                        .action("向上拆分", SplitUp::default().boxed_clone())
-                                        .action("向下拆分", SplitDown::default().boxed_clone())
+                                        .action("Split Right", SplitRight::default().boxed_clone())
+                                        .action("Split Left", SplitLeft::default().boxed_clone())
+                                        .action("Split Up", SplitUp::default().boxed_clone())
+                                        .action("Split Down", SplitDown::default().boxed_clone())
                                     })
                                     .into()
                                 }
@@ -219,7 +219,7 @@ impl TerminalPanel {
                             }))
                             .tooltip(move |_window, cx| {
                                 Tooltip::for_action(
-                                    if zoomed { "缩小" } else { "放大" },
+                                    if zoomed { "Zoom Out" } else { "Zoom In" },
                                     &ToggleZoom,
                                     cx,
                                 )
@@ -1307,9 +1307,9 @@ impl Render for FailedToSpawnTerminal {
             .menu(move |window, cx| {
                 Some(ContextMenu::build(window, cx, |context_menu, _, _| {
                     context_menu
-                        .action("打开设置", zed_actions::OpenSettings.boxed_clone())
+                        .action("Open Settings", zed_actions::OpenSettings.boxed_clone())
                         .action(
-                            "编辑 设置.json",
+                            "Edit settings.json",
                             zed_actions::OpenSettingsFile.boxed_clone(),
                         )
                 }))
@@ -1333,7 +1333,7 @@ impl Render for FailedToSpawnTerminal {
                     .items_center()
                     .justify_center()
                     .text_center()
-                    .child(Label::new("生成终端失败"))
+                    .child(Label::new("Failed to spawn terminal"))
                     .child(
                         Label::new(self.error.to_string())
                             .size(LabelSize::Small)
@@ -1342,7 +1342,7 @@ impl Render for FailedToSpawnTerminal {
                     )
                     .child(SplitButton::new(
                         ButtonLike::new("open-settings-ui")
-                            .child(Label::new("编辑设置").size(LabelSize::Small))
+                            .child(Label::new("Edit Settings").size(LabelSize::Small))
                             .on_click(|_, window, cx| {
                                 window.dispatch_action(zed_actions::OpenSettings.boxed_clone(), cx);
                             }),
@@ -1358,7 +1358,7 @@ impl workspace::Item for FailedToSpawnTerminal {
     type Event = ();
 
     fn tab_content_text(&self, _detail: usize, _cx: &App) -> SharedString {
-        SharedString::new_static("生成终端失败")
+        SharedString::new_static("Failed to spawn terminal")
     }
 }
 
@@ -1652,7 +1652,7 @@ impl Panel for TerminalPanel {
     }
 
     fn icon_tooltip(&self, _window: &Window, _cx: &App) -> Option<&'static str> {
-        Some("终端面板")
+        Some("Terminal Panel")
     }
 
     fn toggle_action(&self) -> Box<dyn gpui::Action> {
@@ -1718,7 +1718,7 @@ impl Render for InlineAssistTabBarButton {
                 window.dispatch_action(InlineAssist::default().boxed_clone(), cx);
             }))
             .tooltip(move |_window, cx| {
-                Tooltip::for_action_in("内联助手", &InlineAssist::default(), &focus_handle, cx)
+                Tooltip::for_action_in("Inline Assist", &InlineAssist::default(), &focus_handle, cx)
             })
     }
 }
@@ -1936,7 +1936,7 @@ mod tests {
                     panel
                 })
             })
-            .expect("无法使用终端面板初始化工作区");
+            .expect("Failed to initialize workspace with terminal panel");
 
         (window_handle, terminal_panel)
     }
@@ -1959,7 +1959,7 @@ mod tests {
                     .read(cx)
                     .items_len()
             })
-            .expect("无法读取中心窗格项目");
+            .expect("Failed to read center pane items");
 
         window_handle
             .update(cx, |multi_workspace, window, cx| {
@@ -1972,7 +1972,7 @@ mod tests {
                     );
                 })
             })
-            .expect("无法分发 new_terminal");
+            .expect("Failed to dispatch new_terminal");
 
         cx.run_until_parked();
 
@@ -1987,16 +1987,16 @@ mod tests {
                     .read(cx)
                     .items_len()
             })
-            .expect("无法读取中心窗格项目");
+            .expect("Failed to read center pane items");
 
         assert_eq!(
             panel_items_after,
             panel_items_before + 1,
-            "当没有中心终端获得焦点时,终端应添加到面板"
+            "Terminal should be added to the panel when no center terminal is focused"
         );
         assert_eq!(
             center_items_after, center_items_before,
-            "中心窗格不应获得新终端"
+            "Center pane should not gain a new terminal"
         );
     }
 
@@ -2017,9 +2017,9 @@ mod tests {
                     })
                 })
             })
-            .expect("无法更新工作区")
+            .expect("Failed to update workspace")
             .await
-            .expect("无法创建中心终端");
+            .expect("Failed to create center terminal");
         cx.run_until_parked();
 
         let center_items_before = window_handle
@@ -2031,8 +2031,8 @@ mod tests {
                     .read(cx)
                     .items_len()
             })
-            .expect("无法读取中心窗格项目");
-        assert_eq!(center_items_before, 1, "中心窗格应有 1 个终端");
+            .expect("Failed to read center pane items");
+        assert_eq!(center_items_before, 1, "Center pane should have 1 terminal");
 
         window_handle
             .update(cx, |multi_workspace, window, cx| {
@@ -2041,14 +2041,14 @@ mod tests {
                         .active_pane()
                         .read(cx)
                         .active_item()
-                        .expect("中心窗格应有活动项目");
+                        .expect("Center pane should have an active item");
                     let terminal_view = active_item
                         .downcast::<TerminalView>()
-                        .expect("活动中心项目应为 TerminalView");
+                        .expect("Active center item should be a TerminalView");
                     window.focus(&terminal_view.focus_handle(cx), cx);
                 })
             })
-            .expect("无法聚焦终端视图");
+            .expect("Failed to focus terminal view");
         cx.run_until_parked();
 
         let panel_items_before =
@@ -2065,7 +2065,7 @@ mod tests {
                     );
                 })
             })
-            .expect("无法分发 new_terminal");
+            .expect("Failed to dispatch new_terminal");
         cx.run_until_parked();
 
         let center_items_after = window_handle
@@ -2077,18 +2077,18 @@ mod tests {
                     .read(cx)
                     .items_len()
             })
-            .expect("无法读取中心窗格项目");
+            .expect("Failed to read center pane items");
         let panel_items_after =
             terminal_panel.read_with(cx, |panel, cx| panel.active_pane.read(cx).items_len());
 
         assert_eq!(
             center_items_after,
             center_items_before + 1,
-            "新终端应添加到中心窗格"
+            "New terminal should be added to the center pane"
         );
         assert_eq!(
             panel_items_after, panel_items_before,
-            "终端面板不应获得新终端"
+            "Terminal panel should not gain a new terminal"
         );
     }
 
@@ -2105,16 +2105,16 @@ mod tests {
                     panel.add_terminal_shell(None, RevealStrategy::Always, window, cx)
                 })
             })
-            .expect("无法更新工作区")
+            .expect("Failed to update workspace")
             .await
-            .expect("无法创建面板终端");
+            .expect("Failed to create panel terminal");
         cx.run_until_parked();
 
         window_handle
             .update(cx, |_, window, cx| {
                 window.focus(&terminal_panel.read(cx).focus_handle(cx), cx);
             })
-            .expect("无法聚焦终端面板");
+            .expect("Failed to focus terminal panel");
         cx.run_until_parked();
 
         let panel_items_before =
@@ -2129,7 +2129,7 @@ mod tests {
                     .read(cx)
                     .items_len()
             })
-            .expect("无法读取中心窗格项目");
+            .expect("Failed to read center pane items");
 
         window_handle
             .update(cx, |multi_workspace, window, cx| {
@@ -2142,7 +2142,7 @@ mod tests {
                     );
                 })
             })
-            .expect("无法分发 new_terminal");
+            .expect("Failed to dispatch new_terminal");
         cx.run_until_parked();
 
         let panel_items_after =
@@ -2156,16 +2156,16 @@ mod tests {
                     .read(cx)
                     .items_len()
             })
-            .expect("无法读取中心窗格项目");
+            .expect("Failed to read center pane items");
 
         assert_eq!(
             panel_items_after,
             panel_items_before + 1,
-            "当面板获得焦点时,新终端应添加到面板"
+            "New terminal should be added to the panel when panel is focused"
         );
         assert_eq!(
             center_items_after, center_items_before,
-            "中心窗格不应获得新终端"
+            "Center pane should not gain a new terminal"
         );
     }
 
@@ -2186,9 +2186,9 @@ mod tests {
                     })
                 })
             })
-            .expect("无法更新工作区")
+            .expect("Failed to update workspace")
             .await
-            .expect("无法创建中心终端");
+            .expect("Failed to create center terminal");
         cx.run_until_parked();
 
         window_handle
@@ -2198,14 +2198,14 @@ mod tests {
                         .active_pane()
                         .read(cx)
                         .active_item()
-                        .expect("中心窗格应有活动项目");
+                        .expect("Center pane should have an active item");
                     let terminal_view = active_item
                         .downcast::<TerminalView>()
-                        .expect("活动中心项目应为 TerminalView");
+                        .expect("Active center item should be a TerminalView");
                     window.focus(&terminal_view.focus_handle(cx), cx);
                 })
             })
-            .expect("无法聚焦终端视图");
+            .expect("Failed to focus terminal view");
         cx.run_until_parked();
 
         let center_items_before = window_handle
@@ -2217,7 +2217,7 @@ mod tests {
                     .read(cx)
                     .items_len()
             })
-            .expect("无法读取中心窗格项目");
+            .expect("Failed to read center pane items");
         let panel_items_before =
             terminal_panel.read_with(cx, |panel, cx| panel.active_pane.read(cx).items_len());
 
@@ -2232,7 +2232,7 @@ mod tests {
                     );
                 })
             })
-            .expect("无法分发 local=true 的 new_terminal");
+            .expect("Failed to dispatch new_terminal with local=true");
         cx.run_until_parked();
 
         let center_items_after = window_handle
@@ -2244,18 +2244,18 @@ mod tests {
                     .read(cx)
                     .items_len()
             })
-            .expect("无法读取中心窗格项目");
+            .expect("Failed to read center pane items");
         let panel_items_after =
             terminal_panel.read_with(cx, |panel, cx| panel.active_pane.read(cx).items_len());
 
         assert_eq!(
             center_items_after,
             center_items_before + 1,
-            "新本地终端应添加到中心窗格"
+            "New local terminal should be added to the center pane"
         );
         assert_eq!(
             panel_items_after, panel_items_before,
-            "终端面板不应获得新终端"
+            "Terminal panel should not gain a new terminal"
         );
     }
 
@@ -2276,9 +2276,9 @@ mod tests {
                     })
                 })
             })
-            .expect("无法更新工作区")
+            .expect("Failed to update workspace")
             .await
-            .expect("无法创建中心终端");
+            .expect("Failed to create center terminal");
         cx.run_until_parked();
 
         window_handle
@@ -2287,16 +2287,16 @@ mod tests {
                     panel.add_terminal_shell(None, RevealStrategy::Always, window, cx)
                 })
             })
-            .expect("无法更新工作区")
+            .expect("Failed to update workspace")
             .await
-            .expect("无法创建面板终端");
+            .expect("Failed to create panel terminal");
         cx.run_until_parked();
 
         window_handle
             .update(cx, |_, window, cx| {
                 window.focus(&terminal_panel.read(cx).focus_handle(cx), cx);
             })
-            .expect("无法聚焦终端面板");
+            .expect("Failed to focus terminal panel");
         cx.run_until_parked();
 
         let panel_items_before =
@@ -2310,7 +2310,7 @@ mod tests {
                     .read(cx)
                     .items_len()
             })
-            .expect("无法读取中心窗格项目");
+            .expect("Failed to read center pane items");
 
         window_handle
             .update(cx, |multi_workspace, window, cx| {
@@ -2323,7 +2323,7 @@ mod tests {
                     );
                 })
             })
-            .expect("无法分发 new_terminal");
+            .expect("Failed to dispatch new_terminal");
         cx.run_until_parked();
 
         let panel_items_after =
@@ -2337,16 +2337,16 @@ mod tests {
                     .read(cx)
                     .items_len()
             })
-            .expect("无法读取中心窗格项目");
+            .expect("Failed to read center pane items");
 
         assert_eq!(
             panel_items_after,
             panel_items_before + 1,
-            "当面板获得焦点时,新终端应进入面板,即使中心已有终端"
+            "New terminal should go to panel when panel is focused, even if center has a terminal"
         );
         assert_eq!(
             center_items_after, center_items_before,
-            "当面板获得焦点时,中心窗格不应获得新终端"
+            "Center pane should not gain a new terminal when panel is focused"
         );
     }
 

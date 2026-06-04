@@ -613,7 +613,7 @@ async fn test_context_server_respects_disable_ai(cx: &mut TestAppContext) {
         assert_eq!(
             store.read(cx).status_for_server(&server_1_id),
             None,
-            "禁用 AI 时服务器不应启动"
+            "Server should not start when disable_ai is true"
         );
     });
 
@@ -659,7 +659,7 @@ async fn test_context_server_respects_disable_ai(cx: &mut TestAppContext) {
         assert_eq!(
             store.read(cx).status_for_server(&server_1_id),
             Some(ContextServerStatus::Stopped),
-            "禁用 AI 时服务器应已停止"
+            "Server should be stopped when disable_ai is true"
         );
     });
 }
@@ -737,16 +737,16 @@ async fn test_context_server_refreshed_when_worktree_added(cx: &mut TestAppConte
     cx.update(|cx| {
         assert!(
             *notify_count.borrow() > 0,
-            "添加工作树应该触发上下文服务器存储刷新"
+            "Adding a worktree should trigger the context server store to refresh"
         );
         assert!(
             store.read(cx).server_ids().contains(&server_1_id),
-            "配置的服务器列表在添加工作树后仍应包含该服务器"
+            "Configured server list should still include the server after a worktree is added"
         );
         assert_eq!(
             store.read(cx).status_for_server(&server_1_id),
             Some(ContextServerStatus::Running),
-            "添加工作树后服务器应仍保持运行"
+            "Server should still be running after a worktree is added"
         );
     });
 }
@@ -812,11 +812,11 @@ async fn test_server_ids_includes_disabled_servers(cx: &mut TestAppContext) {
         let server_ids = store.read(cx).server_ids().to_vec();
         assert!(
             server_ids.contains(&enabled_server_id),
-            "server_ids 应包含已启用的服务器"
+            "server_ids should include enabled server"
         );
         assert!(
             server_ids.contains(&disabled_server_id),
-            "server_ids 应包含已禁用的服务器"
+            "server_ids should include disabled server"
         );
     });
 
@@ -825,14 +825,14 @@ async fn test_server_ids_includes_disabled_servers(cx: &mut TestAppContext) {
         assert_eq!(
             store.read(cx).status_for_server(&enabled_server_id),
             Some(ContextServerStatus::Running),
-            "已启用的服务器应正在运行"
+            "enabled server should be running"
         );
         // Disabled server should not be in the servers map (status returns None)
         // but should still be in server_ids
         assert_eq!(
             store.read(cx).status_for_server(&disabled_server_id),
             None,
-            "已禁用的服务器不应有状态(不在服务器映射中)"
+            "disabled server should not have a status (not in servers map)"
         );
     });
 }

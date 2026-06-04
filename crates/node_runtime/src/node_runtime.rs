@@ -119,7 +119,7 @@ impl NodeRuntime {
                     // failure case not cached, since it's cheap to check again
                     return Box::new(UnavailableNodeRuntime {
                         error_message: format!(
-                            "检查设置中 `node.path` 指定的 Node.js ({}) 失败: {:?}",
+                            "failure checking Node.js from `node.path` in settings ({}): {:?}",
                             node.display(),
                             err
                         )
@@ -153,14 +153,14 @@ impl NodeRuntime {
                 Some(err @ DetectError::NotInPath(_)) => (Level::Info, err.to_string()),
                 None => (
                     Level::Info,
-                    "设置中的 `node.ignore_system_version` 为 `true`".to_string(),
+                    "`node.ignore_system_version` is `true` in settings".to_string(),
                 ),
             };
             match ManagedNodeRuntime::install_if_needed(&state.http).await {
                 Ok(instance) => {
                     log::log!(
                         log_level,
-                        "正在使用 VibeDev 托管的 Node.js (位于 {}),因为 {}",
+                        "using Zed managed Node.js at {} since {}",
                         instance.installation_path.display(),
                         why_using_managed
                     );
@@ -188,7 +188,7 @@ impl NodeRuntime {
             // error message.
             return Box::new(UnavailableNodeRuntime {
                 error_message: format!(
-                    "检查 PATH 中的系统 Node.js 失败: {}",
+                    "failure while checking system Node.js from PATH: {}",
                     system_node_error
                 )
                 .into(),
@@ -199,7 +199,7 @@ impl NodeRuntime {
             // TODO: When support is added for setting `options.allow_binary_download`, update this
             // error message.
             Box::new(UnavailableNodeRuntime {
-                error_message: "`node` 设置不允许以任何方式使用 Node.js"
+                error_message: "`node` settings do not allow any way to use Node.js"
                     .to_string()
                     .into(),
             })
@@ -275,13 +275,13 @@ impl NodeRuntime {
         let info: NpmInfo = serde_json::from_slice(&output.stdout)?;
         let before = npm_config_before(instance.as_ref(), http.proxy())
             .await
-            .context("获取 npm 配置文件失败")
+            .context("getting npm before config")
             .log_err()
             .flatten();
         let latest_dist_tag = info.dist_tags.latest.clone();
         let selected_version = select_npm_package_version(name, info, before.as_deref())?;
         log::debug!(
-            "已选择最新 npm 包版本 package={name:?} before={before:?} dist_tag_latest={latest_dist_tag:?} selected={selected_version}"
+            "selected latest npm package version package={name:?} before={before:?} dist_tag_latest={latest_dist_tag:?} selected={selected_version}"
         );
         Ok(selected_version)
     }
@@ -296,7 +296,7 @@ impl NodeRuntime {
         }
 
         log::debug!(
-            "正在安装 npm 包 directory={} packages={packages:?}",
+            "installing npm packages directory={} packages={packages:?}",
             directory.display()
         );
 
@@ -332,7 +332,7 @@ impl NodeRuntime {
     ) -> Result<()> {
         // Let npm apply user config such as `before` and `min-release-age` during resolution.
         log::debug!(
-            "正在安装最新 npm 包 directory={} packages={package_names:?}",
+            "installing latest npm packages directory={} packages={package_names:?}",
             directory.display()
         );
         let packages = package_names
@@ -354,7 +354,7 @@ impl NodeRuntime {
         // we attempt to install the package.
         if fs::metadata(local_executable_path).await.is_err() {
             log::debug!(
-                "npm 包缓存未命中 package={package_name:?} reason=missing-executable executable={}",
+                "npm package cache miss package={package_name:?} reason=missing-executable executable={}",
                 local_executable_path.display()
             );
             return true;
@@ -367,7 +367,7 @@ impl NodeRuntime {
             .flatten()
         else {
             log::debug!(
-                "npm 包缓存未命中 package={package_name:?} reason=missing-installed-version package_dir={}",
+                "npm package cache miss package={package_name:?} reason=missing-installed-version package_dir={}",
                 local_package_directory.display()
             );
             return true;
@@ -380,7 +380,7 @@ impl NodeRuntime {
         let should_install =
             should_install_npm_package_version(&installed_version, version_strategy);
         log::debug!(
-            "npm 包缓存检查 package={package_name:?} installed={installed_version} strategy={version_strategy_label} should_install={should_install}"
+            "npm package cache check package={package_name:?} installed={installed_version} strategy={version_strategy_label} should_install={should_install}"
         );
         should_install
     }
@@ -446,7 +446,7 @@ fn select_npm_package_version(
         && !info.time.is_empty()
     {
         let before_timestamp = DateTime::parse_from_rfc3339(before)
-            .with_context(|| format!("解析 npm 配置文件时间戳失败 {before:?}"))?
+            .with_context(|| format!("parsing npm before config timestamp {before:?}"))?
             .with_timezone(&Utc);
         let latest_version = info.dist_tags.latest.as_ref();
 
@@ -467,13 +467,13 @@ fn select_npm_package_version(
             }
         }
 
-        bail!("未找到 {before} 之前的 npm 包 {package_name} 版本");
+        bail!("no version found for npm package {package_name} before {before}");
     }
 
     info.dist_tags
         .latest
         .or_else(|| info.versions.pop())
-        .with_context(|| format!("未找到 npm 包 {package_name} 的版本"))
+        .with_context(|| format!("no version found for npm package {package_name}"))
 }
 
 fn is_allowed_npm_version_before(
@@ -500,7 +500,7 @@ fn npm_version_was_published_before(
         return Ok(false);
     };
     let published_at = DateTime::parse_from_rfc3339(published_at)
-        .with_context(|| format!("解析 npm 发布版本 {version} 的时间戳失败"))?
+        .with_context(|| format!("parsing npm release timestamp for version {version}"))?
         .with_timezone(&Utc);
     Ok(&published_at <= before)
 }
@@ -591,7 +591,7 @@ impl ManagedNodeRuntime {
                         true
                     } else {
                         log::warn!(
-                            "位于 {} 的 VibeDev 托管 Node.js 二进制文件检查失败,输出为: {:?}",
+                            "Zed managed Node.js binary at {} failed check with output: {:?}",
                             node_binary.display(),
                             output
                         );
@@ -763,11 +763,11 @@ impl NodeRuntimeTrait for ManagedNodeRuntime {
 
         anyhow::ensure!(
             smol::fs::metadata(&node_binary).await.is_ok(),
-            "缺少 node 二进制文件"
+            "missing node binary file"
         );
         anyhow::ensure!(
             smol::fs::metadata(&npm_file).await.is_ok(),
-            "缺少 npm 文件"
+            "missing npm file"
         );
 
         let command_args = build_npm_command_args(
@@ -815,7 +815,7 @@ impl SystemNodeRuntime {
             .with_context(|| format!("running node from {:?}", node))?;
         if !output.status.success() {
             anyhow::bail!(
-                "运行 node --version 失败。标准输出: {}, 标准错误: {}",
+                "failed to run node --version. stdout: {}, stderr: {}",
                 String::from_utf8_lossy(&output.stdout),
                 String::from_utf8_lossy(&output.stderr),
             );
@@ -824,7 +824,7 @@ impl SystemNodeRuntime {
         let version = semver::Version::parse(version_str.trim().trim_start_matches('v'))?;
         if version < Self::MIN_VERSION {
             anyhow::bail!(
-                "位于 {} 的 node 版本过低。要求: {}, 实际: {}",
+                "node at {} is too old. want: {}, got: {}",
                 node.to_string_lossy(),
                 Self::MIN_VERSION,
                 version
@@ -1075,13 +1075,13 @@ fn npm_command_env(node_binary: Option<&Path>) -> HashMap<String, String> {
     #[cfg(windows)]
     {
         if let Some(val) = env::var("SYSTEMROOT")
-            .context("缺少环境变量: SYSTEMROOT!")
+            .context("Missing environment variable: SYSTEMROOT!")
             .log_err()
         {
             command_env.insert("SYSTEMROOT".into(), val);
         }
         if let Some(val) = env::var("ComSpec")
-            .context("缺少环境变量: ComSpec!")
+            .context("Missing environment variable: ComSpec!")
             .log_err()
         {
             command_env.insert("ComSpec".into(), val);
@@ -1347,7 +1347,7 @@ mod tests {
         let Err(error) =
             select_npm_package_version("test-package", info, Some("2023-12-01T00:00:00.000Z"))
         else {
-            bail!("预期时间截止点拒绝所有包版本");
+            bail!("expected cutoff to reject all package versions");
         };
         assert_eq!(
             error.to_string(),

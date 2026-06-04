@@ -259,7 +259,7 @@ impl ShellKind {
     /// Returns whether this shell's command chaining syntax can be parsed by brush-parser.
     ///
     /// This is used to determine if we can safely parse shell commands to extract sub-commands
-    /// for security purposes (e.g., preventing shell injection in "始终允许" patterns).
+    /// for security purposes (e.g., preventing shell injection in "always allow" patterns).
     ///
     /// The brush-parser handles `;` (sequential execution) and `|` (piping), which are
     /// supported by all common shells. It also handles `&&` and `||` for conditional

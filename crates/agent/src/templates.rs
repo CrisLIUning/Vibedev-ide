@@ -90,10 +90,10 @@ mod tests {
         };
         let templates = Templates::new();
         let rendered = template.render(&templates).unwrap();
-        assert!(rendered.contains("你是 VibeDev 编程助手"));
-        assert!(rendered.contains("日期:2026-01-01"));
+        assert!(rendered.contains("You are the Zed coding agent"));
+        assert!(rendered.contains("Today's Date: 2026-01-01"));
         assert!(rendered.contains("## Fixing Diagnostics"));
-        assert!(rendered.contains("## 规划"));
+        assert!(rendered.contains("## Planning"));
         assert!(rendered.contains("## Session Title"));
         assert!(rendered.contains("test-model"));
     }

@@ -74,7 +74,7 @@ impl EncryptedPassword {
             assert_eq!(
                 self.0.len() % CRYPTPROTECTMEMORY_BLOCK_SIZE as usize,
                 0,
-                "违反了 CryptUnprotectMemory 的前置条件(缓冲区大小 <{}> 必须是 CRYPTPROTECTMEMORY_BLOCK_SIZE <{}> 的倍数)。",
+                "Violated pre-condition (buffer size <{}> must be a multiple of CRYPTPROTECTMEMORY_BLOCK_SIZE <{}>) for CryptUnprotectMemory.",
                 self.0.len(),
                 CRYPTPROTECTMEMORY_BLOCK_SIZE
             );

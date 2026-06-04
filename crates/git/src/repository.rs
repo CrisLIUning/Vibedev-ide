@@ -333,7 +333,7 @@ impl Worktree {
 
     pub fn directory_name(&self, main_worktree_path: Option<&Path>) -> String {
         if self.is_main {
-            return "主工作树".to_string();
+            return "main worktree".to_string();
         }
 
         let dir_name = self
@@ -587,7 +587,7 @@ impl FetchOptions {
 
     pub fn name(&self) -> SharedString {
         match self {
-            Self::All => "获取所有远程仓库".into(),
+            Self::All => "Fetch all remotes".into(),
             Self::Remote(remote) => remote.name.clone(),
         }
     }
@@ -1109,13 +1109,13 @@ impl RealGitRepository {
         let any_git_binary_path = system_git_binary_path
             .clone()
             .or(bundled_git_binary_path)
-            .context("没有可用的 git 二进制文件")?;
+            .context("no git binary available")?;
         log::info!(
-            "正在使用 git 二进制文件 {any_git_binary_path:?} 打开位于 {dotgit_path:?} 的 git 仓库"
+            "opening git repository at {dotgit_path:?} using git binary {any_git_binary_path:?}"
         );
-        let workdir_root = dotgit_path.parent().context(".git 没有父目录")?;
+        let workdir_root = dotgit_path.parent().context(".git has no parent")?;
         let repository =
-            git2::Repository::open(workdir_root).context("创建 libgit2 仓库")?;
+            git2::Repository::open(workdir_root).context("creating libgit2 repository")?;
         Ok(Self {
             repository: Arc::new(Mutex::new(repository)),
             system_git_binary_path,
@@ -1138,7 +1138,7 @@ impl RealGitRepository {
         Ok(GitBinary::new(
             self.any_git_binary_path.clone(),
             self.working_directory()
-                .with_context(|| "没有工作目录无法运行 git 命令")?,
+                .with_context(|| "Can't run git commands without a working directory")?,
             self.path(),
             self.executor.clone(),
             self.is_trusted(),
@@ -1442,7 +1442,7 @@ impl GitRepository for RealGitRepository {
                 .await?;
             anyhow::ensure!(
                 output.status.success(),
-                "重置失败:\n{}",
+                "Failed to reset:\n{}",
                 String::from_utf8_lossy(&output.stderr),
             );
             Ok(())
@@ -1471,7 +1471,7 @@ impl GitRepository for RealGitRepository {
                 .await?;
             anyhow::ensure!(
                 output.status.success(),
-                "检出文件失败:\n{}",
+                "Failed to checkout files:\n{}",
                 String::from_utf8_lossy(&output.stderr),
             );
             Ok(())
@@ -1493,7 +1493,7 @@ impl GitRepository for RealGitRepository {
                     const STAGE_NORMAL: i32 = 0;
                     // git2 unwraps internally on empty paths or `.`
                     if path.is_empty() {
-                        bail!("空路径没有索引文本");
+                        bail!("empty path has no index text");
                     }
                     let Some(entry) = index.get_path(path.as_std_path(), STAGE_NORMAL) else {
                         return Ok(None);
@@ -1507,7 +1507,7 @@ impl GitRepository for RealGitRepository {
                 }
 
                 logic(&repo.lock(), &path)
-                    .context("加载索引文本")
+                    .context("loading index text")
                     .log_err()
                     .flatten()
             })
@@ -1522,7 +1522,7 @@ impl GitRepository for RealGitRepository {
                     let head = repo.head()?.peel_to_tree()?;
                     // git2 unwraps internally on empty paths or `.`
                     if path.is_empty() {
-                        return Err(anyhow!("空路径没有已提交文本"));
+                        return Err(anyhow!("empty path has no committed text"));
                     }
                     let Some(entry) = head.get_path(path.as_std_path()).ok() else {
                         return Ok(None);
@@ -1535,7 +1535,7 @@ impl GitRepository for RealGitRepository {
                 }
 
                 logic(&repo.lock(), &path)
-                    .context("加载已提交文本")
+                    .context("loading committed text")
                     .log_err()
                     .flatten()
             })
@@ -1575,7 +1575,7 @@ impl GitRepository for RealGitRepository {
                     .build_command(&["config", "--get", "commit.template"])
                     .output()
                     .await
-                    .context("运行 git config --get 提交.template 失败")?;
+                    .context("failed to run git config --get commit.template")?;
 
                 let raw_path = String::from_utf8_lossy(&output.stdout).trim().to_string();
                 if !output.status.success() || raw_path.is_empty() {
@@ -1594,7 +1594,7 @@ impl GitRepository for RealGitRepository {
                 let template = match std::fs::read_to_string(&path) {
                     Ok(s) if !s.trim().is_empty() => Some(s),
                     Err(err) => {
-                        log::warn!("读取提交模板 {} 失败: {}", path.display(), err);
+                        log::warn!("failed to read commit template {}: {}", path.display(), err);
                         None
                     }
                     _ => None,
@@ -1642,7 +1642,7 @@ impl GitRepository for RealGitRepository {
 
                     anyhow::ensure!(
                         output.status.success(),
-                        "暂存失败:\n{}",
+                        "Failed to stage:\n{}",
                         String::from_utf8_lossy(&output.stderr)
                     );
                 } else {
@@ -1655,7 +1655,7 @@ impl GitRepository for RealGitRepository {
                         .await?;
                     anyhow::ensure!(
                         output.status.success(),
-                        "取消暂存失败:\n{}",
+                        "Failed to unstage:\n{}",
                         String::from_utf8_lossy(&output.stderr)
                     );
                 }
@@ -1935,7 +1935,7 @@ impl GitRepository for RealGitRepository {
                     Ok(())
                 } else {
                     let stderr = String::from_utf8_lossy(&output.stderr);
-                    anyhow::bail!("git 工作树 添加失败: {stderr}");
+                    anyhow::bail!("git worktree add failed: {stderr}");
                 }
             })
             .boxed()
@@ -2010,7 +2010,7 @@ impl GitRepository for RealGitRepository {
             let branch = if let Ok(branch) = repo.find_branch(&name, BranchType::Local) {
                 branch
             } else if let Ok(revision) = repo.find_branch(&name, BranchType::Remote) {
-                let (_, branch_name) = name.split_once("/").context("意外的分支格式")?;
+                let (_, branch_name) = name.split_once("/").context("Unexpected branch format")?;
 
                 let revision = revision.get();
                 let branch_commit = revision.peel_to_commit()?;
@@ -2032,7 +2032,7 @@ impl GitRepository for RealGitRepository {
 
             Ok(branch
                 .name()?
-                .context("无法检出匿名分支")?
+                .context("cannot checkout anonymous branch")?
                 .to_string())
         });
 
@@ -2131,7 +2131,7 @@ impl GitRepository for RealGitRepository {
 
                 anyhow::ensure!(
                     output.status.success(),
-                    "运行 git 差异 失败:\n{}",
+                    "Failed to run git diff:\n{}",
                     String::from_utf8_lossy(&output.stderr)
                 );
                 Ok(String::from_utf8_lossy(&output.stdout).to_string())
@@ -2187,7 +2187,7 @@ impl GitRepository for RealGitRepository {
                         .await?;
                     anyhow::ensure!(
                         output.status.success(),
-                        "暂存路径失败:\n{}",
+                        "Failed to stage paths:\n{}",
                         String::from_utf8_lossy(&output.stderr),
                     );
                 }
@@ -2216,7 +2216,7 @@ impl GitRepository for RealGitRepository {
 
                     anyhow::ensure!(
                         output.status.success(),
-                        "取消暂存失败:\n{}",
+                        "Failed to unstage:\n{}",
                         String::from_utf8_lossy(&output.stderr),
                     );
                 }
@@ -2243,7 +2243,7 @@ impl GitRepository for RealGitRepository {
 
                 anyhow::ensure!(
                     output.status.success(),
-                    "贮藏失败:\n{}",
+                    "Failed to stash:\n{}",
                     String::from_utf8_lossy(&output.stderr)
                 );
                 Ok(())
@@ -2268,7 +2268,7 @@ impl GitRepository for RealGitRepository {
 
                 anyhow::ensure!(
                     output.status.success(),
-                    "应用并删除贮藏失败:\n{}",
+                    "Failed to stash pop:\n{}",
                     String::from_utf8_lossy(&output.stderr)
                 );
                 Ok(())
@@ -2293,7 +2293,7 @@ impl GitRepository for RealGitRepository {
 
                 anyhow::ensure!(
                     output.status.success(),
-                    "应用贮藏失败:\n{}",
+                    "Failed to apply stash:\n{}",
                     String::from_utf8_lossy(&output.stderr)
                 );
                 Ok(())
@@ -2318,7 +2318,7 @@ impl GitRepository for RealGitRepository {
 
                 anyhow::ensure!(
                     output.status.success(),
-                    "删除贮藏失败:\n{}",
+                    "Failed to stash drop:\n{}",
                     String::from_utf8_lossy(&output.stderr)
                 );
                 Ok(())
@@ -2567,7 +2567,7 @@ impl GitRepository for RealGitRepository {
 
                 anyhow::ensure!(
                     output.status.success(),
-                    "获取所有远程仓库失败:\n{}",
+                    "Failed to get all remotes:\n{}",
                     String::from_utf8_lossy(&output.stderr)
                 );
                 let remote_names: HashSet<Remote> = String::from_utf8_lossy(&output.stdout)
@@ -2627,7 +2627,7 @@ impl GitRepository for RealGitRepository {
 
                 let head = git_cmd(&["rev-parse", "HEAD"])
                     .await
-                    .context("获取 HEAD 失败")?
+                    .context("Failed to get HEAD")?
                     .trim()
                     .to_owned();
 
@@ -2644,7 +2644,7 @@ impl GitRepository for RealGitRepository {
                 // check the main branch of each remote
                 let remotes = git_cmd(&["remote"])
                     .await
-                    .context("获取远程仓库失败")?;
+                    .context("Failed to get remotes")?;
                 for remote in remotes.lines() {
                     if let Ok(remote_head) =
                         git_cmd(&["symbolic-ref", &format!("refs/remotes/{remote}/HEAD")]).await
@@ -2677,10 +2677,10 @@ impl GitRepository for RealGitRepository {
                     git.run(&["add", "--all"]).await?;
                     let tree = git.run(&["write-tree"]).await?;
                     let checkpoint_sha = if let Some(head_sha) = head_sha.as_deref() {
-                        git.run(&["commit-tree", &tree, "-p", head_sha, "-m", "检查点"])
+                        git.run(&["commit-tree", &tree, "-p", head_sha, "-m", "Checkpoint"])
                             .await?
                     } else {
-                        git.run(&["commit-tree", &tree, "-m", "检查点"]).await?
+                        git.run(&["commit-tree", &tree, "-m", "Checkpoint"]).await?
                     };
 
                     excludes.restore_original().await?;
@@ -2733,13 +2733,13 @@ impl GitRepository for RealGitRepository {
                 let head_sha = git
                     .run(&["rev-parse", "HEAD"])
                     .await
-                    .context("读取 HEAD 失败")?;
+                    .context("failed to read HEAD")?;
 
                 // Capture the staged state: write-tree reads the current index
                 let staged_tree = git
                     .run(&["write-tree"])
                     .await
-                    .context("写入已暂存树失败")?;
+                    .context("failed to write staged tree")?;
                 let staged_sha = git
                     .run(&[
                         "commit-tree",
@@ -2747,10 +2747,10 @@ impl GitRepository for RealGitRepository {
                         "-p",
                         &head_sha,
                         "-m",
-                        "WIP 已暂存",
+                        "WIP staged",
                     ])
                     .await
-                    .context("创建已暂存提交失败")?;
+                    .context("failed to create staged commit")?;
 
                 // Capture the full state (staged + unstaged + untracked) using
                 // a temporary index so we don't disturb the real one.
@@ -2765,13 +2765,13 @@ impl GitRepository for RealGitRepository {
                                 "-p",
                                 &staged_sha,
                                 "-m",
-                                "WIP 未暂存",
+                                "WIP unstaged",
                             ])
                             .await?;
                         Ok(sha)
                     })
                     .await
-                    .context("创建未暂存提交失败")?;
+                    .context("failed to create unstaged commit")?;
 
                 Ok((staged_sha, unstaged_sha))
             })
@@ -2794,14 +2794,14 @@ impl GitRepository for RealGitRepository {
                 // modifications, and deletions to the working directory.
                 git.run(&["read-tree", "--reset", "-u", &unstaged_sha])
                     .await
-                    .context("从未暂存提交恢复工作目录失败")?;
+                    .context("failed to restore working directory from unstaged commit")?;
 
                 // Then replace just the index with the staged tree. Without -u
                 // this doesn't touch the working directory, so the result is:
                 // working tree = unstaged state, index = staged state.
                 git.run(&["read-tree", &staged_sha])
                     .await
-                    .context("从已暂存提交恢复索引失败")?;
+                    .context("failed to restore index from staged commit")?;
 
                 Ok(())
             })
@@ -2991,7 +2991,7 @@ impl GitRepository for RealGitRepository {
 
             let mut child = command.spawn()?;
             let stdout = child.stdout.take().context("failed to get stdout")?;
-            let stderr = child.stderr.take().context("获取 stderr 失败")?;
+            let stderr = child.stderr.take().context("failed to get stderr")?;
             let mut reader = BufReader::new(stdout);
 
             let mut line_buffer = String::new();
@@ -3035,9 +3035,9 @@ impl GitRepository for RealGitRepository {
                     .log_err();
 
                 if stderr_output.is_empty() {
-                    anyhow::bail!("git log 命令执行失败,状态码: {}", status);
+                    anyhow::bail!("git log command failed with {}", status);
                 } else {
-                    anyhow::bail!("git log 命令执行失败,状态码: {}, 错误信息: {}", status, stderr_output);
+                    anyhow::bail!("git log command failed with {}: {}", status, stderr_output);
                 }
             }
             Ok(())
@@ -4480,7 +4480,7 @@ mod tests {
         let new_worktree = worktrees
             .iter()
             .find(|w| w.display_name() == "test-branch")
-            .expect("应能找到包含 test-分支 的工作树");
+            .expect("should find worktree with test-branch");
         assert_eq!(
             new_worktree.path.canonicalize().unwrap(),
             worktree_path.canonicalize().unwrap(),
@@ -4544,7 +4544,7 @@ mod tests {
         assert_eq!(worktrees.len(), 1);
         assert!(
             worktrees.iter().all(|w| w.display_name() != "to-remove"),
-            "已移除的工作树不应出现在列表中"
+            "removed worktree should not appear in list"
         );
         assert!(!worktree_path.exists());
 
@@ -4571,7 +4571,7 @@ mod tests {
         let result = repo.remove_worktree(worktree_path.clone(), false).await;
         assert!(
             result.is_err(),
-            "非强制移除含有未提交更改的工作树应失败"
+            "non-force removal of dirty worktree should fail"
         );
 
         // Force removal should succeed
@@ -4650,7 +4650,7 @@ mod tests {
         let moved_worktree = worktrees
             .iter()
             .find(|w| w.display_name() == "old-name")
-            .expect("应能通过分支名找到工作树");
+            .expect("should find worktree by branch name");
         assert_eq!(
             moved_worktree.path.canonicalize().unwrap(),
             new_path.canonicalize().unwrap()

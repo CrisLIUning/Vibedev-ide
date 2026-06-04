@@ -243,12 +243,12 @@ impl LanguageServerState {
                                         .size(IconSize::XSmall),
                                 )
                                 .child(
-                                    Label::new("项目处于受限模式")
+                                    Label::new("Project is in Restricted Mode")
                                         .size(LabelSize::Small),
                                 ),
                         )
                         .child(
-                            Label::new("语言服务器需要信任此项目后才能运行")
+                            Label::new("Language Servers can't run until you trust this project.")
                                 .size(LabelSize::Small)
                                 .color(Color::Muted),
                         )
@@ -285,9 +285,9 @@ impl LanguageServerState {
         for item in &self.items {
             if let LspMenuItem::ToggleServersButton { restart } = item {
                 let label = if *restart {
-                    "重启所有服务器"
+                    "Restart All Servers"
                 } else {
-                    "停止所有服务器"
+                    "Stop All Servers"
                 };
 
                 let restart = *restart;
@@ -339,20 +339,20 @@ impl LanguageServerState {
                     BinaryStatus::None => None,
                     BinaryStatus::CheckingForUpdate
                     | BinaryStatus::Downloading
-                    | BinaryStatus::Starting => Some((Color::Modified, "正在启动…")),
+                    | BinaryStatus::Starting => Some((Color::Modified, "Starting…")),
                     BinaryStatus::Stopping | BinaryStatus::Stopped => {
-                        Some((Color::Disabled, "已停止"))
+                        Some((Color::Disabled, "Stopped"))
                     }
-                    BinaryStatus::Failed { .. } => Some((Color::Error, "错误")),
+                    BinaryStatus::Failed { .. } => Some((Color::Error, "Error")),
                 })
                 .or_else(|| {
                     Some(match server_info.health? {
-                        ServerHealth::Ok => (Color::Success, "运行中"),
-                        ServerHealth::Warning => (Color::Warning, "警告"),
-                        ServerHealth::Error => (Color::Error, "错误"),
+                        ServerHealth::Ok => (Color::Success, "Running"),
+                        ServerHealth::Warning => (Color::Warning, "Warning"),
+                        ServerHealth::Error => (Color::Error, "Error"),
                     })
                 })
-                .unwrap_or((Color::Success, "运行中"));
+                .unwrap_or((Color::Success, "Running"));
 
             let message = server_info
                 .message
@@ -421,7 +421,7 @@ impl LanguageServerState {
                                             [(
                                                 0..0,
                                                 format!(
-                                                    "语言服务器 {server_name}:\n\n{message}"
+                                                    "Language server {server_name}:\n\n{message}"
                                                 ),
                                             )],
                                             None,
@@ -1349,25 +1349,25 @@ impl Render for LspButton {
         let (indicator, description) = if is_restricted {
             (
                 Some(Indicator::dot().color(Color::Warning)),
-                "受限模式",
+                "Restricted Mode",
             )
         } else if has_errors {
             (
                 Some(Indicator::dot().color(Color::Error)),
-                "服务器有错误",
+                "Server with errors",
             )
         } else if has_warnings {
             (
                 Some(Indicator::dot().color(Color::Warning)),
-                "服务器有警告",
+                "Server with warnings",
             )
         } else if has_other_notifications {
             (
                 Some(Indicator::dot().color(Color::Modified)),
-                "服务器有通知",
+                "Server with notifications",
             )
         } else {
-            (None, "所有服务器运行正常")
+            (None, "All Servers Operational")
         };
 
         let lsp_button = cx.weak_entity();
@@ -1379,7 +1379,7 @@ impl Render for LspButton {
                         == EditPredictionProvider::Copilot;
                     telemetry::event!(
                         "Toolbar Menu Opened",
-                        name = "语言服务器",
+                        name = "Language Servers",
                         copilot_enabled,
                         is_via_ssh,
                     );
@@ -1399,7 +1399,7 @@ impl Render for LspButton {
                         .when(is_restricted, |s| s.icon_color(Color::Warning))
                         .indicator_border_color(Some(cx.theme().colors().status_bar_background)),
                     move |_window, cx| {
-                        Tooltip::with_meta("语言服务器", Some(&ToggleMenu), description, cx)
+                        Tooltip::with_meta("Language Servers", Some(&ToggleMenu), description, cx)
                     },
                 ),
         )

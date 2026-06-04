@@ -200,7 +200,7 @@ impl TryFrom<&str> for PromptContextType {
             "skill" => Ok(Self::Skill),
             "diagnostics" => Ok(Self::Diagnostics),
             "diff" => Ok(Self::BranchDiff),
-            _ => Err(format!("无效的上下文选择器模式: {}", value)),
+            _ => Err(format!("Invalid context picker mode: {}", value)),
         }
     }
 }
@@ -224,9 +224,9 @@ impl PromptContextType {
             Self::Symbol => "Symbols",
             Self::Fetch => "Fetch",
             Self::Thread => "Threads",
-            Self::Skill => "技能",
+            Self::Skill => "Skills",
             Self::Diagnostics => "Diagnostics",
-            Self::BranchDiff => "分支差异",
+            Self::BranchDiff => "Branch Diff",
         }
     }
 
@@ -831,7 +831,7 @@ impl<T: PromptCompletionProviderDelegate> PromptCompletionProvider<T> {
         let uri = MentionUri::GitDiff {
             base_ref: base_ref.to_string(),
         };
-        let crease_text: SharedString = format!("分支差异 (对比 {})", base_ref).into();
+        let crease_text: SharedString = format!("Branch Diff (vs {})", base_ref).into();
         let display_text = format!("@{}", crease_text);
         let new_text = format!("[{}]({}) ", display_text, uri.to_uri());
         let new_text_len = new_text.len();
@@ -1362,7 +1362,7 @@ impl<T: PromptCompletionProviderDelegate> CompletionProvider for PromptCompletio
                                     source_highlight_id,
                                 );
                                 let Some((new_text, icon_path, confirm)) = skill_info else {
-                                    unreachable!("技能候选始终具有确认回调")
+                                    unreachable!("skill candidates always have confirm callbacks")
                                 };
                                 Completion {
                                     replace_range: source_range.clone(),
@@ -1381,7 +1381,7 @@ impl<T: PromptCompletionProviderDelegate> CompletionProvider for PromptCompletio
                                     confirm: Some(confirm),
                                     group: show_section_headers.then(|| CompletionGroup {
                                         key: "skills".into(),
-                                        label: Some("技能".into()),
+                                        label: Some("Skills".into()),
                                     }),
                                 }
                             }
@@ -1439,7 +1439,7 @@ impl<T: PromptCompletionProviderDelegate> CompletionProvider for PromptCompletio
                                     })),
                                     group: show_section_headers.then(|| CompletionGroup {
                                         key: "agent-commands".into(),
-                                        label: Some("Agent 命令".into()),
+                                        label: Some("Agent Commands".into()),
                                     }),
                                 }
                             }
@@ -2598,7 +2598,7 @@ fn completion_text_for_terminal_selections(
                         editor.fold_creases(vec![crease], false, window, cx);
                         crease_ids.first().copied()
                     }) else {
-                        log::error!("insert_creases 为终端选择返回了空 ID");
+                        log::error!("insert_creases returned no ids for terminal selection");
                         continue;
                     };
 
@@ -2971,7 +2971,7 @@ mod tests {
                 mode: None,
                 argument: None,
             }),
-            "应在 '(' 后立即解析提及"
+            "Should parse mention immediately after '('"
         );
 
         assert_eq!(
@@ -2981,7 +2981,7 @@ mod tests {
                 mode: None,
                 argument: None,
             }),
-            "应在 '[' 后立即解析提及"
+            "Should parse mention immediately after '['"
         );
 
         assert_eq!(
@@ -2991,7 +2991,7 @@ mod tests {
                 mode: None,
                 argument: None,
             }),
-            "应在 '{{' 后立即解析提及"
+            "Should parse mention immediately after '{{'"
         );
     }
 
@@ -3140,16 +3140,16 @@ mod tests {
         workspace.update(cx, |workspace, cx| {
             let selection = source
                 .read_selection(workspace, true, cx)
-                .expect("编辑器源在行上有光标时应该产生选择");
+                .expect("editor source with cursor on a line should yield a selection");
             assert!(
                 matches!(selection, AgentContextSelection::Editor(_)),
-                "期望编辑器变体"
+                "expected Editor variant"
             );
             if let AgentContextSelection::Editor(ranges) = selection {
                 assert_eq!(
                     ranges.len(),
                     1,
-                    "整行回退应该恰好返回一个范围"
+                    "expected exactly one range for whole-line fallback"
                 );
                 let (range_buffer, range) = &ranges[0];
                 let snapshot = range_buffer.read(cx).snapshot();
@@ -3158,7 +3158,7 @@ mod tests {
                 assert_eq!(
                     &snapshot.text()[start_offset..end_offset],
                     "def",
-                    "整行回退应该捕获当前行"
+                    "whole-line fallback should capture the current row"
                 );
             }
 

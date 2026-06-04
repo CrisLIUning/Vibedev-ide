@@ -423,7 +423,7 @@ pub fn default_color_scales() -> ColorScales {
 
 pub(crate) fn gray() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "灰色",
+        scale: "Gray",
         light: [
             "#fcfcfcff",
             "#f9f9f9ff",
@@ -487,7 +487,7 @@ pub(crate) fn gray() -> ColorScaleSet {
 
 pub(crate) fn mauve() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "紫红",
+        scale: "Mauve",
         light: [
             "#fdfcfdff",
             "#faf9fbff",
@@ -551,7 +551,7 @@ pub(crate) fn mauve() -> ColorScaleSet {
 
 pub(crate) fn slate() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "石板灰",
+        scale: "Slate",
         light: [
             "#fcfcfdff",
             "#f9f9fbff",
@@ -615,7 +615,7 @@ pub(crate) fn slate() -> ColorScaleSet {
 
 pub(crate) fn sage() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "鼠尾草绿",
+        scale: "Sage",
         light: [
             "#fbfdfcff",
             "#f7f9f8ff",
@@ -679,7 +679,7 @@ pub(crate) fn sage() -> ColorScaleSet {
 
 pub(crate) fn olive() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "橄榄",
+        scale: "Olive",
         light: [
             "#fcfdfcff",
             "#f8faf8ff",
@@ -743,7 +743,7 @@ pub(crate) fn olive() -> ColorScaleSet {
 
 pub(crate) fn sand() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "沙色",
+        scale: "Sand",
         light: [
             "#fdfdfcff",
             "#f9f9f8ff",
@@ -807,7 +807,7 @@ pub(crate) fn sand() -> ColorScaleSet {
 
 pub(crate) fn gold() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "金色",
+        scale: "Gold",
         light: [
             "#fdfdfcff",
             "#faf9f2ff",
@@ -871,7 +871,7 @@ pub(crate) fn gold() -> ColorScaleSet {
 
 pub(crate) fn bronze() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "青铜",
+        scale: "Bronze",
         light: [
             "#fdfcfcff",
             "#fdf7f5ff",
@@ -935,7 +935,7 @@ pub(crate) fn bronze() -> ColorScaleSet {
 
 pub(crate) fn brown() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "棕色",
+        scale: "Brown",
         light: [
             "#fefdfcff",
             "#fcf9f6ff",
@@ -999,7 +999,7 @@ pub(crate) fn brown() -> ColorScaleSet {
 
 pub(crate) fn yellow() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "黄色",
+        scale: "Yellow",
         light: [
             "#fdfdf9ff",
             "#fefce9ff",
@@ -1063,7 +1063,7 @@ pub(crate) fn yellow() -> ColorScaleSet {
 
 pub(crate) fn amber() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "琥珀色",
+        scale: "Amber",
         light: [
             "#fefdfbff",
             "#fefbe9ff",
@@ -1127,7 +1127,7 @@ pub(crate) fn amber() -> ColorScaleSet {
 
 pub(crate) fn orange() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "橙色",
+        scale: "Orange",
         light: [
             "#fefcfbff",
             "#fff7edff",
@@ -1191,7 +1191,7 @@ pub(crate) fn orange() -> ColorScaleSet {
 
 pub(crate) fn tomato() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "番茄红",
+        scale: "Tomato",
         light: [
             "#fffcfcff",
             "#fff8f7ff",
@@ -1319,7 +1319,7 @@ pub(crate) fn red() -> ColorScaleSet {
 
 pub(crate) fn ruby() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "红宝石",
+        scale: "Ruby",
         light: [
             "#fffcfdff",
             "#fff7f8ff",
@@ -1383,7 +1383,7 @@ pub(crate) fn ruby() -> ColorScaleSet {
 
 pub(crate) fn crimson() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "深红",
+        scale: "Crimson",
         light: [
             "#fffcfdff",
             "#fef7f9ff",
@@ -1447,7 +1447,7 @@ pub(crate) fn crimson() -> ColorScaleSet {
 
 pub(crate) fn pink() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "粉色",
+        scale: "Pink",
         light: [
             "#fffcfeff",
             "#fef7fbff",
@@ -1511,7 +1511,7 @@ pub(crate) fn pink() -> ColorScaleSet {
 
 pub(crate) fn plum() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "李子",
+        scale: "Plum",
         light: [
             "#fefcffff",
             "#fdf7fdff",
@@ -1575,7 +1575,7 @@ pub(crate) fn plum() -> ColorScaleSet {
 
 pub(crate) fn purple() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "紫色",
+        scale: "Purple",
         light: [
             "#fefcfeff",
             "#fbf7feff",
@@ -1639,7 +1639,7 @@ pub(crate) fn purple() -> ColorScaleSet {
 
 pub(crate) fn violet() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "紫罗兰",
+        scale: "Violet",
         light: [
             "#fdfcfeff",
             "#faf8ffff",
@@ -1895,7 +1895,7 @@ pub(crate) fn blue() -> ColorScaleSet {
 
 pub(crate) fn cyan() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "青色",
+        scale: "Cyan",
         light: [
             "#fafdfeff",
             "#f2fafbff",
@@ -1959,7 +1959,7 @@ pub(crate) fn cyan() -> ColorScaleSet {
 
 pub(crate) fn teal() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "鸭翅绿",
+        scale: "Teal",
         light: [
             "#fafefdff",
             "#f3fbf9ff",
@@ -2023,7 +2023,7 @@ pub(crate) fn teal() -> ColorScaleSet {
 
 pub(crate) fn jade() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "玉色",
+        scale: "Jade",
         light: [
             "#fbfefdff",
             "#f4fbf7ff",
@@ -2087,7 +2087,7 @@ pub(crate) fn jade() -> ColorScaleSet {
 
 pub(crate) fn green() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "绿色",
+        scale: "Green",
         light: [
             "#fbfefcff",
             "#f4fbf6ff",
@@ -2151,7 +2151,7 @@ pub(crate) fn green() -> ColorScaleSet {
 
 pub(crate) fn grass() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "草绿",
+        scale: "Grass",
         light: [
             "#fbfefbff",
             "#f5fbf5ff",
@@ -2215,7 +2215,7 @@ pub(crate) fn grass() -> ColorScaleSet {
 
 pub(crate) fn lime() -> ColorScaleSet {
     StaticColorScaleSet {
-        scale: "青柠",
+        scale: "Lime",
         light: [
             "#fcfdfaff",
             "#f8faf3ff",

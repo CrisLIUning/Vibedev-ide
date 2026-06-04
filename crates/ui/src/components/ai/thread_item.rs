@@ -570,7 +570,7 @@ impl RenderOnce for ThreadItem {
                                 .size(IconSize::Small)
                                 .color(Color::Error),
                         )
-                        .child(Label::new("线程存在错误"))
+                        .child(Label::new("Thread has an Error"))
                         .into_any_element(),
                     AgentThreadStatus::WaitingForConfirmation => h_flex()
                         .gap_1()
@@ -579,7 +579,7 @@ impl RenderOnce for ThreadItem {
                                 .size(IconSize::Small)
                                 .color(Color::Warning),
                         )
-                        .child(Label::new("等待确认"))
+                        .child(Label::new("Waiting for Confirmation"))
                         .into_any_element(),
                     _ => gpui::Empty.into_any_element(),
                 }))
@@ -609,7 +609,7 @@ impl Component for ThreadItem {
 
         let thread_item_examples = vec![
             single_example(
-                "默认",
+                "Default",
                 container()
                     .child(
                         ThreadItem::new("ti-1", "Linking to the Agent Panel Depending on Settings")
@@ -619,7 +619,7 @@ impl Component for ThreadItem {
                     .into_any_element(),
             ),
             single_example(
-                "等待确认",
+                "Waiting for Confirmation",
                 container()
                     .child(
                         ThreadItem::new("ti-2b", "Execute shell command in terminal")
@@ -629,17 +629,17 @@ impl Component for ThreadItem {
                     .into_any_element(),
             ),
             single_example(
-                "错误",
+                "Error",
                 container()
                     .child(
-                        ThreadItem::new("ti-2c", "连接语言服务器失败")
+                        ThreadItem::new("ti-2c", "Failed to connect to language server")
                             .timestamp("5h")
                             .status(AgentThreadStatus::Error),
                     )
                     .into_any_element(),
             ),
             single_example(
-                "运行中的 Agent",
+                "Running Agent",
                 container()
                     .child(
                         ThreadItem::new("ti-3", "Add line numbers option to FileEditBlock")
@@ -650,7 +650,7 @@ impl Component for ThreadItem {
                     .into_any_element(),
             ),
             single_example(
-                "在工作树中",
+                "In Worktree",
                 container()
                     .child(
                         ThreadItem::new("ti-4", "Add line numbers option to FileEditBlock")
@@ -667,7 +667,7 @@ impl Component for ThreadItem {
                     .into_any_element(),
             ),
             single_example(
-                "有更改",
+                "With Changes",
                 container()
                     .child(
                         ThreadItem::new("ti-5", "Managing user and project settings interactions")
@@ -679,7 +679,7 @@ impl Component for ThreadItem {
                     .into_any_element(),
             ),
             single_example(
-                "工作树 + 更改 + 时间戳",
+                "Worktree + Changes + Timestamp",
                 container()
                     .child(
                         ThreadItem::new("ti-5b", "Full metadata example")
@@ -736,7 +736,7 @@ impl Component for ThreadItem {
                     .into_any_element(),
             ),
             single_example(
-                "主工作树(隐藏) + 代码块 + 时间戳",
+                "Main Worktree (hidden) + Changes + Timestamp",
                 container()
                     .child(
                         ThreadItem::new("ti-5e", "Main worktree branch with diff stats")
@@ -755,10 +755,10 @@ impl Component for ThreadItem {
                     .into_any_element(),
             ),
             single_example(
-                "长工作树名称(截断)",
+                "Long Worktree Name (truncation)",
                 container()
                     .child(
-                        ThreadItem::new("ti-5f", "包含超长工作树名称的对话线程")
+                        ThreadItem::new("ti-5f", "Thread with a very long worktree name")
                             .icon(IconName::AiClaude)
                             .worktrees(vec![ThreadItemWorktreeInfo {
                                 worktree_name: Some(
@@ -774,10 +774,10 @@ impl Component for ThreadItem {
                     .into_any_element(),
             ),
             single_example(
-                "带搜索高亮的工作树",
+                "Worktree with Search Highlights",
                 container()
                     .child(
-                        ThreadItem::new("ti-5g", "筛选后高亮显示工作树的对话线程")
+                        ThreadItem::new("ti-5g", "Filtered thread with highlighted worktree")
                             .icon(IconName::AiClaude)
                             .worktrees(vec![ThreadItemWorktreeInfo {
                                 worktree_name: Some("jade-glen".into()),
@@ -791,10 +791,10 @@ impl Component for ThreadItem {
                     .into_any_element(),
             ),
             single_example(
-                "多个工作树(无分支)",
+                "Multiple Worktrees (no branches)",
                 container()
                     .child(
-                        ThreadItem::new("ti-5h", "跨多个工作树的对话线程")
+                        ThreadItem::new("ti-5h", "Thread spanning multiple worktrees")
                             .icon(IconName::AiClaude)
                             .worktrees(vec![
                                 ThreadItemWorktreeInfo {
@@ -817,10 +817,10 @@ impl Component for ThreadItem {
                     .into_any_element(),
             ),
             single_example(
-                "多个工作树(带分支)",
+                "Multiple Worktrees with Branches",
                 container()
                     .child(
-                        ThreadItem::new("ti-5i", "多根目录且各工作树带独立分支")
+                        ThreadItem::new("ti-5i", "Multi-root with per-worktree branches")
                             .icon(IconName::ZedAgent)
                             .worktrees(vec![
                                 ThreadItemWorktreeInfo {
@@ -843,10 +843,10 @@ impl Component for ThreadItem {
                     .into_any_element(),
             ),
             single_example(
-                "项目名称 + 工作树 + 分支",
+                "Project Name + Worktree + Branch",
                 container()
                     .child(
-                        ThreadItem::new("ti-5j", "包含项目上下文的对话线程")
+                        ThreadItem::new("ti-5j", "Thread with project context")
                             .icon(IconName::AiClaude)
                             .project_name("my-remote-server")
                             .worktrees(vec![ThreadItemWorktreeInfo {
@@ -861,10 +861,10 @@ impl Component for ThreadItem {
                     .into_any_element(),
             ),
             single_example(
-                "项目路径 + 工作树(归档视图)",
+                "Project Paths + Worktree (archive view)",
                 container()
                     .child(
-                        ThreadItem::new("ti-5k", "包含文件夹路径的归档对话线程")
+                        ThreadItem::new("ti-5k", "Archived thread with folder paths")
                             .icon(IconName::AiClaude)
                             .project_paths(Arc::from(vec![
                                 PathBuf::from("/projects/zed"),
@@ -882,10 +882,10 @@ impl Component for ThreadItem {
                     .into_any_element(),
             ),
             single_example(
-                "所有元数据",
+                "All Metadata",
                 container()
                     .child(
-                        ThreadItem::new("ti-5l", "填充了所有元数据字段的对话线程")
+                        ThreadItem::new("ti-5l", "Thread with every metadata field populated")
                             .icon(IconName::ZedAgent)
                             .project_name("remote-dev")
                             .worktrees(vec![ThreadItemWorktreeInfo {
@@ -902,10 +902,10 @@ impl Component for ThreadItem {
                     .into_any_element(),
             ),
             single_example(
-                "聚焦项(键盘选择)",
+                "Focused Item (Keyboard Selection)",
                 container()
                     .child(
-                        ThreadItem::new("ti-7", "实现键盘导航")
+                        ThreadItem::new("ti-7", "Implement keyboard navigation")
                             .icon(IconName::AiClaude)
                             .timestamp("12h")
                             .focused(true),
@@ -913,10 +913,10 @@ impl Component for ThreadItem {
                     .into_any_element(),
             ),
             single_example(
-                "操作槽位",
+                "Action Slot",
                 container()
                     .child(
-                        ThreadItem::new("ti-9", "悬停以查看操作按钮")
+                        ThreadItem::new("ti-9", "Hover to see action button")
                             .icon(IconName::AiClaude)
                             .timestamp("6h")
                             .hovered(true)

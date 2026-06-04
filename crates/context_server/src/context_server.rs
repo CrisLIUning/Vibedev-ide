@@ -145,7 +145,7 @@ impl ContextServer {
         let initialized_protocol = protocol.initialize(client_info).await?;
 
         log::debug!(
-            "上下文服务器 {} 已初始化: {:?}",
+            "context server {} initialized: {:?}",
             self.id,
             initialized_protocol.initialize,
         );

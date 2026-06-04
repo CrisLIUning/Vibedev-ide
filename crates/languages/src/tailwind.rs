@@ -220,7 +220,7 @@ async fn get_cached_server_binary(
         let server_path = container_dir.join(SERVER_PATH);
         anyhow::ensure!(
             server_path.exists(),
-            "目录 {server_path:?} 中缺少可执行文件"
+            "missing executable in directory {server_path:?}"
         );
         Ok(LanguageServerBinary {
             path: node.binary_path().await?,

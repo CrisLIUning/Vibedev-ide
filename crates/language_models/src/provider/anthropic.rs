@@ -102,7 +102,7 @@ impl State {
         let api_url = AnthropicLanguageModelProvider::api_url(cx);
         let Some(api_key) = self.api_key_state.key(&api_url) else {
             return Task::ready(Err(anyhow::anyhow!(
-                "获取 Anthropic 模型需要 API 密钥"
+                "cannot fetch Anthropic models without an API key"
             )));
         };
 
@@ -456,11 +456,11 @@ impl LanguageModel for AnthropicModel {
             .map(|e| {
                 let is_default = matches!(e, anthropic::Effort::High);
                 let (name, value) = match e {
-                    anthropic::Effort::Low => ("低".into(), "low".into()),
-                    anthropic::Effort::Medium => ("中".into(), "medium".into()),
-                    anthropic::Effort::High => ("高".into(), "high".into()),
-                    anthropic::Effort::XHigh => ("极高".into(), "xhigh".into()),
-                    anthropic::Effort::Max => ("最大".into(), "max".into()),
+                    anthropic::Effort::Low => ("Low".into(), "low".into()),
+                    anthropic::Effort::Medium => ("Medium".into(), "medium".into()),
+                    anthropic::Effort::High => ("High".into(), "high".into()),
+                    anthropic::Effort::XHigh => ("XHigh".into(), "xhigh".into()),
+                    anthropic::Effort::Max => ("Max".into(), "max".into()),
                 };
                 language_model::LanguageModelEffortLevel {
                     name,
@@ -607,25 +607,25 @@ impl Render for ConfigurationView {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let env_var_set = self.state.read(cx).api_key_state.is_from_env_var();
         let configured_card_label = if env_var_set {
-            format!("API 密钥已在 {API_KEY_ENV_VAR_NAME} 环境变量中设置")
+            format!("API key set in {API_KEY_ENV_VAR_NAME} environment variable")
         } else {
             let api_url = AnthropicLanguageModelProvider::api_url(cx);
             if api_url == ANTHROPIC_API_URL {
-                "API 密钥已配置".to_string()
+                "API key configured".to_string()
             } else {
-                format!("已为 {} 配置 API 密钥", api_url)
+                format!("API key configured for {}", api_url)
             }
         };
 
         if self.load_credentials_task.is_some() {
             div()
-                .child(Label::new("正在加载凭据..."))
+                .child(Label::new("Loading credentials..."))
                 .into_any_element()
         } else if self.should_render_editor(cx) {
             v_flex()
                 .size_full()
                 .on_action(cx.listener(Self::save_api_key))
-                .child(Label::new(format!("要使用 {},您需要添加 API 密钥。请按照以下步骤操作:", match &self.target_agent {
+                .child(Label::new(format!("To use {}, you need to add an API key. Follow these steps:", match &self.target_agent {
                     ConfigurationViewTargetAgent::ZedAgent => "VibeDev's agent with Anthropic".into(),
                     ConfigurationViewTargetAgent::Other(agent) => agent.clone(),
                 })))
@@ -633,11 +633,11 @@ impl Render for ConfigurationView {
                     List::new()
                         .child(
                             ListBulletItem::new("")
-                                .child(Label::new("访问以下地址创建一个"))
-                                .child(ButtonLink::new("Anthropic 设置", "https://console.anthropic.com/settings/keys"))
+                                .child(Label::new("Create one by visiting"))
+                                .child(ButtonLink::new("Anthropic's settings", "https://console.anthropic.com/settings/keys"))
                         )
                         .child(
-                            ListBulletItem::new("在下方粘贴您的 API 密钥并按回车键以开始使用该代理")
+                            ListBulletItem::new("Paste your API key below and hit enter to start using the agent")
                         )
                 )
                 .child(self.api_key_editor.clone())
@@ -656,7 +656,7 @@ impl Render for ConfigurationView {
                 .on_click(cx.listener(|this, _, window, cx| this.reset_api_key(window, cx)))
                 .when(env_var_set, |this| {
                     this.tooltip_label(format!(
-                    "要重置 API 密钥,请取消设置 {API_KEY_ENV_VAR_NAME} 环境变量。"
+                    "To reset your API key, unset the {API_KEY_ENV_VAR_NAME} environment variable."
                 ))
                 })
                 .into_any_element()

@@ -66,7 +66,7 @@ impl Render for AnimationExample {
                             .items_center()
                             .text_xl()
                             .gap_4()
-                            .child("动画示例")
+                            .child("Hello Animation")
                             .child(
                                 svg()
                                     .size_20()
@@ -97,7 +97,7 @@ impl Render for AnimationExample {
                             .border_t_1()
                             .border_color(gpui::black().opacity(0.1))
                             .bg(gpui::black().opacity(0.05))
-                            .child("其他面板"),
+                            .child("Other Panel"),
                     ),
             )
     }

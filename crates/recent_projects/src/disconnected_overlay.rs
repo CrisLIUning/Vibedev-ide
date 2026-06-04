@@ -133,7 +133,7 @@ impl DisconnectedOverlay {
             .await?;
             Ok(())
         })
-        .detach_and_prompt_err("重新连接失败", window, cx, |_, _, _| None);
+        .detach_and_prompt_err("Failed to reconnect", window, cx, |_, _, _| None);
     }
 
     fn cancel(&mut self, _: &menu::Cancel, _: &mut Window, cx: &mut Context<Self>) {
@@ -148,7 +148,7 @@ impl Render for DisconnectedOverlay {
 
         let message = match &self.host {
             Host::CollabGuestProject => {
-                "您与远程项目的连接已丢失。".to_string()
+                "Your connection to the remote project has been lost.".to_string()
             }
             Host::RemoteServerProject(options, server_not_running) => {
                 let autosave = if ProjectSettings::get_global(cx)
@@ -160,12 +160,12 @@ impl Render for DisconnectedOverlay {
                     ""
                 };
                 let reason = if *server_not_running {
-                    "进程意外退出"
+                    "process exiting unexpectedly"
                 } else {
-                    "未响应"
+                    "not responding"
                 };
                 format!(
-                    "由于服务器{reason},您与 {} 的连接已丢失。{autosave}",
+                    "Your connection to {} has been lost due to the server {reason}.{autosave}",
                     options.display_name(),
                 )
             }
@@ -183,7 +183,7 @@ impl Render for DisconnectedOverlay {
                     .header(
                         ModalHeader::new()
                             .show_dismiss_button(true)
-                            .child(Headline::new("未连接").size(HeadlineSize::Small)),
+                            .child(Headline::new("Disconnected").size(HeadlineSize::Small)),
                     )
                     .section(Section::new().child(Label::new(message)))
                     .footer(
@@ -191,7 +191,7 @@ impl Render for DisconnectedOverlay {
                             h_flex()
                                 .gap_2()
                                 .child(
-                                    Button::new("close-window", "关闭窗口")
+                                    Button::new("close-window", "Close Window")
                                         .style(ButtonStyle::Filled)
                                         .layer(ElevationIndex::ModalSurface)
                                         .on_click(cx.listener(move |_, _, window, _| {
@@ -200,7 +200,7 @@ impl Render for DisconnectedOverlay {
                                 )
                                 .when(can_reconnect, |el| {
                                     el.child(
-                                        Button::new("reconnect", "重新连接")
+                                        Button::new("reconnect", "Reconnect")
                                             .style(ButtonStyle::Filled)
                                             .layer(ElevationIndex::ModalSurface)
                                             .start_icon(Icon::new(IconName::ArrowCircle))

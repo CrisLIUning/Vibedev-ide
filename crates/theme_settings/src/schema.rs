@@ -1065,7 +1065,7 @@ mod tests {
     fn parse_color(color: &str) -> gpui::Hsla {
         match try_parse_color(color) {
             Ok(color) => color,
-            Err(error) => panic!("解析颜色 {color} 失败: {error}"),
+            Err(error) => panic!("failed to parse color {color}: {error}"),
         }
     }
 

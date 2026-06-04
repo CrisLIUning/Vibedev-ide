@@ -12,7 +12,7 @@ where
         type Value = Vec<String>;
 
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            formatter.write_str("非空字符串列表")
+            formatter.write_str("a list of non-empty strings")
         }
 
         fn visit_seq<V>(self, mut seq: V) -> Result<Vec<String>, V::Error>
@@ -24,7 +24,7 @@ where
                 if value.is_empty() {
                     return Err(de::Error::invalid_value(
                         de::Unexpected::Str(&value),
-                        &"非空字符串",
+                        &"a non-empty string",
                     ));
                 }
                 vec.push(value);

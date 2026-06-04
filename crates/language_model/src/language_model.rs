@@ -226,7 +226,7 @@ pub trait LanguageModel: Send + Sync {
 
             // Stream ended without a complete tool use
             Err(LanguageModelCompletionError::Other(anyhow::anyhow!(
-                "流已结束,但未收到完整的工具调用"
+                "Stream ended without receiving a complete tool use"
             )))
         }
         .boxed()

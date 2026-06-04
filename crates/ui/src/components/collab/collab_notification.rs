@@ -69,56 +69,56 @@ impl Component for CollabNotification {
 
         let call_examples = vec![
             single_example(
-                "来电",
+                "Incoming Call",
                 container()
                     .child(
                         CollabNotification::new(
                             avatar,
-                            Button::new("accept", "接受"),
-                            Button::new("decline", "拒绝"),
+                            Button::new("accept", "Accept"),
+                            Button::new("decline", "Decline"),
                         )
-                        .child(Label::new("该用户邀请您加入通话")),
+                        .child(Label::new("the user is inviting you to a call")),
                     )
                     .into_any_element(),
             ),
             single_example(
-                "屏幕共享请求",
+                "Screen Share Request",
                 container()
                     .child(
                         CollabNotification::new(
                             avatar,
-                            Button::new("accept", "查看"),
-                            Button::new("decline", "忽略"),
+                            Button::new("accept", "View"),
+                            Button::new("decline", "Ignore"),
                         )
-                        .child(Label::new("该用户正在共享屏幕")),
+                        .child(Label::new("the user is sharing their screen")),
                     )
                     .into_any_element(),
             ),
             single_example(
-                "项目已共享",
+                "Project Shared",
                 container()
                     .child(
                         CollabNotification::new(
                             avatar,
-                            Button::new("accept", "打开"),
-                            Button::new("decline", "关闭"),
+                            Button::new("accept", "Open"),
+                            Button::new("decline", "Dismiss"),
                         )
-                        .child(Label::new("该用户正在共享项目"))
+                        .child(Label::new("the user is sharing a project"))
                         .child(Label::new("zed").color(Color::Muted)),
                     )
                     .into_any_element(),
             ),
             single_example(
-                "内容溢出",
+                "Overflowing Content",
                 container()
                     .child(
                         CollabNotification::new(
                             avatar,
-                            Button::new("accept", "接受"),
-                            Button::new("decline", "拒绝"),
+                            Button::new("accept", "Accept"),
+                            Button::new("decline", "Decline"),
                         )
                         .child(Label::new(
-                            "a_very_long_username_that_might_overflow 正在 VibeDev 中共享项目:",
+                            "a_very_long_username_that_might_overflow is sharing a project in Zed:",
                         ))
                         .child(
                             Label::new("zed-cloud, zed, edit-prediction-bench, zed.dev")
@@ -131,42 +131,42 @@ impl Component for CollabNotification {
 
         let toast_examples = vec![
             single_example(
-                "联系人请求",
+                "Contact Request",
                 container()
                     .child(
                         CollabNotification::new(
                             avatar,
-                            Button::new("accept", "接受"),
-                            Button::new("decline", "拒绝"),
+                            Button::new("accept", "Accept"),
+                            Button::new("decline", "Decline"),
                         )
-                        .child(Label::new("maxbrunsfeld 想要将你添加为联系人")),
+                        .child(Label::new("maxbrunsfeld wants to add you as a contact")),
                     )
                     .into_any_element(),
             ),
             single_example(
-                "已接受联系人请求",
+                "Contact Request Accepted",
                 container()
                     .child(
                         CollabNotification::new(
                             avatar,
-                            Button::new("dismiss", "关闭"),
-                            Button::new("close", "关闭"),
+                            Button::new("dismiss", "Dismiss"),
+                            Button::new("close", "Dismiss"),
                         )
-                        .child(Label::new("maxbrunsfeld 已接受你的联系人请求")),
+                        .child(Label::new("maxbrunsfeld accepted your contact request")),
                     )
                     .into_any_element(),
             ),
             single_example(
-                "频道邀请",
+                "Channel Invitation",
                 container()
                     .child(
                         CollabNotification::new(
                             avatar,
-                            Button::new("accept", "接受"),
-                            Button::new("decline", "拒绝"),
+                            Button::new("accept", "Accept"),
+                            Button::new("decline", "Decline"),
                         )
                         .child(Label::new(
-                            "maxbrunsfeld 邀请你加入 #zed 频道",
+                            "maxbrunsfeld invited you to join the #zed channel",
                         )),
                     )
                     .into_any_element(),
@@ -176,9 +176,9 @@ impl Component for CollabNotification {
         Some(
             v_flex()
                 .gap_6()
-                .child(example_group_with_title("通话与项目", call_examples).vertical())
+                .child(example_group_with_title("Calls & Projects", call_examples).vertical())
                 .child(
-                    example_group_with_title("联系人与频道通知", toast_examples).vertical(),
+                    example_group_with_title("Contact & Channel Toasts", toast_examples).vertical(),
                 )
                 .into_any_element(),
         )

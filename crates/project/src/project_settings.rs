@@ -1228,34 +1228,34 @@ impl SettingsObserver {
                                     let vscode_tasks =
                                         parse_json_with_comments::<VsCodeTaskFile>(&content)
                                             .with_context(|| {
-                                                format!("解析 VSCode 任务,文件 {abs_path:?}")
+                                                format!("parsing VSCode tasks, file {abs_path:?}")
                                             })?;
                                     let zed_tasks = TaskTemplates::try_from(vscode_tasks)
                                         .with_context(|| {
                                             format!(
-                                        "将 VSCode 任务转换为 VibeDev 任务,文件 {abs_path:?}"
+                                        "converting VSCode tasks into Zed ones, file {abs_path:?}"
                                     )
                                         })?;
                                     serde_json::to_string(&zed_tasks).with_context(|| {
                                         format!(
-                                            "将 VibeDev 任务序列化为 JSON,文件 {abs_path:?}"
+                                            "serializing Zed tasks into JSON, file {abs_path:?}"
                                         )
                                     })
                                 } else if abs_path.ends_with(local_vscode_launch_file_relative_path().as_std_path()) {
                                     let vscode_tasks =
                                         parse_json_with_comments::<VsCodeDebugTaskFile>(&content)
                                             .with_context(|| {
-                                                format!("解析 VSCode 调试任务,文件 {abs_path:?}")
+                                                format!("parsing VSCode debug tasks, file {abs_path:?}")
                                             })?;
                                     let zed_tasks = DebugTaskFile::try_from(vscode_tasks)
                                         .with_context(|| {
                                             format!(
-                                        "将 VSCode 调试任务转换为 VibeDev 任务,文件 {abs_path:?}"
+                                        "converting VSCode debug tasks into Zed ones, file {abs_path:?}"
                                     )
                                         })?;
                                     serde_json::to_string(&zed_tasks).with_context(|| {
                                         format!(
-                                            "将 VibeDev 任务序列化为 JSON,文件 {abs_path:?}"
+                                            "serializing Zed tasks into JSON, file {abs_path:?}"
                                         )
                                     })
                                 } else {
@@ -1386,7 +1386,7 @@ impl SettingsObserver {
                     match result {
                         Err(InvalidSettingsError::Debug { path, message }) => {
                             log::error!(
-                                "在 {path:?} 中设置本地调试场景失败: {message:?}"
+                                "Failed to set local debug scenarios in {path:?}: {message:?}"
                             );
                             cx.emit(SettingsObserverEvent::LocalTasksUpdated(Err(
                                 InvalidSettingsError::Debug { path, message },
@@ -1407,7 +1407,7 @@ impl SettingsObserver {
                 }
                 (LocalSettingsPath::OutsideWorktree(path), kind) => {
                     log::error!(
-                        "类型为 {:?} 的 OutsideWorktree 路径 {:?} 仅受 editorconfig 支持",
+                        "OutsideWorktree path {:?} with kind {:?} is only supported by editorconfig",
                         path,
                         kind
                     );

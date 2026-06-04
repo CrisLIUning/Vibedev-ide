@@ -64,7 +64,7 @@ pub async fn run_context_retrieval(
         ep_store.update(&mut cx, |store, cx| store.context_for_project(&project, cx));
 
     let excerpt_count: usize = context_files.iter().map(|f| f.excerpts.len()).sum();
-    step_progress.set_info(format!("{} 个摘录", excerpt_count), InfoStyle::Normal);
+    step_progress.set_info(format!("{} excerpts", excerpt_count), InfoStyle::Normal);
 
     if let Some(prompt_inputs) = example.prompt_inputs.as_mut() {
         prompt_inputs.related_files = Some(context_files);
@@ -102,7 +102,7 @@ async fn wait_for_language_servers_to_start(
     });
 
     step_progress.set_substatus(format!(
-        "等待 {} 个 LSP",
+        "waiting for {} LSPs",
         servers_pending_diagnostics.len()
     ));
 
@@ -119,7 +119,7 @@ async fn wait_for_language_servers_to_start(
         let step_progress = step_progress.clone();
         move |lsp_store, event, cx| match event {
             project::LspStoreEvent::LanguageServerAdded(id, name, _) => {
-                step_progress.set_substatus(format!("LSP 已启动: {}", name));
+                step_progress.set_substatus(format!("LSP started: {}", name));
                 started_tx.try_send(*id).ok();
             }
             project::LspStoreEvent::DiskBasedDiagnosticsFinished { language_server_id } => {
@@ -128,7 +128,7 @@ async fn wait_for_language_servers_to_start(
                     .language_server_adapter_for_id(*language_server_id)
                     .unwrap()
                     .name();
-                step_progress.set_substatus(format!("LSP 空闲: {}", name));
+                step_progress.set_substatus(format!("LSP idle: {}", name));
                 diag_tx.try_send(*language_server_id).ok();
             }
             project::LspStoreEvent::LanguageServerUpdate {

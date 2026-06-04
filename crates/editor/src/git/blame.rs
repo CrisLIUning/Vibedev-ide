@@ -616,7 +616,7 @@ impl GitBlame {
                             .collect::<Vec<_>>();
                         let all_errors = all_errors.join(", ");
                         if this.user_triggered {
-                            log::error!("获取 git 追溯数据失败: {all_errors}");
+                            log::error!("failed to get git blame data: {all_errors}");
                             cx.emit(project::Event::Toast {
                                 notification_id: "git-blame".into(),
                                 message: all_errors,
@@ -625,7 +625,7 @@ impl GitBlame {
                         } else {
                             // If we weren't triggered by a user, we just log errors in the background, instead of sending
                             // notifications.
-                            log::debug!("获取 git 追溯数据失败: {all_errors}");
+                            log::debug!("failed to get git blame data: {all_errors}");
                         }
                     })
                 }
@@ -787,7 +787,7 @@ mod tests {
             event,
             project::Event::Toast {
                 notification_id: "git-blame".into(),
-                message: "无法追溯 \"file.txt\": 获取 \"file.txt\" 追溯信息失败"
+                message: "Failed to blame \"file.txt\": failed to get blame for \"file.txt\""
                     .to_string(),
                 link: None
             }

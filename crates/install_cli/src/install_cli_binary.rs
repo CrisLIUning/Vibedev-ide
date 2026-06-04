@@ -57,7 +57,7 @@ async fn install_script(cx: &AsyncApp) -> Result<PathBuf> {
         .output()
         .await?
         .status;
-    anyhow::ensure!(status.success(), "运行 osascript 出错");
+    anyhow::ensure!(status.success(), "error running osascript");
     Ok(link_path.into())
 }
 
@@ -68,7 +68,7 @@ pub fn install_cli_binary(window: &mut Window, cx: &mut Context<Workspace>) {
         if cfg!(any(target_os = "linux", target_os = "freebsd")) {
             let prompt = cx.prompt(
                 PromptLevel::Warning,
-                "CLI 应该已经安装",
+                "CLI should already be installed",
                 Some(LINUX_PROMPT_DETAIL),
                 &["Ok"],
             );
@@ -86,7 +86,7 @@ pub fn install_cli_binary(window: &mut Window, cx: &mut Context<Workspace>) {
                 Toast::new(
                     NotificationId::unique::<InstalledZedCli>(),
                     format!(
-                        "已将 `zed` 安装到 {}。您可以从终端启动 {}。",
+                        "Installed `zed` to {}. You can launch {} from your terminal.",
                         path.to_string_lossy(),
                         ReleaseChannel::global(cx).display_name()
                     ),
@@ -97,5 +97,5 @@ pub fn install_cli_binary(window: &mut Window, cx: &mut Context<Workspace>) {
         register_zed_scheme(cx).await.log_err();
         Ok(())
     })
-    .detach_and_prompt_err("安装 zed cli 出错", window, cx, |_, _, _| None);
+    .detach_and_prompt_err("Error installing zed cli", window, cx, |_, _, _| None);
 }

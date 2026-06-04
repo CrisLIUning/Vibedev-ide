@@ -52,7 +52,7 @@ impl Scheduler for PlatformScheduler {
         #[cfg(target_family = "wasm")]
         {
             let _ = (&future, &timeout);
-            panic!("无法在 wasm 上阻塞")
+            panic!("Cannot block on wasm")
         }
         #[cfg(not(target_family = "wasm"))]
         {

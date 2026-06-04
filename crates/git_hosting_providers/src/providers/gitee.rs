@@ -50,7 +50,7 @@ impl Gitee {
         if response.status().is_client_error() {
             let text = String::from_utf8_lossy(body.as_slice());
             bail!(
-                "状态错误 {}, 响应: {text:?}",
+                "status error {}, response: {text:?}",
                 response.status().as_u16()
             );
         }

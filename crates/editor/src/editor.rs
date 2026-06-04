@@ -310,9 +310,9 @@ enum ReportEditorEvent {
 impl ReportEditorEvent {
     pub fn event_type(&self) -> &'static str {
         match self {
-            Self::Saved { .. } => "编辑器已保存",
-            Self::EditorOpened => "编辑器已打开",
-            Self::Closed => "编辑器已关闭",
+            Self::Saved { .. } => "Editor Saved",
+            Self::EditorOpened => "Editor Opened",
+            Self::Closed => "Editor Closed",
         }
     }
 }
@@ -1261,7 +1261,7 @@ struct HoveredCursor {
 #[derive(Debug)]
 /// SelectionEffects controls the side-effects of updating the selection.
 ///
-/// The default behaviour does "您主要想要":
+/// The default behaviour does "what you mostly want":
 /// - it pushes to the nav history if the cursor moved by >10 lines
 /// - it re-triggers completion requests
 /// - it scrolls to fit
@@ -1773,7 +1773,7 @@ impl Editor {
     ) -> Self {
         debug_assert!(
             display_map.is_none() || mode.is_minimap(),
-            "仅为迷你地图提供新的显示映射,否则可能会产生意外的副作用!"
+            "Providing a display map for a new editor is only intended for the minimap and might have unintended side effects otherwise!"
         );
 
         let full_mode = mode.is_full();
@@ -1953,7 +1953,7 @@ impl Editor {
                             Self::open_transaction_for_hidden_buffers(
                                 workspace,
                                 transaction.clone(),
-                                "重命名".to_string(),
+                                "Rename".to_string(),
                                 window,
                                 cx,
                             );
@@ -1973,7 +1973,7 @@ impl Editor {
                             Self::open_transaction_for_hidden_buffers(
                                 workspace,
                                 transaction.clone(),
-                                "LSP 编辑".to_string(),
+                                "LSP Edit".to_string(),
                                 window,
                                 cx,
                             );
@@ -2676,13 +2676,13 @@ impl Editor {
         cx: &mut Context<Workspace>,
     ) {
         Self::new_in_workspace(workspace, window, cx).detach_and_prompt_err(
-            "创建缓冲区失败",
+            "Failed to create buffer",
             window,
             cx,
             |e, _, _| match e.error_code() {
                 ErrorCode::RemoteUpgradeRequired => Some(format!(
-                "远程 VibeDev 实例尚不支持此功能。需要升级到 {}",
-                e.error_tag("required").unwrap_or("最新版本")
+                "The remote instance of Zed does not support this yet. It must be upgraded to {}",
+                e.error_tag("required").unwrap_or("the latest version")
             )),
                 _ => None,
             },
@@ -2758,11 +2758,11 @@ impl Editor {
             })?;
             anyhow::Ok(())
         })
-        .detach_and_prompt_err("创建缓冲区失败", window, cx, |e, _, _| {
+        .detach_and_prompt_err("Failed to create buffer", window, cx, |e, _, _| {
             match e.error_code() {
                 ErrorCode::RemoteUpgradeRequired => Some(format!(
-                "远程 VibeDev 实例尚不支持此功能。需要升级到 {}",
-                e.error_tag("required").unwrap_or("最新版本")
+                "The remote instance of Zed does not support this yet. It must be upgraded to {}",
+                e.error_tag("required").unwrap_or("the latest version")
             )),
                 _ => None,
             }
@@ -3898,9 +3898,9 @@ impl Editor {
             }))
             .tooltip(move |_window, cx| {
                 Tooltip::with_meta_in(
-                    "移除书签",
+                    "Remove bookmark",
                     Some(&ToggleBookmark),
-                    SharedString::from("右键查看更多选项"),
+                    SharedString::from("Right-click for more options"),
                     &focus_handle,
                     cx,
                 )
@@ -3987,48 +3987,48 @@ impl Editor {
             .map(|(anchor, bp)| (anchor, Arc::from(bp)));
 
         let log_breakpoint_msg = if breakpoint.as_ref().is_some_and(|bp| bp.1.message.is_some()) {
-            "编辑日志断点"
+            "Edit Log Breakpoint"
         } else {
-            "设置日志断点"
+            "Set Log Breakpoint"
         };
 
         let condition_breakpoint_msg = if breakpoint
             .as_ref()
             .is_some_and(|bp| bp.1.condition.is_some())
         {
-            "编辑条件断点"
+            "Edit Condition Breakpoint"
         } else {
-            "设置条件断点"
+            "Set Condition Breakpoint"
         };
 
         let hit_condition_breakpoint_msg = if breakpoint
             .as_ref()
             .is_some_and(|bp| bp.1.hit_condition.is_some())
         {
-            "编辑命中条件断点"
+            "Edit Hit Condition Breakpoint"
         } else {
-            "设置命中条件断点"
+            "Set Hit Condition Breakpoint"
         };
 
         let set_breakpoint_msg = if breakpoint.as_ref().is_some() {
-            "取消断点"
+            "Unset Breakpoint"
         } else {
-            "设置断点"
+            "Set Breakpoint"
         };
 
         let bookmark = self.bookmark_at_row(row, window, cx);
 
         let set_bookmark_msg = if bookmark.as_ref().is_some() {
-            "移除书签"
+            "Remove bookmark"
         } else {
-            "添加书签"
+            "Add Bookmark"
         };
 
         let run_to_cursor = window.is_action_available(&RunToCursor, cx);
 
         let toggle_state_msg = breakpoint.as_ref().map_or(None, |bp| match bp.1.state {
-            BreakpointState::Enabled => Some("禁用"),
-            BreakpointState::Disabled => Some("启用"),
+            BreakpointState::Enabled => Some("Disable"),
+            BreakpointState::Disabled => Some("Enable"),
         });
 
         let (anchor, breakpoint) =
@@ -4039,7 +4039,7 @@ impl Editor {
                 .context(focus_handle)
                 .when(run_to_cursor, |this| {
                     let weak_editor = weak_editor.clone();
-                    this.entry("运行到光标处", None, move |window, cx| {
+                    this.entry("Run to cursor", None, move |window, cx| {
                         weak_editor
                             .update(cx, |editor, cx| {
                                 editor.change_selections(
@@ -4184,7 +4184,7 @@ impl Editor {
             modifiers: Modifiers::secondary_key(),
             ..Default::default()
         };
-        let primary_action_text = "取消设置断点";
+        let primary_action_text = "Unset breakpoint";
         let focus_handle = self.focus_handle.clone();
         let has_context_menu = self.has_mouse_context_menu();
 
@@ -4195,7 +4195,7 @@ impl Editor {
                 "{alt_as_text}-点击以禁用\n右键点击查看更多选项"
             ))
         } else {
-            SharedString::from("右键查看更多选项")
+            SharedString::from("Right-click for more options")
         };
         IconButton::new(("breakpoint_indicator", row.0 as usize), icon)
             .icon_size(IconSize::XSmall)
@@ -4254,8 +4254,8 @@ impl Editor {
         impl Intent {
             fn as_str(&self) -> &'static str {
                 match self {
-                    Intent::SetBookmark => "设置书签",
-                    Intent::SetBreakpoint => "设置断点",
+                    Intent::SetBookmark => "Set bookmark",
+                    Intent::SetBreakpoint => "Set Breakpoint",
                 }
             }
 
@@ -7645,7 +7645,7 @@ impl Editor {
                 &editor,
                 workspace,
                 project_transaction,
-                format!("重命名: {} → {}", old_name, new_name),
+                format!("Rename: {} → {}", old_name, new_name),
                 cx,
             )
             .await?;
@@ -8243,7 +8243,7 @@ impl Editor {
         cx: &mut Context<Self>,
     ) -> Entity<Self> {
         const MINIMAP_FONT_WEIGHT: gpui::FontWeight = gpui::FontWeight::BLACK;
-        const MINIMAP_FONT_FAMILY: SharedString = SharedString::new_static(".VibeDevMono");
+        const MINIMAP_FONT_FAMILY: SharedString = SharedString::new_static(".ZedMono");
 
         let mut minimap = Editor::new_internal(
             EditorMode::Minimap {
@@ -8482,7 +8482,7 @@ impl Editor {
                 Self::open_locations_in_multibuffer(
                     workspace,
                     locations,
-                    format!("'{title}' 的选区"),
+                    format!("Selections for '{title}'"),
                     false,
                     false,
                     MultibufferSelectionMode::All,
@@ -10726,21 +10726,21 @@ fn process_completion_for_edit(
         {
             debug_assert_eq!(
                 insert_range.start, replace_range.start,
-                "insert_range 和 replace_range 应在同一位置开始"
+                "insert_range and replace_range should start at the same position"
             );
             debug_assert!(
                 insert_range
                     .start
                     .cmp(cursor_position, &buffer_snapshot)
                     .is_le(),
-                "insert_range 应在光标位置之前或处开始"
+                "insert_range should start before or at cursor position"
             );
             debug_assert!(
                 replace_range
                     .start
                     .cmp(cursor_position, &buffer_snapshot)
                     .is_le(),
-                "replace_range 应在光标位置之前或处开始"
+                "replace_range should start before or at cursor position"
             );
 
             let should_replace = match intent {
@@ -11919,9 +11919,9 @@ impl BreakpointPromptEditor {
             prompt.set_show_cursor_when_unfocused(false, cx);
             prompt.set_placeholder_text(
                 match edit_action {
-                    BreakpointPromptEditAction::Log => "断点命中时要记录的消息。{} 内的表达式将被插值。",
-                    BreakpointPromptEditAction::Condition => "断点命中时的条件。{} 内的表达式将被插值。",
-                    BreakpointPromptEditAction::HitCondition => "要忽略的断点命中次数",
+                    BreakpointPromptEditAction::Log => "Message to log when a breakpoint is hit. Expressions within {} are interpolated.",
+                    BreakpointPromptEditAction::Condition => "Condition when a breakpoint is hit. Expressions within {} are interpolated.",
+                    BreakpointPromptEditAction::HitCondition => "How many breakpoint hits to ignore",
                 },
                 window,
                 cx,
@@ -12024,7 +12024,7 @@ impl BreakpointPromptEditor {
             .icon_color(Color::Muted)
             .shape(IconButtonShape::Square)
             .tooltip(move |_window, cx| {
-                Tooltip::for_action_in("取消", &menu::Cancel, &focus_handle, cx)
+                Tooltip::for_action_in("Cancel", &menu::Cancel, &focus_handle, cx)
             })
             .on_click(cx.listener(|this, _, window, cx| {
                 this.cancel(&menu::Cancel, window, cx);
@@ -12037,7 +12037,7 @@ impl BreakpointPromptEditor {
             .icon_color(Color::Muted)
             .shape(IconButtonShape::Square)
             .tooltip(move |_window, cx| {
-                Tooltip::for_action_in("确认", &menu::Confirm, &focus_handle, cx)
+                Tooltip::for_action_in("Confirm", &menu::Confirm, &focus_handle, cx)
             })
             .on_click(cx.listener(|this, _, window, cx| {
                 this.confirm(&menu::Confirm, window, cx);

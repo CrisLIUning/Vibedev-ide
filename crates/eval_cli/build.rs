@@ -1,13 +1,13 @@
 fn main() {
     let cargo_toml =
-        std::fs::read_to_string("../zed/Cargo.toml").expect("读取 crates/zed/Cargo.toml 失败");
+        std::fs::read_to_string("../zed/Cargo.toml").expect("Failed to read crates/zed/Cargo.toml");
     let version = cargo_toml
         .lines()
         .find(|line| line.starts_with("version = "))
-        .expect("在 crates/zed/Cargo.toml 中未找到版本号")
+        .expect("Version not found in crates/zed/Cargo.toml")
         .split('=')
         .nth(1)
-        .expect("无效的版本格式")
+        .expect("Invalid version format")
         .trim()
         .trim_matches('"');
     println!("cargo:rerun-if-changed=../zed/Cargo.toml");

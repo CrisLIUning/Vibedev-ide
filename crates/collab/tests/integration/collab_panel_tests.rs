@@ -32,12 +32,12 @@ async fn test_reorder_favorite_channels_independently_of_channels(cx: &mut TestA
     assert_eq!(
         panel.read_with(cx, |panel, _| panel.entries_as_strings()),
         &[
-            "[频道]",
+            "[Channels]",
             "  v root",
             "    #️⃣ channel-a",
             "    #️⃣ channel-b",
             "    #️⃣ channel-c",
-            "[联系人]",
+            "[Contacts]",
         ]
     );
 
@@ -51,12 +51,12 @@ async fn test_reorder_favorite_channels_independently_of_channels(cx: &mut TestA
     assert_eq!(
         panel.read_with(cx, |panel, _| panel.entries_as_strings()),
         &[
-            "[频道]",
+            "[Channels]",
             "  v root",
             "    #️⃣ channel-a",
             "    #️⃣ channel-b  <== selected",
             "    #️⃣ channel-c",
-            "[联系人]",
+            "[Contacts]",
         ]
     );
 
@@ -67,14 +67,14 @@ async fn test_reorder_favorite_channels_independently_of_channels(cx: &mut TestA
     assert_eq!(
         panel.read_with(cx, |panel, _| panel.entries_as_strings()),
         &[
-            "[收藏]",
+            "[Favorites]",
             "  #️⃣ channel-b",
             "[Channels]",
             "  v root",
             "    #️⃣ channel-a",
             "    #️⃣ channel-b  <== selected",
             "    #️⃣ channel-c",
-            "[联系人]",
+            "[Contacts]",
         ]
     );
 
@@ -89,15 +89,15 @@ async fn test_reorder_favorite_channels_independently_of_channels(cx: &mut TestA
     assert_eq!(
         panel.read_with(cx, |panel, _| panel.entries_as_strings()),
         &[
-            "[收藏]",
+            "[Favorites]",
             "  #️⃣ channel-b",
             "  #️⃣ channel-c",
-            "[频道]",
+            "[Channels]",
             "  v root",
             "    #️⃣ channel-a",
             "    #️⃣ channel-b",
             "    #️⃣ channel-c  <== selected",
-            "[联系人]",
+            "[Contacts]",
         ]
     );
 
@@ -113,15 +113,15 @@ async fn test_reorder_favorite_channels_independently_of_channels(cx: &mut TestA
     assert_eq!(
         panel.read_with(cx, |panel, _| panel.entries_as_strings()),
         &[
-            "[收藏]",
+            "[Favorites]",
             "  #️⃣ channel-b  <== selected",
             "  #️⃣ channel-c",
-            "[频道]",
+            "[Channels]",
             "  v root",
             "    #️⃣ channel-a",
             "    #️⃣ channel-b",
             "    #️⃣ channel-c",
-            "[联系人]",
+            "[Contacts]",
         ]
     );
 
@@ -133,15 +133,15 @@ async fn test_reorder_favorite_channels_independently_of_channels(cx: &mut TestA
     assert_eq!(
         panel.read_with(cx, |panel, _| panel.entries_as_strings()),
         &[
-            "[收藏]",
+            "[Favorites]",
             "  #️⃣ channel-c",
             "  #️⃣ channel-b  <== selected",
-            "[频道]",
+            "[Channels]",
             "  v root",
             "    #️⃣ channel-a",
             "    #️⃣ channel-b",
             "    #️⃣ channel-c",
-            "[联系人]",
+            "[Contacts]",
         ]
     );
 
@@ -152,15 +152,15 @@ async fn test_reorder_favorite_channels_independently_of_channels(cx: &mut TestA
     assert_eq!(
         panel.read_with(cx, |panel, _| panel.entries_as_strings()),
         &[
-            "[收藏]",
+            "[Favorites]",
             "  #️⃣ channel-c",
             "  #️⃣ channel-b  <== selected",
-            "[频道]",
+            "[Channels]",
             "  v root",
             "    #️⃣ channel-a",
             "    #️⃣ channel-b",
             "    #️⃣ channel-c",
-            "[联系人]",
+            "[Contacts]",
         ]
     );
 
@@ -172,15 +172,15 @@ async fn test_reorder_favorite_channels_independently_of_channels(cx: &mut TestA
     assert_eq!(
         panel.read_with(cx, |panel, _| panel.entries_as_strings()),
         &[
-            "[收藏]",
+            "[Favorites]",
             "  #️⃣ channel-b  <== selected",
             "  #️⃣ channel-c",
-            "[频道]",
+            "[Channels]",
             "  v root",
             "    #️⃣ channel-a",
             "    #️⃣ channel-b",
             "    #️⃣ channel-c",
-            "[联系人]",
+            "[Contacts]",
         ]
     );
 
@@ -191,15 +191,15 @@ async fn test_reorder_favorite_channels_independently_of_channels(cx: &mut TestA
     assert_eq!(
         panel.read_with(cx, |panel, _| panel.entries_as_strings()),
         &[
-            "[收藏]",
+            "[Favorites]",
             "  #️⃣ channel-b  <== selected",
             "  #️⃣ channel-c",
-            "[频道]",
+            "[Channels]",
             "  v root",
             "    #️⃣ channel-a",
             "    #️⃣ channel-b",
             "    #️⃣ channel-c",
-            "[联系人]",
+            "[Contacts]",
         ]
     );
 
@@ -211,14 +211,14 @@ async fn test_reorder_favorite_channels_independently_of_channels(cx: &mut TestA
     assert_eq!(
         panel.read_with(cx, |panel, _| panel.entries_as_strings()),
         &[
-            "[收藏]",
+            "[Favorites]",
             "  #️⃣ channel-c  <== selected",
-            "[频道]",
+            "[Channels]",
             "  v root",
             "    #️⃣ channel-a",
             "    #️⃣ channel-b",
             "    #️⃣ channel-c",
-            "[联系人]",
+            "[Contacts]",
         ]
     );
 
@@ -231,12 +231,12 @@ async fn test_reorder_favorite_channels_independently_of_channels(cx: &mut TestA
     assert_eq!(
         panel.read_with(cx, |panel, _| panel.entries_as_strings()),
         &[
-            "[频道]",
+            "[Channels]",
             "  v root  <== selected",
             "    #️⃣ channel-a",
             "    #️⃣ channel-b",
             "    #️⃣ channel-c",
-            "[联系人]",
+            "[Contacts]",
         ]
     );
 }
@@ -274,12 +274,12 @@ async fn test_reorder_channels_independently_of_favorites(cx: &mut TestAppContex
     assert_eq!(
         panel.read_with(cx, |panel, _| panel.entries_as_strings()),
         &[
-            "[频道]",
+            "[Channels]",
             "  v root",
             "    #️⃣ channel-a  <== selected",
             "    #️⃣ channel-b",
             "    #️⃣ channel-c",
-            "[联系人]",
+            "[Contacts]",
         ]
     );
 
@@ -299,7 +299,7 @@ async fn test_reorder_channels_independently_of_favorites(cx: &mut TestAppContex
     assert_eq!(
         panel.read_with(cx, |panel, _| panel.entries_as_strings()),
         &[
-            "[收藏]",
+            "[Favorites]",
             "  #️⃣ channel-a",
             "  #️⃣ channel-b",
             "[Channels]",
@@ -307,7 +307,7 @@ async fn test_reorder_channels_independently_of_favorites(cx: &mut TestAppContex
             "    #️⃣ channel-a",
             "    #️⃣ channel-b  <== selected",
             "    #️⃣ channel-c",
-            "[联系人]",
+            "[Contacts]",
         ]
     );
 
@@ -318,7 +318,7 @@ async fn test_reorder_channels_independently_of_favorites(cx: &mut TestAppContex
     assert_eq!(
         panel.read_with(cx, |panel, _| panel.entries_as_strings()),
         &[
-            "[收藏]",
+            "[Favorites]",
             "  #️⃣ channel-a",
             "  #️⃣ channel-b",
             "[Channels]",
@@ -326,7 +326,7 @@ async fn test_reorder_channels_independently_of_favorites(cx: &mut TestAppContex
             "    #️⃣ channel-a  <== selected",
             "    #️⃣ channel-b",
             "    #️⃣ channel-c",
-            "[联系人]",
+            "[Contacts]",
         ]
     );
 
@@ -342,7 +342,7 @@ async fn test_reorder_channels_independently_of_favorites(cx: &mut TestAppContex
     assert_eq!(
         panel.read_with(cx, |panel, _| panel.entries_as_strings()),
         &[
-            "[收藏]",
+            "[Favorites]",
             "  #️⃣ channel-a",
             "  #️⃣ channel-b",
             "[Channels]",
@@ -350,7 +350,7 @@ async fn test_reorder_channels_independently_of_favorites(cx: &mut TestAppContex
             "    #️⃣ channel-b",
             "    #️⃣ channel-a  <== selected",
             "    #️⃣ channel-c",
-            "[联系人]",
+            "[Contacts]",
         ]
     );
 }

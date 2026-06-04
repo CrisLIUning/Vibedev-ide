@@ -13,7 +13,7 @@ impl Render for Scrollable {
             .p_4()
             .overflow_scroll()
             .bg(gpui::white())
-            .child("嵌套布局中双向滚动测试示例")
+            .child("Example for test 2 way scroll in nested layout")
             .child(
                 div()
                     .h(px(5000.))
@@ -36,10 +36,10 @@ impl Render for Scrollable {
                                     .border_1()
                                     .border_color(gpui::green())
                                     .p_4()
-                                    .child("水平滚动"),
+                                    .child("Scroll Horizontal"),
                             ),
                     )
-                    .child("垂直滚动"),
+                    .child("Scroll Vertical"),
             )
     }
 }

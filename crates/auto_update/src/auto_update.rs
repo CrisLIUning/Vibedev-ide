@@ -49,7 +49,7 @@ const REMOTE_SERVER_CACHE_LIMIT: usize = 5;
 fn linux_rsync_install_hint() -> &'static str {
     let os_release = match std::fs::read_to_string("/etc/os-release") {
         Ok(os_release) => os_release,
-        Err(_) => return "请使用您的包管理器安装 rsync",
+        Err(_) => return "Please install rsync using your package manager",
     };
 
     let mut distribution_ids = Vec::new();
@@ -86,12 +86,12 @@ fn linux_rsync_install_hint() -> &'static str {
         .iter()
         .any(|distribution_id| distribution_id == "nixos")
     {
-        Some("从 nixpkgs 安装 rsync")
+        Some("Install pkgs.rsync from nixpkgs")
     } else {
         None
     };
 
-    package_manager_hint.unwrap_or("请使用您的包管理器安装 rsync")
+    package_manager_hint.unwrap_or("Please install rsync using your package manager")
 }
 
 actions!(
@@ -205,7 +205,7 @@ impl Drop for MacOsUnmounter<'_> {
                     }
                     Ok(output) => {
                         log::error!(
-                            "卸载磁盘镜像失败: {:?}",
+                            "Failed to unmount disk image: {:?}",
                             String::from_utf8_lossy(&output.stderr)
                         );
                     }
@@ -301,7 +301,7 @@ pub fn check(_: &Check, window: &mut Window, cx: &mut App) {
     {
         drop(window.prompt(
             gpui::PromptLevel::Info,
-            "VibeDev 是通过包管理器安装的。",
+            "Zed was installed via a package manager.",
             Some(&message),
             &["Ok"],
             cx,
@@ -321,8 +321,8 @@ pub fn check(_: &Check, window: &mut Window, cx: &mut App) {
     } else {
         drop(window.prompt(
             gpui::PromptLevel::Info,
-            "无法检查更新",
-            Some("非捆绑应用已禁用自动更新。"),
+            "Could not check for updates",
+            Some("Auto-updates disabled for non-bundled app."),
             &["Ok"],
             cx,
         ));
@@ -491,7 +491,7 @@ impl AutoUpdater {
                         error.downcast_ref::<MissingDependencyError>().is_some();
                     this.status = match check_type {
                         UpdateCheckType::Automatic if is_missing_dependency => {
-                            log::warn!("自动更新: {}", error);
+                            log::warn!("auto-update: {}", error);
                             AutoUpdateStatus::Errored {
                                 error: Arc::new(error),
                             }
@@ -560,7 +560,7 @@ impl AutoUpdater {
                 .context("auto-update not initialized")
         })?;
 
-        set_status("正在获取远程服务器版本", cx);
+        set_status("Fetching remote server release", cx);
         let release = Self::get_release_asset(
             &this,
             release_channel,
@@ -585,7 +585,7 @@ impl AutoUpdater {
                 "downloading vibedev-remote-server {os} {arch} version {}",
                 release.version
             );
-            set_status("正在下载远程服务器", cx);
+            set_status("Downloading remote server", cx);
             download_remote_server_binary(&version_path, release, client).await?;
         }
 
@@ -594,7 +594,7 @@ impl AutoUpdater {
                 .await
         {
             log::warn!(
-                "清理 {:?} 中的远程服务器缓存失败: {error:#}",
+                "Failed to clean up remote server cache in {:?}: {error:#}",
                 platform_dir
             );
         }
@@ -686,13 +686,13 @@ impl AutoUpdater {
 
         anyhow::ensure!(
             response.status().is_success(),
-            "获取发布版本失败: {:?}",
+            "failed to fetch release: {:?}",
             String::from_utf8_lossy(&body),
         );
 
         serde_json::from_slice(body.as_slice()).with_context(|| {
             format!(
-                "反序列化发布版本 {:?} 时出错",
+                "error deserializing release {:?}",
                 String::from_utf8_lossy(&body),
             )
         })
@@ -1016,11 +1016,11 @@ impl AutoUpdater {
 
         let installer_dir = InstallerDir::new()
             .await
-            .context("创建安装程序目录失败")?;
+            .context("Failed to create installer dir")?;
         let target_path = Self::target_path(&installer_dir).await?;
         download_release(&target_path, fetched_release_data, client)
             .await
-            .with_context(|| format!("下载更新到 {} 失败", target_path.display()))?;
+            .with_context(|| format!("Failed to download update to {}", target_path.display()))?;
 
         this.update(cx, |this, cx| {
             this.status = AutoUpdateStatus::Installing {
@@ -1031,7 +1031,7 @@ impl AutoUpdater {
 
         let new_binary_path = Self::install_release(installer_dir, &target_path, cx)
             .await
-            .with_context(|| format!("在 {} 安装更新失败", target_path.display()))?;
+            .with_context(|| format!("Failed to install update at: {}", target_path.display()))?;
         if let Some(new_binary_path) = new_binary_path {
             cx.update(|cx| cx.set_restart_path(new_binary_path));
         }
@@ -1104,7 +1104,7 @@ impl AutoUpdater {
         if which::which("rsync").is_err() {
             let install_hint = linux_rsync_install_hint();
             return Err(MissingDependencyError(format!(
-                "自动更新需要 rsync,但尚未安装。{install_hint}"
+                "rsync is required for auto-updates but is not installed. {install_hint}"
             ))
             .into());
         }
@@ -1112,7 +1112,7 @@ impl AutoUpdater {
         #[cfg(target_os = "macos")]
         anyhow::ensure!(
             which::which("rsync").is_ok(),
-            "无法自动更新,因为未找到所需的 rsync 工具。"
+            "Could not auto-update because the required rsync utility was not found."
         );
 
         Ok(())
@@ -1200,7 +1200,7 @@ async fn download_remote_server_binary(
     let mut response = client.get(&release.url, Default::default(), true).await?;
     anyhow::ensure!(
         response.status().is_success(),
-        "下载远程服务器发布版本失败: {:?}",
+        "failed to download remote server release: {:?}",
         response.status()
     );
     smol::io::copy(response.body_mut(), &mut temp_file).await?;
@@ -1256,7 +1256,7 @@ async fn cleanup_remote_server_cache(
 
         if let Err(error) = smol::fs::remove_file(&path).await {
             log::warn!(
-                "删除旧的远程服务器归档 {:?} 失败: {}",
+                "Failed to remove old remote server archive {:?}: {}",
                 path,
                 error
             );
@@ -1291,7 +1291,7 @@ async fn download_release(
     let mut response = client.get(&release.url, Default::default(), true).await?;
     anyhow::ensure!(
         response.status().is_success(),
-        "下载更新失败: {:?}",
+        "failed to download update: {:?}",
         response.status()
     );
     smol::io::copy(response.body_mut(), &mut target_file).await?;
@@ -1322,11 +1322,11 @@ async fn install_release_linux(
     let output = cmd
         .output()
         .await
-        .with_context(|| "解压失败: {cmd}")?;
+        .with_context(|| "failed to extract: {cmd}")?;
 
     anyhow::ensure!(
         output.status.success(),
-        "解压 {:?} 到 {:?} 失败: {:?}",
+        "failed to extract {:?} to {:?}: {:?}",
         downloaded_tar_gz,
         extracted,
         String::from_utf8_lossy(&output.stderr)
@@ -1356,11 +1356,11 @@ async fn install_release_linux(
     let output = cmd
         .output()
         .await
-        .with_context(|| "rsync 同步失败: {cmd}")?;
+        .with_context(|| "failed to rsync: {cmd}")?;
 
     anyhow::ensure!(
         output.status.success(),
-        "从 {:?} 复制 VibeDev 更新到 {:?} 失败: {:?}",
+        "failed to copy Zed update from {:?} to {:?}: {:?}",
         from,
         to,
         String::from_utf8_lossy(&output.stderr)
@@ -1391,11 +1391,11 @@ async fn install_release_macos(
     let output = cmd
         .output()
         .await
-        .with_context(|| "挂载失败: {cmd}")?;
+        .with_context(|| "failed to mount: {cmd}")?;
 
     anyhow::ensure!(
         output.status.success(),
-        "挂载失败: {:?}",
+        "failed to mount: {:?}",
         String::from_utf8_lossy(&output.stderr)
     );
 
@@ -1412,11 +1412,11 @@ async fn install_release_macos(
     let output = cmd
         .output()
         .await
-        .with_context(|| "rsync 同步失败: {cmd}")?;
+        .with_context(|| "failed to rsync: {cmd}")?;
 
     anyhow::ensure!(
         output.status.success(),
-        "复制应用失败: {:?}",
+        "failed to copy app: {:?}",
         String::from_utf8_lossy(&output.stderr)
     );
 
@@ -1456,7 +1456,7 @@ async fn install_release_windows(downloaded_installer: &Path) -> Result<Option<P
     let output = cmd.output().await?;
     anyhow::ensure!(
         output.status.success(),
-        "启动安装程序失败: {:?}",
+        "failed to start installer: {:?}",
         String::from_utf8_lossy(&output.stderr)
     );
     // We return the path to the update helper program, because it will

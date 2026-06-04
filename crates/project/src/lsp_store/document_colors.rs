@@ -102,7 +102,7 @@ impl LspStore {
                         lsp_store.fetch_document_colors_for_buffer(&buffer, cx)
                     })?
                     .await
-                    .context("获取文档颜色")
+                    .context("fetching document colors")
                     .map_err(Arc::new);
                 let fetched_colors = match fetched_colors {
                     Ok(fetched_colors) => {
@@ -196,7 +196,7 @@ impl LspStore {
                 let response = upstream_client
                     .request(request)
                     .await
-                    .context("颜色展示协议请求")?;
+                    .context("color presentation proto request")?;
                 color.resolved = true;
                 color.color_presentations = response
                     .presentations
@@ -218,7 +218,7 @@ impl LspStore {
                 .update(cx, |buffer, cx| {
                     Some(File::from_dyn(buffer.file())?.abs_path(cx))
                 })
-                .context("缺少路径的缓冲区")
+                .context("buffer with the missing path")
             {
                 Ok(path) => path,
                 Err(e) => return Task::ready(Err(e)),
@@ -247,7 +247,7 @@ impl LspStore {
                 color.color_presentations = resolve_task
                     .await
                     .into_response()
-                    .context("颜色展示解析 LSP 请求")?
+                    .context("color presentation resolve LSP request")?
                     .into_iter()
                     .map(|presentation| ColorPresentation {
                         label: SharedString::from(presentation.label),
@@ -358,13 +358,13 @@ impl LspStore {
         let color = envelope
             .payload
             .color
-            .context("无效的颜色解析请求")?;
+            .context("invalid color resolve request")?;
         let start = color
             .lsp_range_start
-            .context("无效的颜色解析请求")?;
+            .context("invalid color resolve request")?;
         let end = color
             .lsp_range_end
-            .context("无效的颜色解析请求")?;
+            .context("invalid color resolve request")?;
 
         let color = DocumentColor {
             lsp_range: lsp::Range {
@@ -390,7 +390,7 @@ impl LspStore {
                 )
             })
             .await
-            .context("解析颜色展示")?;
+            .context("resolving color presentation")?;
 
         Ok(proto::GetColorPresentationResponse {
             presentations: resolved_color

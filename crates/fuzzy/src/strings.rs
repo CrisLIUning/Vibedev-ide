@@ -54,7 +54,7 @@ impl StringMatch {
             if let Some(start) = positions.next().copied() {
                 let Some(char_len) = self.char_len_at_index(start) else {
                     log::error!(
-                        "不变量违规:索引 {start} 超出范围或不在字符串 {:?} 的 utf-8 边界上",
+                        "Invariant violation: Index {start} out of range or not on a utf-8 boundary in string {:?}",
                         self.string
                     );
                     return None;
@@ -64,7 +64,7 @@ impl StringMatch {
                     if end == **next_start {
                         let Some(char_len) = self.char_len_at_index(end) else {
                             log::error!(
-                                "不变量违规:索引 {end} 超出范围或不在字符串 {:?} 的 utf-8 边界上",
+                                "Invariant violation: Index {end} out of range or not on a utf-8 boundary in string {:?}",
                                 self.string
                             );
                             return None;

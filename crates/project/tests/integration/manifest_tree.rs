@@ -19,7 +19,7 @@ mod path_trie {
             assert_eq!(path.as_unix_str(), "a/b/c");
             ControlFlow::Continue(())
         });
-        // Now let's annotate a parent with "已知缺失" node.
+        // Now let's annotate a parent with "Known missing" node.
         trie.insert(
             &TriePath::new(rel_path("a")),
             (),

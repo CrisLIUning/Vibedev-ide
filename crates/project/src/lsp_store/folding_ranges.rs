@@ -102,7 +102,7 @@ impl LspStore {
                     })
                     .map_err(Arc::new)?
                     .await
-                    .context("获取折叠范围")
+                    .context("fetching folding ranges")
                     .map_err(Arc::new);
 
                 let fetched = match fetched {
@@ -205,14 +205,14 @@ impl LspStore {
                         Ok(ranges) => Some((server_id, ranges)),
                         Err(e) => {
                             has_errors = true;
-                            log::error!("获取折叠范围失败: {e:#}");
+                            log::error!("Failed to fetch folding ranges: {e:#}");
                             None
                         }
                     })
                     .collect::<HashMap<_, _>>();
                 anyhow::ensure!(
                     !has_errors || !result.is_empty(),
-                    "获取折叠范围失败"
+                    "Failed to fetch folding ranges"
                 );
                 Ok(Some(result))
             })

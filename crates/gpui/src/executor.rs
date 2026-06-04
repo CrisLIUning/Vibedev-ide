@@ -253,7 +253,7 @@ impl BackgroundExecutor {
     pub fn set_num_cpus(&self, count: usize) {
         self.dispatcher
             .as_test()
-            .expect("set_num_cpus 只能在测试执行器上调用")
+            .expect("set_num_cpus can only be called on a test executor")
             .set_num_cpus(count);
     }
 

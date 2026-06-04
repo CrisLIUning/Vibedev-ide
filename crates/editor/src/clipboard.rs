@@ -405,7 +405,7 @@ impl Editor {
             .all::<MultiBufferOffset>(&self.display_snapshot(cx));
 
         if selections.is_empty() {
-            log::warn!("VibeDev 中应始终至少有一个选区。这是一个 bug。");
+            log::warn!("There should always be at least one selection in Zed. This is a bug.");
             return;
         };
 
@@ -417,7 +417,7 @@ impl Editor {
         });
 
         let Some(clipboard_text) = clipboard_text else {
-            log::warn!("剪贴板不包含文本。");
+            log::warn!("Clipboard doesn't contain text.");
             return;
         };
 

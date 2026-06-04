@@ -269,7 +269,7 @@ impl TelemetryLogView {
         struct TelemetryLogReadError;
         cx.emit(TelemetryLogEvent::ShowToast(Toast::new(
             NotificationId::unique::<TelemetryLogReadError>(),
-            format!("读取遥测日志失败: {}", error),
+            format!("Failed to read telemetry log: {}", error),
         )));
     }
 
@@ -400,7 +400,7 @@ impl TelemetryLogView {
                     .when(signed_in, |this| {
                         this.child(
                             div()
-                                .child(ui::Chip::new("已登录"))
+                                .child(ui::Chip::new("signed in"))
                                 .visible_on_hover("telemetry-entry"),
                         )
                     }),
@@ -484,7 +484,7 @@ impl Item for TelemetryLogView {
     type Event = TelemetryLogEvent;
 
     fn tab_content_text(&self, _detail: usize, _cx: &App) -> SharedString {
-        "遥测日志".into()
+        "Telemetry Log".into()
     }
 
     fn tab_icon(&self, _window: &Window, _cx: &App) -> Option<Icon> {
@@ -510,9 +510,9 @@ impl Render for TelemetryLogView {
                     .justify_center()
                     .items_center()
                     .child(if self.events.is_empty() {
-                        "尚未记录遥测事件"
+                        "No telemetry events recorded yet"
                     } else {
-                        "没有事件匹配当前筛选条件"
+                        "No events match the current filter"
                     })
                     .into_any()
             } else {
@@ -539,7 +539,7 @@ impl TelemetryLogToolbarItemView {
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let search_editor = cx.new(|cx| {
             let mut editor = editor::Editor::single_line(window, cx);
-            editor.set_placeholder_text("筛选事件...", window, cx);
+            editor.set_placeholder_text("Filter events...", window, cx);
             editor
         });
 
@@ -580,7 +580,7 @@ impl Render for TelemetryLogToolbarItemView {
             .child(
                 IconButton::new("clear_events", IconName::Trash)
                     .icon_size(IconSize::Small)
-                    .tooltip(Tooltip::text("清除事件"))
+                    .tooltip(Tooltip::text("Clear Events"))
                     .disabled(!has_events)
                     .on_click(cx.listener(move |_this, _, _window, cx| {
                         telemetry_log_clone.update(cx, |log, cx| {
@@ -591,7 +591,7 @@ impl Render for TelemetryLogToolbarItemView {
             .child(
                 IconButton::new("open_log_file", IconName::File)
                     .icon_size(IconSize::Small)
-                    .tooltip(Tooltip::text("打开原始日志文件"))
+                    .tooltip(Tooltip::text("Open Raw Log File"))
                     .on_click(|_, _window, cx| {
                         let path = Telemetry::log_file_path();
                         cx.open_url(&format!("file://{}", path.display()));

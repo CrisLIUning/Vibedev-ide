@@ -43,7 +43,7 @@ fn create_error(
         .map(|(_, span)| span)
         .next()
         .unwrap_or_else(Span::call_site);
-    let error_text = format!("SQL 错误: {}\n查询语句: {}", error, formatted_sql);
+    let error_text = format!("Sql Error: {}\nFor Query: {}", error, formatted_sql);
     TokenStream::from(Error::new(error_span.into(), error_text).into_compile_error())
 }
 

@@ -1501,7 +1501,7 @@ impl Editor {
                 if !full_comment_prefixes.is_empty() {
                     let first_prefix = full_comment_prefixes
                         .first()
-                        .expect("前缀列表非空");
+                        .expect("prefixes is non-empty");
                     let prefix_trimmed_lengths = full_comment_prefixes
                         .iter()
                         .map(|p| p.trim_end_matches(' ').len())
@@ -1528,7 +1528,7 @@ impl Editor {
                                 )
                             })
                             .max_by_key(|range| range.end.column - range.start.column)
-                            .expect("前缀列表非空");
+                            .expect("prefixes is non-empty");
 
                         if prefix_range.is_empty() {
                             all_selection_lines_are_comments = false;
@@ -2169,20 +2169,20 @@ impl Editor {
             if action.language.is_none() && action.name.is_none() {
                 Snippet::parse(snippet_body)?
             } else {
-                bail!("`代码片段` 与 `language` 和 `name` 互斥")
+                bail!("`snippet` is mutually exclusive with `language` and `name`")
             }
         } else if let Some(name) = &action.name {
-            let project = self.project().context("无项目")?;
+            let project = self.project().context("no project")?;
             let snippet_store = project.read(cx).snippets().read(cx);
             let snippet = snippet_store
                 .snippets_for(action.language.clone(), cx)
                 .into_iter()
                 .find(|snippet| snippet.name == *name)
-                .context("未找到代码片段")?;
+                .context("snippet not found")?;
             Snippet::parse(&snippet.body)?
         } else {
             // todo(andrew): open modal to select snippet
-            bail!("需要 `name` 或 `代码片段`")
+            bail!("`name` or `snippet` is required")
         };
 
         self.insert_snippet(&insertion_ranges, snippet, window, cx)

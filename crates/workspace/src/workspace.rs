@@ -3435,7 +3435,7 @@ impl Workspace {
                                         // draw's side effect is to schedule the FocusChanged events in the current flush effect cycle
                                         // And we need that to happen before the next keystroke to keep vim mode happy...
                                         // (Note that the tests always do this implicitly, so you must manually test with something like:
-                                        //   "bindings": { "g z": ["工作区::SendKeystrokes", ": j <enter> u"]}
+                                        //   "bindings": { "g z": ["workspace::SendKeystrokes", ": j <enter> u"]}
                                         // )
                                         window.draw(cx).clear();
                                         return true;
@@ -4306,7 +4306,7 @@ impl Workspace {
         if let Some(item) = self.active_item(cx) {
             item.item_focus_handle(cx).focus(window, cx);
         } else {
-            log::error!("切换焦点到中心窗格时找不到焦点目标",);
+            log::error!("Could not find a focus target when switching focus to the center panes",);
         }
     }
 
@@ -5903,7 +5903,7 @@ impl Workspace {
                     cx,
                 )
                 .detach_and_prompt_err(
-                    "加入项目失败",
+                    "Failed to join project",
                     window,
                     cx,
                     |error, _, _| Some(format!("{error:#}")),
@@ -8116,7 +8116,7 @@ impl ParticipantLocation {
     pub fn from_proto(location: Option<proto::ParticipantLocation>) -> Result<Self> {
         match location
             .and_then(|l| l.variant)
-            .context("未提供参与者位置")?
+            .context("participant location was not provided")?
         {
             proto::participant_location::Variant::SharedProject(project) => {
                 Ok(Self::SharedProject {
@@ -9060,7 +9060,7 @@ pub async fn restore_multiworkspace(
     let window_handle = match workspace_result {
         Ok(handle) => handle,
         Err(err) => {
-            log::error!("恢复活动工作区失败: {err:#}");
+            log::error!("Failed to restore active workspace: {err:#}");
 
             let mut fallback_handle = None;
             for key in &state.project_groups {
@@ -9085,7 +9085,7 @@ pub async fn restore_multiworkspace(
                         break;
                     }
                     Err(fallback_err) => {
-                        log::error!("备用项目组也失败了: {fallback_err:#}");
+                        log::error!("Fallback project group also failed: {fallback_err:#}");
                     }
                 }
             }
@@ -11408,7 +11408,7 @@ mod tests {
                 assert_eq!(
                     mw.workspace(),
                     &workspace_b,
-                    "工作区 B 提示时应被激活"
+                    "workspace B should be activated when it prompts"
                 );
             })
             .unwrap();
@@ -11420,7 +11420,7 @@ mod tests {
         // Window should still exist because workspace B's close was cancelled
         assert!(
             multi_workspace_handle.update(cx, |_, _, _| ()).is_ok(),
-            "取消一个工作区的关闭后窗口应仍然存在"
+            "window should still exist after cancelling one workspace's close"
         );
     }
 
@@ -11513,7 +11513,7 @@ mod tests {
         cx.run_until_parked();
 
         // Accept the save prompt.
-        cx.simulate_prompt_answer("不保存");
+        cx.simulate_prompt_answer("Don't Save");
         cx.run_until_parked();
         let removed = remove_task.await.unwrap();
         assert!(removed, "removal should have succeeded");
@@ -11607,7 +11607,7 @@ mod tests {
             "closing a no-folder workspace with a dirty serializable item should prompt, \
              since the workspace will not be reachable after close"
         );
-        cx.simulate_prompt_answer("不保存");
+        cx.simulate_prompt_answer("Don't Save");
         cx.executor().run_until_parked();
 
         assert!(task.await.unwrap());
@@ -11681,7 +11681,7 @@ mod tests {
             "replacing a workspace with a dirty serializable item should prompt, \
              since the workspace will be detached afterwards"
         );
-        cx.simulate_prompt_answer("不保存");
+        cx.simulate_prompt_answer("Don't Save");
         cx.executor().run_until_parked();
 
         assert!(task.await.unwrap());
@@ -11760,7 +11760,7 @@ mod tests {
             "a save/discard prompt should be shown for the dirty scratch item \
              when its serialization fails"
         );
-        cx.simulate_prompt_answer("不保存");
+        cx.simulate_prompt_answer("Don't Save");
         cx.executor().run_until_parked();
 
         // Preparing to close succeeds, even though serialization failed.
@@ -12223,7 +12223,7 @@ mod tests {
         item.read_with(cx, |item, _| {
             assert_eq!(
                 item.save_count, 0,
-                "在同一项目的子项之间切换焦点不应触发自动保存"
+                "Switching focus between children within the same item should not autosave"
             );
         });
 
@@ -12240,7 +12240,7 @@ mod tests {
         item.read_with(cx, |item, _| {
             assert_eq!(
                 item.save_count, 1,
-                "窗口停用时应触发自动保存(当焦点在项目的子项上时)"
+                "Window deactivation should trigger autosave when focus was on a child of the item"
             );
         });
         cx.update(|window, _| window.activate_window());
@@ -12258,7 +12258,7 @@ mod tests {
         item.read_with(cx, |item, _| {
             assert_eq!(
                 item.save_count, 2,
-                "当焦点位于子项上时,停用窗口应触发自动保存"
+                "Deactivating window should trigger autosave when focus was on a child"
             );
         });
     }
@@ -12300,7 +12300,7 @@ mod tests {
         item.read_with(cx, |item, _| {
             assert_eq!(
                 item.save_count, 0,
-                "打开模态框不应立即触发自动保存"
+                "Opening a modal should NOT immediately trigger autosave"
             );
         });
 
@@ -12315,7 +12315,7 @@ mod tests {
         item.read_with(cx, |item, _| {
             assert_eq!(
                 item.save_count, 0,
-                "焦点返回同一项目时应跳过延迟保存"
+                "Returning focus to the same item should skip deferred save"
             );
         });
 
@@ -12329,7 +12329,7 @@ mod tests {
         });
         cx.executor().run_until_parked();
         item.read_with(cx, |item, _| {
-            assert_eq!(item.save_count, 0, "打开模态框不应触发保存");
+            assert_eq!(item.save_count, 0, "Modal open should not trigger save");
         });
 
         // Window deactivation should flush deferred saves.
@@ -12338,7 +12338,7 @@ mod tests {
         item.read_with(cx, |item, _| {
             assert_eq!(
                 item.save_count, 1,
-                "窗口停用时应刷新延迟保存"
+                "Window deactivation should flush deferred saves"
             );
         });
     }
@@ -12393,7 +12393,7 @@ mod tests {
         item1.read_with(cx, |item, _| {
             assert_eq!(
                 item.save_count, 1,
-                "切换到另一个项目时应触发前一个项目的延迟保存"
+                "Switching to another item should trigger deferred save of the previous item"
             );
         });
     }
@@ -12609,8 +12609,8 @@ mod tests {
             let panes = workspace.center.panes();
             assert!(panes.len() >= 2);
             (
-                panes.first().expect("至少一个窗格").entity_id(),
-                panes.last().expect("至少一个窗格").entity_id(),
+                panes.first().expect("at least one pane").entity_id(),
+                panes.last().expect("at least one pane").entity_id(),
             )
         });
 
@@ -13648,7 +13648,7 @@ mod tests {
                 persisted.size, None,
                 "flexible panel should not persist a redundant pixel size"
             );
-            let original_ratio = persisted.flex.expect("面板的 flex 值应被持久化");
+            let original_ratio = persisted.flex.expect("panel's flex should be persisted");
 
             // Remove the panel and re-add: both size and ratio should be restored.
             workspace.update_in(cx, |workspace, window, cx| {
@@ -13671,7 +13671,7 @@ mod tests {
                 assert_eq!(
                     size_state.flex,
                     Some(original_ratio),
-                    "重新添加的弹性面板应恢复已持久化的 flex 值"
+                    "re-added flexible panel should restore persisted flex"
                 );
             });
         }
@@ -13795,7 +13795,7 @@ mod tests {
             let right_panel = right_dock
                 .read(cx)
                 .visible_panel()
-                .expect("右侧停靠栏应有一个可见面板")
+                .expect("right dock should have a visible panel")
                 .clone();
             workspace.toggle_dock_panel_flexible_size(
                 &right_dock,
@@ -13807,18 +13807,18 @@ mod tests {
             let right_dock = right_dock.read(cx);
             let right_panel = right_dock
                 .visible_panel()
-                .expect("右侧停靠栏仍应有一个可见面板");
+                .expect("right dock should still have a visible panel");
             assert!(
                 right_panel.has_flexible_size(window, cx),
-                "右侧面板现在应该是弹性的"
+                "right panel should now be flexible"
             );
 
             let right_size_state = right_dock
                 .stored_panel_size_state(right_panel.as_ref())
-                .expect("切换后右侧面板应具有已存储的尺寸状态");
+                .expect("right panel should have a stored size state after toggling");
             let right_flex = right_size_state
                 .flex
-                .expect("切换后右侧面板应具有 flex 值");
+                .expect("right panel should have a flex value after toggling");
 
             let left_dock = workspace.left_dock().read(cx);
             let left_width = workspace
@@ -13826,11 +13826,11 @@ mod tests {
                 .expect("left dock should still have an active panel");
             let right_width = workspace
                 .dock_size(&right_dock, window, cx)
-                .expect("右侧停靠栏仍应有一个活动面板");
+                .expect("right dock should still have an active panel");
 
             let left_flex = workspace
                 .default_dock_flex(DockPosition::Left)
-                .expect("左侧停靠栏应具有默认 flex 值");
+                .expect("left dock should have a default flex");
             let center_column_count = workspace.center.full_height_column_count() as f32;
 
             let total_flex = left_flex + center_column_count + right_flex;
@@ -13838,11 +13838,11 @@ mod tests {
             let expected_right = right_flex / total_flex * workspace.bounds.size.width;
             assert_eq!(
                 left_width, expected_left,
-                "弹性左侧面板应通过 flex 比例分配工作区宽度"
+                "flexible left panel should share workspace width via flex ratios"
             );
             assert_eq!(
                 right_width, expected_right,
-                "弹性右侧面板应通过 flex 比例分配工作区宽度"
+                "flexible right panel should share workspace width via flex ratios"
             );
         });
     }
@@ -14888,7 +14888,7 @@ mod tests {
                     .panes()
                     .iter()
                     .any(|pane| pane == workspace.active_pane()),
-                "活动窗格应为剩余工作区窗格之一"
+                "active pane should be one of the remaining workspace panes"
             );
         });
     }
@@ -15380,7 +15380,7 @@ mod tests {
                 json!({
                     "one.png": "BINARYDATAHERE",
                     "two.ipynb": "{ totally a notebook }",
-                    "three.txt": "编辑文本,当然为什么不呢?"
+                    "three.txt": "editing text, sure why not?"
                 }),
             )
             .await;
@@ -15444,7 +15444,7 @@ mod tests {
                 json!({
                     "one.png": "BINARYDATAHERE",
                     "two.ipynb": "{ totally a notebook }",
-                    "three.txt": "编辑文本,当然为什么不呢?"
+                    "three.txt": "editing text, sure why not?"
                 }),
             )
             .await;

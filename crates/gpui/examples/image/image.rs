@@ -100,15 +100,15 @@ impl Render for ImageShowcase {
                             .items_center()
                             .gap_8()
                             .child(ImageContainer::new(
-                                "从本地文件加载的图片",
+                                "Image loaded from a local file",
                                 self.local_resource.clone(),
                             ))
                             .child(ImageContainer::new(
-                                "从远程资源加载的图片",
+                                "Image loaded from a remote resource",
                                 self.remote_resource.clone(),
                             ))
                             .child(ImageContainer::new(
-                                "从资源加载的图片",
+                                "Image loaded from an asset",
                                 self.asset_resource.clone(),
                             )),
                     )
@@ -120,13 +120,13 @@ impl Render for ImageShowcase {
                             .child(
                                 div()
                                     .flex_col()
-                                    .child("自动宽度")
+                                    .child("Auto Width")
                                     .child(img("https://picsum.photos/800/400").h(px(180.))),
                             )
                             .child(
                                 div()
                                     .flex_col()
-                                    .child("自动高度")
+                                    .child("Auto Height")
                                     .child(img("https://picsum.photos/800/400").w(px(180.))),
                             ),
                     )
@@ -139,7 +139,7 @@ impl Render for ImageShowcase {
                             .w_full()
                             .border_1()
                             .border_color(rgb(0xC0C0C0))
-                            .child("最大宽度 100% 的图片")
+                            .child("image with max width 100%")
                             .child(img("https://picsum.photos/800/400").max_w_full()),
                     ),
             )
@@ -170,7 +170,7 @@ fn run_example() {
             // created and used exclusively on the main thread.
             let http_client = unsafe {
                 gpui_web::FetchHttpClient::with_user_agent("gpui example")
-                    .expect("无法创建 FetchHttpClient")
+                    .expect("failed to create FetchHttpClient")
             };
             cx.set_http_client(Arc::new(http_client));
         }
@@ -179,8 +179,8 @@ fn run_example() {
         cx.on_action(|_: &Quit, cx| cx.quit());
         cx.bind_keys([KeyBinding::new("cmd-q", Quit, None)]);
         cx.set_menus(vec![Menu {
-            name: "图片".into(),
-            items: vec![MenuItem::action("退出", Quit)],
+            name: "Image".into(),
+            items: vec![MenuItem::action("Quit", Quit)],
             disabled: false,
         }]);
 

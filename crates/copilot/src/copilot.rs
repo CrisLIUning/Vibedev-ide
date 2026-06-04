@@ -75,7 +75,7 @@ impl CopilotServer {
         let server = self.as_running()?;
         anyhow::ensure!(
             matches!(server.sign_in_status, SignInStatus::Authorized),
-            "使用 Copilot 前必须登录"
+            "must sign in before using copilot"
         );
         Ok(server)
     }
@@ -497,7 +497,7 @@ impl Copilot {
             Some("HTTPS_PROXY")
         } else {
             log::error!(
-                "不支持的语言服务器代理协议方案 (必须是 http 或 https)"
+                "Unsupported protocol scheme for language server proxy (must be http or https)"
             );
             None
         };
@@ -708,7 +708,7 @@ impl Copilot {
 
             if env::var("ZED_FORCE_COPILOT_ERROR").is_ok() {
                 this.server = CopilotServer::Error(
-                    "测试用的强制错误 (ZED_FORCE_COPILOT_ERROR)".into(),
+                    "Forced error for testing (ZED_FORCE_COPILOT_ERROR)".into(),
                 );
                 return;
             }
@@ -1029,7 +1029,7 @@ impl Copilot {
         let buffer_entity = buffer.clone();
         let lsp = server.lsp.clone();
         let Some(registered_buffer) = server.registered_buffers.get_mut(&buffer.entity_id()) else {
-            return Task::ready(Err(anyhow::anyhow!("缓冲区未注册")));
+            return Task::ready(Err(anyhow::anyhow!("buffer not registered")));
         };
         let pending_snapshot = registered_buffer.report_changes(buffer, cx);
         let buffer = buffer.read(cx);
@@ -1421,7 +1421,7 @@ async fn get_copilot_lsp(fs: Arc<dyn Fs>, node_runtime: NodeRuntime) -> anyhow::
         return Ok(binary_path);
     }
 
-    anyhow::bail!("GitHub Copilot 原生语言服务器二进制文件未安装")
+    anyhow::bail!("GitHub Copilot native language server binary was not installed")
 }
 
 fn copilot_lsp_native_binary_path() -> anyhow::Result<PathBuf> {
@@ -1429,13 +1429,13 @@ fn copilot_lsp_native_binary_path() -> anyhow::Result<PathBuf> {
         "linux" => "linux",
         "macos" => "darwin",
         "windows" => "win32",
-        platform => anyhow::bail!("不支持的 Copilot 语言服务器平台: {platform}"),
+        platform => anyhow::bail!("unsupported Copilot language server platform: {platform}"),
     };
     let architecture = match env::consts::ARCH {
         "aarch64" => "arm64",
         "x86_64" => "x64",
         architecture => {
-            anyhow::bail!("不支持的 Copilot 语言服务器架构: {architecture}")
+            anyhow::bail!("unsupported Copilot language server architecture: {architecture}")
         }
     };
 
@@ -1692,7 +1692,7 @@ mod tests {
             Ok(request::PromptUserDeviceFlow {
                 user_code: "test-code".into(),
                 command: lsp::Command {
-                    title: "登录".into(),
+                    title: "Sign in".into(),
                     command: "github.copilot.finishDeviceFlow".into(),
                     arguments: None,
                 },

@@ -190,7 +190,7 @@ pub fn single_example(
 }
 
 pub fn empty_example(variant_name: impl Into<SharedString>) -> ComponentExample {
-    ComponentExample::new(variant_name, div().w_full().text_center().items_center().text_xs().opacity(0.4).child("此处故意留空。它表示一种不应渲染任何内容的情况。").into_any_element())
+    ComponentExample::new(variant_name, div().w_full().text_center().items_center().text_xs().opacity(0.4).child("This space is intentionally left blank. It indicates a case that should render nothing.").into_any_element())
 }
 
 pub fn example_group(examples: Vec<ComponentExample>) -> ComponentExampleGroup {

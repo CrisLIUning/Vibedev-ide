@@ -174,7 +174,7 @@ impl Client {
         cx: AsyncApp,
     ) -> Result<Self> {
         log::debug!(
-            "正在启动上下文服务器 (executable={:?}, args={:?})",
+            "starting context server (executable={:?}, args={:?})",
             binary.executable,
             &binary.args
         );
@@ -339,7 +339,7 @@ impl Client {
         while let Ok(message) = outbound_rx.recv().await {
             log::trace!("outgoing message: {}", message);
             if let Err(err) = transport.send(message).await {
-                log::debug!("传输发送失败: {:#}", err);
+                log::debug!("transport send failed: {:#}", err);
                 *last_transport_error.lock() = Some(err);
                 return Ok(());
             }
@@ -516,7 +516,7 @@ impl fmt::Display for ContextServerId {
 
 impl fmt::Debug for Client {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("上下文服务器客户端")
+        f.debug_struct("Context Server Client")
             .field("id", &self.server_id.0)
             .field("name", &self.name)
             .finish_non_exhaustive()

@@ -112,9 +112,9 @@ mod integration {
         let path = project_path(path);
         let file_bookmarks = bookmarks
             .get(&path)
-            .unwrap_or_else(|| panic!("未找到 {} 的书签", path.display()));
+            .unwrap_or_else(|| panic!("Expected bookmarks for {}", path.display()));
         let rows: Vec<u32> = file_bookmarks.iter().map(|b| b.0).collect();
-        assert_eq!(rows, expected_rows, "{} 的书签行", path.display());
+        assert_eq!(rows, expected_rows, "Bookmark rows for {}", path.display());
     }
 
     #[gpui::test]
@@ -182,7 +182,7 @@ mod integration {
         assert_bookmark_rows(&bookmarks, path!("/project/file2.rs"), &[0, 3]);
         assert!(
             !bookmarks.contains_key(&project_path(path!("/project/file3.rs"))),
-            "file3.rs 不应有书签"
+            "file3.rs should have no bookmarks"
         );
     }
 

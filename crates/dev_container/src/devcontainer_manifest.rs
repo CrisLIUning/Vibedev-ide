@@ -68,23 +68,23 @@ impl DevContainerManifest {
         local_project_path: &Path,
     ) -> Result<Self, DevContainerError> {
         let config_path = local_project_path.join(local_config.config_path.clone());
-        log::debug!("正在解析位于 {:?} 的 devcontainer json", &config_path);
+        log::debug!("parsing devcontainer json found in {:?}", &config_path);
         let devcontainer_contents = context.fs.load(&config_path).await.map_err(|e| {
-            log::error!("无法读取 devcontainer 内容: {e}");
+            log::error!("Unable to read devcontainer contents: {e}");
             DevContainerError::DevContainerParseFailed
         })?;
 
         let devcontainer = deserialize_devcontainer_json(&devcontainer_contents)?;
 
         let devcontainer_directory = config_path.parent().ok_or_else(|| {
-            log::error!("Dev container 文件应位于目录中");
+            log::error!("Dev container file should be in a directory");
             DevContainerError::NotInValidProject
         })?;
         let file_name = config_path
             .file_name()
             .and_then(|f| f.to_str())
             .ok_or_else(|| {
-                log::error!("Dev container 文件没有文件名或包含无效的 Unicode 字符");
+                log::error!("Dev container file has no file name, or is invalid unicode");
                 DevContainerError::DevContainerParseFailed
             })?;
 
@@ -324,7 +324,7 @@ impl DevContainerManifest {
                 let dockerfile_contents = self.expanded_dockerfile_content().await?;
                 return image_from_dockerfile(dockerfile_contents, &build.target).ok_or_else(
                     || {
-                        log::error!("无法在 Dockerfile 中找到基础镜像");
+                        log::error!("Unable to find base image in Dockerfile");
                         DevContainerError::DevContainerParseFailed
                     },
                 );
@@ -344,7 +344,7 @@ impl DevContainerManifest {
                         &main_service.build.as_ref().and_then(|b| b.target.clone()),
                     )
                     .ok_or_else(|| {
-                        log::error!("无法在 Dockerfile 中找到基础镜像");
+                        log::error!("Unable to find base image in Dockerfile");
                         DevContainerError::DevContainerParseFailed
                     });
                 }
@@ -352,11 +352,11 @@ impl DevContainerManifest {
                     return Ok(image.to_string());
                 }
 
-                log::error!("在 docker-compose 配置中未找到有效的基准镜像");
+                log::error!("No valid base image found in docker-compose configuration");
                 return Err(DevContainerError::DevContainerParseFailed);
             }
             DevContainerBuildType::None => {
-                log::error!("不是用于构建的有效 devcontainer 配置");
+                log::error!("Not a valid devcontainer config for build");
                 return Err(DevContainerError::NotInValidProject);
             }
         }
@@ -366,7 +366,7 @@ impl DevContainerManifest {
         let dev_container = match &self.config {
             ConfigStatus::Deserialized(_) => {
                 log::error!(
-                    "Dev container 尚未解析变量扩展, 无法下载资源"
+                    "Dev container has not yet been parsed for variable expansion. Cannot yet download resources"
                 );
                 return Err(DevContainerError::DevContainerParseFailed);
             }
@@ -388,12 +388,12 @@ impl DevContainerManifest {
             .create_dir(&features_content_dir)
             .await
             .map_err(|e| {
-                log::error!("创建 features 内容目录失败: {e}");
+                log::error!("Failed to create features content dir: {e}");
                 DevContainerError::FilesystemError
             })?;
 
         self.fs.create_dir(&empty_context_dir).await.map_err(|e| {
-            log::error!("创建空上下文目录失败: {e}");
+            log::error!("Failed to create empty context dir: {e}");
             DevContainerError::FilesystemError
         })?;
 
@@ -430,7 +430,7 @@ impl DevContainerManifest {
             .write(&builtin_env_path, &builtin_env_content.as_bytes())
             .await
             .map_err(|e| {
-                log::error!("写入内置环境文件失败: {e}");
+                log::error!("Failed to write builtin env file: {e}");
                 DevContainerError::FilesystemError
             })?;
 
@@ -440,7 +440,7 @@ impl DevContainerManifest {
         for (index, (feature_ref, options)) in ordered_features.iter().enumerate() {
             if matches!(options, FeatureOptions::Bool(false)) {
                 log::debug!(
-                    "Feature '{}' 已禁用 (设为 false), 跳过",
+                    "Feature '{}' is disabled (set to false), skipping",
                     feature_ref
                 );
                 continue;
@@ -452,7 +452,7 @@ impl DevContainerManifest {
 
             self.fs.create_dir(&feature_dir).await.map_err(|e| {
                 log::error!(
-                    "创建 {} 的 feature 目录失败: {e}",
+                    "Failed to create feature directory for {}: {e}",
                     feature_ref
                 );
                 DevContainerError::FilesystemError
@@ -460,7 +460,7 @@ impl DevContainerManifest {
 
             let oci_ref = parse_oci_feature_ref(feature_ref).ok_or_else(|| {
                 log::error!(
-                    "Feature '{}' 不是受支持的 OCI feature 引用",
+                    "Feature '{}' is not a supported OCI feature reference",
                     feature_ref
                 );
                 DevContainerError::DevContainerParseFailed
@@ -469,7 +469,7 @@ impl DevContainerManifest {
                 get_oci_token(&oci_ref.registry, &oci_ref.path, &self.http_client)
                     .await
                     .map_err(|e| {
-                        log::error!("获取 feature '{}' 的 OCI token 失败: {e}", feature_ref);
+                        log::error!("Failed to get OCI token for feature '{}': {e}", feature_ref);
                         DevContainerError::ResourceFetchFailed
                     })?;
             let manifest = get_oci_manifest(
@@ -483,7 +483,7 @@ impl DevContainerManifest {
             .await
             .map_err(|e| {
                 log::error!(
-                    "获取 feature '{}' 的 OCI manifest 失败: {e}",
+                    "Failed to fetch OCI manifest for feature '{}': {e}",
                     feature_ref
                 );
                 DevContainerError::ResourceFetchFailed
@@ -493,7 +493,7 @@ impl DevContainerManifest {
                 .first()
                 .ok_or_else(|| {
                     log::error!(
-                        "Feature '{}' 的 OCI manifest 不包含任何层",
+                        "OCI manifest for feature '{}' contains no layers",
                         feature_ref
                     );
                     DevContainerError::ResourceFetchFailed
@@ -515,7 +515,7 @@ impl DevContainerManifest {
             let feature_json_path = &feature_dir.join("devcontainer-feature.json");
             if !self.fs.is_file(feature_json_path).await {
                 let message = format!(
-                    "在 {:?} 中未找到 devcontainer-feature.json, 无法应用默认值",
+                    "No devcontainer-feature.json found in {:?}, no defaults to apply",
                     feature_json_path
                 );
                 log::error!("{}", &message);
@@ -523,7 +523,7 @@ impl DevContainerManifest {
             }
 
             let contents = self.fs.load(&feature_json_path).await.map_err(|e| {
-                log::error!("读取 devcontainer-feature.json 出错: {:?}", e);
+                log::error!("error reading devcontainer-feature.json: {:?}", e);
                 DevContainerError::FilesystemError
             })?;
 
@@ -531,13 +531,13 @@ impl DevContainerManifest {
 
             let feature_json: DevContainerFeatureJson =
                 serde_json_lenient::from_value(contents_parsed).map_err(|e| {
-                    log::error!("解析 devcontainer-feature.json 失败: {e}");
+                    log::error!("Failed to parse devcontainer-feature.json: {e}");
                     DevContainerError::ResourceFetchFailed
                 })?;
 
             let feature_manifest = FeatureManifest::new(consecutive_id, feature_dir, feature_json);
 
-            log::debug!("已下载 '{}' 的 OCI feature 内容", feature_ref);
+            log::debug!("Downloaded OCI feature content for '{}'", feature_ref);
 
             let env_content = feature_manifest
                 .write_feature_env(&self.fs, options)
@@ -554,7 +554,7 @@ impl DevContainerManifest {
                 )
                 .await
                 .map_err(|e| {
-                    log::error!("写入 {} 的安装包装器失败: {e}", feature_ref);
+                    log::error!("Failed to write install wrapper for {}: {e}", feature_ref);
                     DevContainerError::FilesystemError
                 })?;
 
@@ -605,12 +605,12 @@ impl DevContainerManifest {
             .write(&build_info.dockerfile_path, &dockerfile_content.as_bytes())
             .await
             .map_err(|e| {
-                log::error!("写入 Dockerfile.extended 失败: {e}");
+                log::error!("Failed to write Dockerfile.extended: {e}");
                 DevContainerError::FilesystemError
             })?;
 
         log::debug!(
-            "Features 构建资源已写入 {:?}",
+            "Features build resources written to {:?}",
             build_info.features_content_dir
         );
 
@@ -719,7 +719,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
         let dev_container = match &self.config {
             ConfigStatus::Deserialized(_) => {
                 log::error!(
-                    "Dev container 尚未解析变量扩展, 无法合并资源"
+                    "Dev container has not yet been parsed for variable expansion. Cannot yet merge resources"
                 );
                 return Err(DevContainerError::DevContainerParseFailed);
             }
@@ -758,7 +758,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
     async fn build_resources(&self) -> Result<DevContainerBuildResources, DevContainerError> {
         if let ConfigStatus::Deserialized(_) = &self.config {
             log::error!(
-                "Dev container 尚未解析变量扩展, 无法构建资源"
+                "Dev container has not yet been parsed for variable expansion. Cannot yet build resources"
             );
             return Err(DevContainerError::DevContainerParseFailed);
         }
@@ -778,7 +778,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
                 let built_docker_image = self.build_docker_image().await?;
                 let Some(features_build_info) = &self.features_build_info else {
                     log::error!(
-                        "无法在初始 docker 构建之前尝试构建更新 UID 的 dockerfile"
+                        "Can't attempt to build update UID dockerfile before initial docker build"
                     );
                     return Err(DevContainerError::DevContainerParseFailed);
                 };
@@ -790,7 +790,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
                 Ok(DevContainerBuildResources::Docker(resources))
             }
             DevContainerBuildType::DockerCompose => {
-                log::debug!("使用 docker compose, 正在构建扩展的 compose 文件");
+                log::debug!("Using docker compose. Building extended compose files");
                 let docker_compose_resources = self.build_and_extend_compose_files().await?;
 
                 return Ok(DevContainerBuildResources::DockerCompose(
@@ -809,7 +809,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
     ) -> Result<DevContainerUp, DevContainerError> {
         let ConfigStatus::VariableParsed(_) = &self.config else {
             log::error!(
-                "变量尚未解析, 无法继续运行 dev container"
+                "Variables have not been parsed; cannot proceed with running the dev container"
             );
             return Err(DevContainerError::DevContainerParseFailed);
         };
@@ -840,7 +840,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
         let dev_container = match &self.config {
             ConfigStatus::Deserialized(_) => {
                 log::error!(
-                    "Dev container 尚未解析变量扩展, 无法获取 docker compose 文件"
+                    "Dev container has not yet been parsed for variable expansion. Cannot yet get docker compose files"
                 );
                 return Err(DevContainerError::DevContainerParseFailed);
             }
@@ -864,7 +864,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
             .get_docker_compose_config(&docker_compose_full_paths)
             .await?
         else {
-            log::error!("输出无法反序列化为 DockerComposeConfig");
+            log::error!("Output could not deserialize into DockerComposeConfig");
             return Err(DevContainerError::DevContainerParseFailed);
         };
         Ok(DockerComposeResources {
@@ -879,7 +879,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
         let dev_container = match &self.config {
             ConfigStatus::Deserialized(_) => {
                 log::error!(
-                    "Dev container 尚未解析变量扩展, 无法从 compose 文件构建"
+                    "Dev container has not yet been parsed for variable expansion. Cannot yet build from compose files"
                 );
                 return Err(DevContainerError::DevContainerParseFailed);
             }
@@ -888,7 +888,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
 
         let Some(features_build_info) = &self.features_build_info else {
             log::error!(
-                "无法构建和扩展 compose 文件: features 构建信息尚未创建"
+                "Cannot build and extend compose files: features build info is not yet constructed"
             );
             return Err(DevContainerError::DevContainerParseFailed);
         };
@@ -976,7 +976,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
             let config_location = temp_base.join("docker_compose_build.json");
 
             let config_json = serde_json_lenient::to_string(&build_override).map_err(|e| {
-                log::error!("序列化 docker compose 运行时覆盖时出错: {e}");
+                log::error!("Error serializing docker compose runtime override: {e}");
                 DevContainerError::DevContainerParseFailed
             })?;
 
@@ -984,7 +984,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
                 .write(&config_location, config_json.as_bytes())
                 .await
                 .map_err(|e| {
-                    log::error!("写入运行时覆盖文件时出错: {e}");
+                    log::error!("Error writing the runtime override file: {e}");
                     DevContainerError::FilesystemError
                 })?;
 
@@ -1069,7 +1069,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
                 let config_location = temp_base.join("docker_compose_build.json");
 
                 let config_json = serde_json_lenient::to_string(&build_override).map_err(|e| {
-                    log::error!("序列化 docker compose 运行时覆盖时出错: {e}");
+                    log::error!("Error serializing docker compose runtime override: {e}");
                     DevContainerError::DevContainerParseFailed
                 })?;
 
@@ -1077,7 +1077,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
                     .write(&config_location, config_json.as_bytes())
                     .await
                     .map_err(|e| {
-                        log::error!("写入运行时覆盖文件时出错: {e}");
+                        log::error!("Error writing the runtime override file: {e}");
                         DevContainerError::FilesystemError
                     })?;
 
@@ -1096,7 +1096,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
                 )
             }
         } else {
-            log::error!("Docker compose 必须定义 image 或 dockerfile");
+            log::error!("Docker compose must have either image or dockerfile defined");
             return Err(DevContainerError::DevContainerParseFailed);
         };
 
@@ -1129,7 +1129,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
         let config_location = temp_base.join("docker_compose_runtime.json");
 
         let config_json = serde_json_lenient::to_string(&config).map_err(|e| {
-            log::error!("序列化 docker compose 运行时覆盖时出错: {e}");
+            log::error!("Error serializing docker compose runtime override: {e}");
             DevContainerError::DevContainerParseFailed
         })?;
 
@@ -1137,7 +1137,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
             .write(&config_location, config_json.as_bytes())
             .await
             .map_err(|e| {
-                log::error!("写入运行时覆盖文件时出错: {e}");
+                log::error!("Error writing the runtime override file: {e}");
                 DevContainerError::FilesystemError
             })?;
 
@@ -1154,7 +1154,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
 
         if let Some(metadata) = &resources.image.config.labels.metadata {
             let serialized_metadata = serde_json_lenient::to_string(metadata).map_err(|e| {
-                log::error!("序列化 docker 镜像元数据时出错: {e}");
+                log::error!("Error serializing docker image metadata: {e}");
                 DevContainerError::ContainerNotValid(resources.image.id.clone())
             })?;
 
@@ -1317,7 +1317,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
         let dev_container = match &self.config {
             ConfigStatus::Deserialized(_) => {
                 log::error!(
-                    "Dev container 尚未解析变量扩展, 无法构建镜像"
+                    "Dev container has not yet been parsed for variable expansion. Cannot yet build image"
                 );
                 return Err(DevContainerError::DevContainerParseFailed);
             }
@@ -1332,7 +1332,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
                     .as_ref()
                     .is_none_or(|features| features.is_empty())
                 {
-                    log::debug!("没有要添加的 features, 使用基准镜像");
+                    log::debug!("No features to add. Using base image");
                     return Ok(base_image);
                 }
             }
@@ -1349,13 +1349,13 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
             .run_command(&mut command)
             .await
             .map_err(|e| {
-                log::error!("构建 docker 镜像时出错: {e}");
+                log::error!("Error building docker image: {e}");
                 DevContainerError::CommandFailed(command.get_program().display().to_string())
             })?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            log::error!("docker buildx build 失败: {stderr}");
+            log::error!("docker buildx build failed: {stderr}");
             return Err(DevContainerError::CommandFailed(
                 command.get_program().display().to_string(),
             ));
@@ -1363,7 +1363,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
 
         // After a successful build, inspect the newly tagged image to get its metadata
         let Some(features_build_info) = &self.features_build_info else {
-            log::error!("期望有 features 构建信息, 但未创建");
+            log::error!("Features build info expected, but not created");
             return Err(DevContainerError::DevContainerParseFailed);
         };
         let image = self
@@ -1416,7 +1416,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
             .output()
             .await
             .map_err(|e| {
-                log::error!("获取主机 UID 失败: {e}");
+                log::error!("Failed to get host UID: {e}");
                 DevContainerError::CommandFailed("id -u".to_string())
             })
             .and_then(|output| {
@@ -1424,7 +1424,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
                     .trim()
                     .parse::<u32>()
                     .map_err(|e| {
-                        log::error!("解析主机 UID 失败: {e}");
+                        log::error!("Failed to parse host UID: {e}");
                         DevContainerError::CommandFailed("id -u".to_string())
                     })
             })?;
@@ -1434,7 +1434,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
             .output()
             .await
             .map_err(|e| {
-                log::error!("获取主机 GID 失败: {e}");
+                log::error!("Failed to get host GID: {e}");
                 DevContainerError::CommandFailed("id -g".to_string())
             })
             .and_then(|output| {
@@ -1442,7 +1442,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
                     .trim()
                     .parse::<u32>()
                     .map_err(|e| {
-                        log::error!("解析主机 GID 失败: {e}");
+                        log::error!("Failed to parse host GID: {e}");
                         DevContainerError::CommandFailed("id -g".to_string())
                     })
             })?;
@@ -1456,7 +1456,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
             .write(&dockerfile_path, dockerfile_content.as_bytes())
             .await
             .map_err(|e| {
-                log::error!("写入 updateUID Dockerfile 失败: {e}");
+                log::error!("Failed to write updateUID Dockerfile: {e}");
                 DevContainerError::FilesystemError
             })?;
 
@@ -1478,13 +1478,13 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${{PATH:-\3}}/g' /etc/profile || true
             .run_command(&mut command)
             .await
             .map_err(|e| {
-                log::error!("构建 UID 更新镜像时出错: {e}");
+                log::error!("Error building UID update image: {e}");
                 DevContainerError::CommandFailed(command.get_program().display().to_string())
             })?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            log::error!("UID 更新构建失败: {stderr}");
+            log::error!("UID update build failed: {stderr}");
             return Err(DevContainerError::CommandFailed(
                 command.get_program().display().to_string(),
             ));
@@ -1508,19 +1508,19 @@ RUN eval $(sed -n "s/${REMOTE_USER}:[^:]*:\([^:]*\):\([^:]*\):[^:]*:\([^:]*\).*/
 	eval $(sed -n "s/\([^:]*\):[^:]*:${NEW_UID}:.*/EXISTING_USER=\1/p" /etc/passwd); \
 	eval $(sed -n "s/\([^:]*\):[^:]*:${NEW_GID}:.*/EXISTING_GROUP=\1/p" /etc/group); \
 	if [ -z "$OLD_UID" ]; then \
-		echo "在 /etc/passwd 中未找到远程用户 ($REMOTE_USER)。"; \
+		echo "Remote user not found in /etc/passwd ($REMOTE_USER)."; \
 	elif [ "$OLD_UID" = "$NEW_UID" -a "$OLD_GID" = "$NEW_GID" ]; then \
-		echo "UID 和 GID 相同 ($NEW_UID:$NEW_GID)。"; \
+		echo "UIDs and GIDs are the same ($NEW_UID:$NEW_GID)."; \
 	elif [ "$OLD_UID" != "$NEW_UID" -a -n "$EXISTING_USER" ]; then \
-		echo "存在使用该 UID 的用户 ($EXISTING_USER=$NEW_UID)。"; \
+		echo "User with UID exists ($EXISTING_USER=$NEW_UID)."; \
 	else \
 		if [ "$OLD_GID" != "$NEW_GID" -a -n "$EXISTING_GROUP" ]; then \
 			FREE_GID=65532; \
 			while grep -q ":[^:]*:${FREE_GID}:" /etc/group; do FREE_GID=$((FREE_GID - 1)); done; \
-			echo "将组 $EXISTING_GROUP 的 GID 从 $NEW_GID 重新分配为 $FREE_GID。"; \
+			echo "Reassigning group $EXISTING_GROUP from GID $NEW_GID to $FREE_GID."; \
 			sed -i -e "s/\(${EXISTING_GROUP}:[^:]*:\)${NEW_GID}:/\1${FREE_GID}:/" /etc/group; \
 		fi; \
-		echo "将 UID:GID 从 $OLD_UID:$OLD_GID 更新为 $NEW_UID:$NEW_GID。"; \
+		echo "Updating UID:GID from $OLD_UID:$OLD_GID to $NEW_UID:$NEW_GID."; \
 		sed -i -e "s/\(${REMOTE_USER}:[^:]*:\)[^:]*:[^:]*/\1${NEW_UID}:${NEW_GID}/" /etc/passwd; \
 		if [ "$OLD_GID" != "$NEW_GID" ]; then \
 			sed -i -e "s/\([^:]*:[^:]*:\)${OLD_GID}:/\1${NEW_GID}:/" /etc/group; \
@@ -1549,7 +1549,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
 
     async fn build_feature_content_image(&self) -> Result<(), DevContainerError> {
         let Some(features_build_info) = &self.features_build_info else {
-            log::error!("无法获取 features 构建信息以构建 feature 内容镜像");
+            log::error!("Features build info not available for building feature content image");
             return Err(DevContainerError::DevContainerParseFailed);
         };
         let features_content_dir = &features_build_info.features_content_dir;
@@ -1561,7 +1561,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
             .write(&dockerfile_path, dockerfile_content.as_bytes())
             .await
             .map_err(|e| {
-                log::error!("写入 feature 内容 Dockerfile 失败: {e}");
+                log::error!("Failed to write feature content Dockerfile: {e}");
                 DevContainerError::FilesystemError
             })?;
 
@@ -1580,13 +1580,13 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
             .run_command(&mut command)
             .await
             .map_err(|e| {
-                log::error!("构建 feature 内容镜像时出错: {e}");
+                log::error!("Error building feature content image: {e}");
                 DevContainerError::CommandFailed(self.docker_client.docker_cli())
             })?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            log::error!("Feature 内容镜像构建失败: {stderr}");
+            log::error!("Feature content image build failed: {stderr}");
             return Err(DevContainerError::CommandFailed(
                 self.docker_client.docker_cli(),
             ));
@@ -1599,7 +1599,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
         let dev_container = match &self.config {
             ConfigStatus::Deserialized(_) => {
                 log::error!(
-                    "Dev container 尚未解析变量扩展, 无法继续进行 docker 构建"
+                    "Dev container has not yet been parsed for variable expansion. Cannot yet proceed with docker build"
                 );
                 return Err(DevContainerError::DevContainerParseFailed);
             }
@@ -1608,7 +1608,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
 
         let Some(features_build_info) = &self.features_build_info else {
             log::error!(
-                "无法创建 docker 构建命令; features 构建信息尚未创建"
+                "Cannot create docker build command; features build info has not been constructed"
             );
             return Err(DevContainerError::DevContainerParseFailed);
         };
@@ -1721,24 +1721,24 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
             .run_command(&mut command)
             .await
             .map_err(|e| {
-                log::error!("运行 docker compose up 时出错: {e}");
+                log::error!("Error running docker compose up: {e}");
                 DevContainerError::CommandFailed(command.get_program().display().to_string())
             })?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            log::error!("docker compose up 返回非成功状态: {}", stderr);
+            log::error!("Non-success status from docker compose up: {}", stderr);
             return Err(DevContainerError::CommandFailed(
                 command.get_program().display().to_string(),
             ));
         }
 
         if let Some(docker_ps) = self.check_for_existing_container().await? {
-            log::debug!("发现新创建的 dev container");
+            log::debug!("Found newly created dev container");
             return self.docker_client.inspect(&docker_ps.id).await;
         }
 
-        log::error!("在 docker compose up 后未找到现有容器");
+        log::error!("Could not find existing container after docker compose up");
 
         Err(DevContainerError::DevContainerParseFailed)
     }
@@ -1754,7 +1754,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
             .run_command(&mut docker_run_command)
             .await
             .map_err(|e| {
-                log::error!("运行 docker run 出错: {e}");
+                log::error!("Error running docker run: {e}");
                 DevContainerError::CommandFailed(
                     docker_run_command.get_program().display().to_string(),
                 )
@@ -1762,15 +1762,15 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
 
         if !output.status.success() {
             let std_err = String::from_utf8_lossy(&output.stderr);
-            log::error!("docker run 返回非成功状态。StdErr: {std_err}");
+            log::error!("Non-success status from docker run. StdErr: {std_err}");
             return Err(DevContainerError::CommandFailed(
                 docker_run_command.get_program().display().to_string(),
             ));
         }
 
-        log::debug!("正在检查已启动的容器");
+        log::debug!("Checking for container that was started");
         let Some(docker_ps) = self.check_for_existing_container().await? else {
-            log::error!("无法定位刚创建的容器");
+            log::error!("Could not locate container just created");
             return Err(DevContainerError::DevContainerParseFailed);
         };
         self.docker_client.inspect(&docker_ps.id).await
@@ -1894,7 +1894,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
 
         if let Some(metadata) = &build_resources.image.config.labels.metadata {
             let serialized_metadata = serde_json_lenient::to_string(metadata).map_err(|e| {
-                log::error!("序列化镜像元数据出错: {e}");
+                log::error!("Problem serializing image metadata: {e}");
                 DevContainerError::ContainerNotValid(build_resources.image.id.clone())
             })?;
             command.arg("-l");
@@ -1958,7 +1958,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
         new_container: bool,
     ) -> Result<(), DevContainerError> {
         let ConfigStatus::VariableParsed(config) = &self.config else {
-            log::error!("配置尚未解析,无法继续执行远程脚本");
+            log::error!("Config not yet parsed, cannot proceed with remote scripts");
             return Err(DevContainerError::DevContainerScriptsFailed);
         };
         let remote_folder = self.remote_workspace_folder()?.display().to_string();
@@ -1966,7 +1966,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
         if new_container {
             if let Some(on_create_command) = &config.on_create_command {
                 for (command_name, command) in on_create_command.script_commands() {
-                    log::debug!("正在运行 onCreateCommand 命令 {command_name}");
+                    log::debug!("Running on create command {command_name}");
                     self.docker_client
                         .run_docker_exec(
                             &devcontainer_up.container_id,
@@ -1980,7 +1980,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
             }
             if let Some(update_content_command) = &config.update_content_command {
                 for (command_name, command) in update_content_command.script_commands() {
-                    log::debug!("正在运行 updateContentCommand 命令 {command_name}");
+                    log::debug!("Running update content command {command_name}");
                     self.docker_client
                         .run_docker_exec(
                             &devcontainer_up.container_id,
@@ -1995,7 +1995,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
 
             if let Some(post_create_command) = &config.post_create_command {
                 for (command_name, command) in post_create_command.script_commands() {
-                    log::debug!("正在运行 postCreateCommand 命令 {command_name}");
+                    log::debug!("Running post create command {command_name}");
                     self.docker_client
                         .run_docker_exec(
                             &devcontainer_up.container_id,
@@ -2009,7 +2009,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
             }
             if let Some(post_start_command) = &config.post_start_command {
                 for (command_name, command) in post_start_command.script_commands() {
-                    log::debug!("正在运行 postStartCommand 命令 {command_name}");
+                    log::debug!("Running post start command {command_name}");
                     self.docker_client
                         .run_docker_exec(
                             &devcontainer_up.container_id,
@@ -2024,7 +2024,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
         }
         if let Some(post_attach_command) = &config.post_attach_command {
             for (command_name, command) in post_attach_command.script_commands() {
-                log::debug!("正在运行 postAttachCommand 命令 {command_name}");
+                log::debug!("Running post attach command {command_name}");
                 self.docker_client
                     .run_docker_exec(
                         &devcontainer_up.container_id,
@@ -2042,17 +2042,17 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
 
     async fn run_initialize_commands(&self) -> Result<(), DevContainerError> {
         let ConfigStatus::VariableParsed(config) = &self.config else {
-            log::error!("配置尚未解析,无法继续执行 initializeCommand");
+            log::error!("Config not yet parsed, cannot proceed with initializeCommand");
             return Err(DevContainerError::DevContainerParseFailed);
         };
 
         if let Some(initialize_command) = &config.initialize_command {
-            log::debug!("正在运行 initializeCommand 命令");
+            log::debug!("Running initialize command");
             initialize_command
                 .run(&self.command_runner, &self.local_project_directory)
                 .await
         } else {
-            log::warn!("未找到 initializeCommand 命令");
+            log::warn!("No initialize command found");
             Ok(())
         }
     }
@@ -2061,12 +2061,12 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
         &self,
     ) -> Result<Option<DevContainerUp>, DevContainerError> {
         if let Some(docker_ps) = self.check_for_existing_container().await? {
-            log::debug!("已找到开发容器,将直接使用");
+            log::debug!("Dev container already found. Proceeding with it");
 
             let docker_inspect = self.docker_client.inspect(&docker_ps.id).await?;
 
             if !docker_inspect.is_running() {
-                log::debug!("容器未运行,将尝试启动后继续");
+                log::debug!("Container not running. Will attempt to start, and then proceed");
                 self.docker_client.start_container(&docker_ps.id).await?;
             }
 
@@ -2088,7 +2088,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
 
             Ok(Some(dev_container_up))
         } else {
-            log::debug!("未找到现有容器。");
+            log::debug!("Existing container not found.");
 
             Ok(None)
         }
@@ -2141,7 +2141,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
                     Ok(contents) => contents,
                     Err(err) => {
                         log::warn!(
-                            "推导项目名称时忽略无法读取的 compose 片段 `{}`:{err:?}",
+                            "Ignoring unreadable compose fragment `{}` while deriving project name: {err:?}",
                             file.display()
                         );
                         continue;
@@ -2164,7 +2164,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
                 // fall back to a non-canonical project name and create a
                 // second compose project for the same repo.
                 log::error!(
-                    "推导项目名称时读取工作区 .env 文件 `{}` 失败:{err:?}",
+                    "Failed to read workspace .env `{}` while deriving project name: {err:?}",
                     dotenv_path.display()
                 );
                 return Err(DevContainerError::FilesystemError);
@@ -2183,7 +2183,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
 
     async fn expanded_dockerfile_content(&self) -> Result<String, DevContainerError> {
         let Some(dockerfile_path) = self.dockerfile_location().await else {
-            log::error!("尝试为镜像类型的配置展开 Dockerfile");
+            log::error!("Tried to expand dockerfile for an image-type config");
             return Err(DevContainerError::DevContainerParseFailed);
         };
 
@@ -2206,7 +2206,7 @@ RUN sed -i -E 's/((^|\s)PATH=)([^\$]*)$/\1\${PATH:-\3}/g' /etc/profile || true
                 .unwrap_or_default(),
         };
         let contents = self.fs.load(&dockerfile_path).await.map_err(|e| {
-            log::error!("加载 Dockerfile 失败: {e}");
+            log::error!("Failed to load Dockerfile: {e}");
             DevContainerError::FilesystemError
         })?;
         let mut parsed_lines: Vec<String> = Vec::new();
@@ -2331,14 +2331,14 @@ pub(crate) async fn spawn_dev_container(
 
     devcontainer_manifest.parse_nonremote_vars()?;
 
-    log::debug!("正在检查现有容器");
+    log::debug!("Checking for existing container");
     if let Some(devcontainer) = devcontainer_manifest
         .check_for_existing_devcontainer()
         .await?
     {
         Ok(devcontainer)
     } else {
-        log::debug!("未找到现有容器,正在构建");
+        log::debug!("Existing container not found. Building");
 
         devcontainer_manifest.build_and_run().await
     }
@@ -2491,7 +2491,7 @@ fn derive_project_name(
     sanitize_compose_project_name(&raw)
 }
 
-/// Classify an anyhow error from `Fs::load` as "文件不存在" vs a
+/// Classify an anyhow error from `Fs::load` as "file does not exist" vs a
 /// real I/O failure. Used on the `.env` read in `project_name()`, where the
 /// CLI's `getProjectName` catches only `ENOENT`/`EISDIR` and rethrows
 /// everything else; any other error must propagate so callers can surface
@@ -2618,11 +2618,11 @@ fn generate_install_wrapper(
     env_variables: &str,
 ) -> Result<String, DevContainerError> {
     let escaped_id = shlex::try_quote(feature_ref).map_err(|e| {
-        log::error!("转义 feature 引用 {feature_ref} 出错: {e}");
+        log::error!("Error escaping feature ref {feature_ref}: {e}");
         DevContainerError::DevContainerParseFailed
     })?;
     let escaped_name = shlex::try_quote(feature_id).map_err(|e| {
-        log::error!("转义 feature {feature_id} 出错: {e}");
+        log::error!("Error escaping feature {feature_id}: {e}");
         DevContainerError::DevContainerParseFailed
     })?;
     let options_indented: String = env_variables
@@ -2632,7 +2632,7 @@ fn generate_install_wrapper(
         .collect::<Vec<_>>()
         .join("\n");
     let escaped_options = shlex::try_quote(&options_indented).map_err(|e| {
-        log::error!("转义选项 {options_indented} 出错: {e}");
+        log::error!("Error escaping options {options_indented}: {e}");
         DevContainerError::DevContainerParseFailed
     })?;
 
@@ -2884,7 +2884,7 @@ mod test {
     fn test_project_filename() -> String {
         PathBuf::from(TEST_PROJECT_PATH)
             .file_name()
-            .expect("有效")
+            .expect("is valid")
             .display()
             .to_string()
     }
@@ -3243,7 +3243,7 @@ mod test {
         let ConfigStatus::VariableParsed(variable_replaced_devcontainer) =
             &devcontainer_manifest.config
         else {
-            panic!("配置未解析");
+            panic!("Config not parsed");
         };
 
         // ${devcontainerId}
@@ -3383,7 +3383,7 @@ mod test {
         let ConfigStatus::VariableParsed(variable_replaced_devcontainer) =
             &devcontainer_manifest.config
         else {
-            panic!("配置未解析");
+            panic!("Config not parsed");
         };
 
         // ${devcontainerId}
@@ -3671,19 +3671,19 @@ RUN eval $(sed -n "s/${REMOTE_USER}:[^:]*:\([^:]*\):\([^:]*\):[^:]*:\([^:]*\).*/
 	eval $(sed -n "s/\([^:]*\):[^:]*:${NEW_UID}:.*/EXISTING_USER=\1/p" /etc/passwd); \
 	eval $(sed -n "s/\([^:]*\):[^:]*:${NEW_GID}:.*/EXISTING_GROUP=\1/p" /etc/group); \
 	if [ -z "$OLD_UID" ]; then \
-		echo "在 /etc/passwd 中未找到远程用户 ($REMOTE_USER)。"; \
+		echo "Remote user not found in /etc/passwd ($REMOTE_USER)."; \
 	elif [ "$OLD_UID" = "$NEW_UID" -a "$OLD_GID" = "$NEW_GID" ]; then \
-		echo "UID 和 GID 相同 ($NEW_UID:$NEW_GID)。"; \
+		echo "UIDs and GIDs are the same ($NEW_UID:$NEW_GID)."; \
 	elif [ "$OLD_UID" != "$NEW_UID" -a -n "$EXISTING_USER" ]; then \
-		echo "存在使用该 UID 的用户 ($EXISTING_USER=$NEW_UID)。"; \
+		echo "User with UID exists ($EXISTING_USER=$NEW_UID)."; \
 	else \
 		if [ "$OLD_GID" != "$NEW_GID" -a -n "$EXISTING_GROUP" ]; then \
 			FREE_GID=65532; \
 			while grep -q ":[^:]*:${FREE_GID}:" /etc/group; do FREE_GID=$((FREE_GID - 1)); done; \
-			echo "将组 $EXISTING_GROUP 的 GID 从 $NEW_GID 重新分配为 $FREE_GID。"; \
+			echo "Reassigning group $EXISTING_GROUP from GID $NEW_GID to $FREE_GID."; \
 			sed -i -e "s/\(${EXISTING_GROUP}:[^:]*:\)${NEW_GID}:/\1${FREE_GID}:/" /etc/group; \
 		fi; \
-		echo "将 UID:GID 从 $OLD_UID:$OLD_GID 更新为 $NEW_UID:$NEW_GID。"; \
+		echo "Updating UID:GID from $OLD_UID:$OLD_GID to $NEW_UID:$NEW_GID."; \
 		sed -i -e "s/\(${REMOTE_USER}:[^:]*:\)[^:]*:[^:]*/\1${NEW_UID}:${NEW_GID}/" /etc/passwd; \
 		if [ "$OLD_GID" != "$NEW_GID" ]; then \
 			sed -i -e "s/\([^:]*:[^:]*:\)${OLD_GID}:/\1${NEW_GID}:/" /etc/group; \
@@ -3930,12 +3930,12 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
                 c.args.first().map(String::as_str) == Some("compose")
                     && c.args.iter().any(|a| a == "up")
             })
-            .expect("已记录 docker compose up 命令");
+            .expect("docker compose up command recorded");
         let project_name_idx = compose_up
             .args
             .iter()
             .position(|a| a == "--project-name")
-            .expect("compose 命令包含 --项目-name 标志");
+            .expect("compose command has --project-name flag");
         assert_eq!(
             compose_up.args[project_name_idx + 1],
             "project_devcontainer",
@@ -4027,19 +4027,19 @@ RUN eval $(sed -n "s/${REMOTE_USER}:[^:]*:\([^:]*\):\([^:]*\):[^:]*:\([^:]*\).*/
 	eval $(sed -n "s/\([^:]*\):[^:]*:${NEW_UID}:.*/EXISTING_USER=\1/p" /etc/passwd); \
 	eval $(sed -n "s/\([^:]*\):[^:]*:${NEW_GID}:.*/EXISTING_GROUP=\1/p" /etc/group); \
 	if [ -z "$OLD_UID" ]; then \
-		echo "在 /etc/passwd 中未找到远程用户 ($REMOTE_USER)。"; \
+		echo "Remote user not found in /etc/passwd ($REMOTE_USER)."; \
 	elif [ "$OLD_UID" = "$NEW_UID" -a "$OLD_GID" = "$NEW_GID" ]; then \
-		echo "UID 和 GID 相同 ($NEW_UID:$NEW_GID)。"; \
+		echo "UIDs and GIDs are the same ($NEW_UID:$NEW_GID)."; \
 	elif [ "$OLD_UID" != "$NEW_UID" -a -n "$EXISTING_USER" ]; then \
-		echo "存在使用该 UID 的用户 ($EXISTING_USER=$NEW_UID)。"; \
+		echo "User with UID exists ($EXISTING_USER=$NEW_UID)."; \
 	else \
 		if [ "$OLD_GID" != "$NEW_GID" -a -n "$EXISTING_GROUP" ]; then \
 			FREE_GID=65532; \
 			while grep -q ":[^:]*:${FREE_GID}:" /etc/group; do FREE_GID=$((FREE_GID - 1)); done; \
-			echo "将组 $EXISTING_GROUP 的 GID 从 $NEW_GID 重新分配为 $FREE_GID。"; \
+			echo "Reassigning group $EXISTING_GROUP from GID $NEW_GID to $FREE_GID."; \
 			sed -i -e "s/\(${EXISTING_GROUP}:[^:]*:\)${NEW_GID}:/\1${FREE_GID}:/" /etc/group; \
 		fi; \
-		echo "将 UID:GID 从 $OLD_UID:$OLD_GID 更新为 $NEW_UID:$NEW_GID。"; \
+		echo "Updating UID:GID from $OLD_UID:$OLD_GID to $NEW_UID:$NEW_GID."; \
 		sed -i -e "s/\(${REMOTE_USER}:[^:]*:\)[^:]*:[^:]*/\1${NEW_UID}:${NEW_GID}/" /etc/passwd; \
 		if [ "$OLD_GID" != "$NEW_GID" ]; then \
 			sed -i -e "s/\([^:]*:[^:]*:\)${OLD_GID}:/\1${NEW_GID}:/" /etc/group; \
@@ -4209,7 +4209,7 @@ ENV DOCKER_BUILDKIT=1
         let got = derive_project_name(
             &HashMap::new(),
             None,
-            Some("我的 Compose 项目"),
+            Some("My Compose Project"),
             true,
             Some(Path::new(
                 "/path/to/local/project/.devcontainer/docker-compose.yml",
@@ -4372,7 +4372,7 @@ ENV DOCKER_BUILDKIT=1
         let other_io = anyhow::Error::new(std::io::Error::from(std::io::ErrorKind::Other));
         assert!(!is_missing_file_error(&other_io));
 
-        let non_io: anyhow::Error = anyhow::anyhow!("其他错误");
+        let non_io: anyhow::Error = anyhow::anyhow!("something else");
         assert!(!is_missing_file_error(&non_io));
     }
 
@@ -4840,19 +4840,19 @@ RUN eval $(sed -n "s/${REMOTE_USER}:[^:]*:\([^:]*\):\([^:]*\):[^:]*:\([^:]*\).*/
 	eval $(sed -n "s/\([^:]*\):[^:]*:${NEW_UID}:.*/EXISTING_USER=\1/p" /etc/passwd); \
 	eval $(sed -n "s/\([^:]*\):[^:]*:${NEW_GID}:.*/EXISTING_GROUP=\1/p" /etc/group); \
 	if [ -z "$OLD_UID" ]; then \
-		echo "在 /etc/passwd 中未找到远程用户 ($REMOTE_USER)。"; \
+		echo "Remote user not found in /etc/passwd ($REMOTE_USER)."; \
 	elif [ "$OLD_UID" = "$NEW_UID" -a "$OLD_GID" = "$NEW_GID" ]; then \
-		echo "UID 和 GID 相同 ($NEW_UID:$NEW_GID)。"; \
+		echo "UIDs and GIDs are the same ($NEW_UID:$NEW_GID)."; \
 	elif [ "$OLD_UID" != "$NEW_UID" -a -n "$EXISTING_USER" ]; then \
-		echo "存在使用该 UID 的用户 ($EXISTING_USER=$NEW_UID)。"; \
+		echo "User with UID exists ($EXISTING_USER=$NEW_UID)."; \
 	else \
 		if [ "$OLD_GID" != "$NEW_GID" -a -n "$EXISTING_GROUP" ]; then \
 			FREE_GID=65532; \
 			while grep -q ":[^:]*:${FREE_GID}:" /etc/group; do FREE_GID=$((FREE_GID - 1)); done; \
-			echo "将组 $EXISTING_GROUP 的 GID 从 $NEW_GID 重新分配为 $FREE_GID。"; \
+			echo "Reassigning group $EXISTING_GROUP from GID $NEW_GID to $FREE_GID."; \
 			sed -i -e "s/\(${EXISTING_GROUP}:[^:]*:\)${NEW_GID}:/\1${FREE_GID}:/" /etc/group; \
 		fi; \
-		echo "将 UID:GID 从 $OLD_UID:$OLD_GID 更新为 $NEW_UID:$NEW_GID。"; \
+		echo "Updating UID:GID from $OLD_UID:$OLD_GID to $NEW_UID:$NEW_GID."; \
 		sed -i -e "s/\(${REMOTE_USER}:[^:]*:\)[^:]*:[^:]*/\1${NEW_UID}:${NEW_GID}/" /etc/passwd; \
 		if [ "$OLD_GID" != "$NEW_GID" ]; then \
 			sed -i -e "s/\([^:]*:[^:]*:\)${OLD_GID}:/\1${NEW_GID}:/" /etc/group; \
@@ -5202,19 +5202,19 @@ RUN eval $(sed -n "s/${REMOTE_USER}:[^:]*:\([^:]*\):\([^:]*\):[^:]*:\([^:]*\).*/
 	eval $(sed -n "s/\([^:]*\):[^:]*:${NEW_UID}:.*/EXISTING_USER=\1/p" /etc/passwd); \
 	eval $(sed -n "s/\([^:]*\):[^:]*:${NEW_GID}:.*/EXISTING_GROUP=\1/p" /etc/group); \
 	if [ -z "$OLD_UID" ]; then \
-		echo "在 /etc/passwd 中未找到远程用户 ($REMOTE_USER)。"; \
+		echo "Remote user not found in /etc/passwd ($REMOTE_USER)."; \
 	elif [ "$OLD_UID" = "$NEW_UID" -a "$OLD_GID" = "$NEW_GID" ]; then \
-		echo "UID 和 GID 相同 ($NEW_UID:$NEW_GID)。"; \
+		echo "UIDs and GIDs are the same ($NEW_UID:$NEW_GID)."; \
 	elif [ "$OLD_UID" != "$NEW_UID" -a -n "$EXISTING_USER" ]; then \
-		echo "存在使用该 UID 的用户 ($EXISTING_USER=$NEW_UID)。"; \
+		echo "User with UID exists ($EXISTING_USER=$NEW_UID)."; \
 	else \
 		if [ "$OLD_GID" != "$NEW_GID" -a -n "$EXISTING_GROUP" ]; then \
 			FREE_GID=65532; \
 			while grep -q ":[^:]*:${FREE_GID}:" /etc/group; do FREE_GID=$((FREE_GID - 1)); done; \
-			echo "将组 $EXISTING_GROUP 的 GID 从 $NEW_GID 重新分配为 $FREE_GID。"; \
+			echo "Reassigning group $EXISTING_GROUP from GID $NEW_GID to $FREE_GID."; \
 			sed -i -e "s/\(${EXISTING_GROUP}:[^:]*:\)${NEW_GID}:/\1${FREE_GID}:/" /etc/group; \
 		fi; \
-		echo "将 UID:GID 从 $OLD_UID:$OLD_GID 更新为 $NEW_UID:$NEW_GID。"; \
+		echo "Updating UID:GID from $OLD_UID:$OLD_GID to $NEW_UID:$NEW_GID."; \
 		sed -i -e "s/\(${REMOTE_USER}:[^:]*:\)[^:]*:[^:]*/\1${NEW_UID}:${NEW_GID}/" /etc/passwd; \
 		if [ "$OLD_GID" != "$NEW_GID" ]; then \
 			sed -i -e "s/\([^:]*:[^:]*:\)${OLD_GID}:/\1${NEW_GID}:/" /etc/group; \
@@ -5323,19 +5323,19 @@ RUN eval $(sed -n "s/${REMOTE_USER}:[^:]*:\([^:]*\):\([^:]*\):[^:]*:\([^:]*\).*/
 	eval $(sed -n "s/\([^:]*\):[^:]*:${NEW_UID}:.*/EXISTING_USER=\1/p" /etc/passwd); \
 	eval $(sed -n "s/\([^:]*\):[^:]*:${NEW_GID}:.*/EXISTING_GROUP=\1/p" /etc/group); \
 	if [ -z "$OLD_UID" ]; then \
-		echo "在 /etc/passwd 中未找到远程用户 ($REMOTE_USER)。"; \
+		echo "Remote user not found in /etc/passwd ($REMOTE_USER)."; \
 	elif [ "$OLD_UID" = "$NEW_UID" -a "$OLD_GID" = "$NEW_GID" ]; then \
-		echo "UID 和 GID 相同 ($NEW_UID:$NEW_GID)。"; \
+		echo "UIDs and GIDs are the same ($NEW_UID:$NEW_GID)."; \
 	elif [ "$OLD_UID" != "$NEW_UID" -a -n "$EXISTING_USER" ]; then \
-		echo "存在使用该 UID 的用户 ($EXISTING_USER=$NEW_UID)。"; \
+		echo "User with UID exists ($EXISTING_USER=$NEW_UID)."; \
 	else \
 		if [ "$OLD_GID" != "$NEW_GID" -a -n "$EXISTING_GROUP" ]; then \
 			FREE_GID=65532; \
 			while grep -q ":[^:]*:${FREE_GID}:" /etc/group; do FREE_GID=$((FREE_GID - 1)); done; \
-			echo "将组 $EXISTING_GROUP 的 GID 从 $NEW_GID 重新分配为 $FREE_GID。"; \
+			echo "Reassigning group $EXISTING_GROUP from GID $NEW_GID to $FREE_GID."; \
 			sed -i -e "s/\(${EXISTING_GROUP}:[^:]*:\)${NEW_GID}:/\1${FREE_GID}:/" /etc/group; \
 		fi; \
-		echo "将 UID:GID 从 $OLD_UID:$OLD_GID 更新为 $NEW_UID:$NEW_GID。"; \
+		echo "Updating UID:GID from $OLD_UID:$OLD_GID to $NEW_UID:$NEW_GID."; \
 		sed -i -e "s/\(${REMOTE_USER}:[^:]*:\)[^:]*:[^:]*/\1${NEW_UID}:${NEW_GID}/" /etc/passwd; \
 		if [ "$OLD_GID" != "$NEW_GID" ]; then \
 			sed -i -e "s/\([^:]*:[^:]*:\)${OLD_GID}:/\1${NEW_GID}:/" /etc/group; \
@@ -5605,7 +5605,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
             .await;
 
         let Err(DevContainerError::MultipleMatchingContainers(ids)) = result else {
-            panic!("期望 MultipleMatchingContainers,得到 {result:?}");
+            panic!("expected MultipleMatchingContainers, got {result:?}");
         };
         assert_eq!(ids, vec!["abc123".to_string(), "def456".to_string()]);
     }
@@ -6402,7 +6402,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                             fi
                         fi
                         if [ -z "${!variable_name}" ] || ! echo "${version_list}" | grep "^${!variable_name//./\\.}$" > /dev/null 2>&1; then
-                            err "无效的 ${variable_name} 值: ${requested_version}\n有效值:\n${version_list}" >&2
+                            err "Invalid ${variable_name} value: ${requested_version}\nValid values:\n${version_list}" >&2
                             exit 1
                         fi
                         echo "${variable_name}=${!variable_name}"
@@ -6460,14 +6460,14 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                         if echo "$output" | jq -e 'type == "object"' > /dev/null; then
                           message=$(echo "$output" | jq -r '.message')
 
-                          if [[ $message == "API 速率限制已超出"* ]]; then
-                                echo -e "\n尝试使用 GitHub API 查找最新版本失败...\n原因: ${message}"
-                                echo -e "\n正在尝试使用 GitHub 标签查找最新版本。"
+                          if [[ $message == "API rate limit exceeded"* ]]; then
+                                echo -e "\nAn attempt to find latest version using GitHub Api Failed... \nReason: ${message}"
+                                echo -e "\nAttempting to find latest version using GitHub tags."
                                 find_prev_version_from_git_tags prev_version "$url" "tags/v"
                                 declare -g ${variable_name}="${prev_version}"
                            fi
                         elif echo "$output" | jq -e 'type == "array"' > /dev/null; then
-                            echo -e "\n正在尝试使用 GitHub API 查找最新版本。"
+                            echo -e "\nAttempting to find latest version using GitHub Api."
                             version=$(echo "$output" | jq -r '.[1].tag_name')
                             declare -g ${variable_name}="${version#v}"
                         fi
@@ -6506,13 +6506,13 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                         done
 
                         if [ -z "${PKG_MGR_CMD}" ]; then
-                            err "找不到支持的包管理器 (tdnf, dnf, microdnf, yum)"
+                            err "Unable to find a supported package manager (tdnf, dnf, microdnf, yum)"
                             exit 1
                         fi
 
                         architecture="$(rpm --eval '%{_arch}' 2>/dev/null || uname -m)"
                     else
-                        err "不支持的 Linux 发行版 ${ID}。"
+                        err "Linux distro ${ID} not supported."
                         exit 1
                     fi
 
@@ -6523,8 +6523,8 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
 
                     # Prevent attempting to install Moby on Debian trixie (packages removed)
                     if [ "${USE_MOBY}" = "true" ] && [ "${ID}" = "debian" ] && [ "${VERSION_CODENAME}" = "trixie" ]; then
-                        err "Debian 'trixie' 不支持 'moby' 选项,因为 'moby-cli' 及相关系统包已从该发行版中移除。"
-                        err "要继续,请将功能选项设置为 '\"moby\": false' 或使用其他基础镜像 (例如: 'debian:bookworm' 或 'ubuntu-24.04')。"
+                        err "The 'moby' option is not supported on Debian 'trixie' because 'moby-cli' and related system packages have been removed from that distribution."
+                        err "To continue, either set the feature option '\"moby\": false' or use a different base image (for example: 'debian:bookworm' or 'ubuntu-24.04')."
                         exit 1
                     fi
 
@@ -6532,29 +6532,29 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                     if [ "${USE_MOBY}" = "true" ]; then
                         if [ "${ADJUSTED_ID}" = "debian" ]; then
                             if [[ "${DOCKER_MOBY_ARCHIVE_VERSION_CODENAMES}" != *"${VERSION_CODENAME}"* ]]; then
-                                err "不支持的发行版版本 '${VERSION_CODENAME}'。要解决此问题,请: (1) 将功能选项设置为 '\"moby\": false',或 (2) 选择兼容的操作系统发行版"
-                                err "支持的发行版包括: ${DOCKER_MOBY_ARCHIVE_VERSION_CODENAMES}"
+                                err "Unsupported distribution version '${VERSION_CODENAME}'. To resolve, either: (1) set feature option '\"moby\": false' , or (2) choose a compatible OS distribution"
+                                err "Supported distributions include: ${DOCKER_MOBY_ARCHIVE_VERSION_CODENAMES}"
                                 exit 1
                             fi
-                            echo "(*) ${VERSION_CODENAME} 支持 Moby 安装 - 正在设置 Microsoft 软件源"
+                            echo "(*) ${VERSION_CODENAME} is supported for Moby installation  - setting up Microsoft repository"
                         elif [ "${ADJUSTED_ID}" = "rhel" ]; then
                             if [ "${ID}" = "azurelinux" ] || [ "${ID}" = "mariner" ]; then
-                                echo " (*) 检测到 ${ID} ${VERSION_ID} - 正在使用 Microsoft 软件源获取 Moby 包"
+                                echo " (*) ${ID} ${VERSION_ID} detected - using Microsoft repositories for Moby packages"
                             else
-                                echo "检测到基于 RHEL 的系统 (${ID}) - Moby 包可能需要额外配置"
+                                echo "RHEL-based system (${ID}) detected - Moby packages may require additional configuration"
                             fi
                         fi
                     else
                         if [ "${ADJUSTED_ID}" = "debian" ]; then
                             if [[ "${DOCKER_LICENSED_ARCHIVE_VERSION_CODENAMES}" != *"${VERSION_CODENAME}"* ]]; then
-                                err "不支持的发行版版本 '${VERSION_CODENAME}'。要解决此问题,请选择兼容的操作系统发行版"
-                                err "支持的发行版包括: ${DOCKER_LICENSED_ARCHIVE_VERSION_CODENAMES}"
+                                err "Unsupported distribution version '${VERSION_CODENAME}'. To resolve, please choose a compatible OS distribution"
+                                err "Supported distributions include: ${DOCKER_LICENSED_ARCHIVE_VERSION_CODENAMES}"
                                 exit 1
                             fi
-                            echo "(*) ${VERSION_CODENAME} 支持 Docker CE 安装 (支持: ${DOCKER_LICENSED_ARCHIVE_VERSION_CODENAMES}) - 正在设置 Docker 软件源"
+                            echo "(*) ${VERSION_CODENAME} is supported for Docker CE installation (supported: ${DOCKER_LICENSED_ARCHIVE_VERSION_CODENAMES}) - setting up Docker repository"
                         elif [ "${ADJUSTED_ID}" = "rhel" ]; then
 
-                            echo "检测到基于 RHEL 的系统 (${ID}) - 正在使用 Docker CE 包"
+                            echo "RHEL-based system (${ID}) detected - using Docker CE packages"
                         fi
                     fi
 
@@ -6604,22 +6604,22 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                                 echo "deb [arch=${architecture} signed-by=/usr/share/keyrings/microsoft-archive-keyring.gpg] https://packages.microsoft.com/repos/microsoft-${ID}-${VERSION_CODENAME}-prod ${VERSION_CODENAME} main" > /etc/apt/sources.list.d/microsoft.list
                                 ;;
                             rhel)
-                                echo "(*) 检测到 ${ID} - 正在检查 Moby 包..."
+                                echo "(*) ${ID} detected - checking for Moby packages..."
 
                                 # Check if moby packages are available in default repos
                                 if ${PKG_MGR_CMD} list available moby-engine >/dev/null 2>&1; then
-                                    echo "(*) 正在使用内置的 ${ID} Moby 包"
+                                    echo "(*) Using built-in ${ID} Moby packages"
                                 else
                                     case "${ID}" in
                                         azurelinux)
-                                            echo "(*) 在 Azure Linux 软件源中未找到 Moby 包"
-                                            echo "(*) 对于 Azure Linux,推荐使用 Docker CE ('moby': false)"
-                                            err "Azure Linux ${VERSION_ID} 没有可用的 Moby 包。"
-                                            err "建议: 使用 '\"moby\": false' 来安装 Docker CE。"
+                                            echo "(*) Moby packages not found in Azure Linux repositories"
+                                            echo "(*) For Azure Linux, Docker CE ('moby': false) is recommended"
+                                            err "Moby packages are not available for Azure Linux ${VERSION_ID}."
+                                            err "Recommendation: Use '\"moby\": false' to install Docker CE instead."
                                             exit 1
                                             ;;
                                         mariner)
-                                            echo "(*) 正在为 CBL-Mariner 添加 Microsoft 软件源..."
+                                            echo "(*) Adding Microsoft repository for CBL-Mariner..."
                                             # Add Microsoft repository if packages aren't available locally
                                             curl -sSL ${MICROSOFT_GPG_KEYS_URI} | gpg --dearmor > /etc/pki/rpm-gpg/microsoft.gpg
                                             cat > /etc/yum.repos.d/microsoft.repo << EOF
@@ -6633,14 +6633,14 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                                     # Verify packages are available after adding repo
                                     pkg_mgr_update
                                     if ! ${PKG_MGR_CMD} list available moby-engine >/dev/null 2>&1; then
-                                        echo "(*) 在 Microsoft 软件源中也未找到 Moby 包"
-                                        err "CBL-Mariner ${VERSION_ID} 没有可用的 Moby 包。"
-                                        err "建议: 使用 '\"moby\": false' 来安装 Docker CE。"
+                                        echo "(*) Moby packages not found in Microsoft repository either"
+                                        err "Moby packages are not available for CBL-Mariner ${VERSION_ID}."
+                                        err "Recommendation: Use '\"moby\": false' to install Docker CE instead."
                                         exit 1
                                     fi
                                     ;;
                                 *)
-                                    err "${ID} 没有可用的 Moby 包。请使用 'moby': false 选项。"
+                                    err "Moby packages are not available for ${ID}. Please use 'moby': false option."
                                     exit 1
                                     ;;
                                 esac
@@ -6672,16 +6672,16 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                     EOF
                                 }
                                 install_azure_linux_deps() {
-                                    echo "(*) 正在为 Docker CE 安装 device-mapper 库..."
-                                    [ "${ID}" != "mariner" ] && ${PKG_MGR_CMD} -y install device-mapper-libs 2>/dev/null || echo "(*) device-mapper 安装失败,继续执行"
-                                    echo "(*) 正在安装其他 Docker CE 依赖项..."
+                                    echo "(*) Installing device-mapper libraries for Docker CE..."
+                                    [ "${ID}" != "mariner" ] && ${PKG_MGR_CMD} -y install device-mapper-libs 2>/dev/null || echo "(*) Device-mapper install failed, proceeding"
+                                    echo "(*) Installing additional Docker CE dependencies..."
                                     ${PKG_MGR_CMD} -y install libseccomp libtool-ltdl systemd-libs libcgroup tar xz || {
-                                        echo "(*) 部分可选依赖项无法安装,继续执行..."
+                                        echo "(*) Some optional dependencies could not be installed, continuing..."
                                     }
                                 }
                                 setup_selinux_context() {
                                     if command -v getenforce >/dev/null 2>&1 && [ "$(getenforce 2>/dev/null)" != "Disabled" ]; then
-                                        echo "(*) 正在为 Docker 兼容性创建最小化 SELinux 上下文..."
+                                        echo "(*) Creating minimal SELinux context for Docker compatibility..."
                                         mkdir -p /etc/selinux/targeted/contexts/files/ 2>/dev/null || true
                                         echo "/var/lib/docker(/.*)? system_u:object_r:container_file_t:s0" >> /etc/selinux/targeted/contexts/files/file_contexts.local 2>/dev/null || true
                                     fi
@@ -6690,19 +6690,19 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                                 # Special handling for RHEL Docker CE installation
                                 case "${ID}" in
                                     azurelinux|mariner)
-                                        echo "(*) 检测到 ${ID}"
-                                        echo "(*) 注意: Moby 包在 Azure Linux 上效果更好。考虑使用 'moby': true"
-                                        echo "(*) 正在设置 Docker CE 软件源..."
+                                        echo "(*) ${ID} detected"
+                                        echo "(*) Note: Moby packages work better on Azure Linux. Consider using 'moby': true"
+                                        echo "(*) Setting up Docker CE repository..."
 
                                         setup_docker_ce_repo
                                         install_azure_linux_deps
 
                                         if [ "${USE_MOBY}" != "true" ]; then
-                                            echo "(*) Azure Linux 的 Docker CE 安装 - 跳过 container-selinux"
-                                            echo "(*) 注意: SELinux 策略将为最小化配置,但 Docker 将正常运行"
+                                            echo "(*) Docker CE installation for Azure Linux - skipping container-selinux"
+                                            echo "(*) Note: SELinux policies will be minimal but Docker will function normally"
                                             setup_selinux_context
                                         else
-                                            echo "(*) 正在使用 Moby - 不需要 container-selinux"
+                                            echo "(*) Using Moby - container-selinux not required"
                                         fi
                                         ;;
                                     *)
@@ -6749,7 +6749,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                             engine_version_suffix="=$(apt-cache madison ${engine_package_name} | awk -F"|" '{print $2}' | sed -e 's/^[ \t]*//' | grep -E -m 1 "${docker_version_regex}")"
                         set -e
                         if [ -z "${engine_version_suffix}" ] || [ "${engine_version_suffix}" = "=" ] || [ -z "${cli_version_suffix}" ] || [ "${cli_version_suffix}" = "=" ] ; then
-                            err "在 OS ${ID} ${VERSION_CODENAME} (${architecture}) 上未找到与 \"${DOCKER_VERSION}\" 完全或部分匹配的 Docker / Moby 版本。可用版本:"
+                            err "No full or partial Docker / Moby version match found for \"${DOCKER_VERSION}\" on OS ${ID} ${VERSION_CODENAME} (${architecture}). Available versions:"
                             apt-cache madison ${cli_package_name} | awk -F"|" '{print $2}' | grep -oP '^(.+:)?\K.+'
                             exit 1
                         fi
@@ -6768,7 +6768,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                                     engine_version_suffix="-${available_versions}"
                                     cli_version_suffix="-${available_versions}"
                                 else
-                                    echo "(*) 未找到确切版本 ${DOCKER_VERSION},使用最新的可用版本"
+                                    echo "(*) Exact version ${DOCKER_VERSION} not found, using latest available"
                                     engine_version_suffix=""
                                     cli_version_suffix=""
                                 fi
@@ -6791,7 +6791,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                                 buildx_version_suffix="=$(apt-cache madison moby-buildx | awk -F"|" '{print $2}' | sed -e 's/^[ \t]*//' | grep -E -m 1 "${buildx_version_regex}")"
                             set -e
                             if [ -z "${buildx_version_suffix}" ] || [ "${buildx_version_suffix}" = "=" ]; then
-                                err "在 OS ${ID} ${VERSION_CODENAME} (${architecture}) 上未找到与 \"${MOBY_BUILDX_VERSION}\" 完全或部分匹配的 moby-buildx 版本。可用版本:"
+                                err "No full or partial moby-buildx version match found for \"${MOBY_BUILDX_VERSION}\" on OS ${ID} ${VERSION_CODENAME} (${architecture}). Available versions:"
                                 apt-cache madison moby-buildx | awk -F"|" '{print $2}' | grep -oP '^(.+:)?\K.+'
                                 exit 1
                             fi
@@ -6805,7 +6805,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                                     if [ -n "${available_buildx}" ]; then
                                         buildx_version_suffix="-${available_buildx}"
                                     else
-                                        echo "(*) 未找到确切的 buildx 版本 ${MOBY_BUILDX_VERSION},使用最新的可用版本"
+                                        echo "(*) Exact buildx version ${MOBY_BUILDX_VERSION} not found, using latest available"
                                         buildx_version_suffix=""
                                     fi
                                     ;;
@@ -6816,7 +6816,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
 
                     # Install Docker / Moby CLI if not already installed
                     if type docker > /dev/null 2>&1 && type dockerd > /dev/null 2>&1; then
-                        echo "Docker / Moby CLI 和引擎已安装。"
+                        echo "Docker / Moby CLI and Engine already installed."
                     else
                             case ${ADJUSTED_ID} in
                             debian)
@@ -6828,17 +6828,17 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                                     set -e
 
                                     if [ ${exit_code} -ne 0 ]; then
-                                        err "OS ${ID} ${VERSION_CODENAME} (${architecture}) 中没有可用的 moby 包。要解决此问题,请: (1) 将功能选项设置为 '\"moby\": false',或 (2) 选择兼容的操作系统版本 (例如: 'ubuntu-24.04')。"
+                                        err "Packages for moby not available in OS ${ID} ${VERSION_CODENAME} (${architecture}). To resolve, either: (1) set feature option '\"moby\": false' , or (2) choose a compatible OS version (eg: 'ubuntu-24.04')."
                                         exit 1
                                     fi
 
                                     # Install compose
-                                    apt-get -y install --no-install-recommends moby-compose || err "OS ${ID} ${VERSION_CODENAME} (${architecture}) 没有可用的 moby-compose (Docker Compose v2) 包。跳过。"
+                                    apt-get -y install --no-install-recommends moby-compose || err "Package moby-compose (Docker Compose v2) not available for OS ${ID} ${VERSION_CODENAME} (${architecture}). Skipping."
                                 else
                                     apt-get -y install --no-install-recommends docker-ce-cli${cli_version_suffix} docker-ce${engine_version_suffix}
                                     # Install compose
                                     apt-mark hold docker-ce docker-ce-cli
-                                    apt-get -y install --no-install-recommends docker-compose-plugin || echo "(*) OS ${ID} ${VERSION_CODENAME} (${architecture}) 没有可用的 docker-compose-plugin (Docker Compose v2) 包。跳过。"
+                                    apt-get -y install --no-install-recommends docker-compose-plugin || echo "(*) Package docker-compose-plugin (Docker Compose v2) not available for OS ${ID} ${VERSION_CODENAME} (${architecture}). Skipping."
                                 fi
                                 ;;
                             rhel)
@@ -6849,18 +6849,18 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                                     set -e
 
                                     if [ ${exit_code} -ne 0 ]; then
-                                        err "OS ${ID} ${VERSION_CODENAME} (${architecture}) 中没有可用的 moby 包。要解决此问题,请: (1) 将功能选项设置为 '\"moby\": false',或 (2) 选择兼容的操作系统版本。"
+                                        err "Packages for moby not available in OS ${ID} ${VERSION_CODENAME} (${architecture}). To resolve, either: (1) set feature option '\"moby\": false' , or (2) choose a compatible OS version."
                                         exit 1
                                     fi
 
                                     # Install compose
                                     if [ "${DOCKER_DASH_COMPOSE_VERSION}" != "none" ]; then
-                                        ${PKG_MGR_CMD} -y install moby-compose || echo "(*) ${ID} ${VERSION_CODENAME} (${architecture}) 没有可用的 moby-compose 包。跳过。"
+                                        ${PKG_MGR_CMD} -y install moby-compose || echo "(*) Package moby-compose not available for ${ID} ${VERSION_CODENAME} (${architecture}). Skipping."
                                     fi
                                 else
                                                    # Special handling for Azure Linux Docker CE installation
                                     if [ "${ID}" = "azurelinux" ] || [ "${ID}" = "mariner" ]; then
-                                        echo "(*) 正在 Azure Linux 上安装 Docker CE (绕过 container-selinux 依赖)..."
+                                        echo "(*) Installing Docker CE on Azure Linux (bypassing container-selinux dependency)..."
 
                                         # Use rpm with --force and --nodeps for Azure Linux
                                         set +e  # Don't exit on error for this section
@@ -6869,15 +6869,15 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                                         set -e
 
                                         if [ $install_result -ne 0 ]; then
-                                            echo "(*) 标准安装失败,尝试手动安装..."
+                                            echo "(*) Standard installation failed, trying manual installation..."
 
-                                            echo "(*) 标准安装失败,尝试手动安装..."
+                                            echo "(*) Standard installation failed, trying manual installation..."
 
                                             # Create directory for downloading packages
                                             mkdir -p /tmp/docker-ce-install
 
                                             # Download packages manually using curl since tdnf doesn't support download
-                                            echo "(*) 正在手动下载 Docker CE 包..."
+                                            echo "(*) Downloading Docker CE packages manually..."
 
                                             # Get the repository baseurl
                                             repo_baseurl="https://download.docker.com/linux/centos/9/x86_64/stable"
@@ -6894,12 +6894,12 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                                                 docker_ce_version="latest"
                                             fi
 
-                                            echo "(*) 正在尝试从软件源下载 Docker CE 包..."
+                                            echo "(*) Attempting to download Docker CE packages from repository..."
 
                                             # Try to download latest packages if specific version fails
                                             if ! curl -fsSL "${repo_baseurl}/Packages/docker-ce-${docker_ce_version}.el9.x86_64.rpm" -o docker-ce.rpm 2>/dev/null; then
                                                 # Fallback: try to get latest available version
-                                                echo "(*) 未找到指定版本,尝试最新版本..."
+                                                echo "(*) Specific version not found, trying latest..."
                                                 latest_docker=$(curl -s "${repo_baseurl}/Packages/" | grep -o 'docker-ce-[0-9][^"]*\.el9\.x86_64\.rpm' | head -1)
                                                 latest_cli=$(curl -s "${repo_baseurl}/Packages/" | grep -o 'docker-ce-cli-[0-9][^"]*\.el9\.x86_64\.rpm' | head -1)
                                                 latest_containerd=$(curl -s "${repo_baseurl}/Packages/" | grep -o 'containerd\.io-[0-9][^"]*\.el9\.x86_64\.rpm' | head -1)
@@ -6909,28 +6909,28 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                                                     curl -fsSL "${repo_baseurl}/Packages/${latest_cli}" -o docker-ce-cli.rpm
                                                     curl -fsSL "${repo_baseurl}/Packages/${latest_containerd}" -o containerd.io.rpm
                                                 else
-                                                    echo "(*) 错误: 无法在软件源中找到 Docker CE 包"
-                                                    echo "(*) 请检查软件源配置或使用 'moby': true"
+                                                    echo "(*) ERROR: Could not find Docker CE packages in repository"
+                                                    echo "(*) Please check repository configuration or use 'moby': true"
                                                     exit 1
                                                 fi
                                             fi
                                             # Install systemd libraries required by Docker CE
-                                            echo "(*) 正在安装 Docker CE 所需的 systemd 库..."
+                                            echo "(*) Installing systemd libraries required by Docker CE..."
                                             ${PKG_MGR_CMD} -y install systemd-libs || ${PKG_MGR_CMD} -y install systemd-devel || {
-                                                echo "(*) 警告: 无法安装 systemd 库"
-                                                echo "(*) 没有这些库 Docker 可能无法启动"
+                                                echo "(*) WARNING: Could not install systemd libraries"
+                                                echo "(*) Docker may fail to start without these"
                                             }
 
                                             # Install with rpm --force --nodeps
-                                            echo "(*) 正在绕过依赖安装 Docker CE 包..."
+                                            echo "(*) Installing Docker CE packages with dependency override..."
                                             rpm -Uvh --force --nodeps *.rpm
 
                                             # Cleanup
                                             cd /
                                             rm -rf /tmp/docker-ce-install
 
-                                            echo "(*) Docker CE 安装完成 (已绕过依赖)"
-                                            echo "(*) 注意: 没有 container-selinux 可能会限制部分 SELinux 功能"
+                                            echo "(*) Docker CE installation completed with dependency bypass"
+                                            echo "(*) Note: Some SELinux functionality may be limited without container-selinux"
                                         fi
                                     else
                                         # Standard installation for other RHEL-based systems
@@ -6938,14 +6938,14 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                                     fi
                                     # Install compose
                                     if [ "${DOCKER_DASH_COMPOSE_VERSION}" != "none" ]; then
-                                        ${PKG_MGR_CMD} -y install docker-compose-plugin || echo "(*) ${ID} ${VERSION_CODENAME} (${architecture}) 没有可用的 docker-compose-plugin 包。跳过。"
+                                        ${PKG_MGR_CMD} -y install docker-compose-plugin || echo "(*) Package docker-compose-plugin not available for ${ID} ${VERSION_CODENAME} (${architecture}). Skipping."
                                     fi
                                 fi
                                 ;;
                         esac
                     fi
 
-                    echo "Docker / Moby 安装完成!"
+                    echo "Finished installing docker / moby!"
 
                     docker_home="/usr/libexec/docker"
                     cli_plugins_dir="${docker_home}/cli-plugins"
@@ -6954,9 +6954,9 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                     fallback_compose(){
                         local url=$1
                         local repo_url=$(get_github_api_repo_url "$url")
-                        echo -e "\n(!) 获取 docker-compose v${compose_version} 的最新构件失败..."
+                        echo -e "\n(!) Failed to fetch the latest artifacts for docker-compose v${compose_version}..."
                         get_previous_version "${url}" "${repo_url}" compose_version
-                        echo -e "\n正在尝试安装 v${compose_version}"
+                        echo -e "\nAttempting to install v${compose_version}"
                         curl -fsSL "https://github.com/docker/compose/releases/download/v${compose_version}/docker-compose-linux-${target_compose_arch}" -o ${docker_compose_path}
                     }
 
@@ -6966,17 +6966,17 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                         amd64|x86_64) target_compose_arch=x86_64 ;;
                         arm64|aarch64) target_compose_arch=aarch64 ;;
                         *)
-                            echo "(!) Docker in Docker 不支持机器架构 '$architecture', 请使用 x86-64 或 ARM64 机器."
+                            echo "(!) Docker in docker does not support machine architecture '$architecture'. Please use an x86-64 or ARM64 machine."
                             exit 1
                         esac
 
                         docker_compose_path="/usr/local/bin/docker-compose"
                         if [ "${DOCKER_DASH_COMPOSE_VERSION}" = "v1" ]; then
-                            err "Compose V1 的最终版本为 1.29.2, 发布于 2021 年 5 月 10 日. 此后这些包未再收到任何安全更新, 使用风险自负."
+                            err "The final Compose V1 release, version 1.29.2, was May 10, 2021. These packages haven't received any security updates since then. Use at your own risk."
                             INSTALL_DOCKER_COMPOSE_SWITCH="false"
 
                             if [ "${target_compose_arch}" = "x86_64" ]; then
-                                echo "(*) 正在安装 docker compose v1..."
+                                echo "(*) Installing docker compose v1..."
                                 curl -fsSL "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64" -o ${docker_compose_path}
                                 chmod +x ${docker_compose_path}
 
@@ -6985,12 +6985,12 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                                 echo "${DOCKER_COMPOSE_SHA256}  ${docker_compose_path}" > docker-compose.sha256sum
                                 sha256sum -c docker-compose.sha256sum --ignore-missing
                             elif [ "${VERSION_CODENAME}" = "bookworm" ]; then
-                                err "Docker compose v1 在 Arm64 的 'bookworm' 上不可用, 请改用 v2"
+                                err "Docker compose v1 is unavailable for 'bookworm' on Arm64. Kindly switch to use v2"
                                 exit 1
                             else
                                 # Use pip to get a version that runs on this architecture
                                 check_packages python3-minimal python3-pip libffi-dev python3-venv
-                                echo "(*) 正在通过 pip 安装 docker compose v1..."
+                                echo "(*) Installing docker compose v1 via pip..."
                                 export PYTHONUSERBASE=/usr/local
                                 pip3 install --disable-pip-version-check --no-cache-dir --user "Cython<3.0" pyyaml wheel docker-compose --no-build-isolation
                             fi
@@ -6998,9 +6998,9 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                             compose_version=${DOCKER_DASH_COMPOSE_VERSION#v}
                             docker_compose_url="https://github.com/docker/compose"
                             find_version_from_git_tags compose_version "$docker_compose_url" "tags/v"
-                            echo "(*) 正在安装 docker-compose ${compose_version}..."
+                            echo "(*) Installing docker-compose ${compose_version}..."
                             curl -fsSL "https://github.com/docker/compose/releases/download/v${compose_version}/docker-compose-linux-${target_compose_arch}" -o ${docker_compose_path} || {
-                                     echo -e "\n(!) 获取 docker-compose v${compose_version} 的最新构件失败..."
+                                     echo -e "\n(!) Failed to fetch the latest artifacts for docker-compose v${compose_version}..."
                                      fallback_compose "$docker_compose_url"
                             }
 
@@ -7020,15 +7020,15 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                     fallback_compose-switch() {
                         local url=$1
                         local repo_url=$(get_github_api_repo_url "$url")
-                        echo -e "\n(!) 获取 compose-switch v${compose_switch_version} 的最新构件失败..."
+                        echo -e "\n(!) Failed to fetch the latest artifacts for compose-switch v${compose_switch_version}..."
                         get_previous_version "$url" "$repo_url" compose_switch_version
-                        echo -e "\n正在尝试安装 v${compose_switch_version}"
+                        echo -e "\nAttempting to install v${compose_switch_version}"
                         curl -fsSL "https://github.com/docker/compose-switch/releases/download/v${compose_switch_version}/docker-compose-linux-${target_switch_arch}" -o /usr/local/bin/compose-switch
                     }
                     # Install docker-compose switch if not already installed - https://github.com/docker/compose-switch#manual-installation
                     if [ "${INSTALL_DOCKER_COMPOSE_SWITCH}" = "true" ] && ! type compose-switch > /dev/null 2>&1; then
                         if type docker-compose > /dev/null 2>&1; then
-                            echo "(*) 正在安装 compose-switch..."
+                            echo "(*) Installing compose-switch..."
                             current_compose_path="$(command -v docker-compose)"
                             target_compose_path="$(dirname "${current_compose_path}")/docker-compose-v1"
                             compose_switch_version="latest"
@@ -7037,7 +7037,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                             set +e
                             find_version_from_git_tags compose_switch_version "$compose_switch_url"
                             if [ $? -ne 0 ] || [ -z "${compose_switch_version}" ] || [ "${compose_switch_version}" = "latest" ]; then
-                                echo "(*) GitHub API 限流或失败, 使用备用方法"
+                                echo "(*) GitHub API rate limited or failed, using fallback method"
                                 fallback_compose-switch "$compose_switch_url"
                             fi
                             set -e
@@ -7056,18 +7056,18 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                             update-alternatives --install ${docker_compose_path} docker-compose /usr/local/bin/compose-switch 99
                             update-alternatives --install ${docker_compose_path} docker-compose "${target_compose_path}" 1
                         else
-                            err "由于 docker compose 不可用, 跳过安装 compose-switch..."
+                            err "Skipping installation of compose-switch as docker compose is unavailable..."
                         fi
                     fi
 
                     # If init file already exists, exit
                     if [ -f "/usr/local/share/docker-init.sh" ]; then
-                        echo "/usr/local/share/docker-init.sh 已存在, 退出."
+                        echo "/usr/local/share/docker-init.sh already exists, so exiting."
                         # Clean up
                         rm -rf /var/lib/apt/lists/*
                         exit 0
                     fi
-                    echo "docker-init 不存在, 正在添加..."
+                    echo "docker-init doesn't exist, adding..."
 
                     if ! cat /etc/group | grep -e "^docker:" > /dev/null 2>&1; then
                             groupadd -r docker
@@ -7079,10 +7079,10 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                     fallback_buildx() {
                         local url=$1
                         local repo_url=$(get_github_api_repo_url "$url")
-                        echo -e "\n(!) 获取 docker buildx v${buildx_version} 的最新构件失败..."
+                        echo -e "\n(!) Failed to fetch the latest artifacts for docker buildx v${buildx_version}..."
                         get_previous_version "$url" "$repo_url" buildx_version
                         buildx_file_name="buildx-v${buildx_version}.linux-${target_buildx_arch}"
-                        echo -e "\n正在尝试安装 v${buildx_version}"
+                        echo -e "\nAttempting to install v${buildx_version}"
                         wget https://github.com/docker/buildx/releases/download/v${buildx_version}/${buildx_file_name}
                     }
 
@@ -7090,7 +7090,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                         buildx_version="latest"
                         docker_buildx_url="https://github.com/docker/buildx"
                         find_version_from_git_tags buildx_version "$docker_buildx_url" "refs/tags/v"
-                        echo "(*) 正在安装 buildx ${buildx_version}..."
+                        echo "(*) Installing buildx ${buildx_version}..."
 
                           # Map architecture for buildx downloads
                         case "${architecture}" in
@@ -7129,7 +7129,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                         fi
                         if [ "$DOCKER_VERSION" = "latest" ] || [[ -n "$requested_version" && "$requested_version" -ge 27 ]] ; then
                             DOCKER_DEFAULT_IP6_TABLES="--ip6tables=false"
-                            echo "(!) 按照要求, 传递 '${DOCKER_DEFAULT_IP6_TABLES}'"
+                            echo "(!) As requested, passing '${DOCKER_DEFAULT_IP6_TABLES}'"
                         fi
                     fi
 
@@ -7200,7 +7200,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                                 set_cgroup_nesting
 
                                 if [ $? -ne 0 ]; then
-                                    echo "(*) cgroup v2: 启用嵌套失败, 正在重试..."
+                                    echo "(*) cgroup v2: Failed to enable nesting, retrying..."
                                 else
                                     break
                                 fi
@@ -7216,10 +7216,10 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                             cat /etc/resolv.conf | grep -i 'internal.cloudapp.net' > /dev/null 2>&1
                             if [ $? -eq 0 ] && [ "${AZURE_DNS_AUTO_DETECTION}" = "true" ]
                             then
-                                echo "正在设置 dockerd Azure DNS."
+                                echo "Setting dockerd Azure DNS."
                                 CUSTOMDNS="--dns 168.63.129.16"
                             else
-                                echo "未手动设置 dockerd DNS."
+                                echo "Not setting dockerd DNS manually."
                                 CUSTOMDNS=""
                             fi
                         set -e
@@ -7270,7 +7270,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                         done
 
                         if [ "${docker_ok}" != "true" ] && [ "${retry_docker_start_count}" != "4" ]; then
-                            echo "(*) 启动 docker 失败, 正在重试..."
+                            echo "(*) Failed to start docker, retrying..."
                             set +e
                                 sudo_if pkill dockerd
                                 sudo_if pkill containerd
@@ -7341,7 +7341,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                             "version": "1.3.3",
                             "name": "Go",
                             "documentationURL": "https://github.com/devcontainers/features/tree/main/src/go",
-                            "description": "安装 Go 及常用 Go 工具. 自动检测最新版本并安装所需依赖.",
+                            "description": "Installs Go and common Go utilities. Auto-detects latest version and installs needed dependencies.",
                             "options": {
                                 "version": {
                                     "type": "string",
@@ -7352,12 +7352,12 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                                         "1.23"
                                     ],
                                     "default": "latest",
-                                    "description": "选择或输入要安装的 Go 版本"
+                                    "description": "Select or enter a Go version to install"
                                 },
                                 "golangciLintVersion": {
                                     "type": "string",
                                     "default": "latest",
-                                    "description": "要安装的 golangci-lint 版本"
+                                    "description": "Version of golangci-lint to install"
                                 }
                             },
                             "init": true,
@@ -7369,7 +7369,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                                     "settings": {
                                         "github.copilot.chat.codeGeneration.instructions": [
                                             {
-                                                "text": "此开发容器预装了 Go 及常用 Go 工具并添加到了 `PATH` 中, 同时包含用于 Go 开发的 Go 语言扩展."
+                                                "text": "This dev container includes Go and common Go utilities pre-installed and available on the `PATH`, along with the Go language extension for Go development."
                                             }
                                         ]
                                     }
@@ -7433,7 +7433,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                             VERSION_CODENAME="${ID}${MAJOR_VERSION_ID}"
                         fi
                     else
-                        echo "不支持的 Linux 发行版 ${ID}。"
+                        echo "Linux distro ${ID} not supported."
                         exit 1
                     fi
 
@@ -7504,7 +7504,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                             fi
                         fi
                         if [ -z "${!variable_name}" ] || ! echo "${version_list}" | grep "^${!variable_name//./\\.}$" > /dev/null 2>&1; then
-                            echo -e "无效的 ${variable_name} 值: ${requested_version}\n有效值:\n${version_list}" >&2
+                            echo -e "Invalid ${variable_name} value: ${requested_version}\nValid values:\n${version_list}" >&2
                             exit 1
                         fi
                         echo "${variable_name}=${!variable_name}"
@@ -7526,7 +7526,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                                     fi
                                 else
                                     if [ "$(ls /var/cache/${PKG_MGR_CMD}/* 2>/dev/null | wc -l)" = 0 ]; then
-                                        echo "正在运行 ${PKG_MGR_CMD} check-更新 ..."
+                                        echo "Running ${PKG_MGR_CMD} check-update ..."
                                         set +e
                                         ${PKG_MGR_CMD} check-update
                                         rc=$?
@@ -7622,7 +7622,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                         aarch64 | armv8*) architecture="arm64";;
                         aarch32 | armv7* | armvhf*) architecture="armv6l";;
                         i?86) architecture="386";;
-                        *) echo "(!) 不支持架构 $architecture"; exit 1 ;;
+                        *) echo "(!) Architecture $architecture unsupported"; exit 1 ;;
                     esac
 
                     # Install Go
@@ -7640,13 +7640,13 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                         chmod 700 ${GNUPGHOME}
                         curl -sSL -o /tmp/tmp-gnupg/golang_key "${GO_GPG_KEY_URI}"
                         gpg -q --import /tmp/tmp-gnupg/golang_key
-                        echo "正在下载 Go ${TARGET_GO_VERSION}..."
+                        echo "Downloading Go ${TARGET_GO_VERSION}..."
                         set +e
                         curl -fsSL -o /tmp/go.tar.gz "https://golang.org/dl/go${TARGET_GO_VERSION}.linux-${architecture}.tar.gz"
                         exit_code=$?
                         set -e
                         if [ "$exit_code" != "0" ]; then
-                            echo "(!) 下载失败."
+                            echo "(!) Download failed."
                             # Try one break fix version number less if we get a failure. Use "set +e" since "set -e" can cause failures in valid scenarios.
                             set +e
                             major="$(echo "${TARGET_GO_VERSION}" | grep -oE '^[0-9]+' || echo '')"
@@ -7667,16 +7667,16 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                                 fi
                             fi
                             set -e
-                            echo "正在尝试 ${TARGET_GO_VERSION}..."
+                            echo "Trying ${TARGET_GO_VERSION}..."
                             curl -fsSL -o /tmp/go.tar.gz "https://golang.org/dl/go${TARGET_GO_VERSION}.linux-${architecture}.tar.gz"
                         fi
                         curl -fsSL -o /tmp/go.tar.gz.asc "https://golang.org/dl/go${TARGET_GO_VERSION}.linux-${architecture}.tar.gz.asc"
                         gpg --verify /tmp/go.tar.gz.asc /tmp/go.tar.gz
-                        echo "正在解压 Go ${TARGET_GO_VERSION}..."
+                        echo "Extracting Go ${TARGET_GO_VERSION}..."
                         tar -xzf /tmp/go.tar.gz -C "${TARGET_GOROOT}" --strip-components=1
                         rm -rf /tmp/go.tar.gz /tmp/go.tar.gz.asc /tmp/tmp-gnupg
                     else
-                        echo "(!) 已安装版本为 ${TARGET_GO_VERSION} 的 Go, 跳过."
+                        echo "(!) Go is already installed with version ${TARGET_GO_VERSION}. Skipping."
                     fi
 
                     # Install Go tools that are isImportant && !replacedByGopls based on
@@ -7693,7 +7693,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                         github.com/josharian/impl@latest"
 
                     if [ "${INSTALL_GO_TOOLS}" = "true" ]; then
-                        echo "正在安装常用 Go 工具..."
+                        echo "Installing common Go tools..."
                         export PATH=${TARGET_GOROOT}/bin:${PATH}
                         export GOPATH=/tmp/gotools
                         export GOCACHE="${GOPATH}/cache"
@@ -7706,7 +7706,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                         if [[ "1.16" > "$(go version | grep -oP 'go\K[0-9]+\.[0-9]+(\.[0-9]+)?')" ]]; then
                             export GO111MODULE=on
                             go_install_command=get
-                            echo "Go 版本 < 1.16, 使用 go get."
+                            echo "Go version < 1.16, using go get."
                         fi
 
                         (echo "${GO_TOOLS}" | xargs -n 1 go ${go_install_command} -v )2>&1 | tee -a /usr/local/etc/vscode-dev-containers/go.log
@@ -7718,11 +7718,11 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
 
                         # Install golangci-lint from precompiled binaries
                         if [ "$GOLANGCILINT_VERSION" = "latest" ] || [ "$GOLANGCILINT_VERSION" = "" ]; then
-                            echo "正在安装最新版 golangci-lint..."
+                            echo "Installing golangci-lint latest..."
                             curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
                                 sh -s -- -b "${TARGET_GOPATH}/bin"
                         else
-                            echo "正在安装 golangci-lint ${GOLANGCILINT_VERSION}..."
+                            echo "Installing golangci-lint ${GOLANGCILINT_VERSION}..."
                             curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
                                 sh -s -- -b "${TARGET_GOPATH}/bin" "v${GOLANGCILINT_VERSION}"
                         fi
@@ -7740,7 +7740,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                     # Clean up
                     clean_up
 
-                    echo "完成!"
+                    echo "Done!"
                         "#),
                 ])
                 .await;
@@ -7791,7 +7791,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
     "version": "1.1.3",
     "name": "AWS CLI",
     "documentationURL": "https://github.com/devcontainers/features/tree/main/src/aws-cli",
-    "description": "安装 AWS CLI 及所需依赖. 适用于通常缺少 gpg 等必需安装依赖的基础 Dockerfile.",
+    "description": "Installs the AWS CLI along with needed dependencies. Useful for base Dockerfiles that often are missing required install dependencies like gpg.",
     "options": {
         "version": {
             "type": "string",
@@ -7799,12 +7799,12 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                 "latest"
             ],
             "default": "latest",
-            "description": "选择或输入 AWS CLI 版本."
+            "description": "Select or enter an AWS CLI version."
         },
         "verbose": {
             "type": "boolean",
             "default": true,
-            "description": "抑制详细输出."
+            "description": "Suppress verbose output."
         }
     },
     "customizations": {
@@ -7815,7 +7815,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
             "settings": {
                 "github.copilot.chat.codeGeneration.instructions": [
                     {
-                        "text": "此开发容器预装了 AWS CLI 及所需依赖并添加到了 `PATH` 中, 同时包含用于 AWS 开发的 AWS Toolkit 扩展."
+                        "text": "This dev container includes the AWS CLI along with needed dependencies pre-installed and available on the `PATH`, along with the AWS Toolkit extensions for AWS development."
                     }
                 ]
             }
@@ -7929,7 +7929,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                             amd64) architectureStr=x86_64 ;;
                             arm64) architectureStr=aarch64 ;;
                             *)
-                                echo "AWS CLI 不支持机器架构 '$architecture'。请使用 x86-64 或 ARM64 机器。"
+                                echo "AWS CLI does not support machine architecture '$architecture'. Please use an x86-64 or ARM64 machine."
                                 exit 1
                         esac
                         local scriptUrl=https://awscli.amazonaws.com/awscli-exe-linux-${architectureStr}${versionStr}.zip
@@ -7938,7 +7938,7 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
 
                         verify_aws_cli_gpg_signature "$scriptZipFile" "$scriptSigFile"
                         if (( $? > 0 )); then
-                            echo "无法验证 AWS CLI 安装脚本的 GPG 签名。请确保提供了有效的版本。"
+                            echo "Could not verify GPG signature of AWS CLI install script. Make sure you provided a valid version."
                             exit 1
                         fi
 
@@ -7964,14 +7964,14 @@ FROM docker.io/hexpm/elixir:1.21-erlang-28.4.1-debian-trixie-20260316-slim AS de
                         rm -rf ./aws
                     }
 
-                    echo "(*) 正在安装 AWS CLI..."
+                    echo "(*) Installing AWS CLI..."
 
                     install
 
                     # Clean up
                     rm -rf /var/lib/apt/lists/*
 
-                    echo "完成!""#,
+                    echo "Done!""#,
                     ),
                     ("./scripts/", r#""#),
                     (

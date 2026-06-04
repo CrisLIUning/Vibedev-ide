@@ -74,7 +74,7 @@ pub fn adapt_schema_to_format(
     json: &mut Value,
     format: LanguageModelToolSchemaFormat,
 ) -> Result<()> {
-    log::trace!("正在调整模式格式 {:?}: {}", format, json);
+    log::trace!("Adapting schema to format {:?}: {}", format, json);
 
     if let Value::Object(obj) = json {
         obj.remove("$schema");
@@ -87,7 +87,7 @@ pub fn adapt_schema_to_format(
         LanguageModelToolSchemaFormat::JsonSchemaSubset => adapt_to_json_schema_subset(json),
     }?;
 
-    log::trace!("已调整模式: {}", json);
+    log::trace!("Adapted schema: {}", json);
     Ok(())
 }
 
@@ -113,7 +113,7 @@ fn adapt_to_json_schema_subset(json: &mut Value) -> Result<()> {
         for key in UNSUPPORTED_KEYS {
             anyhow::ensure!(
                 !obj.contains_key(key),
-                "无法兼容架构,因为其中包含 \"{key}\""
+                "Schema cannot be made compatible because it contains \"{key}\""
             );
         }
 
@@ -310,7 +310,7 @@ mod tests {
     fn obj(value: Value) -> Map<String, Value> {
         match value {
             Value::Object(map) => map,
-            other => panic!("期望 JSON 对象,得到 {other}"),
+            other => panic!("expected JSON object, got {other}"),
         }
     }
 
@@ -715,11 +715,11 @@ mod tests {
             "properties": {
                 "projectSlugOrId": {
                     "type": ["string", "number"],
-                    "description": "项目别名或数字 ID"
+                    "description": "Project slug or numeric ID"
                 },
                 "optionalName": {
                     "type": ["string", "null"],
-                    "description": "可选名称"
+                    "description": "An optional name"
                 }
             }
         });
@@ -736,11 +736,11 @@ mod tests {
                             {"type": "string"},
                             {"type": "number"}
                         ],
-                        "description": "项目别名或数字 ID"
+                        "description": "Project slug or numeric ID"
                     },
                     "optionalName": {
                         "type": "string",
-                        "description": "可选名称",
+                        "description": "An optional name",
                         "nullable": true
                     }
                 }

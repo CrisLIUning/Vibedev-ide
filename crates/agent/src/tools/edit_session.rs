@@ -99,11 +99,11 @@ impl std::fmt::Display for EditSessionOutput {
                 diff, input_path, ..
             } => {
                 if diff.is_empty() {
-                    write!(f, "未进行任何编辑。")
+                    write!(f, "No edits were made.")
                 } else {
                     write!(
                         f,
-                        "已编辑 {}:\n\n```差异\n{diff}\n```",
+                        "Edited {}:\n\n```diff\n{diff}\n```",
                         input_path.display()
                     )
                 }
@@ -119,11 +119,11 @@ impl std::fmt::Display for EditSessionOutput {
                 {
                     write!(
                         f,
-                        "已编辑 {}:\n\n```差异\n{diff}\n```",
+                        "Edited {}:\n\n```diff\n{diff}\n```",
                         input_path.display()
                     )
                 } else {
-                    write!(f, "未进行任何编辑。")
+                    write!(f, "No edits were made.")
                 }
             }
         }
@@ -645,7 +645,7 @@ impl EditSession {
             cx.update(|cx| context.project.read(cx).absolute_path(&project_path, cx))
         else {
             return Err(format!(
-                "位于 '{}' 的工作树不存在",
+                "Worktree at '{}' does not exist",
                 path.to_string_lossy()
             ));
         };
@@ -719,7 +719,7 @@ impl EditSession {
             ..
         } = self;
         let Pipeline::Edit(edit_pipeline) = pipeline else {
-            return Err("无法在写入会话中完成编辑".to_string());
+            return Err("Cannot finalize edits on a write session".to_string());
         };
 
         for event in &parser.finalize_edits(&edits) {
@@ -735,10 +735,10 @@ impl EditSession {
         }
 
         if log::log_enabled!(log::Level::Debug) {
-            log::debug!("已获取编辑:");
+            log::debug!("Got edits:");
             for edit in &edits {
                 log::debug!(
-                    "  旧文本:'{}',新文本:'{}'",
+                    "  old_text: '{}', new_text: '{}'",
                     edit.old_text.replace('\n', "\\n"),
                     edit.new_text.replace('\n', "\\n")
                 );
@@ -760,7 +760,7 @@ impl EditSession {
             ..
         } = self;
         let Pipeline::Write(write) = pipeline else {
-            return Err("无法在编辑会话中完成写入".to_string());
+            return Err("Cannot finalize a write on an edit session".to_string());
         };
 
         for event in &parser.finalize_content(content) {
@@ -801,7 +801,7 @@ impl EditSession {
             ..
         } = self;
         let Pipeline::Edit(edit_pipeline) = pipeline else {
-            return Err("无法在写入会话中应用部分编辑".to_string());
+            return Err("Cannot apply partial edits on a write session".to_string());
         };
         let Some(edits) = edits else {
             return Ok(());
@@ -833,7 +833,7 @@ impl EditSession {
             ..
         } = self;
         let Pipeline::Write(write) = pipeline else {
-            return Err("无法在编辑会话中应用部分内容".to_string());
+            return Err("Cannot apply partial content on an edit session".to_string());
         };
         let Some(content) = content else {
             return Ok(());
@@ -880,7 +880,7 @@ fn extract_match(
     cx: &mut AsyncApp,
 ) -> Result<Range<usize>, String> {
     let file_changed_since_last_read_message = if file_changed_since_last_read {
-        " 文件自上次读取后已被修改。"
+        " The file has changed on disk since you last read it."
     } else {
         ""
     };
@@ -1030,7 +1030,7 @@ async fn resolve_dirty_buffer(
                 .project
                 .update(cx, |project, cx| project.save_buffer(buffer.clone(), cx))
                 .await
-                .map_err(|e| format!("保存缓冲区失败:{e}"))?;
+                .map_err(|e| format!("Failed to save buffer: {e}"))?;
         }
         super::tool_permissions::DirtyBufferDecision::Discard => {
             context
@@ -1039,7 +1039,7 @@ async fn resolve_dirty_buffer(
                     project.reload_buffers(HashSet::from_iter([buffer.clone()]), false, cx)
                 })
                 .await
-                .map_err(|e| format!("放弃未保存的更改失败:{e}"))?;
+                .map_err(|e| format!("Failed to discard unsaved changes: {e}"))?;
         }
         super::tool_permissions::DirtyBufferDecision::Keep => {
             let error = "The user chose to keep their unsaved changes; the file overwrite \
@@ -1067,16 +1067,16 @@ fn resolve_path(
         EditSessionMode::Edit => {
             let path = project
                 .find_project_path(&path, cx)
-                .ok_or_else(|| "无法编辑文件:路径未找到".to_string())?;
+                .ok_or_else(|| "Can't edit file: path not found".to_string())?;
 
             let entry = project
                 .entry_for_path(&path, cx)
-                .ok_or_else(|| "无法编辑文件:路径未找到".to_string())?;
+                .ok_or_else(|| "Can't edit file: path not found".to_string())?;
 
             if entry.is_file() {
                 Ok(path)
             } else {
-                Err("无法编辑文件:路径是目录".to_string())
+                Err("Can't edit file: path is a directory".to_string())
             }
         }
         EditSessionMode::Write => {
@@ -1086,37 +1086,37 @@ fn resolve_path(
                 if entry.is_file() {
                     return Ok(path);
                 } else {
-                    return Err("无法写入文件:路径是目录".to_string());
+                    return Err("Can't write to file: path is a directory".to_string());
                 }
             }
 
             let parent_path = path
                 .parent()
-                .ok_or_else(|| "无法创建文件:路径不正确".to_string())?;
+                .ok_or_else(|| "Can't create file: incorrect path".to_string())?;
 
             let parent_project_path = project.find_project_path(&parent_path, cx);
 
             let parent_entry = parent_project_path
                 .as_ref()
                 .and_then(|path| project.entry_for_path(path, cx))
-                .ok_or_else(|| "无法创建文件:父目录不存在")?;
+                .ok_or_else(|| "Can't create file: parent directory doesn\'t exist")?;
 
             if !parent_entry.is_dir() {
-                return Err("无法创建文件:父项不是目录".to_string());
+                return Err("Can't create file: parent is not a directory".to_string());
             }
 
             let file_name = path
                 .file_name()
                 .and_then(|file_name| file_name.to_str())
                 .and_then(|file_name| RelPath::unix(file_name).ok())
-                .ok_or_else(|| "无法创建文件:文件名无效".to_string())?;
+                .ok_or_else(|| "Can't create file: invalid filename".to_string())?;
 
             let new_file_path = parent_project_path.map(|parent| ProjectPath {
                 path: parent.path.join(file_name),
                 ..parent
             });
 
-            new_file_path.ok_or_else(|| "无法创建文件".to_string())
+            new_file_path.ok_or_else(|| "Can't create file".to_string())
         }
     }
 }

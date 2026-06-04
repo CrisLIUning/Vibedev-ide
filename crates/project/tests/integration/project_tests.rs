@@ -3924,7 +3924,7 @@ async fn test_diagnostic_summaries_cleared_on_server_restart(cx: &mut gpui::Test
     }
     assert!(
         received_diagnostics_updated,
-        "语言服务器停止时应发出 DiagnosticsUpdated 事件"
+        "DiagnosticsUpdated event should be emitted when a language server is stopped"
     );
 
     project.update(cx, |project, cx| {
@@ -4042,7 +4042,7 @@ async fn test_diagnostic_summaries_cleared_on_buffer_reload(cx: &mut gpui::TestA
     let pulls_after = pull_count.load(atomic::Ordering::SeqCst);
     assert!(
         pulls_after > pulls_before,
-        "缓冲区重新加载后应拉取文档诊断 (before={pulls_before}, after={pulls_after})"
+        "Expected document diagnostic pull after buffer reload (before={pulls_before}, after={pulls_after})"
     );
 }
 
@@ -6271,7 +6271,7 @@ async fn test_dirty_buffer_reloads_after_undo(cx: &mut gpui::TestAppContext) {
         assert_eq!(
             buffer.text(),
             "version 2 from external tool",
-            "撤销操作使缓冲区变干净后,应从磁盘重新加载"
+            "buffer should reload from disk after undo makes it clean"
         );
         assert!(!buffer.is_dirty());
     });
@@ -6732,7 +6732,7 @@ async fn assert_line_endings_after_format(
             assert_eq!(
                 buffer.line_ending(),
                 *expected_line_ending,
-                "路径 {path} 在 {case_name} 中的行尾符不符合预期"
+                "unexpected line ending for {path} in {case_name}"
             );
         });
     }
@@ -8559,7 +8559,7 @@ async fn test_code_actions_without_requested_kinds_do_not_send_only_filter(
     >(move |params, _| async move {
         assert_eq!(
             params.context.only, None,
-            "没有显式种类过滤器的代码操作请求不应发送 `上下文.only`"
+            "Code action requests without explicit kind filters should not send `context.only`"
         );
         Ok(Some(vec![lsp::CodeActionOrCommand::CodeAction(
             lsp::CodeAction {
@@ -12461,7 +12461,7 @@ async fn test_initial_scan_complete(cx: &mut gpui::TestAppContext) {
     let created_repos_len = repos_created.borrow().len();
     assert_eq!(
         created_repos_len, 2,
-        "预期扫描期间创建 2 个仓库,实际得到 {}",
+        "Expected 2 repositories to be created during scan, got {}",
         created_repos_len
     );
 
@@ -12470,7 +12470,7 @@ async fn test_initial_scan_complete(cx: &mut gpui::TestAppContext) {
         assert_eq!(
             git_store.repositories().len(),
             2,
-            "预期 GitStore 中有 2 个仓库"
+            "Expected 2 repositories in GitStore"
         );
     });
 }
@@ -13422,12 +13422,12 @@ mod disable_ai_settings_tests {
             let settings = DisableAiSettings::get(Some(settings_location), cx);
             assert!(
                 settings.disable_ai,
-                "项目级 disable_ai=true 应禁用该项目中文件的 AI 功能"
+                "Project-level disable_ai=true should disable AI for files in that project"
             );
             // Global should now also be true since project-level disable_ai is merged into global
             assert!(
                 DisableAiSettings::get_global(cx).disable_ai,
-                "全局设置应受项目级 disable_ai=true 影响"
+                "Global setting should be affected by project-level disable_ai=true"
             );
         });
 
@@ -13448,12 +13448,12 @@ mod disable_ai_settings_tests {
             let settings = DisableAiSettings::get(Some(settings_location), cx);
             assert!(
                 !settings.disable_ai,
-                "项目级 disable_ai=false 应允许使用 AI"
+                "Project-level disable_ai=false should allow AI"
             );
             // Global should also be false now
             assert!(
                 !DisableAiSettings::get_global(cx).disable_ai,
-                "当项目级设置为 false 时,全局设置应为 false"
+                "Global setting should be false when project-level is false"
             );
         });
 
@@ -13476,7 +13476,7 @@ mod disable_ai_settings_tests {
             let settings = DisableAiSettings::get(Some(settings_location), cx);
             assert!(
                 settings.disable_ai,
-                "项目级 false 无法覆盖用户级 true (SaturatingBool)"
+                "Project-level false cannot override user-level true (SaturatingBool)"
             );
         });
     }

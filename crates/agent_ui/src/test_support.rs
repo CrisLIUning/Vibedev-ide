@@ -66,7 +66,7 @@ impl StubAgentServer<StubAgentConnection> {
     pub fn default_response() -> Self {
         let conn = StubAgentConnection::new();
         conn.set_next_prompt_updates(vec![acp::SessionUpdate::AgentMessageChunk(
-            acp::ContentChunk::new("默认响应".into()),
+            acp::ContentChunk::new("Default response".into()),
         )]);
         Self::new(conn)
     }
@@ -169,7 +169,7 @@ pub fn register_test_sidebar(
         let multi_workspace = window
             .root::<MultiWorkspace>()
             .flatten()
-            .expect("测试窗口应具有 MultiWorkspace 根节点");
+            .expect("test window should have a MultiWorkspace root");
         let sidebar = cx.new(|cx| TestWorkspaceSidebar::new(threads_list_active, cx));
         multi_workspace.update(cx, |multi_workspace, cx| {
             multi_workspace.register_sidebar(sidebar.clone(), cx);

@@ -32,12 +32,12 @@ impl Job {
             apply: Box::new(move |app_dir| {
                 let dir = app_dir.join(name);
                 std::fs::create_dir_all(&dir)
-                    .context(format!("创建目录 {} 失败", dir.display()))
+                    .context(format!("Failed to create directory {}", dir.display()))
             }),
             rollback: Box::new(move |app_dir| {
                 let dir = app_dir.join(name);
                 std::fs::remove_dir_all(&dir)
-                    .context(format!("移除目录失败 {}", dir.display()))
+                    .context(format!("Failed to remove directory {}", dir.display()))
             }),
         }
     }
@@ -50,7 +50,7 @@ impl Job {
 
                 if check.exists() {
                     std::fs::create_dir_all(&dir)
-                        .context(format!("创建目录 {} 失败", dir.display()))?
+                        .context(format!("Failed to create directory {}", dir.display()))?
                 }
                 Ok(())
             }),
@@ -59,7 +59,7 @@ impl Job {
 
                 if dir.exists() {
                     std::fs::remove_dir_all(&dir)
-                        .context(format!("移除目录失败 {}", dir.display()))?
+                        .context(format!("Failed to remove directory {}", dir.display()))?
                 }
 
                 Ok(())
@@ -73,25 +73,25 @@ impl Job {
                 let old_file = app_dir.join(filename);
                 let new_file = app_dir.join(new_filename);
                 log::info!(
-                    "移动文件: {}->{}",
+                    "Moving file: {}->{}",
                     old_file.display(),
                     new_file.display()
                 );
 
                 std::fs::rename(&old_file, new_file)
-                    .context(format!("移动文件失败 {}", old_file.display()))
+                    .context(format!("Failed to move file {}", old_file.display()))
             }),
             rollback: Box::new(move |app_dir| {
                 let old_file = app_dir.join(filename);
                 let new_file = app_dir.join(new_filename);
                 log::info!(
-                    "回滚文件移动: {}->{}",
+                    "Rolling back file move: {}->{}",
                     old_file.display(),
                     new_file.display()
                 );
 
                 std::fs::rename(&new_file, &old_file).context(format!(
-                    "回滚文件移动失败 {}->{}",
+                    "Failed to rollback file move {}->{}",
                     new_file.display(),
                     old_file.display()
                 ))
@@ -107,13 +107,13 @@ impl Job {
 
                 if old_file.exists() {
                     log::info!(
-                        "移动文件: {}->{}",
+                        "Moving file: {}->{}",
                         old_file.display(),
                         new_file.display()
                     );
 
                     std::fs::rename(&old_file, new_file)
-                        .context(format!("移动文件失败 {}", old_file.display()))?;
+                        .context(format!("Failed to move file {}", old_file.display()))?;
                 }
 
                 Ok(())
@@ -124,13 +124,13 @@ impl Job {
 
                 if new_file.exists() {
                     log::info!(
-                        "回滚文件移动: {}->{}",
+                        "Rolling back file move: {}->{}",
                         old_file.display(),
                         new_file.display()
                     );
 
                     std::fs::rename(&new_file, &old_file).context(format!(
-                        "回滚文件移动失败 {}->{}",
+                        "Failed to rollback file move {}->{}",
                         new_file.display(),
                         old_file.display()
                     ))?
@@ -155,7 +155,7 @@ impl Job {
             rollback: Box::new(move |app_dir| {
                 let filename = app_dir.join(filename);
                 anyhow::bail!(
-                    "删除操作无法回滚,文件: {}",
+                    "Delete operations cannot be rolled back, file: {}",
                     filename.display()
                 )
             }),
@@ -291,7 +291,7 @@ fn release_file_handles(app_dir: &Path) -> Result<()> {
         app_dir.join("conpty.dll"),
     ];
 
-    log::info!("正在尝试使用 Restart Manager 释放文件句柄...");
+    log::info!("Attempting to release file handles using Restart Manager...");
 
     let mut session: u32 = 0;
     let mut session_key = [0u16; CCH_RM_SESSION_KEY as usize + 1];
@@ -305,7 +305,7 @@ fn release_file_handles(app_dir: &Path) -> Result<()> {
         )
     };
     if err.is_err() {
-        anyhow::bail!("RmStartSession 失败: {err:?}");
+        anyhow::bail!("RmStartSession failed: {err:?}");
     }
 
     // Ensure we end the session when done
@@ -326,7 +326,7 @@ fn release_file_handles(app_dir: &Path) -> Result<()> {
         .collect();
 
     if wide_paths.is_empty() {
-        log::info!("没有需要释放句柄的文件");
+        log::info!("No files to release handles for");
         return Ok(());
     }
 
@@ -338,7 +338,7 @@ fn release_file_handles(app_dir: &Path) -> Result<()> {
     // Register the files we want to modify
     let err = unsafe { RmRegisterResources(session, Some(&pcwstr_paths), None, None) };
     if err.is_err() {
-        anyhow::bail!("RmRegisterResources 失败: {err:?}");
+        anyhow::bail!("RmRegisterResources failed: {err:?}");
     }
 
     // Check if any processes are using these files
@@ -348,12 +348,12 @@ fn release_file_handles(app_dir: &Path) -> Result<()> {
     let _ = unsafe { RmGetList(session, &mut needed, &mut count, None, &mut reboot_reasons) };
 
     if needed == 0 {
-        log::info!("没有进程持有这些文件的句柄");
+        log::info!("No processes are holding handles to the files");
         return Ok(());
     }
 
     log::info!(
-        "{} 个进程正持有这些文件的句柄,正在请求释放...",
+        "{} process(es) are holding handles to the files, requesting release...",
         needed
     );
 
@@ -362,10 +362,10 @@ fn release_file_handles(app_dir: &Path) -> Result<()> {
     // For Explorer, this typically releases icon cache handles without closing Explorer
     let err = unsafe { RmShutdown(session, 0, None) };
     if err.is_err() {
-        anyhow::bail!("RmShutdown 失败: {:?}", err);
+        anyhow::bail!("RmShutdown failed: {:?}", err);
     }
 
-    log::info!("已成功请求释放句柄");
+    log::info!("Successfully requested handle release");
     Ok(())
 }
 
@@ -374,7 +374,7 @@ pub(crate) fn perform_update(app_dir: &Path, hwnd: Option<isize>, launch: bool) 
 
     // Try to release file handles before starting the update
     if let Err(e) = release_file_handles(app_dir) {
-        log::warn!("Restart Manager 失败 (将继续执行): {}", e);
+        log::warn!("Restart Manager failed (will continue anyway): {}", e);
     }
 
     let mut last_successful_job = None;
@@ -394,16 +394,16 @@ pub(crate) fn perform_update(app_dir: &Path, hwnd: Option<isize>, launch: bool) 
                 Err(err) => match err.downcast_ref::<std::io::Error>() {
                     Some(io_err) => match io_err.kind() {
                         std::io::ErrorKind::NotFound => {
-                            log::error!("操作失败,找不到文件,正在中止: {}", err);
+                            log::error!("Operation failed with file not found, aborting: {}", err);
                             break 'outer;
                         }
                         _ => {
-                            log::error!("操作失败 (正在重试): {}", err);
+                            log::error!("Operation failed (retrying): {}", err);
                             std::thread::sleep(Duration::from_millis(50));
                         }
                     },
                     None => {
-                        log::error!("操作失败,发生意外错误,正在中止: {}", err);
+                        log::error!("Operation failed with unexpected error, aborting: {}", err);
                         break 'outer;
                     }
                 },
@@ -423,7 +423,7 @@ pub(crate) fn perform_update(app_dir: &Path, hwnd: Option<isize>, launch: bool) 
             let job = &JOBS[job];
             if let Err(e) = (job.rollback)(app_dir) {
                 anyhow::bail!(
-                    "任务回滚失败,应用可能处于不一致状态: ({:?})",
+                    "Job rollback failed, the app might be left in an inconsistent state: ({:?})",
                     e
                 );
             }

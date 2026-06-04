@@ -290,7 +290,7 @@ impl AcpTools {
         self.selected_connection
             .as_ref()
             .map(|agent_id| agent_id.0.clone())
-            .unwrap_or_else(|| SharedString::from("未选择连接"))
+            .unwrap_or_else(|| SharedString::from("No connection selected"))
     }
 
     fn connection_menu(&self, window: &mut Window, cx: &mut Context<Self>) -> Entity<ContextMenu> {
@@ -300,7 +300,7 @@ impl AcpTools {
 
         ContextMenu::build(window, cx, move |mut menu, _window, _cx| {
             if entries.is_empty() {
-                return menu.entry("无活动连接", None, |_, _| {});
+                return menu.entry("No active connection", None, |_, _| {});
             }
 
             for entry in &entries {
@@ -661,7 +661,7 @@ impl Display for MessageType {
             MessageType::Request => write!(f, "Request"),
             MessageType::Response => write!(f, "Response"),
             MessageType::Notification => write!(f, "Notification"),
-            MessageType::Stderr => write!(f, "标准错误"),
+            MessageType::Stderr => write!(f, "Stderr"),
         }
     }
 }
@@ -733,7 +733,7 @@ impl Render for AcpTools {
                             .child(
                                 IconButton::new("restart_connection", IconName::RotateCw)
                                     .icon_size(IconSize::Small)
-                                    .tooltip(Tooltip::text("重新连接"))
+                                    .tooltip(Tooltip::text("Restart Connection"))
                                     .disabled(!can_restart)
                                     .on_click(cx.listener(|this, _, _window, cx| {
                                         this.restart_selected_connection(cx);
@@ -786,7 +786,7 @@ impl Render for AcpTools {
                         .justify_center()
                         .items_center()
                         .child(format!(
-                            "正在重新连接到 {}",
+                            "Reconnecting to {}",
                             self.selected_connection_label()
                         ))
                         .into_any(),

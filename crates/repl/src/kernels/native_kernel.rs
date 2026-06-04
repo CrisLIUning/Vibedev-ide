@@ -48,7 +48,7 @@ impl LocalKernelSpecification {
         anyhow::ensure!(argv.len() >= 2, "Invalid argv in kernelspec {}", self.name);
         anyhow::ensure!(
             argv.iter().any(|arg| arg == "{connection_file}"),
-            "内核规范 {} 的 argv 中缺少 'connection_file'",
+            "Missing 'connection_file' in argv in kernelspec {}",
             self.name
         );
 
@@ -64,12 +64,12 @@ impl LocalKernelSpecification {
 
         if let Some(env) = &self.kernelspec.env {
             log::info!(
-                "LocalKernelSpecification: 正在将环境变量应用到命令: {:?}",
+                "LocalKernelSpecification: applying env to command: {:?}",
                 env.keys()
             );
             cmd.envs(env);
         } else {
-            log::info!("LocalKernelSpecification: 内核规格中无环境变量");
+            log::info!("LocalKernelSpecification: no env in kernelspec");
         }
 
         Ok(cmd)
@@ -210,7 +210,7 @@ impl NativeRunningKernel {
                 };
                 let mut lines = futures::stream::select(stderr_lines, stdout_lines);
                 while let Some((level, Ok(line))) = lines.next().await {
-                    log::log!(level, "内核: {}", line);
+                    log::log!(level, "kernel: {}", line);
                 }
             })
             .detach();
@@ -225,10 +225,10 @@ impl NativeRunningKernel {
                             return;
                         }
 
-                        format!("内核进程退出,状态: {:?}", status)
+                        format!("kernel process exited with status: {:?}", status)
                     }
                     Err(err) => {
-                        format!("内核进程出错退出: {:?}", err)
+                        format!("kernel process exited with error: {:?}", err)
                     }
                 };
 

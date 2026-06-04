@@ -102,7 +102,7 @@ impl Workspace {
                             log::error!("Task spawn failed: {e:#}");
                             _ = workspace.update(cx, |w, cx| {
                                 let id = NotificationId::unique::<ResolvedTask>();
-                                w.show_toast(Toast::new(id, format!("任务启动失败: {e}")), cx);
+                                w.show_toast(Toast::new(id, format!("Task spawn failed: {e}")), cx);
                             })
                         }
                         None => log::debug!("Task spawn got cancelled"),
@@ -254,13 +254,13 @@ impl Workspace {
                                 match result {
                                     Ok(exit_status) if !exit_status.success() => {
                                         log::error!(
-                                            "Git 工作树设置任务失败, 状态码: {:?}",
+                                            "Git worktree setup task failed with status: {:?}",
                                             exit_status.code()
                                         );
                                         break;
                                     }
                                     Err(error) => {
-                                        log::error!("Git 工作树设置任务错误: {error:#}");
+                                        log::error!("Git worktree setup task error: {error:#}");
                                         break;
                                     }
                                     _ => {}

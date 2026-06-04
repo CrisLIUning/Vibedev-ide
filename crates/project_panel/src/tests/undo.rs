@@ -88,7 +88,7 @@ impl TestContext {
     fn assert_exists(&mut self, file: &str) {
         assert!(
             find_project_entry(&self.panel, &format!("workspace/{file}"), &mut self.cx).is_some(),
-            "{file} 应该存在"
+            "{file} should exist"
         );
     }
 
@@ -96,7 +96,7 @@ impl TestContext {
         assert_eq!(
             find_project_entry(&self.panel, &format!("workspace/{file}"), &mut self.cx),
             None,
-            "{file} 不应该存在"
+            "{file} should not exist"
         );
     }
 

@@ -25,7 +25,7 @@ impl LoadedContext {
             if request_message.content.is_empty() {
                 request_message
                     .content
-                    .push(MessageContent::Text("用户附加的图片:".to_string()));
+                    .push(MessageContent::Text("Images attached by user:".to_string()));
             }
 
             for image in &self.images {

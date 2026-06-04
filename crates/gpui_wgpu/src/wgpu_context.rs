@@ -50,11 +50,11 @@ impl WgpuContext {
     ) -> anyhow::Result<Self> {
         let device_id_filter = match std::env::var("ZED_DEVICE_ID") {
             Ok(val) => parse_pci_id(&val)
-                .context("无法从 `ZED_DEVICE_ID` 环境变量解析设备 ID")
+                .context("Failed to parse device ID from `ZED_DEVICE_ID` environment variable")
                 .log_err(),
             Err(std::env::VarError::NotPresent) => None,
             err => {
-                err.context("无法读取 `ZED_DEVICE_ID` 环境变量的值")
+                err.context("Failed to read value of `ZED_DEVICE_ID` environment variable")
                     .log_err();
                 None
             }
@@ -75,7 +75,7 @@ impl WgpuContext {
         device.set_device_lost_callback({
             let device_lost = Arc::clone(&device_lost);
             move |reason, message| {
-                log::error!("wgpu 设备丢失: 原因={reason:?}, 消息={message}");
+                log::error!("wgpu device lost: reason={reason:?}, message={message}");
                 if reason != wgpu::DeviceLostReason::Destroyed {
                     device_lost.store(true, Ordering::Relaxed);
                 }
@@ -83,7 +83,7 @@ impl WgpuContext {
         });
 
         log::info!(
-            "已选择 GPU 适配器: {:?} ({:?})",
+            "Selected GPU adapter: {:?} ({:?})",
             adapter.get_info().name,
             adapter.get_info().backend
         );
@@ -116,10 +116,10 @@ impl WgpuContext {
                 force_fallback_adapter: false,
             })
             .await
-            .map_err(|e| anyhow::anyhow!("请求 GPU 适配器失败: {e}"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to request GPU adapter: {e}"))?;
 
         log::info!(
-            "已选择 GPU 适配器: {:?} ({:?})",
+            "Selected GPU adapter: {:?} ({:?})",
             adapter.get_info().name,
             adapter.get_info().backend
         );
@@ -170,7 +170,7 @@ impl WgpuContext {
                 experimental_features: wgpu::ExperimentalFeatures::disabled(),
             })
             .await
-            .map_err(|e| anyhow::anyhow!("无法创建 wgpu 设备: {e}"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to create wgpu device: {e}"))?;
 
         Ok((
             device,
@@ -228,11 +228,11 @@ impl WgpuContext {
         let mut adapters: Vec<_> = instance.enumerate_adapters(wgpu::Backends::all()).await;
 
         if adapters.is_empty() {
-            anyhow::bail!("未找到 GPU 适配器");
+            anyhow::bail!("No GPU adapters found");
         }
 
         if let Some(device_id) = device_id_filter {
-            log::info!("ZED_DEVICE_ID 过滤器: {:#06x}", device_id);
+            log::info!("ZED_DEVICE_ID filter: {:#06x}", device_id);
         }
 
         // Sort adapters into a single priority order. Tiers (from highest to lowest):
@@ -291,7 +291,7 @@ impl WgpuContext {
         });
 
         // Log all available adapters (in sorted order)
-        log::info!("发现 {} 个 GPU 适配器:", adapters.len());
+        log::info!("Found {} GPU adapter(s):", adapters.len());
         for adapter in &adapters {
             let info = adapter.get_info();
             log::info!(
@@ -310,19 +310,19 @@ impl WgpuContext {
 
             if reject_software && info.device_type == wgpu::DeviceType::Cpu {
                 log::info!(
-                    "跳过软件渲染器: {} ({:?})",
+                    "Skipping software renderer: {} ({:?})",
                     info.name,
                     info.backend
                 );
                 continue;
             }
 
-            log::info!("正在测试适配器: {} ({:?})...", info.name, info.backend);
+            log::info!("Testing adapter: {} ({:?})...", info.name, info.backend);
 
             match Self::try_adapter_with_surface(&adapter, surface).await {
                 Ok((device, queue, dual_source_blending, color_atlas_texture_format)) => {
                     log::info!(
-                        "已选择 GPU (通过配置测试): {} ({:?})",
+                        "Selected GPU (passed configuration test): {} ({:?})",
                         info.name,
                         info.backend
                     );
@@ -336,7 +336,7 @@ impl WgpuContext {
                 }
                 Err(e) => {
                     log::info!(
-                        "  适配器 {} ({:?}) 失败: {}, 尝试下一个...",
+                        "  Adapter {} ({:?}) failed: {}, trying next...",
                         info.name,
                         info.backend,
                         e
@@ -345,7 +345,7 @@ impl WgpuContext {
             }
         }
 
-        anyhow::bail!("未找到可配置显示表面的 GPU 适配器")
+        anyhow::bail!("No GPU adapter found that can configure the display surface")
     }
 
     /// Try to use an adapter with a surface by creating a device and testing configuration.
@@ -357,10 +357,10 @@ impl WgpuContext {
     ) -> anyhow::Result<(wgpu::Device, wgpu::Queue, bool, TextureFormat)> {
         let caps = surface.get_capabilities(adapter);
         if caps.formats.is_empty() {
-            anyhow::bail!("无兼容的表面格式");
+            anyhow::bail!("no compatible surface formats");
         }
         if caps.alpha_modes.is_empty() {
-            anyhow::bail!("无兼容的 Alpha 模式");
+            anyhow::bail!("no compatible alpha modes");
         }
 
         let (device, queue, dual_source_blending, color_atlas_texture_format) =
@@ -382,7 +382,7 @@ impl WgpuContext {
 
         let error = error_scope.pop().await;
         if let Some(e) = error {
-            anyhow::bail!("表面配置失败: {e}");
+            anyhow::bail!("surface configuration failed: {e}");
         }
 
         Ok((
@@ -457,10 +457,10 @@ fn parse_pci_id(id: &str) -> anyhow::Result<u32> {
     let is_4_chars = id.len() == 4;
     anyhow::ensure!(
         is_4_chars && is_hex_string,
-        "预期为 4 位十六进制格式的 PCI ID"
+        "Expected a 4 digit PCI ID in hexadecimal format"
     );
 
-    u32::from_str_radix(id, 16).context("将 PCI ID 解析为十六进制")
+    u32::from_str_radix(id, 16).context("parsing PCI ID as hex")
 }
 
 #[cfg(test)]

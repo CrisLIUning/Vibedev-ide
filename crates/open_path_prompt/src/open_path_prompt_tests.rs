@@ -170,7 +170,7 @@ async fn test_open_path_prompt_completion(cx: &mut TestAppContext) {
     assert_eq!(
         confirm_completion(query, 1, &picker, cx).unwrap(),
         path!("/root/dir1/"),
-        "第二个条目是第一个目录"
+        "Second entry is the first directory"
     );
 
     // Confirm completion for the query "/root/", selecting the third candidate "a", since it's a file, it should not add a trailing slash.
@@ -274,7 +274,7 @@ async fn test_open_path_prompt_on_windows(cx: &mut TestAppContext) {
     assert_eq!(
         confirm_completion(query, 1, &picker, cx).unwrap(),
         "C:/root/dir1\\",
-        "第二个条目是第一个目录"
+        "Second entry is the first directory"
     );
 
     let query = "C:\\root/";

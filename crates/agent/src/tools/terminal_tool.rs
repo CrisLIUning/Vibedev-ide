@@ -650,7 +650,7 @@ mod tests {
         let result = task.await;
         let error = result.expect_err("expected invalid terminal command to be rejected");
         assert!(
-            error.contains("不允许 Shell 替换或插值"),
+            error.contains("does not allow shell substitutions or interpolations"),
             "expected explicit invalid-command message, got: {error}"
         );
         assert!(
@@ -779,7 +779,7 @@ mod tests {
             .await
             .expect_err("hardcoded denial should override unconditional allow-all");
         assert!(
-            error.contains("内置安全规则"),
+            error.contains("built-in security rule"),
             "expected hardcoded denial message, got: {error}"
         );
         assert!(
@@ -862,7 +862,7 @@ mod tests {
             "terminal should be created for allowed env-prefixed command"
         );
         assert!(
-            result.contains("命令输出") || result.contains("Command executed successfully."),
+            result.contains("command output") || result.contains("Command executed successfully."),
             "unexpected terminal result: {result}"
         );
     }
@@ -1027,7 +1027,7 @@ mod tests {
         let result = task.await;
         let error = result.unwrap_err();
         assert!(
-            error.contains("不允许 Shell 替换或插值"),
+            error.contains("does not allow shell substitutions or interpolations"),
             "command {command:?} should be rejected with substitution message, got: {error}"
         );
         assert!(
@@ -1347,7 +1347,7 @@ mod tests {
             "terminal should be created for matching multi-assignment command"
         );
         assert!(
-            result.contains("命令输出") || result.contains("Command executed successfully."),
+            result.contains("command output") || result.contains("Command executed successfully."),
             "unexpected terminal result: {result}"
         );
     }
@@ -1424,7 +1424,7 @@ mod tests {
             "terminal should be created for matching quoted-value command"
         );
         assert!(
-            result.contains("命令输出") || result.contains("Command executed successfully."),
+            result.contains("command output") || result.contains("Command executed successfully."),
             "unexpected terminal result: {result}"
         );
     }

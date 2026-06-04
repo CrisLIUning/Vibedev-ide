@@ -959,7 +959,7 @@ impl ContextProvider for RustContextProvider {
         let mut task_templates = vec![
             TaskTemplate {
                 label: format!(
-                    "检查 (package: {})",
+                    "Check (package: {})",
                     RUST_PACKAGE_TASK_VARIABLE.template_value(),
                 ),
                 command: "cargo".into(),
@@ -972,7 +972,7 @@ impl ContextProvider for RustContextProvider {
                 ..TaskTemplate::default()
             },
             TaskTemplate {
-                label: "检查所有目标 (工作区)".into(),
+                label: "Check all targets (workspace)".into(),
                 command: "cargo".into(),
                 args: vec!["check".into(), "--workspace".into(), "--all-targets".into()],
                 cwd: Some("$ZED_DIRNAME".to_owned()),
@@ -980,7 +980,7 @@ impl ContextProvider for RustContextProvider {
             },
             TaskTemplate {
                 label: format!(
-                    "测试 '{}' (package: {})",
+                    "Test '{}' (package: {})",
                     RUST_TEST_NAME_TASK_VARIABLE.template_value(),
                     RUST_PACKAGE_TASK_VARIABLE.template_value(),
                 ),
@@ -1000,7 +1000,7 @@ impl ContextProvider for RustContextProvider {
             },
             TaskTemplate {
                 label: format!(
-                    "文档测试 '{}' (package: {})",
+                    "Doc test '{}' (package: {})",
                     RUST_DOC_TEST_NAME_TASK_VARIABLE.template_value(),
                     RUST_PACKAGE_TASK_VARIABLE.template_value(),
                 ),
@@ -1021,7 +1021,7 @@ impl ContextProvider for RustContextProvider {
             },
             TaskTemplate {
                 label: format!(
-                    "测试模块 '{}' (package: {})",
+                    "Test mod '{}' (package: {})",
                     VariableName::Stem.template_value(),
                     RUST_PACKAGE_TASK_VARIABLE.template_value(),
                 ),
@@ -1039,7 +1039,7 @@ impl ContextProvider for RustContextProvider {
             },
             TaskTemplate {
                 label: format!(
-                    "运行 {} {} (package: {})",
+                    "Run {} {} (package: {})",
                     RUST_BIN_KIND_TASK_VARIABLE.template_value(),
                     RUST_BIN_NAME_TASK_VARIABLE.template_value(),
                     RUST_PACKAGE_TASK_VARIABLE.template_value(),
@@ -1060,7 +1060,7 @@ impl ContextProvider for RustContextProvider {
             },
             TaskTemplate {
                 label: format!(
-                    "测试 (package: {})",
+                    "Test (package: {})",
                     RUST_PACKAGE_TASK_VARIABLE.template_value()
                 ),
                 command: "cargo".into(),
@@ -1073,14 +1073,14 @@ impl ContextProvider for RustContextProvider {
                 ..TaskTemplate::default()
             },
             TaskTemplate {
-                label: "运行".into(),
+                label: "Run".into(),
                 command: "cargo".into(),
                 args: run_task_args,
                 cwd: Some(RUST_MANIFEST_DIRNAME_TASK_VARIABLE.template_value()),
                 ..TaskTemplate::default()
             },
             TaskTemplate {
-                label: "清理".into(),
+                label: "Clean".into(),
                 command: "cargo".into(),
                 args: vec!["clean".into()],
                 cwd: Some(RUST_MANIFEST_DIRNAME_TASK_VARIABLE.template_value()),
@@ -1180,7 +1180,7 @@ async fn target_info_from_abs_path(
         .current_dir(
             abs_path
                 .parent()
-                .ok_or_else(|| anyhow::anyhow!("无法获取父目录"))?,
+                .ok_or_else(|| anyhow::anyhow!("failed to get parent directory"))?,
         )
         .arg("metadata")
         .arg("--no-deps")

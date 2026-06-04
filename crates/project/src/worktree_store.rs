@@ -66,7 +66,7 @@ impl WorktreePaths {
     ) -> anyhow::Result<Self> {
         anyhow::ensure!(
             main_worktree_paths.paths().len() == folder_paths.paths().len(),
-            "main_worktree_paths 有 {} 个条目,但 folder_paths 有 {} 个",
+            "main_worktree_paths has {} entries but folder_paths has {}",
             main_worktree_paths.paths().len(),
             folder_paths.paths().len(),
         );
@@ -609,7 +609,7 @@ impl WorktreeStore {
                             {
                                 if let Some(parent) = abs_new_path.parent() {
                                     fs.create_dir(parent).await.with_context(|| {
-                                        format!("正在创建父目录 {parent:?}")
+                                        format!("creating parent directory {parent:?}")
                                     })?;
                                     return do_rename(
                                         fs.as_ref(),

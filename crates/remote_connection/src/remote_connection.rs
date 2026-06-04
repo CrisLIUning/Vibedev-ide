@@ -107,7 +107,7 @@ impl RemoteConnectionPrompt {
 
     pub fn confirm(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if let Some((_, tx)) = self.prompt.take() {
-            self.status_message = Some("正在连接".into());
+            self.status_message = Some("Connecting".into());
 
             let pw = self.editor.text(cx);
             if let Ok(secure) = EncryptedPassword::try_from(pw.as_ref()) {
@@ -142,9 +142,9 @@ impl Render for RemoteConnectionPrompt {
         let is_password_prompt = self.is_password_prompt;
         let is_masked = self.is_masked;
         let (masked_password_icon, masked_password_tooltip) = if is_masked {
-            (IconName::Eye, "切换以显示密码")
+            (IconName::Eye, "Toggle to Unmask Password")
         } else {
-            (IconName::EyeOff, "切换以隐藏密码")
+            (IconName::EyeOff, "Toggle to Mask Password")
         };
 
         v_flex()
@@ -191,7 +191,7 @@ impl Render for RemoteConnectionPrompt {
                                     .color(Color::Muted),
                             )
                             .child(
-                                Label::new("大写锁定已开启。")
+                                Label::new("Caps lock is on.")
                                     .size(LabelSize::Small)
                                     .color(Color::Muted),
                             ),
@@ -391,7 +391,7 @@ impl Render for RemoteConnectionModal {
                         .inset(true)
                         .spacing(ui::ListItemSpacing::Sparse)
                         .start_slot(Icon::new(IconName::Close).color(Color::Muted))
-                        .child(Label::new("取消"))
+                        .child(Label::new("Cancel"))
                         .end_slot(
                             KeyBinding::for_action_in(&menu::Cancel, &self.focus_handle(cx), cx)
                                 .size(rems_from_px(12.)),
@@ -492,7 +492,7 @@ impl remote::RemoteClientDelegate for RemoteClientDelegate {
             .await
             .with_context(|| {
                 format!(
-                    "正在下载远程服务器二进制文件 (version: {}, os: {}, arch: {})",
+                    "Downloading remote server binary (version: {}, os: {}, arch: {})",
                     version
                         .as_ref()
                         .map(|v| format!("{}", v))
@@ -560,7 +560,7 @@ pub fn connect_with_modal(
         });
         let Some(modal) = workspace.active_modal::<RemoteConnectionModal>(cx) else {
             return Task::ready(Err(anyhow::anyhow!(
-                "无法打开远程连接对话框"
+                "Failed to open remote connection dialog"
             )));
         };
         let prompt = modal.read(cx).prompt.clone();
@@ -657,7 +657,7 @@ impl remote::RemoteClientDelegate for BackgroundRemoteClientDelegate {
             .await
             .with_context(|| {
                 format!(
-                    "正在下载远程服务器二进制文件 (version: {}, os: {}, arch: {})",
+                    "Downloading remote server binary (version: {}, os: {}, arch: {})",
                     version
                         .as_ref()
                         .map(|v| format!("{v}"))

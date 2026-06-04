@@ -78,7 +78,7 @@ impl ApiKeyState {
             Some(api_key.key.clone())
         } else if let ApiKeySource::EnvVar(var_name) = &api_key.source {
             log::warn!(
-                "{} 现正用于 URL {},而最初用于 URL {}",
+                "{} is now being used with URL {}, when initially it was used with URL {}",
                 var_name,
                 url,
                 self.url
@@ -87,7 +87,7 @@ impl ApiKeyState {
         } else {
             // bug case because load_if_needed should be called whenever the url may have changed
             log::error!(
-                "bug: 尝试将关联 URL {} 的 API 密钥用于 URL {}",
+                "bug: Attempted to use API key associated with URL {} instead with URL {}",
                 self.url,
                 url
             );
@@ -106,7 +106,7 @@ impl ApiKeyState {
     ) -> Task<Result<()>> {
         if self.is_from_env_var() {
             return Task::ready(Err(anyhow!(
-                "bug: 当 API 密钥来自环境变量时,尝试将其存储到系统钥匙串",
+                "bug: attempted to store API key in system keychain when API key is from env var",
             )));
         }
         cx.spawn(async move |ent, cx| {
@@ -263,7 +263,7 @@ impl ApiKey {
         };
         let key = match str::from_utf8(&api_key) {
             Ok(key) => key,
-            Err(_) => return LoadStatus::Error(format!("URL {url} 的 API 密钥不是 utf8 编码")),
+            Err(_) => return LoadStatus::Error(format!("API key for URL {url} is not utf8")),
         };
         LoadStatus::Loaded(Self {
             source: ApiKeySource::SystemKeychain,

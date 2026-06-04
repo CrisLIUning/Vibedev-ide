@@ -236,7 +236,7 @@ impl Editor {
                             Ok(None) => continue,
                             Err(e) => {
                                 log::error!(
-                                    "获取缓冲区 {buffer_id:?} 的代码镜头失败:{e:#}"
+                                    "Failed to fetch code lenses for buffer {buffer_id:?}: {e:#}"
                                 );
                                 continue;
                             }
@@ -701,7 +701,7 @@ mod tests {
                     lsp::CodeLens {
                         range: lsp::Range::new(lsp::Position::new(0, 0), lsp::Position::new(0, 19)),
                         command: Some(lsp::Command {
-                            title: "2 个引用".to_owned(),
+                            title: "2 references".to_owned(),
                             command: "lens_cmd".to_owned(),
                             arguments: None,
                         }),
@@ -710,7 +710,7 @@ mod tests {
                     lsp::CodeLens {
                         range: lsp::Range::new(lsp::Position::new(1, 0), lsp::Position::new(1, 19)),
                         command: Some(lsp::Command {
-                            title: "0 个引用".to_owned(),
+                            title: "0 references".to_owned(),
                             command: "lens_cmd".to_owned(),
                             arguments: None,
                         }),
@@ -723,7 +723,7 @@ mod tests {
 
         assert!(
             code_lens_request.next().await.is_some(),
-            "应该收到代码镜头请求"
+            "should have received a code lens request"
         );
         cx.run_until_parked();
 
@@ -731,14 +731,14 @@ mod tests {
             assert_eq!(
                 editor.code_lens_enabled(),
                 true,
-                "代码镜头应该启用"
+                "code lens should be enabled"
             );
             let total_blocks: usize = editor
                 .code_lens
                 .as_ref()
                 .map(|s| s.blocks.values().map(|v| v.len()).sum())
                 .unwrap_or(0);
-            assert_eq!(total_blocks, 2, "应该插入两个代码镜头块");
+            assert_eq!(total_blocks, 2, "Should have inserted two code lens blocks");
         });
     }
 
@@ -769,7 +769,7 @@ mod tests {
                 Ok(Some(vec![lsp::CodeLens {
                     range: lsp::Range::new(lsp::Position::new(0, 0), lsp::Position::new(0, 19)),
                     command: Some(lsp::Command {
-                        title: "1 个引用".to_owned(),
+                        title: "1 reference".to_owned(),
                         command: "lens_cmd".to_owned(),
                         arguments: None,
                     }),
@@ -781,7 +781,7 @@ mod tests {
 
         assert!(
             code_lens_request.next().await.is_some(),
-            "应该收到初始代码镜头请求"
+            "should have received the initial code lens request"
         );
         cx.run_until_parked();
 
@@ -801,7 +801,7 @@ mod tests {
         assert_eq!(
             initial_block_ids.len(),
             1,
-            "应该有一个初始代码镜头块"
+            "Should have one initial code lens block"
         );
 
         cx.update_editor(|editor, window, cx| {
@@ -812,7 +812,7 @@ mod tests {
             .advance_clock(LSP_REQUEST_DEBOUNCE_TIMEOUT + Duration::from_millis(50));
         assert!(
             code_lens_request.next().await.is_some(),
-            "编辑后应该收到另一个代码镜头请求"
+            "should have received another code lens request after edit"
         );
         cx.run_until_parked();
 
@@ -831,7 +831,7 @@ mod tests {
         });
         assert_eq!(
             refreshed_block_ids, initial_block_ids,
-            "当内容不变时,代码镜头块应在刷新时保留"
+            "Code lens blocks should be preserved across refreshes when their content is unchanged"
         );
     }
 
@@ -871,7 +871,7 @@ mod tests {
             .set_request_handler::<lsp::request::CodeLensResolve, _, _>(|lens, _| async move {
                 Ok(lsp::CodeLens {
                     command: Some(lsp::Command {
-                        title: "1 个引用".to_owned(),
+                        title: "1 reference".to_owned(),
                         command: "resolved_cmd".to_owned(),
                         arguments: None,
                     }),
@@ -883,7 +883,7 @@ mod tests {
 
         assert!(
             code_lens_request.next().await.is_some(),
-            "应该收到初始代码镜头请求"
+            "should have received the initial code lens request"
         );
         cx.run_until_parked();
 
@@ -903,7 +903,7 @@ mod tests {
         assert_eq!(
             initial.len(),
             1,
-            "解析应该从浅镜头插入一个块"
+            "resolve should have inserted exactly one block from the shallow lens"
         );
 
         for keystroke in [" ", "x", "y"] {
@@ -915,7 +915,7 @@ mod tests {
                 .advance_clock(LSP_REQUEST_DEBOUNCE_TIMEOUT + Duration::from_millis(50));
             assert!(
                 code_lens_request.next().await.is_some(),
-                "编辑后应该收到另一个(浅)代码镜头请求"
+                "should have received another (shallow) code lens request after edit"
             );
             cx.run_until_parked();
 
@@ -934,7 +934,7 @@ mod tests {
             });
             assert_eq!(
                 after, initial,
-                "块 ID 必须在未解析获取 → 解析周期中保持不变"
+                "Block IDs must survive the unresolved-fetch → resolve cycle without churn"
             );
         }
     }
@@ -979,7 +979,7 @@ mod tests {
                     }
                     Ok(lsp::CodeLens {
                         command: Some(lsp::Command {
-                            title: "1 个引用".to_owned(),
+                            title: "1 reference".to_owned(),
                             command: "resolved_cmd".to_owned(),
                             arguments: None,
                         }),
@@ -992,7 +992,7 @@ mod tests {
 
         assert!(
             code_lens_request.next().await.is_some(),
-            "应该收到初始代码镜头请求"
+            "should have received the initial code lens request"
         );
         cx.run_until_parked();
 
@@ -1004,7 +1004,7 @@ mod tests {
                 .unwrap_or(0);
             assert_eq!(
                 total_blocks, 1,
-                "在解析完成前应该保留一个占位符块"
+                "a placeholder block should be reserved before the resolve completes"
             );
         });
 
@@ -1019,7 +1019,7 @@ mod tests {
                 .unwrap_or(0);
             assert_eq!(
                 total_blocks, 1,
-                "解析完成后占位符块应该仍然存在"
+                "the placeholder block should still be present after resolution"
             );
         });
     }
@@ -1069,7 +1069,7 @@ mod tests {
 
         assert!(
             code_lens_request.next().await.is_some(),
-            "应该收到初始代码镜头请求"
+            "should have received the initial code lens request"
         );
         cx.run_until_parked();
 
@@ -1081,7 +1081,7 @@ mod tests {
                 .unwrap_or(0);
             assert_eq!(
                 total_blocks, 0,
-                "当 lens 解析为空标题时应该清理占位符块"
+                "placeholder block should be cleaned up when its lens resolves to a blank title"
             );
         });
     }
@@ -1138,8 +1138,8 @@ mod tests {
                             .unwrap_or(serde_json::Value::Null);
                         resolve_calls.lock().unwrap().push(kind.clone());
                         let title = match kind.as_str() {
-                            Some("references") => "2 个引用",
-                            Some("implementations") => "1 个实现",
+                            Some("references") => "2 references",
+                            Some("implementations") => "1 implementation",
                             _ => "",
                         };
                         Ok(lsp::CodeLens {
@@ -1158,7 +1158,7 @@ mod tests {
 
         assert!(
             code_lens_request.next().await.is_some(),
-            "应该收到初始代码镜头请求"
+            "should have received the initial code lens request"
         );
         cx.run_until_parked();
 
@@ -1166,7 +1166,7 @@ mod tests {
         assert_eq!(
             calls.len(),
             2,
-            "相同范围的 lens 应该独立解析,得到 {calls:?}"
+            "both same-range lenses should be resolved independently, got {calls:?}"
         );
         let kinds: Vec<&str> = calls.iter().filter_map(|v| v.as_str()).collect();
         assert_eq!(kinds.contains(&"references"), true);
@@ -1181,7 +1181,7 @@ mod tests {
             assert_eq!(
                 blocks.len(),
                 1,
-                "单个块应该包含两个 lens 项目"
+                "a single block should host both lens items"
             );
             let titles: Vec<String> = blocks[0]
                 .line
@@ -1189,9 +1189,9 @@ mod tests {
                 .iter()
                 .filter_map(|item| item.title.as_ref().map(|t| t.to_string()))
                 .collect();
-            assert_eq!(titles.len(), 2, "两个 lens 标题都应该被解析");
-            assert_eq!(titles.contains(&"2 个引用".to_string()), true);
-            assert_eq!(titles.contains(&"1 个实现".to_string()), true);
+            assert_eq!(titles.len(), 2, "both lens titles should be resolved");
+            assert_eq!(titles.contains(&"2 references".to_string()), true);
+            assert_eq!(titles.contains(&"1 implementation".to_string()), true);
         });
     }
 
@@ -1238,7 +1238,7 @@ mod tests {
 
         assert!(
             code_lens_request.next().await.is_some(),
-            "应该收到初始代码镜头请求"
+            "should have received the initial code lens request"
         );
         cx.run_until_parked();
 
@@ -1250,7 +1250,7 @@ mod tests {
                 .unwrap_or(0);
             assert_eq!(
                 total_blocks, 0,
-                "当解析没有返回命令时应该清理占位符块"
+                "placeholder block should be cleaned up when resolve yields no command"
             );
         });
     }
@@ -1276,7 +1276,7 @@ mod tests {
 
         cx.lsp
             .set_request_handler::<lsp::request::CodeLensRequest, _, _>(|_, _| async move {
-                panic!("禁用时不应请求代码镜头");
+                panic!("Should not request code lenses when disabled");
             });
 
         cx.set_state("ˇfunction hello() {}");
@@ -1286,7 +1286,7 @@ mod tests {
             assert_eq!(
                 editor.code_lens_enabled(),
                 false,
-                "设置关闭时代码镜头不应启用"
+                "code lens should not be enabled when setting is off"
             );
         });
     }
@@ -1318,7 +1318,7 @@ mod tests {
                 Ok(Some(vec![lsp::CodeLens {
                     range: lsp::Range::new(lsp::Position::new(0, 0), lsp::Position::new(0, 19)),
                     command: Some(lsp::Command {
-                        title: "1 个引用".to_owned(),
+                        title: "1 reference".to_owned(),
                         command: "lens_cmd".to_owned(),
                         arguments: None,
                     }),
@@ -1330,7 +1330,7 @@ mod tests {
 
         assert!(
             code_lens_request.next().await.is_some(),
-            "应该收到代码镜头请求"
+            "should have received a code lens request"
         );
         cx.run_until_parked();
 
@@ -1338,14 +1338,14 @@ mod tests {
             assert_eq!(
                 editor.code_lens_enabled(),
                 true,
-                "代码镜头应该启用"
+                "code lens should be enabled"
             );
             let total_blocks: usize = editor
                 .code_lens
                 .as_ref()
                 .map(|s| s.blocks.values().map(|v| v.len()).sum())
                 .unwrap_or(0);
-            assert_eq!(total_blocks, 1, "应该有一个代码镜头块");
+            assert_eq!(total_blocks, 1, "Should have one code lens block");
         });
 
         cx.update_editor(|editor, _window, cx| {
@@ -1356,7 +1356,7 @@ mod tests {
             assert_eq!(
                 editor.code_lens_enabled(),
                 false,
-                "清除后代码镜头应禁用"
+                "code lens should be disabled after clearing"
             );
         });
     }
@@ -1404,8 +1404,8 @@ mod tests {
                     .and_then(|v| v.as_str())
                     .unwrap_or("unknown");
                 let title = match id {
-                    "lens_1" => "3 个引用",
-                    "lens_2" => "1 个实现",
+                    "lens_1" => "3 references",
+                    "lens_2" => "1 implementation",
                     _ => "unknown",
                 };
                 Ok(lsp::CodeLens {
@@ -1422,7 +1422,7 @@ mod tests {
 
         assert!(
             code_lens_request.next().await.is_some(),
-            "应该收到代码镜头请求"
+            "should have received a code lens request"
         );
         cx.run_until_parked();
 
@@ -1434,7 +1434,7 @@ mod tests {
                 .unwrap_or(0);
             assert_eq!(
                 total_blocks, 2,
-                "未解析的镜头应该被解析并显示"
+                "Unresolved lenses should have been resolved and displayed"
             );
         });
     }
@@ -1545,7 +1545,7 @@ mod tests {
                         resolved_lines.lock().unwrap().push(line);
                         Ok(lsp::CodeLens {
                             command: Some(lsp::Command {
-                                title: format!("{line} 个引用"),
+                                title: format!("{line} references"),
                                 command: format!("show_refs_{line}"),
                                 arguments: None,
                             }),
@@ -1567,7 +1567,7 @@ mod tests {
         assert_eq!(
             initial_resolved,
             HashSet::from_iter([0, 10, 20, 30, 40]),
-            "只有顶部可见的镜头应该被解析"
+            "Only lenses visible at the top should be resolved"
         );
 
         editor.update_in(cx, |editor, window, cx| {
@@ -1589,7 +1589,7 @@ mod tests {
         assert_eq!(
             after_scroll_resolved,
             HashSet::from_iter([70, 80, 90]),
-            "只有底部新可见的镜头应该被解析,中间的不会"
+            "Only newly visible lenses at the bottom should be resolved, not middle ones"
         );
     }
 }

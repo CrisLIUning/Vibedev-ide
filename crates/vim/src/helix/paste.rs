@@ -106,7 +106,7 @@ impl Vim {
                     } else if action.before {
                         sel.start
                     } else if sel.start == sel.end {
-                        // In Helix, a single-point cursor is "位于" of a
+                        // In Helix, a single-point cursor is "on top" of a
                         // character, and pasting after means after that character.
                         // At line end this means the next line. But on an empty
                         // line there is no character, so paste at the cursor.
@@ -468,7 +468,7 @@ mod test {
             Mode::HelixNormal,
         );
 
-        // If we're currently at the end of a line, "下一行"
+        // If we're currently at the end of a line, "the line after"
         // means right after the cursor.
         cx.set_state(
             indoc! {"

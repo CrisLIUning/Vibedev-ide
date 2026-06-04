@@ -738,7 +738,7 @@ impl UserStore {
             cloud_client
                 .update_system_settings(system_id, body)
                 .await
-                .context("无法保存选中的组织")?;
+                .context("failed to persist selected organization")?;
             Ok(())
         })
     }

@@ -578,7 +578,7 @@ mod tests {
         let content = "vim: set :";
         // This should return None because there are no actual options
         let result = parse_modeline(&[content], &[]);
-        assert!(result.is_none(), "预期为 None 但得到: {:?}", result);
+        assert!(result.is_none(), "Expected None but got: {:?}", result);
 
         // Test modeline without proper format
         let content = "not a modeline";

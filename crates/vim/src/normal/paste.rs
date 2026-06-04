@@ -51,7 +51,7 @@ impl Vim {
                 .filter(|reg| !reg.text.is_empty())
                 else {
                     vim.set_status_label(
-                        format!("寄存器 {} 为空", selected_register.unwrap_or('"')),
+                        format!("Nothing in register {}", selected_register.unwrap_or('"')),
                         cx,
                     );
                     return;
@@ -267,7 +267,7 @@ impl Vim {
                 })
                 .filter(|reg| !reg.text.is_empty()) else {
                     vim.set_status_label(
-                        format!("寄存器 {} 为空", selected_register.unwrap_or('"')),
+                        format!("Nothing in register {}", selected_register.unwrap_or('"')),
                         cx,
                     );
                     return;
@@ -315,7 +315,7 @@ impl Vim {
                 })
                 .filter(|reg| !reg.text.is_empty()) else {
                     vim.set_status_label(
-                        format!("寄存器 {} 为空", selected_register.unwrap_or('"')),
+                        format!("Nothing in register {}", selected_register.unwrap_or('"')),
                         cx,
                     );
                     return;

@@ -418,7 +418,7 @@ impl DapStore {
                     })
                 } else {
                     Task::ready(Err(anyhow!(
-                        "无法找到任务 `{}` 的任何定位器。请在调试场景定义中指定 `attach` 或 `launch` 参数",
+                        "Couldn't find any locator for task `{}`. Specify the `attach` or `launch` arguments in your debug scenario definition",
                         build_command.label
                     )))
                 }

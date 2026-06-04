@@ -139,32 +139,32 @@ impl Component for Color {
                 .gap_6()
                 .children(vec![
                     example_group_with_title(
-                        "文本颜色",
+                        "Text Colors",
                         vec![
                             single_example(
-                                "默认",
-                                Label::new("默认文本颜色")
+                                "Default",
+                                Label::new("Default text color")
                                     .color(Color::Default)
                                     .into_any_element(),
                             )
                             .description(Color::Default.get_variant_docs()),
                             single_example(
-                                "静音",
-                                Label::new("弱化文本颜色")
+                                "Muted",
+                                Label::new("Muted text color")
                                     .color(Color::Muted)
                                     .into_any_element(),
                             )
                             .description(Color::Muted.get_variant_docs()),
                             single_example(
-                                "强调",
-                                Label::new("强调文本颜色")
+                                "Accent",
+                                Label::new("Accent text color")
                                     .color(Color::Accent)
                                     .into_any_element(),
                             )
                             .description(Color::Accent.get_variant_docs()),
                             single_example(
-                                "已禁用",
-                                Label::new("禁用文本颜色")
+                                "Disabled",
+                                Label::new("Disabled text color")
                                     .color(Color::Disabled)
                                     .into_any_element(),
                             )
@@ -172,32 +172,32 @@ impl Component for Color {
                         ],
                     ),
                     example_group_with_title(
-                        "状态颜色",
+                        "Status Colors",
                         vec![
                             single_example(
-                                "成功",
-                                Label::new("成功状态")
+                                "Success",
+                                Label::new("Success status")
                                     .color(Color::Success)
                                     .into_any_element(),
                             )
                             .description(Color::Success.get_variant_docs()),
                             single_example(
-                                "警告",
-                                Label::new("警告状态")
+                                "Warning",
+                                Label::new("Warning status")
                                     .color(Color::Warning)
                                     .into_any_element(),
                             )
                             .description(Color::Warning.get_variant_docs()),
                             single_example(
-                                "错误",
-                                Label::new("错误状态")
+                                "Error",
+                                Label::new("Error status")
                                     .color(Color::Error)
                                     .into_any_element(),
                             )
                             .description(Color::Error.get_variant_docs()),
                             single_example(
-                                "信息",
-                                Label::new("信息状态")
+                                "Info",
+                                Label::new("Info status")
                                     .color(Color::Info)
                                     .into_any_element(),
                             )
@@ -205,32 +205,32 @@ impl Component for Color {
                         ],
                     ),
                     example_group_with_title(
-                        "版本控制颜色",
+                        "Version Control Colors",
                         vec![
                             single_example(
-                                "已创建",
-                                Label::new("已创建项")
+                                "Created",
+                                Label::new("Created item")
                                     .color(Color::Created)
                                     .into_any_element(),
                             )
                             .description(Color::Created.get_variant_docs()),
                             single_example(
-                                "已修改",
-                                Label::new("已修改项")
+                                "Modified",
+                                Label::new("Modified item")
                                     .color(Color::Modified)
                                     .into_any_element(),
                             )
                             .description(Color::Modified.get_variant_docs()),
                             single_example(
-                                "已删除",
-                                Label::new("已删除项")
+                                "Deleted",
+                                Label::new("Deleted item")
                                     .color(Color::Deleted)
                                     .into_any_element(),
                             )
                             .description(Color::Deleted.get_variant_docs()),
                             single_example(
-                                "冲突",
-                                Label::new("冲突项")
+                                "Conflict",
+                                Label::new("Conflict item")
                                     .color(Color::Conflict)
                                     .into_any_element(),
                             )

@@ -173,7 +173,7 @@ impl Render for WindowShadow {
                                                     }
                                                 })
                                                 .text_color(black())
-                                                .child("这是自定义标题栏"),
+                                                .child("this is the custom titlebar"),
                                         }),
                                 ),
                         ),

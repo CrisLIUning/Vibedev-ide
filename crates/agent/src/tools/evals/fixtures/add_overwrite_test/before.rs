@@ -169,7 +169,7 @@ impl ActionLog {
                     let tracked_buffer = this
                         .tracked_buffers
                         .get(&buffer)
-                        .context("缓冲区未被跟踪")?;
+                        .context("buffer not tracked")?;
 
                     let rebase = cx.background_spawn({
                         let mut base_text = tracked_buffer.base_text.clone();
@@ -251,7 +251,7 @@ impl ActionLog {
                 let tracked_buffer = this
                     .tracked_buffers
                     .get_mut(&buffer)
-                    .context("缓冲区未被跟踪")?;
+                    .context("buffer not tracked")?;
                 tracked_buffer.base_text = new_base_text_rope;
                 tracked_buffer.snapshot = buffer_snapshot;
                 tracked_buffer.unreviewed_changes = unreviewed_changes;
@@ -1445,7 +1445,7 @@ mod tests {
         init_test(cx);
 
         let operations = env::var("OPERATIONS")
-            .map(|i| i.parse().expect("无效的 `OPERATIONS` 变量"))
+            .map(|i| i.parse().expect("invalid `OPERATIONS` variable"))
             .unwrap_or(20);
 
         let text = RandomCharIter::new(&mut rng).take(50).collect::<String>();
@@ -1468,7 +1468,7 @@ mod tests {
                 0..25 => {
                     action_log.update(cx, |log, cx| {
                         let range = buffer.read(cx).random_byte_range(0, &mut rng);
-                        log::info!("保留范围 {:?} 内的编辑", range);
+                        log::info!("keeping edits in range {:?}", range);
                         log.keep_edits_in_range(buffer.clone(), range, cx)
                     });
                 }
@@ -1476,7 +1476,7 @@ mod tests {
                     action_log
                         .update(cx, |log, cx| {
                             let range = buffer.read(cx).random_byte_range(0, &mut rng);
-                            log::info!("拒绝范围 {:?} 内的编辑", range);
+                            log::info!("rejecting edits in range {:?}", range);
                             log.reject_edits_in_ranges(buffer.clone(), vec![range], cx)
                         })
                         .await
@@ -1485,9 +1485,9 @@ mod tests {
                 _ => {
                     let is_agent_change = rng.gen_bool(0.5);
                     if is_agent_change {
-                        log::info!("助手编辑");
+                        log::info!("agent edit");
                     } else {
-                        log::info!("用户编辑");
+                        log::info!("user edit");
                     }
                     cx.update(|cx| {
                         buffer.update(cx, |buffer, cx| buffer.randomly_edit(&mut rng, 1, cx));
@@ -1510,7 +1510,7 @@ mod tests {
             buffer: &Entity<Buffer>,
             cx: &mut TestAppContext,
         ) {
-            log::info!("静默中...");
+            log::info!("quiescing...");
             cx.run_until_parked();
             action_log.update(cx, |log, cx| {
                 let tracked_buffer = log.tracked_buffers.get(&buffer).unwrap();

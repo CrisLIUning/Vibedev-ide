@@ -330,7 +330,7 @@ pub async fn stream_completion(
         let mut body = String::new();
         response.body_mut().read_to_string(&mut body).await?;
         anyhow::bail!(
-            "无法连接到 DeepSeek API: {} {}",
+            "Failed to connect to DeepSeek API: {} {}",
             response.status(),
             body,
         );

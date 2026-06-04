@@ -57,11 +57,11 @@ impl ModalView for SecurityModal {
     fn on_before_dismiss(&mut self, _: &mut Window, _: &mut Context<Self>) -> DismissDecision {
         match self.trusted {
             Some(false) => {
-                telemetry::event!("在受限模式下打开", source = "Worktree Trust Modal");
+                telemetry::event!("Open in Restricted", source = "Worktree Trust Modal");
                 DismissDecision::Dismiss(true)
             }
             Some(true) => {
-                telemetry::event!("信任并继续", source = "Worktree Trust Modal");
+                telemetry::event!("Trust and Continue", source = "Worktree Trust Modal");
                 DismissDecision::Dismiss(true)
             }
             // Block dismiss via escape or clicking outside; user must pick an action
@@ -79,9 +79,9 @@ impl Render for SecurityModal {
 
         let restricted_count = self.restricted_paths.len();
         let header_label: SharedString = if restricted_count == 1 {
-            "未识别的项目".into()
+            "Unrecognized Project".into()
         } else {
-            format!("未识别的项目 ({})", restricted_count).into()
+            format!("Unrecognized Projects ({})", restricted_count).into()
         };
 
         let trust_label = self.build_trust_label();
@@ -174,23 +174,23 @@ impl Render for SecurityModal {
                         v_flex()
                             .child(
                                 Label::new(
-                                    "不受信任的项目将在受限模式下打开,以保护您的系统。",
+                                    "Untrusted projects are opened in Restricted Mode to protect your system.",
                                 )
                                 .color(Color::Muted),
                             )
                             .child(
                                 Label::new(
-                                    "请检查 .zed/设置.json 中是否有此项目配置的扩展或命令。",
+                                    "Review .zed/settings.json for any extensions or commands configured by this project.",
                                 )
                                 .color(Color::Muted),
                             ),
                     )
                     .child(
                         v_flex()
-                            .child(Label::new("受限模式将阻止:").color(Color::Muted))
-                            .child(ListBulletItem::new("应用项目设置"))
-                            .child(ListBulletItem::new("运行语言服务器"))
-                            .child(ListBulletItem::new("安装 MCP 服务器集成")),
+                            .child(Label::new("Restricted Mode prevents:").color(Color::Muted))
+                            .child(ListBulletItem::new("Project settings from being applied"))
+                            .child(ListBulletItem::new("Language servers from running"))
+                            .child(ListBulletItem::new("MCP Server integrations from installing")),
                     )
                     .map(|this| match trust_label {
                         Some(trust_label) => this.child(
@@ -214,7 +214,7 @@ impl Render for SecurityModal {
                     .gap_1()
                     .justify_end()
                     .child(
-                        Button::new("rm", "保持在受限模式")
+                        Button::new("rm", "Stay in Restricted Mode")
                             .key_binding(
                                 KeyBinding::for_action(
                                     &ToggleWorktreeSecurity,
@@ -229,7 +229,7 @@ impl Render for SecurityModal {
                             })),
                     )
                     .child(
-                        Button::new("tc", "信任并继续")
+                        Button::new("tc", "Trust and Continue")
                             .style(ButtonStyle::Filled)
                             .layer(ui::ElevationIndex::ModalSurface)
                             .key_binding(
@@ -281,16 +281,16 @@ impl SecurityModal {
         match available_parents.len() {
             0 => {
                 if has_restricted_files {
-                    Some(Cow::Borrowed("信任所有单个文件"))
+                    Some(Cow::Borrowed("Trust all single files"))
                 } else {
                     None
                 }
             }
             1 => Some(Cow::Owned(format!(
-                "信任 {:} 文件夹中的所有项目",
+                "Trust all projects in the {:} folder",
                 self.shorten_path(available_parents[0]).display()
             ))),
-            _ => Some(Cow::Borrowed("信任父文件夹中的所有项目")),
+            _ => Some(Cow::Borrowed("Trust all projects in the parent folders")),
         }
     }
 

@@ -14,7 +14,7 @@ use text::{Anchor, Point};
 /// Use the file path, line number, and symbol name from file outlines, grep results, or other tool outputs to populate these fields.
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct SymbolLocator {
-    /// The relative path of the file containing the symbol (e.g. "编辑器代码文件路径示例").
+    /// The relative path of the file containing the symbol (e.g. "crates/editor/src/editor.rs").
     pub file_path: String,
 
     /// The 1-based line number where the symbol appears. Use the line numbers from file outlines or grep results.
@@ -58,7 +58,7 @@ impl LocationDisplay {
             .read(cx)
             .file()
             .map(|f| f.full_path(cx).display().to_string())
-            .unwrap_or_else(|| "<无标题>".to_string());
+            .unwrap_or_else(|| "<untitled>".to_string());
 
         let start_line = range.start.row + 1;
         let end_line = range.end.row + 1;
@@ -85,7 +85,7 @@ impl LocationDisplay {
 
 impl fmt::Display for LocationDisplay {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let truncated_label = if self.truncated { "(已截断)" } else { "" };
+        let truncated_label = if self.truncated { " (truncated)" } else { "" };
         if self.start_line == self.end_line {
             writeln!(f, "{}#L{}{truncated_label}", self.path, self.start_line)?;
         } else {
@@ -156,7 +156,7 @@ impl SymbolLocator {
 
         let open_buffer_task = project.update(cx, |project, cx| {
             let Some(project_path) = project.find_project_path(file_path, cx) else {
-                return Err(format!("无法在工作区中找到路径 '{file_path}'",));
+                return Err(format!("Could not find path '{file_path}' in project",));
             };
             Ok(project.open_buffer(project_path, cx))
         })?;
@@ -172,7 +172,7 @@ impl SymbolLocator {
             if row > snapshot.max_point().row {
                 let line_count = snapshot.max_point().row + 1;
                 return Err(format!(
-                    "行 {line} 超出 '{file_path}' 的范围(文件共 {line_count} 行)",
+                    "Line {line} is beyond the end of '{file_path}' (file has {line_count} lines)",
                 ));
             }
 

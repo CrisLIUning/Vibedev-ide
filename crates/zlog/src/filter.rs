@@ -152,7 +152,7 @@ fn scope_alloc_from_scope_str(scope_str: &str) -> Option<ScopeAlloc> {
     }
     if scope_iter.next().is_some() {
         crate::warn!(
-            "无效的作用域键,嵌套作用域过多:'{scope_str}'。最大深度为 {SCOPE_DEPTH_MAX}",
+            "Invalid scope key, too many nested scopes: '{scope_str}'. Max depth is {SCOPE_DEPTH_MAX}",
         );
         return None;
     }

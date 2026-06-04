@@ -812,21 +812,21 @@ mod tests {
             assert_eq!(
                 left.width() + right.width(),
                 line.width(),
-                "分割点 {i} 处宽度之和必须相等"
+                "widths must sum at split={i}"
             );
             assert_eq!(
                 left.len() + right.len(),
                 line.len(),
-                "分割点 {i} 处长度之和必须相等"
+                "lengths must sum at split={i}"
             );
             assert_eq!(
                 format!("{}{}", left.text.as_ref(), right.text.as_ref()),
                 "abcdef",
-                "分割点 {i} 处文本必须能拼接还原"
+                "text must concatenate at split={i}"
             );
-            assert_eq!(left.font_size, line.font_size, "分割点 {i} 处的字体大小");
-            assert_eq!(right.ascent, line.ascent, "分割点 {i} 处的上伸度");
-            assert_eq!(right.descent, line.descent, "分割点 {i} 处的下伸度");
+            assert_eq!(left.font_size, line.font_size, "font_size at split={i}");
+            assert_eq!(right.ascent, line.ascent, "ascent at split={i}");
+            assert_eq!(right.descent, line.descent, "descent at split={i}");
         }
 
         // Edge: split at 0 produces no left runs, full content on right

@@ -151,7 +151,7 @@ impl MentionUri {
 
         if is_absolute(input, path_style) && !input.contains("://") {
             return parse_absolute_path(input)
-                .with_context(|| format!("无效的绝对路径提及 URI: {input}"));
+                .with_context(|| format!("Invalid absolute path mention URI: {input}"));
         }
 
         let url = url::Url::parse(input)?;
@@ -298,12 +298,12 @@ impl MentionUri {
                         match key.as_ref() {
                             "name" => {
                                 if name.replace(value.to_string()).is_some() {
-                                    bail!("重复的 skill 名称查询参数");
+                                    bail!("duplicate skill name query parameter");
                                 }
                             }
                             "source" => {
                                 if source.replace(value.to_string()).is_some() {
-                                    bail!("重复的 skill 源查询参数");
+                                    bail!("duplicate skill source query parameter");
                                 }
                             }
                             "path" => {
@@ -311,7 +311,7 @@ impl MentionUri {
                                     .replace(PathBuf::from(value.to_string()))
                                     .is_some()
                                 {
-                                    bail!("重复的 skill 文件路径查询参数");
+                                    bail!("duplicate skill file path query parameter");
                                 }
                             }
                             _ => bail!("invalid query parameter"),
@@ -319,9 +319,9 @@ impl MentionUri {
                     }
 
                     Ok(Self::Skill {
-                        name: name.context("缺少 skill 名称")?,
-                        source: source.context("缺少 skill 源")?,
-                        skill_file_path: skill_file_path.context("缺少 skill 文件路径")?,
+                        name: name.context("missing skill name")?,
+                        source: source.context("missing skill source")?,
+                        skill_file_path: skill_file_path.context("missing skill file path")?,
                     })
                 } else {
                     bail!("invalid zed url: {:?}", input);
@@ -351,13 +351,13 @@ impl MentionUri {
                     format!("Terminal ({} lines)", line_count)
                 }
             }
-            MentionUri::GitDiff { base_ref } => format!("分支差异 ({})", base_ref),
+            MentionUri::GitDiff { base_ref } => format!("Branch Diff ({})", base_ref),
             MentionUri::MergeConflict { file_path } => {
                 let name = Path::new(file_path)
                     .file_name()
                     .unwrap_or_default()
                     .to_string_lossy();
-                format!("合并冲突 ({name})")
+                format!("Merge Conflict ({name})")
             }
             MentionUri::Selection {
                 abs_path: path,
@@ -383,7 +383,7 @@ impl MentionUri {
             MentionUri::Skill { name, source, .. } => {
                 if source.is_empty() {
                     // Must match `SkillSource::display_label()` in agent_skills.
-                    format!("{}(全局)", name)
+                    format!("{} (global)", name)
                 } else {
                     format!("{} ({})", name, source)
                 }
@@ -638,7 +638,7 @@ mod tests {
             MentionUri::File { abs_path } => {
                 assert_eq!(abs_path, Path::new(path!("/path/to/file.rs")));
             }
-            _ => panic!("期望文件变体"),
+            _ => panic!("Expected File variant"),
         }
         assert_eq!(parsed.to_uri().to_string(), file_uri);
     }
@@ -651,7 +651,7 @@ mod tests {
             MentionUri::Directory { abs_path } => {
                 assert_eq!(abs_path, Path::new(path!("/path/to/dir/")));
             }
-            _ => panic!("期望目录变体"),
+            _ => panic!("Expected Directory variant"),
         }
         assert_eq!(parsed.to_uri().to_string(), file_uri);
     }
@@ -714,11 +714,11 @@ mod tests {
             abs_path: PathBuf::from(path!("/path/to/dir")),
         };
         let serialized = uri.to_uri().to_string();
-        assert!(serialized.ends_with('/'), "目录 URI 必须以 / 结尾");
+        assert!(serialized.ends_with('/'), "directory URI must end with /");
         let parsed = MentionUri::parse(&serialized, PathStyle::local()).unwrap();
         assert!(
             matches!(parsed, MentionUri::Directory { .. }),
-            "期望 Directory 变体, 得到 {:?}",
+            "expected Directory variant, got {:?}",
             parsed
         );
     }
@@ -739,7 +739,7 @@ mod tests {
                 assert_eq!(line_range.start(), &9);
                 assert_eq!(line_range.end(), &19);
             }
-            _ => panic!("期望符号变体"),
+            _ => panic!("Expected Symbol variant"),
         }
         assert_eq!(parsed.to_uri().to_string(), symbol_uri);
     }
@@ -758,7 +758,7 @@ mod tests {
                 assert_eq!(line_range.start(), &4);
                 assert_eq!(line_range.end(), &14);
             }
-            _ => panic!("期望选择变体"),
+            _ => panic!("Expected Selection variant"),
         }
         assert_eq!(parsed.to_uri().to_string(), selection_uri);
     }
@@ -771,7 +771,7 @@ mod tests {
             MentionUri::File { abs_path } => {
                 assert_eq!(abs_path, Path::new(path!("/path/to/日本語.txt")));
             }
-            _ => panic!("期望文件变体"),
+            _ => panic!("Expected File variant"),
         }
         assert_eq!(parsed.to_uri().to_string(), file_uri);
     }
@@ -789,7 +789,7 @@ mod tests {
                 assert_eq!(line_range.start(), &0);
                 assert_eq!(line_range.end(), &9);
             }
-            _ => panic!("期望无路径的选择变体"),
+            _ => panic!("Expected Selection variant without path"),
         }
         assert_eq!(parsed.to_uri().to_string(), selection_uri);
     }
@@ -806,7 +806,7 @@ mod tests {
                 assert_eq!(thread_id.to_string(), "session123");
                 assert_eq!(name, "Thread name");
             }
-            _ => panic!("期望对话线程变体"),
+            _ => panic!("Expected Thread variant"),
         }
         assert_eq!(parsed.to_uri().to_string(), thread_uri);
     }
@@ -820,7 +820,7 @@ mod tests {
                 assert_eq!(id.to_string(), "d8694ff2-90d5-4b6f-be33-33c1763acd52");
                 assert_eq!(name, "Some rule");
             }
-            _ => panic!("期望规则变体"),
+            _ => panic!("Expected Rule variant"),
         }
         assert_eq!(parsed.to_uri().to_string(), rule_uri);
     }
@@ -847,7 +847,7 @@ mod tests {
             MentionUri::Fetch { url } => {
                 assert_eq!(url.to_string(), http_uri);
             }
-            _ => panic!("期望获取变体"),
+            _ => panic!("Expected Fetch variant"),
         }
         assert_eq!(parsed.to_uri().to_string(), http_uri);
     }
@@ -860,7 +860,7 @@ mod tests {
             MentionUri::Fetch { url } => {
                 assert_eq!(url.to_string(), https_uri);
             }
-            _ => panic!("期望获取变体"),
+            _ => panic!("Expected Fetch variant"),
         }
         assert_eq!(parsed.to_uri().to_string(), https_uri);
     }
@@ -877,7 +877,7 @@ mod tests {
                 assert!(include_errors);
                 assert!(include_warnings);
             }
-            _ => panic!("期望诊断变体"),
+            _ => panic!("Expected Diagnostics variant"),
         }
         assert_eq!(parsed.to_uri().to_string(), uri);
     }
@@ -894,7 +894,7 @@ mod tests {
                 assert!(!include_errors);
                 assert!(include_warnings);
             }
-            _ => panic!("期望诊断变体"),
+            _ => panic!("Expected Diagnostics variant"),
         }
         assert_eq!(parsed.to_uri().to_string(), uri);
     }
@@ -920,7 +920,7 @@ mod tests {
             MentionUri::File { abs_path } => {
                 assert_eq!(abs_path, Path::new(file_path));
             }
-            _ => panic!("期望文件变体"),
+            _ => panic!("Expected File variant"),
         }
     }
 
@@ -938,7 +938,7 @@ mod tests {
                 assert_eq!(line_range.start(), &41);
                 assert_eq!(line_range.end(), &41);
             }
-            _ => panic!("期望选择变体"),
+            _ => panic!("Expected Selection variant"),
         }
     }
 
@@ -961,7 +961,7 @@ mod tests {
                     .expect("selection URI with column should parse");
                 assert_eq!(parsed_again, parsed.clone());
             }
-            _ => panic!("期望选择变体"),
+            _ => panic!("Expected Selection variant"),
         }
     }
 
@@ -979,7 +979,7 @@ mod tests {
                 assert_eq!(line_range.start(), &41);
                 assert_eq!(line_range.end(), &41);
             }
-            _ => panic!("期望选择变体"),
+            _ => panic!("Expected Selection variant"),
         }
     }
 
@@ -991,7 +991,7 @@ mod tests {
             MentionUri::File { abs_path } => {
                 assert_eq!(abs_path, Path::new("C:\\Users\\zed\\project\\main.rs"));
             }
-            _ => panic!("期望文件变体"),
+            _ => panic!("Expected File variant"),
         }
     }
 
@@ -1012,7 +1012,7 @@ mod tests {
                 assert_eq!(line_range.start(), &41);
                 assert_eq!(line_range.end(), &41);
             }
-            _ => panic!("期望选择变体"),
+            _ => panic!("Expected Selection variant"),
         }
     }
 
@@ -1033,7 +1033,7 @@ mod tests {
                 assert_eq!(line_range.start(), &41);
                 assert_eq!(line_range.end(), &41);
             }
-            _ => panic!("期望选择变体"),
+            _ => panic!("Expected Selection variant"),
         }
     }
 
@@ -1045,7 +1045,7 @@ mod tests {
             MentionUri::File { abs_path } => {
                 assert_eq!(abs_path, Path::new("/path/to/file.rs"));
             }
-            _ => panic!("期望文件变体"),
+            _ => panic!("Expected File variant"),
         }
     }
 
@@ -1063,7 +1063,7 @@ mod tests {
                 assert_eq!(line_range.start(), &41);
                 assert_eq!(line_range.end(), &41);
             }
-            _ => panic!("期望选择变体"),
+            _ => panic!("Expected Selection variant"),
         }
     }
 
@@ -1084,7 +1084,7 @@ mod tests {
                 assert_eq!(line_range.start(), &41);
                 assert_eq!(line_range.end(), &41);
             }
-            _ => panic!("期望选择变体"),
+            _ => panic!("Expected Selection variant"),
         }
     }
 
@@ -1103,7 +1103,7 @@ mod tests {
                 assert_eq!(line_range.start(), &1871);
                 assert_eq!(line_range.end(), &1871);
             }
-            _ => panic!("期望选择变体"),
+            _ => panic!("Expected Selection variant"),
         }
     }
 
@@ -1121,7 +1121,7 @@ mod tests {
                 assert_eq!(line_range.start(), &9);
                 assert_eq!(line_range.end(), &19);
             }
-            _ => panic!("期望选择变体"),
+            _ => panic!("Expected Selection variant"),
         }
 
         // Also test L10-L20 format
@@ -1137,7 +1137,7 @@ mod tests {
                 assert_eq!(line_range.start(), &9);
                 assert_eq!(line_range.end(), &19);
             }
-            _ => panic!("期望选择变体"),
+            _ => panic!("Expected Selection variant"),
         }
     }
 
@@ -1200,21 +1200,21 @@ mod tests {
         };
         assert_eq!(global_skill.name(), "create-skill");
         assert_eq!(global_skill.disambiguated_name(0), "create-skill");
-        assert_eq!(global_skill.disambiguated_name(1), "创建 skill(全局)");
+        assert_eq!(global_skill.disambiguated_name(1), "create-skill (global)");
         assert_eq!(
             project_skill.disambiguated_name(1),
-            "创建 skill(我的项目)"
+            "create-skill (my-project)"
         );
 
         // A type without special disambiguation (Thread) — detail has no effect
         // (the value is a fixed point so the disambiguation loop terminates).
         let thread = MentionUri::Thread {
             id: acp::SessionId::new("123"),
-            name: "我的对话".into(),
+            name: "My Thread".into(),
         };
-        assert_eq!(thread.disambiguated_name(0), "我的对话");
-        assert_eq!(thread.disambiguated_name(1), "我的对话");
-        assert_eq!(thread.disambiguated_name(5), "我的对话");
+        assert_eq!(thread.disambiguated_name(0), "My Thread");
+        assert_eq!(thread.disambiguated_name(1), "My Thread");
+        assert_eq!(thread.disambiguated_name(5), "My Thread");
 
         // Edge case: file at filesystem root has no parent to show
         let root_file = MentionUri::File {

@@ -53,7 +53,7 @@ where
     match ValueOrJsonString::<T>::deserialize(deserializer)? {
         ValueOrJsonString::Value(value) => Ok(value),
         ValueOrJsonString::String(string) => serde_json::from_str::<T>(&string).map_err(|error| {
-            D::Error::custom(format!("无法解析字符串化的值: {error}"))
+            D::Error::custom(format!("failed to parse stringified value: {error}"))
         }),
     }
 }
@@ -115,7 +115,7 @@ macro_rules! tools {
                 let mut j = i + 1;
                 while j < NAMES.len() {
                     if str_eq(NAMES[i], NAMES[j]) {
-                        panic!("tools! 宏中存在重复的工具名称");
+                        panic!("Duplicate tool name in tools! macro");
                     }
                     j += 1;
                 }

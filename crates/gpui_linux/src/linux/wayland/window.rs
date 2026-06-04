@@ -695,10 +695,10 @@ impl WaylandWindowStatePtr {
                     }
                 }
                 WEnum::Value(_) => {
-                    log::warn!("未知的装饰模式");
+                    log::warn!("Unknown decoration mode");
                 }
                 WEnum::Unknown(v) => {
-                    log::warn!("未知的装饰模式: {}", v);
+                    log::warn!("Unknown decoration mode: {}", v);
                 }
             }
         }
@@ -1393,7 +1393,7 @@ impl PlatformWindow for WaylandWindow {
             match state.renderer.recover(&raw_window) {
                 Ok(()) => {}
                 Err(err) => {
-                    log::warn!("GPU 恢复失败,将在下一帧重试: {err}");
+                    log::warn!("GPU recovery failed, will retry on next frame: {err}");
                 }
             }
 
@@ -1478,7 +1478,7 @@ impl PlatformWindow for WaylandWindow {
             None => {
                 if matches!(decorations, WindowDecorations::Server) {
                     log::info!(
-                        "请求服务端装饰,但 Wayland 服务器不支持。回退到客户端装饰。"
+                        "Server-side decorations requested, but the Wayland server does not support them. Falling back to client-side decorations."
                     );
                 }
                 state.decorations = WindowDecorations::Client;

@@ -583,7 +583,7 @@ impl Interactivity {
     {
         debug_assert!(
             self.drag_listener.is_none(),
-            "不支持在同一个元素上多次调用 on_drag"
+            "calling on_drag more than once on the same element is not supported"
         );
         self.drag_listener = Some((
             Arc::new(value),
@@ -604,7 +604,7 @@ impl Interactivity {
     {
         debug_assert!(
             self.hover_listener.is_none(),
-            "不支持在同一个元素上多次调用 on_hover"
+            "calling on_hover more than once on the same element is not supported"
         );
         self.hover_listener = Some(Box::new(listener));
     }
@@ -617,7 +617,7 @@ impl Interactivity {
     {
         debug_assert!(
             self.tooltip_builder.is_none(),
-            "不支持在同一个元素上多次调用 tooltip"
+            "calling tooltip more than once on the same element is not supported"
         );
         self.tooltip_builder = Some(TooltipBuilder {
             build: Rc::new(build_tooltip),
@@ -636,7 +636,7 @@ impl Interactivity {
     {
         debug_assert!(
             self.tooltip_builder.is_none(),
-            "不支持在同一个元素上多次调用 tooltip"
+            "calling tooltip more than once on the same element is not supported"
         );
         self.tooltip_builder = Some(TooltipBuilder {
             build: Rc::new(build_tooltip),
@@ -750,7 +750,7 @@ pub trait InteractiveElement: Sized {
     fn hover(mut self, f: impl FnOnce(StyleRefinement) -> StyleRefinement) -> Self {
         debug_assert!(
             self.interactivity().hover_style.is_none(),
-            "悬停样式已设置"
+            "hover style already set"
         );
         self.interactivity().hover_style = Some(Box::new(f(StyleRefinement::default())));
         self

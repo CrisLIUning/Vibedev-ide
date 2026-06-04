@@ -21,7 +21,7 @@ fn migrate_one(obj: &mut serde_json::Map<String, Value>) -> Result<()> {
         Value::Bool(false) => Value::String("never".to_string()),
         Value::String(s) if s == "never" || s == "when_hidden" || s == "always" => return Ok(()),
         _ => {
-            anyhow::bail!("期望 play_sound_when_agent_done 为布尔值或有效的枚举值")
+            anyhow::bail!("Expected play_sound_when_agent_done to be a boolean or valid enum value")
         }
     };
 

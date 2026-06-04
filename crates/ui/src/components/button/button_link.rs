@@ -10,7 +10,7 @@ use crate::{ButtonLike, prelude::*};
 /// ```
 /// use ui::ButtonLink;
 ///
-/// let button_link = ButtonLink::new("点击我", "https://example.com");
+/// let button_link = ButtonLink::new("Click me", "https://example.com");
 /// ```
 #[derive(IntoElement, RegisterComponent)]
 pub struct ButtonLink {
@@ -82,7 +82,7 @@ impl Component for ButtonLink {
     }
 
     fn description() -> Option<&'static str> {
-        Some("打开 URL 的按钮。")
+        Some("A button that opens a URL.")
     }
 
     fn preview(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
@@ -91,7 +91,7 @@ impl Component for ButtonLink {
                 .gap_6()
                 .child(
                     example_group(vec![single_example(
-                        "简单",
+                        "Simple",
                         ButtonLink::new("zed.dev", "https://zed.dev").into_any_element(),
                     )])
                     .vertical(),

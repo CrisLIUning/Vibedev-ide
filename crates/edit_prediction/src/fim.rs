@@ -54,7 +54,7 @@ pub fn request_prediction(
         }
         _ => None,
     }) else {
-        return Task::ready(Err(anyhow!("不支持用于 FIM 的编辑预测提供者")));
+        return Task::ready(Err(anyhow!("Unsupported edit prediction provider for FIM")));
     };
 
     let api_key = load_open_ai_compatible_api_key_if_needed(provider, cx);

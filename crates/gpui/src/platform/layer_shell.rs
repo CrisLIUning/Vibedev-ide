@@ -79,5 +79,5 @@ pub struct LayerShellOptions {
 /// An error indicating that an action failed because the compositor doesn't support the required
 /// layer_shell protocol.
 #[derive(Debug, Error)]
-#[error("合成器不支持 zwlr_layer_shell_v1")]
+#[error("Compositor doesn't support zwlr_layer_shell_v1")]
 pub struct LayerShellNotSupportedError;

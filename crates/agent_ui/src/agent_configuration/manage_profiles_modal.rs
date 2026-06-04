@@ -184,7 +184,7 @@ impl ManageProfilesModal {
     ) {
         let name_editor = cx.new(|cx| Editor::single_line(window, cx));
         name_editor.update(cx, |editor, cx| {
-            editor.set_placeholder_text("配置文件名称", window, cx);
+            editor.set_placeholder_text("Profile name", window, cx);
         });
 
         self.mode = Mode::NewProfile(NewProfileMode {
@@ -542,7 +542,7 @@ impl ManageProfilesModal {
                             h_flex()
                                 .gap_1()
                                 .child(
-                                    Label::new("自定义")
+                                    Label::new("Customize")
                                         .size(LabelSize::Small)
                                         .color(Color::Muted),
                                 )
@@ -572,7 +572,7 @@ impl ManageProfilesModal {
             div()
                 .track_focus(&self.focus_handle(cx))
                 .size_full()
-                .child(ProfileModalHeader::new("Agent 配置文件", None))
+                .child(ProfileModalHeader::new("Agent Profiles", None))
                 .child(
                     v_flex()
                         .pb_1()
@@ -586,7 +586,7 @@ impl ManageProfilesModal {
                             this.child(ListSeparator)
                                 .child(
                                     div().pl_2().pb_1().child(
-                                        Label::new("自定义配置文件")
+                                        Label::new("Custom Profiles")
                                             .size(LabelSize::Small)
                                             .color(Color::Muted),
                                     ),
@@ -615,7 +615,7 @@ impl ManageProfilesModal {
                                         .inset(true)
                                         .spacing(ListItemSpacing::Sparse)
                                         .start_slot(Icon::new(IconName::Plus))
-                                        .child(Label::new("添加新配置文件"))
+                                        .child(Label::new("Add New Profile"))
                                         .on_click({
                                             cx.listener(move |this, _, window, cx| {
                                                 this.new_profile(None, window, cx);
@@ -652,7 +652,7 @@ impl ManageProfilesModal {
                 .profiles
                 .get(base_profile_id)
                 .map(|profile| profile.name.clone())
-                .unwrap_or_else(|| "未知".into())
+                .unwrap_or_else(|| "Unknown".into())
         });
 
         v_flex()
@@ -660,8 +660,8 @@ impl ManageProfilesModal {
             .track_focus(&self.focus_handle(cx))
             .child(ProfileModalHeader::new(
                 match &base_profile_name {
-                    Some(base_profile) => format!("派生 {base_profile}"),
-                    None => "新建配置文件".into(),
+                    Some(base_profile) => format!("Fork {base_profile}"),
+                    None => "New Profile".into(),
                 },
                 match base_profile_name {
                     Some(_) => Some(IconName::Scissors),
@@ -684,7 +684,7 @@ impl ManageProfilesModal {
             .profiles
             .get(&mode.profile_id)
             .map(|profile| profile.name.clone())
-            .unwrap_or_else(|| "未知".into());
+            .unwrap_or_else(|| "Unknown".into());
 
         let icon = match mode.profile_id.as_str() {
             "write" => IconName::Pencil,
@@ -725,7 +725,7 @@ impl ManageProfilesModal {
                                                 .size(IconSize::Small)
                                                 .color(Color::Muted),
                                         )
-                                        .child(Label::new("派生配置文件"))
+                                        .child(Label::new("Fork Profile"))
                                         .on_click({
                                             let profile_id = mode.profile_id.clone();
                                             cx.listener(move |this, _, window, cx| {
@@ -766,7 +766,7 @@ impl ManageProfilesModal {
                                                 .size(IconSize::Small)
                                                 .color(Color::Muted),
                                         )
-                                        .child(Label::new("配置默认模型"))
+                                        .child(Label::new("Configure Default Model"))
                                         .on_click({
                                             let profile_id = mode.profile_id.clone();
                                             cx.listener(move |this, _, window, cx| {
@@ -807,7 +807,7 @@ impl ManageProfilesModal {
                                                 .size(IconSize::Small)
                                                 .color(Color::Muted),
                                         )
-                                        .child(Label::new("配置内置工具"))
+                                        .child(Label::new("Configure Built-in Tools"))
                                         .on_click({
                                             let profile_id = mode.profile_id.clone();
                                             cx.listener(move |this, _, window, cx| {
@@ -844,7 +844,7 @@ impl ManageProfilesModal {
                                                 .size(IconSize::Small)
                                                 .color(Color::Muted),
                                         )
-                                        .child(Label::new("配置 MCP 工具"))
+                                        .child(Label::new("Configure MCP Tools"))
                                         .on_click({
                                             let profile_id = mode.profile_id.clone();
                                             cx.listener(move |this, _, window, cx| {
@@ -881,7 +881,7 @@ impl ManageProfilesModal {
                                                 .size(IconSize::Small)
                                                 .color(Color::Error),
                                         )
-                                        .child(Label::new("删除配置文件").color(Color::Error))
+                                        .child(Label::new("Delete Profile").color(Color::Error))
                                         .disabled(builtin_profiles::is_builtin(&mode.profile_id))
                                         .on_click({
                                             let profile_id = mode.profile_id.clone();
@@ -915,7 +915,7 @@ impl ManageProfilesModal {
                                                 .size(IconSize::Small)
                                                 .color(Color::Muted),
                                         )
-                                        .child(Label::new("返回"))
+                                        .child(Label::new("Go Back"))
                                         .end_slot(
                                             div().child(
                                                 KeyBinding::for_action_in(
@@ -967,7 +967,7 @@ impl Render for ManageProfilesModal {
                             .size(IconSize::Small)
                             .color(Color::Muted),
                     )
-                    .child(Label::new("返回"))
+                    .child(Label::new("Go Back"))
                     .end_slot(
                         div().child(
                             KeyBinding::for_action_in(&menu::Cancel, &self.focus_handle, cx)
@@ -1010,12 +1010,12 @@ impl Render for ManageProfilesModal {
                         .profiles
                         .get(profile_id)
                         .map(|profile| profile.name.clone())
-                        .unwrap_or_else(|| "未知".into());
+                        .unwrap_or_else(|| "Unknown".into());
 
                     v_flex()
                         .pb_1()
                         .child(ProfileModalHeader::new(
-                            format!("{profile_name} — 配置内置工具"),
+                            format!("{profile_name} — Configure Built-in Tools"),
                             Some(IconName::Settings),
                         ))
                         .child(ListSeparator)
@@ -1033,12 +1033,12 @@ impl Render for ManageProfilesModal {
                         .profiles
                         .get(profile_id)
                         .map(|profile| profile.name.clone())
-                        .unwrap_or_else(|| "未知".into());
+                        .unwrap_or_else(|| "Unknown".into());
 
                     v_flex()
                         .pb_1()
                         .child(ProfileModalHeader::new(
-                            format!("{profile_name} — 配置默认模型"),
+                            format!("{profile_name} — Configure Default Model"),
                             Some(IconName::ZedAgent),
                         ))
                         .child(ListSeparator)
@@ -1056,12 +1056,12 @@ impl Render for ManageProfilesModal {
                         .profiles
                         .get(profile_id)
                         .map(|profile| profile.name.clone())
-                        .unwrap_or_else(|| "未知".into());
+                        .unwrap_or_else(|| "Unknown".into());
 
                     v_flex()
                         .pb_1()
                         .child(ProfileModalHeader::new(
-                            format!("{profile_name} — 配置 MCP 工具"),
+                            format!("{profile_name} — Configure MCP Tools"),
                             Some(IconName::ToolHammer),
                         ))
                         .child(ListSeparator)

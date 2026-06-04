@@ -158,31 +158,31 @@ mod tests {
         let list1 = PathList::new(&["a/d", "a/c"]);
         let list2 = PathList::new(&["a/c", "a/d"]);
 
-        assert_eq!(list1.paths(), list2.paths(), "路径不同");
-        assert_eq!(list1.order(), &[1, 0], "list1 顺序不正确");
-        assert_eq!(list2.order(), &[0, 1], "list2 顺序不正确");
+        assert_eq!(list1.paths(), list2.paths(), "paths differ");
+        assert_eq!(list1.order(), &[1, 0], "list1 order incorrect");
+        assert_eq!(list2.order(), &[0, 1], "list2 order incorrect");
 
         // Same paths in different order are equal (order is display-only).
         assert_eq!(
             list1, list2,
-            "相同路径不同顺序应相等"
+            "same paths with different order should be equal"
         );
 
         let list1_deserialized = PathList::deserialize(&list1.serialize());
-        assert_eq!(list1_deserialized, list1, "list1 反序列化失败");
+        assert_eq!(list1_deserialized, list1, "list1 deserialization failed");
 
         let list2_deserialized = PathList::deserialize(&list2.serialize());
-        assert_eq!(list2_deserialized, list2, "list2 反序列化失败");
+        assert_eq!(list2_deserialized, list2, "list2 deserialization failed");
 
         assert_eq!(
             list1.ordered_paths().collect_array().unwrap(),
             [&PathBuf::from("a/d"), &PathBuf::from("a/c")],
-            "list1 有序路径不正确"
+            "list1 ordered paths incorrect"
         );
         assert_eq!(
             list2.ordered_paths().collect_array().unwrap(),
             [&PathBuf::from("a/c"), &PathBuf::from("a/d")],
-            "list2 有序路径不正确"
+            "list2 ordered paths incorrect"
         );
     }
 

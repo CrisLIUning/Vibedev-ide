@@ -35,7 +35,7 @@ impl UnixSocket {
             Err(err) => {
                 let wsa_err = unsafe { windows::Win32::Networking::WinSock::WSAGetLastError().0 };
                 if wsa_err == WSAEWOULDBLOCK.0 {
-                    Err(Error::new(ErrorKind::WouldBlock, "接受操作将阻塞"))
+                    Err(Error::new(ErrorKind::WouldBlock, "accept would block"))
                 } else {
                     Err(err.into())
                 }

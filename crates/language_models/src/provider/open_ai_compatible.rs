@@ -537,9 +537,9 @@ impl Render for ConfigurationView {
                                 .text_ellipsis()
                                 .child(Label::new(
                                     if env_var_set {
-                                        format!("API 密钥已在 {env_var_name} 环境变量中设置")
+                                        format!("API key set in {env_var_name} environment variable")
                                     } else {
-                                        format!("已为 {} 配置 API 密钥", &state.settings.api_url)
+                                        format!("API key configured for {}", &state.settings.api_url)
                                     }
                                 ))
                         ),
@@ -548,12 +548,12 @@ impl Render for ConfigurationView {
                     h_flex()
                         .flex_shrink_0()
                         .child(
-                            Button::new("reset-api-key", "重置 API 密钥")
+                            Button::new("reset-api-key", "Reset API Key")
                                 .label_size(LabelSize::Small)
                                 .start_icon(Icon::new(IconName::Undo).size(IconSize::Small))
                                 .layer(ElevationIndex::ModalSurface)
                                 .when(env_var_set, |this| {
-                                    this.tooltip(Tooltip::text(format!("要重置您的 API 密钥,请取消设置 {env_var_name} 环境变量。")))
+                                    this.tooltip(Tooltip::text(format!("To reset your API key, unset the {env_var_name} environment variable.")))
                                 })
                                 .on_click(cx.listener(|this, _, window, cx| this.reset_api_key(window, cx))),
                         ),
@@ -562,7 +562,7 @@ impl Render for ConfigurationView {
         };
 
         if self.load_credentials_task.is_some() {
-            div().child(Label::new("正在加载凭据…")).into_any()
+            div().child(Label::new("Loading credentials…")).into_any()
         } else {
             v_flex().size_full().child(api_key_section).into_any()
         }

@@ -50,7 +50,7 @@ impl UpdateVersion {
                 version: VersionCheckType::Semantic(Version::new(1, 99, 0)),
             },
             AutoUpdateStatus::Updated { .. } => AutoUpdateStatus::Errored {
-                error: Arc::new(anyhow!("网络超时")),
+                error: Arc::new(anyhow!("Network timeout")),
             },
             AutoUpdateStatus::Errored { .. } => AutoUpdateStatus::Idle,
         };
@@ -66,7 +66,7 @@ impl UpdateVersion {
     }
 
     fn version_tooltip_message(version: &VersionCheckType) -> String {
-        format!("更新到版本: {}", {
+        format!("Update to Version: {}", {
             match version {
                 VersionCheckType::Sha(sha) => sha.full(),
                 VersionCheckType::Semantic(semantic_version) => semantic_version.to_string(),

@@ -89,7 +89,7 @@ impl AppContext for AsyncApp {
         let app = self.app.upgrade().context("app was released")?;
         let mut lock = app.try_borrow_mut()?;
         if lock.quitting {
-            bail!("应用正在退出");
+            bail!("app is quitting");
         }
         lock.update_window(window, f)
     }
@@ -118,7 +118,7 @@ impl AppContext for AsyncApp {
         let app = self.app.upgrade().context("app was released")?;
         let lock = app.borrow();
         if lock.quitting {
-            bail!("应用正在退出");
+            bail!("app is quitting");
         }
         lock.read_window(window, read)
     }
@@ -194,7 +194,7 @@ impl AsyncApp {
         let app = self.app();
         let mut lock = app.borrow_mut();
         if lock.quitting {
-            bail!("应用正在退出");
+            bail!("app is quitting");
         }
         lock.open_window(options, build_root_view)
     }
@@ -383,14 +383,14 @@ impl AppContext for AsyncWindowContext {
             cx.new(
                 build_entity
                     .take()
-                    .expect("build_entity 只能被获取一次"),
+                    .expect("build_entity is taken exactly once"),
             )
         }) {
             Ok(entity) => entity,
             Err(_) => self.app.new(
                 build_entity
                     .take()
-                    .expect("update_window 返回错误且未调用闭包"),
+                    .expect("update_window returned Err without invoking the closure"),
             ),
         }
     }
@@ -406,14 +406,14 @@ impl AppContext for AsyncWindowContext {
     ) -> Entity<T> {
         let mut args = Some((reservation, build_entity));
         match self.app.update_window(self.window, |_, _, cx| {
-            let (reservation, build_entity) = args.take().expect("参数只能被获取一次");
+            let (reservation, build_entity) = args.take().expect("args are taken exactly once");
             cx.insert_entity(reservation, build_entity)
         }) {
             Ok(entity) => entity,
             Err(_) => {
                 let (reservation, build_entity) = args
                     .take()
-                    .expect("update_window 返回错误且未调用闭包");
+                    .expect("update_window returned Err without invoking the closure");
                 self.app.insert_entity(reservation, build_entity)
             }
         }
@@ -509,7 +509,7 @@ impl VisualContext for AsyncWindowContext {
             .with_window(view.entity_id(), |window, app| {
                 view.update(app, |entity, cx| update(entity, window, cx))
             })
-            .context("实体没有当前窗口")
+            .context("entity has no current window")
     }
 
     fn replace_root_view<V>(

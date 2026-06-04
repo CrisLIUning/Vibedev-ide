@@ -82,7 +82,7 @@ pub fn collect_diagnostics(
 
         let mut text = String::new();
         if let Some(error_source) = error_source.as_ref() {
-            writeln!(text, "诊断: {}", error_source).unwrap();
+            writeln!(text, "diagnostics: {}", error_source).unwrap();
         } else {
             writeln!(text, "diagnostics").unwrap();
         }
@@ -136,7 +136,7 @@ pub fn collect_diagnostics(
         }
 
         let mut label = String::new();
-        label.push_str("诊断");
+        label.push_str("diagnostics");
         if let Some(source) = error_source {
             write!(label, " ({})", source).unwrap();
         }
@@ -145,14 +145,14 @@ pub fn collect_diagnostics(
             label.push(':');
 
             if project_summary.error_count > 0 {
-                write!(label, " {} 个错误", project_summary.error_count).unwrap();
+                write!(label, " {} errors", project_summary.error_count).unwrap();
                 if project_summary.warning_count > 0 {
                     label.push(',');
                 }
             }
 
             if project_summary.warning_count > 0 {
-                write!(label, " {} 个警告", project_summary.warning_count).unwrap();
+                write!(label, " {} warnings", project_summary.warning_count).unwrap();
             }
         }
 

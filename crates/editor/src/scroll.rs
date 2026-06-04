@@ -459,7 +459,7 @@ impl ScrollManager {
             self._save_scroll_position_task = cx.background_executor().spawn(async move {
                 executor.timer(Duration::from_millis(10)).await;
                 log::debug!(
-                    "正在保存工作区 {workspace_id:?} 中项目 {item_id:?} 的滚动位置"
+                    "Saving scroll position for item {item_id:?} in workspace {workspace_id:?}"
                 );
                 db.save_scroll_position(
                     item_id,

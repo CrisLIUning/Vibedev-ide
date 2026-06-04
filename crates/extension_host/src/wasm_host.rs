@@ -759,7 +759,7 @@ impl WasmHost {
             .fs
             .canonicalize(&self.work_dir)
             .await
-            .with_context(|| format!("规范化工作目录 {:?}", self.work_dir))?;
+            .with_context(|| format!("canonicalizing work dir {:?}", self.work_dir))?;
         let extension_work_dir = canonical_work_dir.join(id.as_ref());
 
         let absolute = if path.is_relative() {
@@ -769,7 +769,7 @@ impl WasmHost {
         };
 
         let normalized = util::paths::normalize_lexically(&absolute)
-            .map_err(|_| anyhow!("路径 {path:?} 超出其父级范围"))?;
+            .map_err(|_| anyhow!("path {path:?} escapes its parent"))?;
 
         // Canonicalize the nearest existing ancestor to resolve any symlinks
         // in the on-disk portion of the path. Components beyond that ancestor
@@ -786,7 +786,7 @@ impl WasmHost {
                     }
                     existing = existing
                         .parent()
-                        .context(format!("无法解析路径 {path:?}"))?;
+                        .context(format!("cannot resolve path {path:?}"))?;
                 }
             }
         };
@@ -798,7 +798,7 @@ impl WasmHost {
 
         anyhow::ensure!(
             resolved.starts_with(&extension_work_dir),
-            "无法写入路径 {resolved:?}",
+            "cannot write to path {resolved:?}",
         );
         Ok(resolved)
     }
@@ -815,7 +815,7 @@ pub fn parse_wasm_extension_version(extension_id: &str, wasm_bytes: &[u8]) -> Re
             version = parse_wasm_extension_version_custom_section(s.data());
             if version.is_none() {
                 bail!(
-                    "扩展 {} 包含无效的 zed:api-version 段: {:?}",
+                    "extension {} has invalid zed:api-version section: {:?}",
                     extension_id,
                     s.data()
                 );
@@ -856,12 +856,12 @@ impl WasmExtension {
             .fs
             .open_sync(&path)
             .await
-            .context(format!("打开 wasm 文件失败, 路径: {path:?}"))?;
+            .context(format!("opening wasm file, path: {path:?}"))?;
 
         let mut wasm_bytes = Vec::new();
         wasm_file
             .read_to_end(&mut wasm_bytes)
-            .context(format!("读取 wasm 文件失败, 路径: {path:?}"))?;
+            .context(format!("reading wasm file, path: {path:?}"))?;
 
         wasm_host
             .load_extension(wasm_bytes, manifest, cx)
@@ -887,14 +887,14 @@ impl WasmExtension {
             }))
             .map_err(|_| {
                 anyhow!(
-                    "wasm 扩展通道不应此时关闭, 扩展 {} (id {})",
+                    "wasm extension channel should not be closed yet, extension {} (id {})",
                     self.manifest.name,
                     self.manifest.id,
                 )
             })?;
         return_rx.await.with_context(|| {
             format!(
-                "wasm 扩展通道, 扩展 {} (id {})",
+                "wasm extension channel, extension {} (id {})",
                 self.manifest.name, self.manifest.id,
             )
         })
@@ -920,7 +920,7 @@ impl WasmState {
             }))
             .unwrap_or_else(|_| {
                 panic!(
-                    "主线程消息通道不应此时关闭, 扩展 {} (id {})",
+                    "main thread message channel should not be closed yet, extension {} (id {})",
                     self.manifest.name, self.manifest.id,
                 )
             });
@@ -1057,7 +1057,7 @@ mod tests {
             .await;
         assert!(
             result.is_err(),
-            "符号链接逃逸应被拒绝,但得到: {result:?}",
+            "symlink escape should be rejected, but got: {result:?}",
         );
 
         // A path using `..` to escape the extension work dir must be rejected.
@@ -1069,7 +1069,7 @@ mod tests {
             .await;
         assert!(
             result.is_err(),
-            "父目录遍历逃逸应被拒绝,但得到: {result:?}",
+            "parent traversal escape should be rejected, but got: {result:?}",
         );
 
         // A legitimate path within the extension work dir should succeed.
@@ -1081,7 +1081,7 @@ mod tests {
             .await;
         assert!(
             result.is_ok(),
-            "合法路径应被接受,但得到: {result:?}",
+            "legitimate path should be accepted, but got: {result:?}",
         );
 
         // A relative path with non-existent intermediate directories should
@@ -1093,7 +1093,7 @@ mod tests {
             .await;
         assert!(
             result.is_ok(),
-            "具有不存在父目录的相对路径应被接受,但得到: {result:?}",
+            "relative path with non-existent parents should be accepted, but got: {result:?}",
         );
 
         // A symlink deeper than the immediate parent must still be caught.
@@ -1104,7 +1104,7 @@ mod tests {
             .await;
         assert!(
             result.is_err(),
-            "通过深层不存在路径的符号链接逃逸应被拒绝,但得到: {result:?}",
+            "symlink escape through deep non-existent path should be rejected, but got: {result:?}",
         );
     }
 }

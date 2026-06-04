@@ -60,7 +60,7 @@ impl EncodingSelector {
             workspace.show_toast(
                 Toast::new(
                     NotificationId::unique::<EncodingSelector>(),
-                    "保存文件以更改编码",
+                    "Save file to change encoding",
                 ),
                 cx,
             );
@@ -70,7 +70,7 @@ impl EncodingSelector {
             workspace.show_toast(
                 Toast::new(
                     NotificationId::unique::<EncodingSelector>(),
-                    "协作期间无法更改编码",
+                    "Cannot change encoding during collaboration",
                 ),
                 cx,
             );
@@ -80,7 +80,7 @@ impl EncodingSelector {
             workspace.show_toast(
                 Toast::new(
                     NotificationId::unique::<EncodingSelector>(),
-                    "无法更改远程服务器文件的编码",
+                    "Cannot change encoding of remote server file",
                 ),
                 cx,
             );
@@ -150,7 +150,7 @@ impl EncodingSelectorDelegate {
         let current_encoding = self.buffer.read(cx).encoding();
 
         if candidate_encoding.name() == current_encoding.name() {
-            format!("{} (当前)", candidate_encoding.name())
+            format!("{} (current)", candidate_encoding.name())
         } else {
             candidate_encoding.name().to_string()
         }
@@ -222,7 +222,7 @@ impl PickerDelegate for EncodingSelectorDelegate {
     type ListItem = ListItem;
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
-        "以编码重新打开...".into()
+        "Reopen with encoding...".into()
     }
 
     fn match_count(&self) -> usize {

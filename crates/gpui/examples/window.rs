@@ -52,7 +52,7 @@ impl Render for SubWindow {
                                 .items_center()
                                 .justify_center()
                                 .size_full()
-                                .child("自定义标题栏"),
+                                .child("Custom Titlebar"),
                         ),
                 )
             })
@@ -62,9 +62,9 @@ impl Render for SubWindow {
                     .flex()
                     .flex_col()
                     .gap_2()
-                    .child("子窗口")
+                    .child("SubWindow")
                     .when(self.is_dialog, |div| {
-                        div.child(button("打开嵌套对话框", move |_, cx| {
+                        div.child(button("Open Nested Dialog", move |_, cx| {
                             cx.open_window(
                                 WindowOptions {
                                     window_bounds: Some(window_bounds),
@@ -81,7 +81,7 @@ impl Render for SubWindow {
                             .unwrap();
                         }))
                     })
-                    .child(button("关闭", |window, _| {
+                    .child(button("Close", |window, _| {
                         window.remove_window();
                     })),
             )
@@ -104,7 +104,7 @@ impl Render for WindowDemo {
             .justify_center()
             .content_center()
             .gap_2()
-            .child(button("普通", move |_, cx| {
+            .child(button("Normal", move |_, cx| {
                 cx.open_window(
                     WindowOptions {
                         window_bounds: Some(window_bounds),
@@ -119,7 +119,7 @@ impl Render for WindowDemo {
                 )
                 .unwrap();
             }))
-            .child(button("弹出窗口", move |_, cx| {
+            .child(button("Popup", move |_, cx| {
                 cx.open_window(
                     WindowOptions {
                         window_bounds: Some(window_bounds),
@@ -135,7 +135,7 @@ impl Render for WindowDemo {
                 )
                 .unwrap();
             }))
-            .child(button("浮动窗口", move |_, cx| {
+            .child(button("Floating", move |_, cx| {
                 cx.open_window(
                     WindowOptions {
                         window_bounds: Some(window_bounds),
@@ -151,7 +151,7 @@ impl Render for WindowDemo {
                 )
                 .unwrap();
             }))
-            .child(button("对话框", move |_, cx| {
+            .child(button("Dialog", move |_, cx| {
                 cx.open_window(
                     WindowOptions {
                         window_bounds: Some(window_bounds),
@@ -167,7 +167,7 @@ impl Render for WindowDemo {
                 )
                 .unwrap();
             }))
-            .child(button("自定义标题栏", move |_, cx| {
+            .child(button("Custom Titlebar", move |_, cx| {
                 cx.open_window(
                     WindowOptions {
                         titlebar: None,
@@ -183,7 +183,7 @@ impl Render for WindowDemo {
                 )
                 .unwrap();
             }))
-            .child(button("不可见", move |_, cx| {
+            .child(button("Invisible", move |_, cx| {
                 cx.open_window(
                     WindowOptions {
                         show: false,
@@ -199,7 +199,7 @@ impl Render for WindowDemo {
                 )
                 .unwrap();
             }))
-            .child(button("不可移动", move |_, cx| {
+            .child(button("Unmovable", move |_, cx| {
                 cx.open_window(
                     WindowOptions {
                         is_movable: false,
@@ -216,7 +216,7 @@ impl Render for WindowDemo {
                 )
                 .unwrap();
             }))
-            .child(button("不可调整大小", move |_, cx| {
+            .child(button("Unresizable", move |_, cx| {
                 cx.open_window(
                     WindowOptions {
                         is_resizable: false,
@@ -232,7 +232,7 @@ impl Render for WindowDemo {
                 )
                 .unwrap();
             }))
-            .child(button("不可最小化", move |_, cx| {
+            .child(button("Unminimizable", move |_, cx| {
                 cx.open_window(
                     WindowOptions {
                         is_minimizable: false,
@@ -248,7 +248,7 @@ impl Render for WindowDemo {
                 )
                 .unwrap();
             }))
-            .child(button("隐藏应用", |window, cx| {
+            .child(button("Hide Application", |window, cx| {
                 cx.hide();
 
                 // Restore the application after 3 seconds
@@ -263,42 +263,42 @@ impl Render for WindowDemo {
                     })
                     .detach();
             }))
-            .child(button("调整大小", |window, _| {
+            .child(button("Resize", |window, _| {
                 let content_size = window.bounds().size;
                 window.resize(size(content_size.height, content_size.width));
             }))
-            .child(button("提示", |window, cx| {
+            .child(button("Prompt", |window, cx| {
                 let answer = window.prompt(
                     PromptLevel::Info,
-                    "您确定吗?",
+                    "Are you sure?",
                     None,
-                    &["确定", "取消"],
+                    &["Ok", "Cancel"],
                     cx,
                 );
 
                 cx.spawn(async move |_| {
                     if answer.await.unwrap() == 0 {
-                        println!("你点击了确定");
+                        println!("You have clicked Ok");
                     } else {
-                        println!("你点击了取消");
+                        println!("You have clicked Cancel");
                     }
                 })
                 .detach();
             }))
-            .child(button("提示 (非英语)", |window, cx| {
+            .child(button("Prompt (non-English)", |window, cx| {
                 let answer = window.prompt(
                     PromptLevel::Info,
-                    "您确定吗?",
+                    "Are you sure?",
                     None,
-                    &[PromptButton::ok("确定"), PromptButton::cancel("取消")],
+                    &[PromptButton::ok("Ok"), PromptButton::cancel("Cancel")],
                     cx,
                 );
 
                 cx.spawn(async move |_| {
                     if answer.await.unwrap() == 0 {
-                        println!("你点击了确定");
+                        println!("You have clicked Ok");
                     } else {
-                        println!("你点击了取消");
+                        println!("You have clicked Cancel");
                     }
                 })
                 .detach();
@@ -320,7 +320,7 @@ fn run_example() {
             |window, cx| {
                 cx.new(|cx| {
                     cx.observe_window_bounds(window, move |_, window, _| {
-                        println!("窗口边界已更改: {:?}", window.bounds());
+                        println!("Window bounds changed: {:?}", window.bounds());
                     })
                     .detach();
 

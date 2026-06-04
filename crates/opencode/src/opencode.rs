@@ -31,8 +31,8 @@ impl OpenCodeSubscription {
     pub fn display_name(&self) -> &'static str {
         match self {
             Self::Zen => "Zen",
-            Self::Go => "前往",
-            Self::Free => "免费",
+            Self::Go => "Go",
+            Self::Free => "Free",
         }
     }
 
@@ -661,7 +661,7 @@ pub async fn stream_generate_content(
         let mut text = String::new();
         response.body_mut().read_to_string(&mut text).await?;
         Err(anyhow!(
-            "通过 OpenCode 调用 streamGenerateContent 时出错,状态码: {:?}, 响应体: {}",
+            "error during streamGenerateContent via OpenCode, status code: {:?}, body: {}",
             response.status(),
             text
         ))

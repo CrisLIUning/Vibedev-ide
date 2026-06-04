@@ -262,7 +262,7 @@ impl MacTextSystemState {
                         core_graphics::data_provider::CGDataProvider::from_slice(embedded_font)
                     };
                     let font = core_graphics::font::CGFont::from_data_provider(data_provider)
-                        .map_err(|()| anyhow!("无法加载内嵌字体。"))?;
+                        .map_err(|()| anyhow!("Could not load an embedded font."))?;
                     let font = font_kit::loaders::core_text::Font::from_core_graphics_font(font);
                     Ok(Handle::from_native(&font))
                 }
@@ -310,7 +310,7 @@ impl MacTextSystemState {
                     // character wasn't loading. This log statement will hopefully save
                     // someone else from suffering the same fate.
                     log::warn!(
-                        "字体 '{}' 不包含 'm' 字符,未被加载",
+                        "font '{}' has no 'm' character and was not loaded",
                         font.full_name()
                     );
                     continue;
@@ -340,7 +340,7 @@ impl MacTextSystemState {
                         .is_some())
             } {
                 log::error!(
-                    "无法读取字体 {:?} 的特征",
+                    "Failed to read traits for font {:?}",
                     font.postscript_name().unwrap()
                 );
                 continue;
@@ -415,7 +415,7 @@ impl MacTextSystemState {
         glyph_bounds: Bounds<DevicePixels>,
     ) -> Result<(Size<DevicePixels>, Vec<u8>)> {
         if glyph_bounds.size.width.0 == 0 || glyph_bounds.size.height.0 == 0 {
-            anyhow::bail!("字形边界为空");
+            anyhow::bail!("glyph bounds are empty");
         } else {
             // Add an extra pixel when the subpixel variant isn't zero to make room for anti-aliasing.
             let mut bitmap_size = glyph_bounds.size;
@@ -733,7 +733,7 @@ mod lenient_font_attributes {
 
     unsafe fn wrap_under_get_rule(reference: CFStringRef) -> CFString {
         unsafe {
-            assert!(!reference.is_null(), "尝试创建 NULL 对象。");
+            assert!(!reference.is_null(), "Attempted to create a NULL object.");
             let reference = CFRetain(reference as *const ::std::os::raw::c_void) as CFStringRef;
             TCFType::wrap_under_create_rule(reference)
         }
@@ -807,7 +807,7 @@ mod tests {
             for glyph in &run.glyphs {
                 assert!(
                     glyph.index < text.len(),
-                    "字形索引 {} 超出文本长度 {} 的范围",
+                    "Glyph index {} is out of bounds for text length {}",
                     glyph.index,
                     text.len()
                 );
@@ -832,7 +832,7 @@ mod tests {
             for glyph in &run.glyphs {
                 assert!(
                     glyph.index < text.len(),
-                    "字形索引 {} 超出文本长度 {} 的范围",
+                    "Glyph index {} is out of bounds for text length {}",
                     glyph.index,
                     text.len()
                 );
@@ -863,7 +863,7 @@ mod tests {
             for glyph in &run.glyphs {
                 assert!(
                     glyph.index < text.len(),
-                    "字形索引 {} 超出文本长度 {} 的范围",
+                    "Glyph index {} is out of bounds for text length {}",
                     glyph.index,
                     text.len()
                 );

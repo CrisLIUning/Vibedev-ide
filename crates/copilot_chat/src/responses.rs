@@ -335,7 +335,7 @@ pub async fn stream_response(
                             Ok(event) => Some(Ok(event)),
                             Err(error) => {
                                 log::error!(
-                                    "解析 Copilot 响应流事件失败: `{}`\n响应: `{}`",
+                                    "Failed to parse Copilot responses stream event: `{}`\nResponse: `{}`",
                                     error,
                                     line,
                                 );
@@ -404,7 +404,7 @@ pub async fn stream_response(
             }
             Err(error) => {
                 log::error!(
-                    "解析 Copilot 非流式响应失败: `{}`\n响应: `{}`",
+                    "Failed to parse Copilot non-streaming response: `{}`\nResponse: `{}`",
                     error,
                     body,
                 );

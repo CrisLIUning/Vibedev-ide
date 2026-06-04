@@ -688,7 +688,7 @@ impl Sidebar {
 
         let filter_editor = cx.new(|cx| {
             let mut editor = Editor::single_line(window, cx);
-            editor.set_placeholder_text("搜索线程…", window, cx);
+            editor.set_placeholder_text("Search threads…", window, cx);
             editor
         });
 
@@ -2000,7 +2000,7 @@ impl Sidebar {
                         .size(IconSize::XSmall)
                         .color(Color::Muted),
                 )
-                .tooltip(Tooltip::text("远程项目"))
+                .tooltip(Tooltip::text("Remote Project"))
                 .into_any_element(),
         )
     }
@@ -2109,10 +2109,10 @@ impl Sidebar {
                         })
                         .when(waiting_thread_count > 0, |this| {
                             let tooltip_text = if waiting_thread_count == 1 {
-                                "1 个对话线程正在等待确认".to_string()
+                                "1 thread is waiting for confirmation".to_string()
                             } else {
                                 format!(
-                                    "{waiting_thread_count} 个对话线程正在等待确认",
+                                    "{waiting_thread_count} threads are waiting for confirmation",
                                 )
                             };
                             this.child(
@@ -2169,7 +2169,7 @@ impl Sidebar {
                         .when(!has_active_draft, |this| this.visible_on_hover(&group_name))
                         .tooltip(move |_, cx| {
                             Tooltip::for_action_in(
-                                "新建助手对话线程",
+                                "Start New Agent Thread",
                                 &NewThread,
                                 &focus_handle,
                                 cx,
@@ -2237,7 +2237,7 @@ impl Sidebar {
                             Color::Custom(cx.theme().colors().icon_placeholder.opacity(0.1)),
                         ))
                         .child(
-                            Label::new("暂无对话线程")
+                            Label::new("No threads yet")
                                 .size(LabelSize::Small)
                                 .color(Color::Placeholder),
                         ),
@@ -2342,7 +2342,7 @@ impl Sidebar {
 
                         let menu = menu.when(show_multi_project_entries, |this| {
                             this.entry(
-                                "在新窗口中打开项目",
+                                "Open Project in New Window",
                                 Some(Box::new(workspace::MoveProjectToNewWindow)),
                                 {
                                     let project_group_key = project_group_key.clone();
@@ -2377,12 +2377,12 @@ impl Sidebar {
                                                 Some(TextSize::Default.rems(cx).into()),
                                                 false,
                                             ))
-                                            .child(Label::new("-点击").color(Color::Muted));
+                                            .child(Label::new("-click").color(Color::Muted));
 
                                         let label = if has_threads {
-                                            "聚焦上一个项目"
+                                            "Focus Last Project"
                                         } else {
-                                            "聚焦项目"
+                                            "Focus Project"
                                         };
 
                                         h_flex()
@@ -2428,7 +2428,7 @@ impl Sidebar {
                         let menu = if open_workspaces.is_empty() {
                             menu
                         } else {
-                            let mut menu = menu.separator().header("打开的工作树");
+                            let mut menu = menu.separator().header("Open Worktrees");
 
                             for (
                                 workspace_index,
@@ -2494,7 +2494,7 @@ impl Sidebar {
                                                     )
                                                     .icon_size(IconSize::Small)
                                                     .visible_on_hover(&row_group_name)
-                                                    .tooltip(Tooltip::text("关闭工作树"))
+                                                    .tooltip(Tooltip::text("Close Worktree"))
                                                     .on_click(move |_, window, cx| {
                                                         cx.stop_propagation();
                                                         window.prevent_default();
@@ -3357,7 +3357,7 @@ impl Sidebar {
                             path_replacements.push((row.worktree_path.clone(), restored_path));
                         }
                         Err(error) => {
-                            log::error!("恢复工作树失败: {error:#}");
+                            log::error!("Failed to restore worktree: {error:#}");
                             this.update_in(cx, |this, _window, cx| {
                                 this.restoring_tasks.remove(&thread_id);
                                 if let Some(weak_archive_view) = &weak_archive_view {
@@ -3376,7 +3376,7 @@ impl Sidebar {
                                             Toast::new(
                                                 NotificationId::unique::<RestoreWorktreeErrorToast>(
                                                 ),
-                                                format!("恢复工作树失败: {error:#}"),
+                                                format!("Failed to restore worktree: {error:#}"),
                                             )
                                             .autohide(),
                                             cx,
@@ -4065,7 +4065,7 @@ impl Sidebar {
         });
         for barrier in barriers {
             let result: anyhow::Result<()> = barrier.await.map_err(|_| {
-                anyhow::anyhow!("归档工作树时 git 仓库屏障被取消")
+                anyhow::anyhow!("git repository barrier canceled while archiving worktree")
             });
             result.log_err();
         }
@@ -4751,7 +4751,7 @@ impl Sidebar {
     /// workspace from `mw.workspace()`. If the linked worktree workspace is
     /// still active after archiving its last thread, `rebuild_contents` sees
     /// the threadless linked worktree as active and emits a spurious
-    /// "+ 新建对话线程" entry with the worktree chip — keeping the worktree
+    /// "+ New Thread" entry with the worktree chip — keeping the worktree
     /// alive and preventing disk cleanup.
     ///
     /// When `in_flight_archive` is present, it is the background task that
@@ -4858,7 +4858,7 @@ impl Sidebar {
                 }
                 Ok(ArchiveWorktreeOutcome::Cancelled) => {}
                 Err(error) => {
-                    log::error!("归档工作树失败: {error:#}");
+                    log::error!("Failed to archive worktree: {error:#}");
                     cx.update(|cx| {
                         ThreadMetadataStore::global(cx).update(cx, |store, cx| {
                             store.unarchive(thread_id, cx);
@@ -4889,7 +4889,7 @@ impl Sidebar {
             match outcome {
                 Ok(ArchiveWorktreeOutcome::Success | ArchiveWorktreeOutcome::Cancelled) => {}
                 Err(error) => {
-                    log::error!("关闭侧边栏项目后归档工作树失败: {error:#}");
+                    log::error!("Failed to archive worktree after closing sidebar item: {error:#}");
                 }
             }
         })
@@ -5490,7 +5490,7 @@ impl Sidebar {
                         .icon_size(IconSize::Small)
                         .icon_color(Color::Error)
                         .style(ButtonStyle::Tinted(TintColor::Error))
-                        .tooltip(Tooltip::text("停止生成"))
+                        .tooltip(Tooltip::text("Stop Generation"))
                         .on_click({
                             cx.listener(move |this, _, _window, cx| {
                                 this.stop_thread(&thread_id_for_actions, cx);
@@ -5507,7 +5507,7 @@ impl Sidebar {
                             let focus_handle = focus_handle.clone();
                             move |_window, cx| {
                                 Tooltip::for_action_in(
-                                    "归档对话线程",
+                                    "Archive Thread",
                                     &ArchiveSelectedThread,
                                     &focus_handle,
                                     cx,
@@ -5529,7 +5529,7 @@ impl Sidebar {
                     IconButton::new("discard_thread", IconName::Close)
                         .icon_size(IconSize::Small)
                         .icon_color(Color::Muted)
-                        .tooltip(Tooltip::text("放弃草稿"))
+                        .tooltip(Tooltip::text("Discard Draft"))
                         .on_click({
                             let thread_workspace = thread_workspace.clone();
                             cx.listener(move |this, _, window, cx| {
@@ -5620,7 +5620,7 @@ impl Sidebar {
                             let focus_handle = focus_handle.clone();
                             move |_window, cx| {
                                 Tooltip::for_action_in(
-                                    "关闭终端",
+                                    "Close Terminal",
                                     &ArchiveSelectedThread,
                                     &focus_handle,
                                     cx,
@@ -5699,7 +5699,7 @@ impl Sidebar {
                     .selected_style(ButtonStyle::Tinted(TintColor::Accent)),
                 |_window, cx| {
                     Tooltip::for_action(
-                        "添加项目",
+                        "Add Project",
                         &OpenRecent {
                             create_new_window: false,
                         },
@@ -6365,9 +6365,9 @@ impl Sidebar {
     fn render_no_results(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let has_query = self.has_filter_query(cx);
         let message = if has_query {
-            "没有匹配的对话线程。"
+            "No threads match your search."
         } else {
-            "暂无对话线程"
+            "No threads yet"
         };
 
         v_flex()
@@ -6385,7 +6385,7 @@ impl Sidebar {
 
     fn render_empty_state(&self, cx: &mut Context<Self>) -> impl IntoElement {
         ProjectEmptyState::new(
-            "对话线程",
+            "Threads Sidebar",
             self.focus_handle(cx),
             KeyBinding::for_action(&workspace::Open::default(), cx),
         )
@@ -6468,7 +6468,7 @@ impl Sidebar {
                                 this.child(
                                     IconButton::new("clear_filter", IconName::Close)
                                         .icon_size(IconSize::Small)
-                                        .tooltip(Tooltip::text("清除搜索"))
+                                        .tooltip(Tooltip::text("Clear Search"))
                                         .on_click(cx.listener(|this, _, window, cx| {
                                             this.reset_filter_editor_text(window, cx);
                                             this.update_entries(cx);
@@ -6527,7 +6527,7 @@ impl Sidebar {
                                 h_flex()
                                     .gap_2()
                                     .justify_between()
-                                    .child(Label::new("切换侧边栏"))
+                                    .child(Label::new("Toggle Sidebar"))
                                     .child(KeyBinding::for_action(&ToggleWorkspaceSidebar, cx)),
                             )
                             .child(
@@ -6537,7 +6537,7 @@ impl Sidebar {
                                     .border_t_1()
                                     .border_color(cx.theme().colors().border_variant)
                                     .justify_between()
-                                    .child(Label::new("聚焦侧边栏"))
+                                    .child(Label::new("Focus Sidebar"))
                                     .child(KeyBinding::for_action(&FocusWorkspaceSidebar, cx)),
                             )
                             .into_any_element()
@@ -6569,9 +6569,9 @@ impl Sidebar {
                     .toggle_state(is_archive)
                     .tooltip(move |_, cx| {
                         let label = if is_archive {
-                            "隐藏对话线程历史"
+                            "Hide Thread History"
                         } else {
-                            "显示对话线程历史"
+                            "Show Thread History"
                         };
                         Tooltip::for_action(label, &ToggleThreadHistory, cx)
                     })
@@ -6649,12 +6649,12 @@ impl Sidebar {
         });
         render_import_onboarding_banner(
             "acp",
-            "在查找外部助手的对话线程?",
-            "导入来自 Claude Agent, Codex 等助手的对话线程, 无论是在 VibeDev 还是其他客户端中启动的.",
+            "Looking for threads from external agents?",
+            "Import threads from agents like Claude Agent, Codex, and more, whether started in Zed or another client.",
             if verbose_labels {
-                "从外部代理导入对话线程"
+                "Import Threads from External Agents"
             } else {
-                "导入对话线程"
+                "Import Threads"
             },
             |_, _window, cx| AcpThreadImportOnboarding::dismiss(cx),
             on_import,
@@ -6676,10 +6676,10 @@ impl Sidebar {
             .iter()
             .map(|channel| channel.display_name())
             .collect::<Vec<_>>()
-            .join(" 和 ");
+            .join(" and ");
 
         let description = format!(
-            "导入 {} 的对话线程以继续之前的工作。",
+            "Import threads from {} to continue where you left off.",
             channel_names
         );
 
@@ -6693,12 +6693,12 @@ impl Sidebar {
         });
         render_import_onboarding_banner(
             "channel",
-            "发现来自其他频道的对话线程",
+            "Threads found from other channels",
             description,
             if verbose_labels {
-                "从其他频道导入对话线程"
+                "Import Threads from Other Channels"
             } else {
-                "导入对话线程"
+                "Import Threads"
             },
             |_, _window, cx| CrossChannelImportOnboarding::dismiss(cx),
             on_import,
@@ -7119,7 +7119,7 @@ pub fn dump_workspace_info(
         .as_ref()
         .map(|mw| mw.read(cx).workspace().clone());
 
-    writeln!(output, "多工作区: {} 个工作区", workspaces.len()).ok();
+    writeln!(output, "MultiWorkspace: {} workspace(s)", workspaces.len()).ok();
 
     if let Some(mw) = &multi_workspace {
         let keys: Vec<_> = mw.read(cx).project_group_keys();
@@ -7135,8 +7135,8 @@ pub fn dump_workspace_info(
         let is_active = active_workspace.as_ref() == Some(ws);
         writeln!(
             output,
-            "--- 工作区 {index}{} ---",
-            if is_active { " (活动)" } else { "" }
+            "--- Workspace {index}{} ---",
+            if is_active { " (active)" } else { "" }
         )
         .ok();
 
@@ -7192,7 +7192,7 @@ pub fn dump_workspace_info(
         });
 
         let buffer = cx.new(|cx| {
-            editor::MultiBuffer::singleton(buffer, cx).with_title("工作区信息".into())
+            editor::MultiBuffer::singleton(buffer, cx).with_title("Workspace Info".into())
         });
 
         _this.update_in(cx, |workspace, window, cx| {
@@ -7202,7 +7202,7 @@ pub fn dump_workspace_info(
                         editor::Editor::for_multibuffer(buffer, Some(project.clone()), window, cx);
                     editor.set_read_only(true);
                     editor.set_should_serialize(false, cx);
-                    editor.set_breadcrumb_header("工作区信息".into());
+                    editor.set_breadcrumb_header("Workspace Info".into());
                     editor
                 })),
                 None,
@@ -7220,8 +7220,8 @@ fn dump_single_workspace(workspace: &Workspace, output: &mut String, cx: &gpui::
 
     let workspace_db_id = workspace.database_id();
     match workspace_db_id {
-        Some(id) => writeln!(output, "工作区数据库 ID: {id:?}").ok(),
-        None => writeln!(output, "工作区数据库 ID: (无)").ok(),
+        Some(id) => writeln!(output, "Workspace DB ID: {id:?}").ok(),
+        None => writeln!(output, "Workspace DB ID: (none)").ok(),
     };
 
     let project = workspace.project().read(cx);
@@ -7232,7 +7232,7 @@ fn dump_single_workspace(workspace: &Workspace, output: &mut String, cx: &gpui::
         .map(|repo| repo.read(cx).snapshot())
         .collect();
 
-    writeln!(output, "工作树:").ok();
+    writeln!(output, "Worktrees:").ok();
     for worktree in project.worktrees(cx) {
         let worktree = worktree.read(cx);
         let abs_path = worktree.abs_path();
@@ -7248,21 +7248,21 @@ fn dump_single_workspace(workspace: &Workspace, output: &mut String, cx: &gpui::
 
         write!(output, "  - {}", abs_path.display()).ok();
         if !visible {
-            write!(output, " (隐藏)").ok();
+            write!(output, " (hidden)").ok();
         }
         if let Some(branch) = &branch {
-            write!(output, " [分支: {branch}]").ok();
+            write!(output, " [branch: {branch}]").ok();
         }
         if is_linked {
             if let Some(main_worktree_path) = main_worktree_path {
                 write!(
                     output,
-                    " [链接的工作树 -> {}]",
+                    " [linked worktree -> {}]",
                     main_worktree_path.display()
                 )
                 .ok();
             } else {
-                write!(output, " [链接的工作树]").ok();
+                write!(output, " [linked worktree]").ok();
             }
         }
         writeln!(output).ok();
@@ -7282,15 +7282,15 @@ fn dump_single_workspace(workspace: &Workspace, output: &mut String, cx: &gpui::
 
         if let Some(thread) = panel.active_agent_thread(cx) {
             let thread = thread.read(cx);
-            let title = thread.title().unwrap_or_else(|| "(无标题)".into());
+            let title = thread.title().unwrap_or_else(|| "(untitled)".into());
             let session_id = thread.session_id();
             let status = match thread.status() {
                 ThreadStatus::Idle => "idle",
                 ThreadStatus::Generating => "generating",
             };
             let entry_count = thread.entries().len();
-            write!(output, "活动对话线程: {title} (会话: {session_id})").ok();
-            write!(output, " [{status}, {entry_count} 条记录").ok();
+            write!(output, "Active thread: {title} (session: {session_id})").ok();
+            write!(output, " [{status}, {entry_count} entries").ok();
             if panel
                 .active_conversation_view()
                 .is_some_and(|conversation_view| {
@@ -7299,46 +7299,46 @@ fn dump_single_workspace(workspace: &Workspace, output: &mut String, cx: &gpui::
                         .root_thread_has_pending_tool_call(cx)
                 })
             {
-                write!(output, ", 等待确认").ok();
+                write!(output, ", awaiting confirmation").ok();
             }
             writeln!(output, "]").ok();
         } else {
-            writeln!(output, "活动对话线程: (无)").ok();
+            writeln!(output, "Active thread: (none)").ok();
         }
 
         let background_threads = panel.retained_threads();
         if !background_threads.is_empty() {
             writeln!(
                 output,
-                "后台对话线程 ({}): ",
+                "Background threads ({}): ",
                 background_threads.len()
             )
             .ok();
             for (session_id, conversation_view) in background_threads {
                 if let Some(thread_view) = conversation_view.read(cx).root_thread_view() {
                     let thread = thread_view.read(cx).thread.read(cx);
-                    let title = thread.title().unwrap_or_else(|| "(无标题)".into());
+                    let title = thread.title().unwrap_or_else(|| "(untitled)".into());
                     let status = match thread.status() {
                         ThreadStatus::Idle => "idle",
                         ThreadStatus::Generating => "generating",
                     };
                     let entry_count = thread.entries().len();
-                    write!(output, "  - {title} (对话线程: {session_id:?})").ok();
-                    write!(output, " [{status}, {entry_count} 条记录").ok();
+                    write!(output, "  - {title} (thread: {session_id:?})").ok();
+                    write!(output, " [{status}, {entry_count} entries").ok();
                     if conversation_view
                         .read(cx)
                         .root_thread_has_pending_tool_call(cx)
                     {
-                        write!(output, ", 等待确认").ok();
+                        write!(output, ", awaiting confirmation").ok();
                     }
                     writeln!(output, "]").ok();
                 } else {
-                    writeln!(output, "  - (未连接) (对话线程: {session_id:?})").ok();
+                    writeln!(output, "  - (not connected) (thread: {session_id:?})").ok();
                 }
             }
         }
     } else {
-        writeln!(output, "助手面板: 未加载").ok();
+        writeln!(output, "Agent panel: not loaded").ok();
     }
 
     writeln!(output).ok();

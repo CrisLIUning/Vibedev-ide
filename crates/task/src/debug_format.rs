@@ -356,8 +356,8 @@ impl DebugTaskFile {
 
         serde_json::json!({
             "$schema": meta_schema,
-            "title": "调试配置",
-            "description": "调试场景配置",
+            "title": "Debug Configurations",
+            "description": "Configuration for debug scenarios",
             "allowTrailingCommas": true,
             "type": "array",
             "items": {
@@ -373,28 +373,28 @@ impl DebugTaskFile {
                 "properties": {
                     "adapter": {
                         "type": "string",
-                        "description": "调试适配器名称"
+                        "description": "The name of the debug adapter"
                     },
                     "label": {
                         "type": "string",
-                        "description": "调试配置名称"
+                        "description": "The name of the debug configuration"
                     },
                     "build": build_task_definition_ref,
                     "tcp_connection": {
                         "type": "object",
-                        "description": "用于连接到已运行调试适配器的可选 TCP 连接信息",
+                        "description": "Optional TCP connection information for connecting to an already running debug adapter",
                         "properties": {
                             "port": {
                                 "type": "integer",
-                                "description": "调试适配器监听的端口 (默认: 自动寻找开放端口)"
+                                "description": "The port that the debug adapter is listening on (default: auto-find open port)"
                             },
                             "host": {
                                 "type": "string",
-                                "description": "调试适配器监听的主机,以 IPv4 或 IPv6 地址形式(默认值:127.0.0.1)"
+                                "description": "The host that the debug adapter is listening to, as an IPv4 or IPv6 address (default: 127.0.0.1)"
                             },
                             "timeout": {
                                 "type": "integer",
-                                "description": "连接到 TCP DAP 的最大超时时间 (毫秒), 超时将返回错误 (默认: 2000ms)"
+                                "description": "The max amount of time in milliseconds to connect to a tcp DAP before returning an error (default: 2000ms)"
                             }
                         }
                     }

@@ -14,7 +14,7 @@ use ui::{ContextMenu, Divider, IconPosition, Indicator, Tooltip, prelude::*, rig
 /// Describes how a status-bar item can be hidden by the user.
 ///
 /// Every [`StatusItemView`] must either provide this (so that the user gets a
-/// "隐藏按钮" entry in the right-click menu) or explicitly return `None`
+/// "Hide Button" entry in the right-click menu) or explicitly return `None`
 /// to opt out. Returning `None` should be reserved for items that are
 /// already conditional on some other setting exposed elsewhere (e.g., the
 /// activity indicator, which disappears on its own once there's no work to
@@ -53,7 +53,7 @@ pub trait StatusItemView: Render {
     ///
     /// Implementors that return `None` must be inherently conditional on
     /// another user-exposed setting; otherwise, they should return `Some` so
-    /// that the status bar can show a "隐藏按钮" entry in its
+    /// that the status bar can show a "Hide Button" entry in its
     /// right-click menu.
     fn hide_setting(&self, cx: &App) -> Option<HideStatusItem>;
 }
@@ -227,7 +227,7 @@ impl StatusBar {
                         .indicator_border_color(Some(indicator_border))
                 })
                 .tooltip(move |_, cx| {
-                    Tooltip::for_action("打开对话线程侧边栏", &ToggleWorkspaceSidebar, cx)
+                    Tooltip::for_action("Open Threads Sidebar", &ToggleWorkspaceSidebar, cx)
                 })
                 .on_click(move |_, window, cx| {
                     if let Some(multi_workspace) = window.root::<MultiWorkspace>().flatten() {
@@ -273,10 +273,10 @@ fn render_hideable_item(
         .into_any_element()
 }
 
-/// Appends a "隐藏按钮" entry aligned with surrounding toggleable entries.
+/// Appends a "Hide Button" entry aligned with surrounding toggleable entries.
 pub fn add_hide_button_entry(menu: ContextMenu, hide: HideStatusItem) -> ContextMenu {
     menu.toggleable_entry(
-        "隐藏按钮",
+        "Hide Button",
         false,
         IconPosition::Start,
         None,

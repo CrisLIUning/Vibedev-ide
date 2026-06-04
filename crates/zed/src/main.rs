@@ -94,10 +94,10 @@ fn files_not_created_on_launch(errors: HashMap<io::ErrorKind, Vec<&Path>>) {
             let mut error_kind_details = match paths.len() {
                 0 => return None,
                 1 => format!(
-                    "创建目录 {:?} 时发生 {kind}",
+                    "{kind} when creating directory {:?}",
                     paths.first().expect("match arm checks for a single entry")
                 ),
-                _many => format!("创建目录 {paths:?} 时发生 {kind}"),
+                _many => format!("{kind} when creating directories {paths:?}"),
             };
 
             #[cfg(unix)]
@@ -171,7 +171,7 @@ fn fail_to_open_window(e: anyhow::Error, _cx: &mut App) {
                     Notification::new("VibeDev failed to launch")
                         .body(Some(
                             format!(
-                                "{e:?}。请参阅 https://zed.dev/docs/linux 获取故障排除步骤。"
+                                "{e:?}. See https://zed.dev/docs/linux for troubleshooting steps."
                             )
                             .as_str(),
                         ))
@@ -217,19 +217,19 @@ fn main() {
             .etw_zed_pid
             .and_then(|pid| if pid >= 0 { Some(pid as u32) } else { None });
         let Some(output_path) = args.etw_output else {
-            eprintln!("--record-etw-trace 需要 --etw-output");
+            eprintln!("--etw-output is required for --record-etw-trace");
             process::exit(1);
         };
 
         let Some(etw_socket) = args.etw_socket else {
-            eprintln!("--record-etw-trace 需要 --etw-socket");
+            eprintln!("--etw-socket is required for --record-etw-trace");
             process::exit(1);
         };
 
         if let Err(error) =
             etw_tracing::record_etw_trace(zed_pid, &output_path, etw_socket.as_str())
         {
-            eprintln!("ETW 跟踪记录失败: {error:#}");
+            eprintln!("ETW trace recording failed: {error:#}");
             process::exit(1);
         }
         return;
@@ -326,7 +326,7 @@ fn main() {
         .unwrap();
 
     log::info!(
-        "========== 正在启动 VibeDev 版本 {}, sha {} ==========",
+        "========== starting zed version {}, sha {} ==========",
         app_version,
         app_commit_sha
             .as_ref()
@@ -377,7 +377,7 @@ fn main() {
         }
     };
     if failed_single_instance_check {
-        println!("zed 已在运行");
+        println!("zed is already running");
         return;
     }
 
@@ -630,14 +630,14 @@ fn main() {
         if let (Some(system_id), Some(installation_id)) = (&system_id, &installation_id) {
             match (&system_id, &installation_id) {
                 (IdType::New(_), IdType::New(_)) => {
-                    telemetry::event!("应用首次打开");
-                    telemetry::event!("应用首次在发布通道中打开");
+                    telemetry::event!("App First Opened");
+                    telemetry::event!("App First Opened For Release Channel");
                 }
                 (IdType::Existing(_), IdType::New(_)) => {
-                    telemetry::event!("应用首次在发布通道中打开");
+                    telemetry::event!("App First Opened For Release Channel");
                 }
                 (_, IdType::Existing(_)) => {
-                    telemetry::event!("应用已打开");
+                    telemetry::event!("App Opened");
                 }
             }
         }
@@ -851,12 +851,12 @@ fn main() {
         })
         .detach();
         telemetry::event!(
-            "设置已更改",
+            "Settings Changed",
             setting = "theme",
             value = cx.theme().name.to_string()
         );
         telemetry::event!(
-            "设置已更改",
+            "Settings Changed",
             setting = "keymap",
             value = BaseKeymap::get_global(cx).to_string()
         );
@@ -1087,7 +1087,7 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
                                 workspace.show_toast(
                                     Toast::new(
                                         NotificationId::unique::<OpenProjectForSharedThreadToast>(),
-                                        "打开项目以导入共享线程",
+                                        "Open a project to import shared threads",
                                     )
                                     .autohide(),
                                     cx,
@@ -1157,7 +1157,7 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
                             workspace.show_toast(
                                 Toast::new(
                                     NotificationId::unique::<ImportedThreadToast>(),
-                                    format!("已从 {} 导入共享对话线程", sharer_username),
+                                    format!("Imported shared thread from {}", sharer_username),
                                 )
                                 .autohide(),
                                 cx,
@@ -1385,7 +1385,7 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
             .await?;
             for result in results.into_iter().flatten() {
                 if let Err(err) = result {
-                    log::error!("打开路径时出错: {err:#}");
+                    log::error!("Error opening path: {err:#}");
                 }
             }
             anyhow::Ok(())
@@ -1558,17 +1558,17 @@ pub(crate) async fn restore_or_create_workspace(
             };
 
             if let Err(error) = result {
-                log::error!("恢复工作区失败: {error:#}");
+                log::error!("Failed to restore workspace: {error:#}");
                 error_count += 1;
             }
         }
 
         if error_count > 0 {
             let message = if error_count == 1 {
-                "恢复 1 个工作区失败。请查看日志了解详情。".to_string()
+                "Failed to restore 1 workspace. Check logs for details.".to_string()
             } else {
                 format!(
-                    "恢复 {} 个工作区失败。请查看日志了解详情。",
+                    "Failed to restore {} workspaces. Check logs for details.",
                     error_count
                 )
             };
@@ -1596,7 +1596,7 @@ pub(crate) async fn restore_or_create_workspace(
             // If we couldn't show a toast (no windows opened successfully),
             // open a fallback empty workspace and show the error there
             if !toast_shown {
-                log::error!("所有工作区恢复失败。正在打开备用空工作区。");
+                log::error!("All workspace restorations failed. Opening fallback empty workspace.");
                 cx.update(|cx| {
                     workspace::open_new(
                         Default::default(),
@@ -1812,7 +1812,7 @@ struct Args {
 
     /// Open the project in a dev container.
     ///
-    /// Automatically triggers "在 Dev Container 中重新打开" if a `.devcontainer/`
+    /// Automatically triggers "Reopen in Dev Container" if a `.devcontainer/`
     /// configuration is found in the project directory.
     #[arg(long)]
     dev_container: bool,
@@ -1968,7 +1968,7 @@ fn load_user_themes_in_background(fs: Arc<dyn fs::Fs>, cx: &mut App) {
                 }
                 None => {
                     fs.create_dir(themes_dir).await.with_context(|| {
-                        format!("在路径 {themes_dir:?} 创建主题目录失败")
+                        format!("Failed to create themes dir at path {themes_dir:?}")
                     })?;
                 }
             }
@@ -1976,7 +1976,7 @@ fn load_user_themes_in_background(fs: Arc<dyn fs::Fs>, cx: &mut App) {
             let mut theme_paths = fs
                 .read_dir(themes_dir)
                 .await
-                .with_context(|| format!("从 {themes_dir:?} 读取主题"))?;
+                .with_context(|| format!("reading themes from {themes_dir:?}"))?;
 
             while let Some(theme_path) = theme_paths.next().await {
                 let Some(theme_path) = theme_path.log_err() else {

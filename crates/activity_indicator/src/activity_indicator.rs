@@ -371,7 +371,7 @@ impl ActivityIndicator {
 
                 let additional_work_count = pending_work.count();
                 if additional_work_count > 0 {
-                    write!(&mut message, " + 另外 {} 个", additional_work_count).unwrap();
+                    write!(&mut message, " + {} more", additional_work_count).unwrap();
                 }
 
                 return Some(Content {
@@ -393,7 +393,7 @@ impl ActivityIndicator {
         {
             return Some(Content {
                 icon: ActivityIcon::LoadingSpinner,
-                message: format!("调试: {}", session.read(cx).adapter()),
+                message: format!("Debug: {}", session.read(cx).adapter()),
                 tooltip_message: session.read(cx).label().map(|label| label.to_string()),
                 on_click: None,
             });
@@ -476,7 +476,7 @@ impl ActivityIndicator {
             return Some(Content {
                 icon: ActivityIcon::Icon(IconName::Download),
                 message: format!(
-                    "正在下载 {}...",
+                    "Downloading {}...",
                     downloading.iter().map(|name| name.as_ref()).fold(
                         String::new(),
                         |mut acc, s| {
@@ -501,7 +501,7 @@ impl ActivityIndicator {
             return Some(Content {
                 icon: ActivityIcon::Icon(IconName::Download),
                 message: format!(
-                    "正在检查 {} 的更新...",
+                    "Checking for updates to {}...",
                     checking_for_update.iter().map(|name| name.as_ref()).fold(
                         String::new(),
                         |mut acc, s| {
@@ -526,7 +526,7 @@ impl ActivityIndicator {
             return Some(Content {
                 icon: ActivityIcon::Icon(IconName::Warning),
                 message: format!(
-                    "运行 {} 失败。点击查看错误。",
+                    "Failed to run {}. Click to show error.",
                     failed
                         .iter()
                         .map(|name| name.as_ref())
@@ -549,7 +549,7 @@ impl ActivityIndicator {
         if let Some(failure) = self.project.read(cx).last_formatting_failure(cx) {
             return Some(Content {
                 icon: ActivityIcon::Icon(IconName::Warning),
-                message: format!("格式化失败: {failure}。点击查看日志。"),
+                message: format!("Formatting failed: {failure}. Click to see logs."),
                 on_click: Some(Arc::new(|indicator, window, cx| {
                     indicator.project.update(cx, |project, cx| {
                         project.reset_last_formatting_failure(cx);
@@ -564,8 +564,8 @@ impl ActivityIndicator {
         if let Some((server_name, health, message)) = health_messages.pop() {
             let health_str = match health {
                 ServerHealth::Ok => format!("({server_name}) "),
-                ServerHealth::Warning => format!("({server_name}) 警告: "),
-                ServerHealth::Error => format!("({server_name}) 错误: "),
+                ServerHealth::Warning => format!("({server_name}) Warning: "),
+                ServerHealth::Error => format!("({server_name}) Error: "),
             };
             let single_line_message = message
                 .lines()
@@ -614,15 +614,15 @@ impl ActivityIndicator {
         {
             let (message, icon) = match operation {
                 ExtensionOperation::Install => (
-                    format!("正在安装扩展 {extension_id}…"),
+                    format!("Installing {extension_id} extension…"),
                     ActivityIcon::LoadingSpinner,
                 ),
                 ExtensionOperation::Upgrade => (
-                    format!("正在更新扩展 {extension_id}…"),
+                    format!("Updating {extension_id} extension…"),
                     ActivityIcon::Icon(IconName::Download),
                 ),
                 ExtensionOperation::Remove => (
-                    format!("正在移除扩展 {extension_id}…"),
+                    format!("Removing {extension_id} extension…"),
                     ActivityIcon::LoadingSpinner,
                 ),
             };
@@ -712,7 +712,7 @@ impl Render for ActivityIndicator {
                                     has_cancellable_work = true;
                                     let language_server_id = work.language_server_id;
                                     let token = work.progress_token.clone();
-                                    let title = SharedString::from(format!("取消 {title}"));
+                                    let title = SharedString::from(format!("Cancel {title}"));
                                     menu = menu.custom_entry(
                                         move |_, _| {
                                             h_flex()

@@ -27,11 +27,11 @@ pub fn is_light(cx: &mut App) -> bool {
 /// Returns the platform-appropriate label for the "reveal in file manager" action.
 pub fn reveal_in_file_manager_label(is_remote: bool) -> &'static str {
     if cfg!(target_os = "macos") && !is_remote {
-        "在 Finder 中显示"
+        "Reveal in Finder"
     } else if cfg!(target_os = "windows") && !is_remote {
-        "在文件资源管理器中显示"
+        "Reveal in File Explorer"
     } else {
-        "在文件管理器中显示"
+        "Reveal in File Manager"
     }
 }
 

@@ -891,13 +891,13 @@ fn test_new_normalized_splits_large_base_text() {
         assert_eq!(
             anchor.to_offset(&buffer),
             offset,
-            "anchor_before({offset}) 往返转换不正确"
+            "anchor_before({offset}) round-tripped incorrectly"
         );
         let anchor = buffer.anchor_after(offset);
         assert_eq!(
             anchor.to_offset(&buffer),
             offset,
-            "anchor_after({offset}) 往返转换不正确"
+            "anchor_after({offset}) round-tripped incorrectly"
         );
     }
 
@@ -934,7 +934,7 @@ fn test_new_normalized_splits_large_base_text_with_multibyte_chars() {
         assert_eq!(
             anchor.to_offset(snapshot),
             offset,
-            "锚点在字节偏移 {offset} 处往返转换失败"
+            "anchor round-trip failed at byte offset {offset}"
         );
     }
 }
@@ -975,7 +975,7 @@ fn test_edit_splits_large_insertion() {
         assert_eq!(
             anchor.to_offset(&buffer),
             offset,
-            "anchor_before({offset}) 往返转换不正确"
+            "anchor_before({offset}) round-tripped incorrectly"
         );
     }
 }

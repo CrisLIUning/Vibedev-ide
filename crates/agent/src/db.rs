@@ -761,7 +761,7 @@ mod tests {
         );
         assert!(
             entries[0].created_at.is_some(),
-            "created_at 应已被填充"
+            "created_at should be populated"
         );
     }
 
@@ -777,7 +777,7 @@ mod tests {
 
         assert!(
             db_thread.subagent_context.is_none(),
-            "旧版对话线程在没有 subagent_context 时应默认为 None"
+            "Legacy threads without subagent_context should default to None"
         );
     }
 
@@ -793,7 +793,7 @@ mod tests {
 
         assert!(
             db_thread.draft_prompt.is_none(),
-            "没有 draft_prompt 字段的旧版对话线程应默认为 None"
+            "Legacy threads without draft_prompt field should default to None"
         );
     }
 
@@ -805,7 +805,7 @@ mod tests {
         let child_id = session_id("child-thread");
 
         let mut child_thread = make_thread(
-            "子代理对话线程",
+            "Subagent Thread",
             Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap(),
         );
         child_thread.subagent_context = Some(crate::SubagentContext {
@@ -822,11 +822,11 @@ mod tests {
             .load_thread(child_id)
             .await
             .unwrap()
-            .expect("对话线程应存在");
+            .expect("thread should exist");
 
         let context = loaded
             .subagent_context
-            .expect("subagent_context 应被恢复");
+            .expect("subagent_context should be restored");
         assert_eq!(context.parent_thread_id, parent_id);
         assert_eq!(context.depth, 2);
     }
@@ -837,7 +837,7 @@ mod tests {
 
         let thread_id = session_id("regular-thread");
         let thread = make_thread(
-            "普通对话线程",
+            "Regular Thread",
             Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap(),
         );
 
@@ -850,11 +850,11 @@ mod tests {
             .load_thread(thread_id)
             .await
             .unwrap()
-            .expect("对话线程应存在");
+            .expect("thread should exist");
 
         assert!(
             loaded.subagent_context.is_none(),
-            "普通对话线程不应包含 subagent_context"
+            "Regular threads should have no subagent_context"
         );
     }
 
@@ -864,7 +864,7 @@ mod tests {
 
         let thread_id = session_id("folder-thread");
         let thread = make_thread(
-            "文件夹对话线程",
+            "Folder Thread",
             Utc.with_ymd_and_hms(2024, 6, 15, 12, 0, 0).unwrap(),
         );
 
@@ -888,7 +888,7 @@ mod tests {
 
         let thread_id = session_id("no-folder-thread");
         let thread = make_thread(
-            "无文件夹对话线程",
+            "No Folder Thread",
             Utc.with_ymd_and_hms(2024, 6, 15, 12, 0, 0).unwrap(),
         );
 
@@ -913,7 +913,7 @@ mod tests {
 
         assert!(
             db_thread.ui_scroll_position.is_none(),
-            "没有 scroll_position 字段的旧版对话线程应默认为 None"
+            "Legacy threads without scroll_position field should default to None"
         );
     }
 
@@ -924,7 +924,7 @@ mod tests {
         let thread_id = session_id("thread-with-scroll");
 
         let mut thread = make_thread(
-            "带滚动位置的对话线程",
+            "Thread With Scroll",
             Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap(),
         );
         thread.ui_scroll_position = Some(SerializedScrollPosition {
@@ -941,11 +941,11 @@ mod tests {
             .load_thread(thread_id)
             .await
             .unwrap()
-            .expect("对话线程应存在");
+            .expect("thread should exist");
 
         let scroll = loaded
             .ui_scroll_position
-            .expect("scroll_position 应被恢复");
+            .expect("scroll_position should be restored");
         assert_eq!(scroll.item_ix, 42);
         assert!((scroll.offset_in_item - 13.5).abs() < f32::EPSILON);
     }

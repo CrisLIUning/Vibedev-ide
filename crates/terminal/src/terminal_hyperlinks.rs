@@ -1641,10 +1641,10 @@ mod tests {
 
         if hyperlink_kind == HyperlinkKind::FileIri {
             let Ok(url) = Url::parse(&iri_or_path) else {
-                panic!("无法解析文件 IRI `{iri_or_path}`");
+                panic!("Failed to parse file IRI `{iri_or_path}`");
             };
             let Ok(path) = url.to_file_path() else {
-                panic!("无法将文件 IRI `{iri_or_path}` 解释为路径");
+                panic!("Failed to interpret file IRI `{iri_or_path}` as a path");
             };
             iri_or_path = path.to_string_lossy().into_owned();
         }

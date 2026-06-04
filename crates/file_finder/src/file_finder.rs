@@ -1243,11 +1243,11 @@ impl FileFinderDelegate {
                 } => (
                     channel_name.to_string(),
                     string_match.positions.clone(),
-                    "频道笔记".to_string(),
+                    "Channel Notes".to_string(),
                     vec![],
                 ),
                 Match::CreateNew(project_path) => (
-                    format!("创建文件: {}", project_path.path.display(path_style)),
+                    format!("Create file: {}", project_path.path.display(path_style)),
                     vec![],
                     String::from(""),
                     vec![],
@@ -1472,7 +1472,7 @@ impl PickerDelegate for FileFinderDelegate {
     type ListItem = ListItem;
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
-        "搜索项目文件...".into()
+        "Search project files...".into()
     }
 
     fn match_count(&self) -> usize {
@@ -1847,7 +1847,7 @@ impl PickerDelegate for FileFinderDelegate {
                 this.child(
                     h_flex()
                         .id("project-scan-indicator")
-                        .tooltip(Tooltip::text("项目扫描进行中…"))
+                        .tooltip(Tooltip::text("Project Scan in Progress…"))
                         .child(
                             Icon::new(IconName::LoadCircle)
                                 .color(Color::Accent)
@@ -1908,7 +1908,7 @@ impl PickerDelegate for FileFinderDelegate {
                                         menu.context(focus_handle.clone())
                                             .header("Filter Options")
                                             .toggleable_entry(
-                                                "包含忽略的文件",
+                                                "Include Ignored Files",
                                                 include_ignored.unwrap_or(false),
                                                 ui::IconPosition::End,
                                                 Some(ToggleIncludeIgnored.boxed_clone()),
@@ -1939,7 +1939,7 @@ impl PickerDelegate for FileFinderDelegate {
                                 })
                                 .trigger(
                                     ButtonLike::new("split-trigger")
-                                        .child(Label::new("拆分…"))
+                                        .child(Label::new("Split…"))
                                         .selected_style(ButtonStyle::Tinted(TintColor::Accent))
                                         .child(
                                             KeyBinding::for_action_in(
@@ -1959,19 +1959,19 @@ impl PickerDelegate for FileFinderDelegate {
                                             move |menu, _, _| {
                                                 menu.context(focus_handle)
                                                     .action(
-                                                        "向左拆分",
+                                                        "Split Left",
                                                         pane::SplitLeft::default().boxed_clone(),
                                                     )
                                                     .action(
-                                                        "向右拆分",
+                                                        "Split Right",
                                                         pane::SplitRight::default().boxed_clone(),
                                                     )
                                                     .action(
-                                                        "向上拆分",
+                                                        "Split Up",
                                                         pane::SplitUp::default().boxed_clone(),
                                                     )
                                                     .action(
-                                                        "向下拆分",
+                                                        "Split Down",
                                                         pane::SplitDown::default().boxed_clone(),
                                                     )
                                             }
@@ -1980,7 +1980,7 @@ impl PickerDelegate for FileFinderDelegate {
                                 }),
                         )
                         .child(
-                            Button::new("open-selection", "打开")
+                            Button::new("open-selection", "Open")
                                 .key_binding(
                                     KeyBinding::for_action_in(&menu::Confirm, &focus_handle, cx)
                                         .map(|kb| kb.size(rems_from_px(12.))),

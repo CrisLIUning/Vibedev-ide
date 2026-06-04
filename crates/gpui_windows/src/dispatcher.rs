@@ -113,7 +113,7 @@ impl PlatformDispatcher for WindowsDispatcher {
     fn dispatch(&self, runnable: RunnableVariant, priority: Priority) {
         let priority = match priority {
             Priority::RealtimeAudio => {
-                panic!("RealtimeAudio 优先级应使用 spawn_realtime,而非 dispatch")
+                panic!("RealtimeAudio priority should use spawn_realtime, not dispatch")
             }
             Priority::High => WorkItemPriority::High,
             Priority::Medium => WorkItemPriority::Normal,
@@ -162,7 +162,7 @@ impl PlatformDispatcher for WindowsDispatcher {
 
             // SAFETY: thread_handle is a valid handle to the current thread
             unsafe { SetThreadPriority(thread_handle, THREAD_PRIORITY_TIME_CRITICAL) }
-                .context("线程优先级")
+                .context("thread priority")
                 .log_err();
 
             f();

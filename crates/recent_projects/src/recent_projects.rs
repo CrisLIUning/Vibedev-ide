@@ -78,7 +78,7 @@ struct OpenFolderEntry {
 #[derive(Clone, Debug)]
 enum ProjectPickerEntry {
     Header(SharedString),
-    /// A currently open folder from the active workspace's "当前文件夹" section.
+    /// A currently open folder from the active workspace's "Current Folders" section.
     ///
     /// `index` points into `RecentProjectsDelegate::open_folders`, and `positions` stores the
     /// fuzzy-match highlight positions for rendering the folder name.
@@ -86,7 +86,7 @@ enum ProjectPickerEntry {
         index: usize,
         positions: Vec<usize>,
     },
-    /// A project group from the current window's "当前窗口" section.
+    /// A project group from the current window's "This Window" section.
     ///
     /// These entries come from `RecentProjectsDelegate::window_project_groups`, not from the
     /// recent-project database. Empty queries list every project group known to the current
@@ -94,7 +94,7 @@ enum ProjectPickerEntry {
     /// that project group in the current window, while secondary confirm can move local project
     /// groups to a new window when multiple groups are available.
     ProjectGroup(StringMatch),
-    /// A workspace from the recent-project database's "最近的项目" section.
+    /// A workspace from the recent-project database's "Recent Projects" section.
     ///
     /// The match's `candidate_id` indexes into `RecentProjectsDelegate::workspaces`. Confirming
     /// one opens that recent workspace in either the current window or a new window, depending on
@@ -345,7 +345,7 @@ pub fn init(cx: &mut App) {
                         Please note that Zed currently does not support opening network share folders inside wsl.
                     "#};
 
-                    let _ = cx.prompt(gpui::PromptLevel::Critical, "无效路径", Some(&message), &["Ok"]).await;
+                    let _ = cx.prompt(gpui::PromptLevel::Critical, "Invalid path", Some(&message), &["Ok"]).await;
                     return;
                 }
 
@@ -487,7 +487,7 @@ pub fn init(cx: &mut App) {
                 cx.spawn_in(window, async move |_, cx| {
                     cx.prompt(
                         gpui::PromptLevel::Critical,
-                        "无法从远程项目打开 Dev Container",
+                        "Cannot open Dev Container from remote project",
                         None,
                         &["Ok"],
                     )
@@ -895,7 +895,7 @@ impl PickerDelegate for RecentProjectsDelegate {
     type ListItem = AnyElement;
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
-        "搜索项目…".into()
+        "Search projects…".into()
     }
 
     fn render_editor(
@@ -1034,7 +1034,7 @@ impl PickerDelegate for RecentProjectsDelegate {
             };
 
             if !matched_folders.is_empty() {
-                entries.push(ProjectPickerEntry::Header("当前文件夹".into()));
+                entries.push(ProjectPickerEntry::Header("Current Folders".into()));
                 for (index, positions) in matched_folders {
                     entries.push(ProjectPickerEntry::OpenFolder { index, positions });
                 }
@@ -1048,7 +1048,7 @@ impl PickerDelegate for RecentProjectsDelegate {
         };
 
         if has_projects_to_show {
-            entries.push(ProjectPickerEntry::Header("当前窗口".into()));
+            entries.push(ProjectPickerEntry::Header("This Window".into()));
 
             if is_empty_query {
                 for id in 0..self.window_project_groups.len() {
@@ -1073,7 +1073,7 @@ impl PickerDelegate for RecentProjectsDelegate {
         };
 
         if has_recent_to_show {
-            entries.push(ProjectPickerEntry::Header("最近的项目".into()));
+            entries.push(ProjectPickerEntry::Header("Recent Projects".into()));
 
             if is_empty_query {
                 for (id, workspace) in self.workspaces.iter().enumerate() {
@@ -1187,7 +1187,7 @@ impl PickerDelegate for RecentProjectsDelegate {
 
     fn no_matches_text(&self, _window: &mut Window, _cx: &mut App) -> Option<SharedString> {
         let text = if self.workspaces.is_empty() && self.open_folders.is_empty() {
-            "最近打开的项目将显示在这里".into()
+            "Recently opened projects will show up here".into()
         } else {
             "No matches".into()
         };
@@ -1225,7 +1225,7 @@ impl PickerDelegate for RecentProjectsDelegate {
                     .child(
                         IconButton::new(("remove-folder", worktree_id.to_usize()), IconName::Close)
                             .icon_size(IconSize::Small)
-                            .tooltip(Tooltip::text("从项目中移除文件夹"))
+                            .tooltip(Tooltip::text("Remove Folder from Project"))
                             .on_click(cx.listener(move |picker, _, window, cx| {
                                 let Some(workspace) = picker.delegate.workspace.upgrade() else {
                                     return;
@@ -1358,7 +1358,7 @@ impl PickerDelegate for RecentProjectsDelegate {
                                     let focus_handle = self.focus_handle.clone();
                                     move |_, cx| {
                                         Tooltip::for_action_in(
-                                            "在新窗口中打开",
+                                            "Open in New Window",
                                             &menu::SecondaryConfirm,
                                             &focus_handle,
                                             cx,
@@ -1384,7 +1384,7 @@ impl PickerDelegate for RecentProjectsDelegate {
                         this.child(
                             IconButton::new("remove_open_project", IconName::Close)
                                 .icon_size(IconSize::Small)
-                                .tooltip(Tooltip::text("从窗口中移除项目"))
+                                .tooltip(Tooltip::text("Remove Project from Window"))
                                 .on_click({
                                     let project_group_key = project_group_key.clone();
                                     cx.listener(move |picker, _, window, cx| {
@@ -1466,9 +1466,9 @@ impl PickerDelegate for RecentProjectsDelegate {
                     .unzip();
 
                 let tooltip_title = if paths.len() > 1 {
-                    "将文件夹添加到此项目"
+                    "Add Folders to this Project"
                 } else {
-                    "添加文件夹到此项目"
+                    "Add Folder to this Project"
                 };
 
                 let prefix = match &location {
@@ -1497,7 +1497,7 @@ impl PickerDelegate for RecentProjectsDelegate {
                                     Tooltip::with_meta(
                                         tooltip_title,
                                         None,
-                                        "作为多根文件夹",
+                                        "As a multi-root folder",
                                         cx,
                                     )
                                 })
@@ -1521,7 +1521,7 @@ impl PickerDelegate for RecentProjectsDelegate {
                             .tooltip({
                                 move |_, cx| {
                                     Tooltip::for_action_in(
-                                        "在新窗口中打开项目",
+                                        "Open Project in New Window",
                                         &menu::SecondaryConfirm,
                                         &focus_handle,
                                         cx,
@@ -1538,7 +1538,7 @@ impl PickerDelegate for RecentProjectsDelegate {
                     .child(
                         IconButton::new("delete", IconName::Close)
                             .icon_size(IconSize::Small)
-                            .tooltip(Tooltip::text("从最近项目中删除"))
+                            .tooltip(Tooltip::text("Delete from Recent Projects"))
                             .on_click(cx.listener(move |this, _event, window, cx| {
                                 cx.stop_propagation();
                                 window.prevent_default();
@@ -1574,7 +1574,7 @@ impl PickerDelegate for RecentProjectsDelegate {
                                 })
                                 .tooltip(move |_, cx| {
                                     Tooltip::with_meta(
-                                        "在此窗口中打开项目",
+                                        "Open Project in This Window",
                                         None,
                                         tooltip_path.clone(),
                                         cx,
@@ -1624,7 +1624,7 @@ impl PickerDelegate for RecentProjectsDelegate {
                                     .w_full()
                                     .gap_1()
                                     .justify_between()
-                                    .child(Label::new("打开本地文件夹"))
+                                    .child(Label::new("Open Local Folder"))
                                     .child(KeyBinding::for_action_in(
                                         &workspace::Open {
                                             create_new_window: self.create_new_window,
@@ -1653,7 +1653,7 @@ impl PickerDelegate for RecentProjectsDelegate {
                                     .w_full()
                                     .gap_1()
                                     .justify_between()
-                                    .child(Label::new("打开远程文件夹"))
+                                    .child(Label::new("Open Remote Folder"))
                                     .child(KeyBinding::for_action(
                                         &OpenRemote {
                                             from_existing_connection: false,
@@ -1690,7 +1690,7 @@ impl PickerDelegate for RecentProjectsDelegate {
 
         let secondary_footer_actions: Option<AnyElement> = match selected_entry {
             Some(ProjectPickerEntry::OpenFolder { .. }) => Some(
-                Button::new("remove_selected", "移除文件夹")
+                Button::new("remove_selected", "Remove Folder")
                     .key_binding(KeyBinding::for_action_in(
                         &RemoveSelected,
                         &focus_handle,
@@ -1702,7 +1702,7 @@ impl PickerDelegate for RecentProjectsDelegate {
                     .into_any_element(),
             ),
             Some(ProjectPickerEntry::ProjectGroup(_)) if !is_current_workspace_entry => Some(
-                Button::new("remove_selected", "从窗口移除")
+                Button::new("remove_selected", "Remove from Window")
                     .key_binding(KeyBinding::for_action_in(
                         &RemoveSelected,
                         &focus_handle,
@@ -1714,7 +1714,7 @@ impl PickerDelegate for RecentProjectsDelegate {
                     .into_any_element(),
             ),
             Some(ProjectPickerEntry::RecentProject(_)) => Some(
-                Button::new("delete_recent", "删除")
+                Button::new("delete_recent", "Delete")
                     .key_binding(KeyBinding::for_action_in(
                         &RemoveSelected,
                         &focus_handle,
@@ -1746,7 +1746,7 @@ impl PickerDelegate for RecentProjectsDelegate {
                                 let window_project_groups = self.window_project_groups.clone();
                                 let selected_index = self.selected_index;
                                 let filtered_entries = self.filtered_entries.clone();
-                                Button::new("move_to_new_window", "新建窗口")
+                                Button::new("move_to_new_window", "New Window")
                                     .key_binding(KeyBinding::for_action_in(
                                         &menu::SecondaryConfirm,
                                         &focus_handle,
@@ -1766,7 +1766,7 @@ impl PickerDelegate for RecentProjectsDelegate {
                             })
                         })
                         .child(
-                            Button::new("activate", "激活")
+                            Button::new("activate", "Activate")
                                 .key_binding(KeyBinding::for_action_in(
                                     &menu::Confirm,
                                     &focus_handle,
@@ -1778,7 +1778,7 @@ impl PickerDelegate for RecentProjectsDelegate {
                         )
                     } else {
                         this.child(
-                            Button::new("open_new_window", "新建窗口")
+                            Button::new("open_new_window", "New Window")
                                 .key_binding(KeyBinding::for_action_in(
                                     &menu::SecondaryConfirm,
                                     &focus_handle,
@@ -1789,7 +1789,7 @@ impl PickerDelegate for RecentProjectsDelegate {
                                 }),
                         )
                         .child(
-                            Button::new("open_here", "打开")
+                            Button::new("open_here", "Open")
                                 .key_binding(KeyBinding::for_action_in(
                                     &menu::Confirm,
                                     &focus_handle,
@@ -1811,7 +1811,7 @@ impl PickerDelegate for RecentProjectsDelegate {
                             y: px(-2.0),
                         })
                         .trigger(
-                            Button::new("actions-trigger", "操作")
+                            Button::new("actions-trigger", "Actions")
                                 .selected_style(ButtonStyle::Tinted(TintColor::Accent))
                                 .key_binding(KeyBinding::for_action_in(
                                     &ToggleActionsMenu,
@@ -1847,13 +1847,13 @@ impl PickerDelegate for RecentProjectsDelegate {
                                         menu.context(focus_handle)
                                             .when(show_add_to_workspace, |menu| {
                                                 menu.action(
-                                                    "添加文件夹到此项目",
+                                                    "Add Folder to this Project",
                                                     AddToWorkspace.boxed_clone(),
                                                 )
                                                 .separator()
                                             })
                                             .entry(
-                                                "打开本地文件夹",
+                                                "Open Local Folder",
                                                 Some(open_action.boxed_clone()),
                                                 {
                                                     let workspace_handle = workspace_handle.clone();
@@ -1868,7 +1868,7 @@ impl PickerDelegate for RecentProjectsDelegate {
                                                 },
                                             )
                                             .action(
-                                                "打开远程文件夹",
+                                                "Open Remote Folder",
                                                 OpenRemote {
                                                     from_existing_connection: false,
                                                     create_new_window: false,
@@ -2072,7 +2072,7 @@ impl RecentProjectsDelegate {
                         workspace
                             .open_workspace_for_paths(OpenMode::NewWindow, paths, window, cx)
                             .detach_and_prompt_err(
-                                "打开项目失败",
+                                "Failed to open project",
                                 window,
                                 cx,
                                 |_, _, _| None,
@@ -2100,7 +2100,7 @@ impl RecentProjectsDelegate {
                             .await
                     })
                     .detach_and_prompt_err(
-                        "打开项目失败",
+                        "Failed to open project",
                         window,
                         cx,
                         |_, _, _| None,
@@ -2350,13 +2350,13 @@ mod tests {
 
     // Test picker for the empty query:
     //
-    //   [0] Header("当前文件夹")
+    //   [0] Header("Current Folders")
     //   [1] OpenFolder(0)
     //   [2] OpenFolder(1)
-    //   [3] Header("当前窗口")
+    //   [3] Header("This Window")
     //   [4] ProjectGroup(0)
     //   [5] ProjectGroup(1)
-    //   [6] Header("最近的项目")
+    //   [6] Header("Recent Projects")
     //   [7..=26] RecentProject(0..=19)
     //
     const RECENT_PROJECT_COUNT: usize = 20;
@@ -2447,7 +2447,7 @@ mod tests {
             let Some(ProjectPickerEntry::RecentProject(hit)) =
                 picker.delegate.filtered_entries.get(index)
             else {
-                panic!("预期索引 {index} 处的条目是一个最近项目");
+                panic!("expected entry at {index} to be a recent project");
             };
             let mut workspaces = picker.delegate.workspaces.clone();
             workspaces.remove(hit.candidate_id);
@@ -2468,7 +2468,7 @@ mod tests {
             assert_eq!(
                 picker.logical_scroll_top_index(),
                 expected,
-                "滚动位置应保持在 {expected} ({phase})"
+                "scroll top should remain at {expected} ({phase})"
             );
             assert_selected_entry_is_recent_project(picker);
         });
@@ -2484,11 +2484,11 @@ mod tests {
             assert_eq!(
                 picker.is_scrolled_to_end(),
                 Some(true),
-                "选择器应保持在底部 ({phase})"
+                "picker should remain pinned to the bottom ({phase})"
             );
             assert!(
                 picker.logical_scroll_top_index() > 0,
-                "选择器固定在底部时不应跳转到顶部 ({phase})"
+                "picker should not jump to the top while pinned to the bottom ({phase})"
             );
             assert_selected_entry_is_recent_project(picker);
         });
@@ -2512,7 +2512,7 @@ mod tests {
         let scroll_top = scroll_to_and_select(&picker, cx, target);
         assert!(
             scroll_top > 0,
-            "测试应该从非顶部位置开始滚动"
+            "test should start scrolled away from the top"
         );
 
         delete_recent_project_in_picker(&picker, cx, target);
@@ -2531,7 +2531,7 @@ mod tests {
         let scroll_top = scroll_to_and_select(&picker, cx, target);
         assert!(
             scroll_top > 0,
-            "测试应该从非顶部位置开始滚动"
+            "test should start scrolled away from the top"
         );
 
         delete_recent_project_in_picker(&picker, cx, target);
@@ -2551,7 +2551,7 @@ mod tests {
             assert_eq!(
                 picker.is_scrolled_to_end(),
                 Some(true),
-                "选择最后一项应使选择器固定在底部"
+                "selecting the last entry should leave the picker pinned to the bottom"
             );
         });
 

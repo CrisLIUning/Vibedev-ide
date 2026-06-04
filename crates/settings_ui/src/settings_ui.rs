@@ -435,12 +435,12 @@ fn init_renderers(cx: &mut App) {
                     settings_window,
                     item,
                     settings_file,
-                    Button::new("open-in-settings-file", "在 设置.json 中编辑")
+                    Button::new("open-in-settings-file", "Edit in settings.json")
                         .style(ButtonStyle::Outlined)
                         .size(ButtonSize::Medium)
                         .tab_index(0_isize)
                         .tooltip(Tooltip::for_action_title_in(
-                            "在 设置.json 中编辑",
+                            "Edit in settings.json",
                             &OpenCurrentFile,
                             &settings_window.focus_handle,
                         ))
@@ -1002,7 +1002,7 @@ impl SettingsPageItem {
                         .child(
                             Button::new(
                                 ("sub-page".into(), sub_page_link.title.clone()),
-                                "配置",
+                                "Configure",
                             )
                             .tab_index(0_isize)
                             .end_icon(
@@ -1200,7 +1200,7 @@ fn render_settings_item(
                                     IconButton::new("reset-to-default-btn", IconName::Undo)
                                         .icon_color(Color::Muted)
                                         .icon_size(IconSize::Small)
-                                        .tooltip(Tooltip::text("重置为默认值"))
+                                        .tooltip(Tooltip::text("Reset to Default"))
                                         .on_click({
                                             move |_, window, cx| {
                                                 reset_to_default(window, cx);
@@ -1214,7 +1214,7 @@ fn render_settings_item(
                             |this, file_set_in| {
                                 this.child(
                                     Label::new(format!(
-                                        "—  在 {} 中修改",
+                                        "—  Modified in {}",
                                         settings_window
                                             .display_name(&file_set_in)
                                             .expect("File name should exist")
@@ -1277,7 +1277,7 @@ fn render_settings_item_link(
                 .icon_color(link_icon_color)
                 .icon_size(IconSize::Small)
                 .shape(IconButtonShape::Square)
-                .tooltip(Tooltip::text("复制链接"))
+                .tooltip(Tooltip::text("Copy Link"))
                 .when_some(json_path, |this, path| {
                     this.on_click(cx.listener(move |this, _, _, cx| {
                         let link = format!("zed://settings/{}", path);
@@ -1384,7 +1384,7 @@ struct SubPageLink {
     /// See [`SettingField.json_path`]
     json_path: Option<&'static str>,
     /// Whether or not the settings in this sub page are configurable in settings.json
-    /// Removes the "在 设置.json 中编辑" button from the page.
+    /// Removes the "Edit in settings.json" button from the page.
     in_json: bool,
     files: FileMask,
     render:
@@ -1434,9 +1434,9 @@ enum SettingsUiFile {
 impl SettingsUiFile {
     fn setting_type(&self) -> &'static str {
         match self {
-            SettingsUiFile::User => "用户",
-            SettingsUiFile::Project(_) => "项目",
-            SettingsUiFile::Server(_) => "服务器",
+            SettingsUiFile::User => "User",
+            SettingsUiFile::Project(_) => "Project",
+            SettingsUiFile::Server(_) => "Server",
         }
     }
 
@@ -1498,7 +1498,7 @@ impl SettingsWindow {
         let current_file = SettingsUiFile::User;
         let search_bar = cx.new(|cx| {
             let mut editor = Editor::single_line(window, cx);
-            editor.set_placeholder_text("搜索设置…", window, cx);
+            editor.set_placeholder_text("Search settings…", window, cx);
             editor
         });
         cx.subscribe(&search_bar, |this, _, event: &EditorEvent, cx| {
@@ -2536,7 +2536,7 @@ impl SettingsWindow {
                                         }),
                                     )
                                     .style(DropdownStyle::Subtle)
-                                    .trigger_tooltip(Tooltip::text("查看其他项目"))
+                                    .trigger_tooltip(Tooltip::text("View Other Projects"))
                                     .trigger_icon(IconName::ChevronDown)
                                     .attach(gpui::Anchor::BottomLeft)
                                     .offset(gpui::Point {
@@ -2549,11 +2549,11 @@ impl SettingsWindow {
                     }),
             )
             .child(
-                Button::new(edit_in_json_id, "在 设置.json 中编辑")
+                Button::new(edit_in_json_id, "Edit in settings.json")
                     .tab_index(0_isize)
                     .style(ButtonStyle::OutlinedGhost)
                     .tooltip(Tooltip::for_action_title_in(
-                        "在 设置.json 中编辑",
+                        "Edit in settings.json",
                         &OpenCurrentFile,
                         &self.focus_handle,
                     ))
@@ -2565,7 +2565,7 @@ impl SettingsWindow {
 
     pub(crate) fn display_name(&self, file: &SettingsUiFile) -> Option<String> {
         match file {
-            SettingsUiFile::User => Some("用户".to_string()),
+            SettingsUiFile::User => Some("User".to_string()),
             SettingsUiFile::Project((worktree_id, path)) => self
                 .worktree_root_dirs
                 .get(&worktree_id)
@@ -2639,9 +2639,9 @@ impl SettingsWindow {
                 .visible_navbar_entries()
                 .any(|(_, entry)| entry.focus_handle.is_focused(window))
         {
-            "聚焦内容"
+            "Focus Content"
         } else {
-            "聚焦导航栏"
+            "Focus Navbar"
         };
 
         let mut key_context = KeyContext::new_with_defaults();
@@ -3066,7 +3066,7 @@ impl SettingsWindow {
             .items_center()
             .justify_center()
             .gap_1()
-            .child(Label::new("无结果"))
+            .child(Label::new("No Results"))
             .child(
                 Label::new(format!("No settings match \"{}\"", search_query))
                     .size(LabelSize::Small)
@@ -3289,11 +3289,11 @@ impl SettingsWindow {
                 .when(current_sub_page.link.in_json, |this| {
                     this.child(
                         div().flex_shrink_0().child(
-                            Button::new("open-in-settings-file", "在 设置.json 中编辑")
+                            Button::new("open-in-settings-file", "Edit in settings.json")
                                 .tab_index(0_isize)
                                 .style(ButtonStyle::OutlinedGhost)
                                 .tooltip(Tooltip::for_action_title_in(
-                                    "在 设置.json 中编辑",
+                                    "Edit in settings.json",
                                     &OpenCurrentFile,
                                     &self.focus_handle,
                                 ))
@@ -3342,7 +3342,7 @@ impl SettingsWindow {
                     )
                     .action_slot(
                         div().pr_1().pb_1().child(
-                            Button::new("fix-in-json", "在 设置.json 中修复")
+                            Button::new("fix-in-json", "Fix in settings.json")
                                 .tab_index(0_isize)
                                 .style(ButtonStyle::Tinted(ui::TintColor::Warning))
                                 .on_click(cx.listener(|this, _, window, cx| {
@@ -3359,7 +3359,7 @@ impl SettingsWindow {
                 .gap_2()
                 .when_some(parse_error, |this, err| {
                     this.child(banner(
-                        "加载设置失败。某些值可能不正确,更改可能会丢失。",
+                        "Failed to load your settings. Some values may be incorrect and changes may be lost.",
                         err,
                         &mut self.shown_errors,
                         cx,
@@ -3367,17 +3367,17 @@ impl SettingsWindow {
                 })
                 .map(|this| match &error.migration_status {
                     settings::MigrationStatus::Succeeded => this.child(banner(
-                        "您的设置已过期,需要更新。",
+                        "Your settings are out of date, and need to be updated.",
                         match &self.current_file {
-                            SettingsUiFile::User => "它们可以自动迁移到最新版本。",
-                            SettingsUiFile::Server(_) | SettingsUiFile::Project(_)  => "它们必须手动迁移到最新版本。"
+                            SettingsUiFile::User => "They can be automatically migrated to the latest version.",
+                            SettingsUiFile::Server(_) | SettingsUiFile::Project(_)  => "They must be manually migrated to the latest version."
                         }.to_string(),
                         &mut self.shown_errors,
                         cx,
                     )),
                     settings::MigrationStatus::Failed { error: err } if !parse_failed => this
                         .child(banner(
-                            "您的设置文件已过期,自动迁移失败",
+                            "Your settings file is out of date, automatic migration failed",
                             err.clone(),
                             &mut self.shown_errors,
                             cx,
@@ -3409,10 +3409,10 @@ impl SettingsWindow {
                         v_flex()
                             .my_0p5()
                             .gap_0p5()
-                            .child(Label::new("受限模式"))
+                            .child(Label::new("Restricted Mode"))
                             .child(
                                 Label::new(
-                                    "此项目处于受限模式。部分项目设置可能不适用。",
+                                    "This project is in restricted mode. Some project settings may not apply.",
                                 )
                                 .size(LabelSize::Small)
                                 .color(Color::Muted),
@@ -3420,7 +3420,7 @@ impl SettingsWindow {
                     )
                     .action_slot(
                         div().pr_2().pb_1().child(
-                            Button::new("manage-trust", "管理信任")
+                            Button::new("manage-trust", "Manage Trust")
                                 .style(ButtonStyle::Tinted(ui::TintColor::Warning))
                                 .on_click(cx.listener(move |_this, _, window, cx| {
                                     if let Some(original_window) = original_window {
@@ -3745,7 +3745,7 @@ impl SettingsWindow {
                             .take(item_index)
                             .rev()
                             .find_map(|item| item.header_text().map(SharedString::new_static))
-                            .unwrap_or_else(|| "设置".into());
+                            .unwrap_or_else(|| "Settings".into());
 
                         self.push_sub_page(sub_page_link.clone(), section_header, window, cx);
                         return true;
@@ -4815,7 +4815,7 @@ pub mod test {
         v Project
         - Project Settings*
         ",
-        toggle_page: "项目",
+        toggle_page: "Project",
         after: r"
         > General
         > Project*
@@ -4834,7 +4834,7 @@ pub mod test {
         - General
         > Appearance & Behavior
         ",
-        toggle_page: "项目",
+        toggle_page: "Project",
         after: r"
         v General Page
         - General
@@ -4918,12 +4918,12 @@ pub mod test {
                 .navbar_entries
                 .iter()
                 .position(|entry| entry.title == "General" && entry.is_root)
-                .expect("General 根条目应该存在");
+                .expect("General root entry should exist");
             let privacy_idx = settings_window
                 .navbar_entries
                 .iter()
-                .position(|entry| entry.title == "隐私" && !entry.is_root)
-                .expect("隐私嵌套条目应该存在");
+                .position(|entry| entry.title == "Privacy" && !entry.is_root)
+                .expect("Privacy nested entry should exist");
 
             let click_event = |click_count| {
                 gpui::ClickEvent::Mouse(gpui::MouseClickEvent {
@@ -4947,7 +4947,7 @@ pub mod test {
                     window,
                     cx,
                 ),
-                "单击应使用正常导航路径"
+                "single-clicks should use the normal navigation path"
             );
             assert!(!settings_window.navbar_entries[general_idx].expanded);
 
@@ -4966,7 +4966,7 @@ pub mod test {
                     window,
                     cx,
                 ),
-                "三次点击不应再次切换条目"
+                "triple-clicks should not toggle the entry again"
             );
             assert!(settings_window.navbar_entries[general_idx].expanded);
 

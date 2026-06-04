@@ -558,7 +558,7 @@ async fn test_ssh_collaboration_git_worktrees(
     assert_eq!(
         host_worktrees.len(),
         2,
-        "重命名后主机仍应有 2 个工作树"
+        "Host should still have 2 worktrees after rename"
     );
     assert_eq!(
         host_worktrees[1].path,
@@ -587,7 +587,7 @@ async fn test_ssh_collaboration_git_worktrees(
     assert_eq!(
         server_worktrees.len(),
         2,
-        "重命名后服务器仍应有 2 个工作树"
+        "Server should still have 2 worktrees after rename"
     );
     assert_eq!(
         server_worktrees[1].path,
@@ -614,7 +614,7 @@ async fn test_ssh_collaboration_git_worktrees(
     assert_eq!(
         host_worktrees.len(),
         1,
-        "移除后主机应仅保留主工作树"
+        "Host should only have the main worktree after removal"
     );
 
     let server_worktrees = {
@@ -639,7 +639,7 @@ async fn test_ssh_collaboration_git_worktrees(
     assert_eq!(
         server_worktrees.len(),
         1,
-        "移除后服务器应仅保留主工作树"
+        "Server should only have the main worktree after removal"
     );
 }
 
@@ -744,7 +744,7 @@ async fn test_ssh_collaboration_formatting_with_prettier(
             p.open_buffer_with_lsp((worktree_id, rel_path("a.ts")), cx)
         })
         .await
-        .expect("用户 B 打开缓冲区进行格式化");
+        .expect("user B opens buffer for formatting");
 
     cx_a.update(|cx| {
         SettingsStore::update_global(cx, |store, cx| {
@@ -803,7 +803,7 @@ async fn test_ssh_collaboration_formatting_with_prettier(
             p.open_buffer((worktree_id, rel_path("a.ts")), cx)
         })
         .await
-        .expect("用户 A 打开缓冲区进行格式化");
+        .expect("user A opens buffer for formatting");
 
     cx_a.update(|cx| {
         SettingsStore::update_global(cx, |store, cx| {
@@ -1260,13 +1260,13 @@ async fn test_ssh_remote_worktree_trust(cx_a: &mut TestAppContext, server_cx: &m
     let can_trust_b = trusted_worktrees.update(cx_a, |store, cx| {
         store.can_trust(&worktree_store, worktree_ids[1], cx)
     });
-    assert!(!can_trust_a, "project_a 初始应受限");
-    assert!(!can_trust_b, "project_b 初始应受限");
+    assert!(!can_trust_a, "project_a should be restricted initially");
+    assert!(!can_trust_b, "project_b should be restricted initially");
 
     let has_restricted = trusted_worktrees.read_with(cx_a, |store, cx| {
         store.has_restricted_worktrees(&worktree_store, cx)
     });
-    assert!(has_restricted, "应包含受限的工作树");
+    assert!(has_restricted, "should have restricted worktrees");
 
     let buffer_before_approval = project_a
         .update(cx_a, |project, cx| {
@@ -1291,7 +1291,7 @@ async fn test_ssh_remote_worktree_trust(cx_a: &mut TestAppContext, server_cx: &m
         assert_eq!(
             LanguageSettings::for_buffer(buffer_before_approval.read(cx), cx).language_servers,
             ["...".to_string()],
-            "在信任批准前,远程 .zed/设置.json 不得同步"
+            "remote .zed/settings.json must not sync before trust approval"
         )
     });
 
@@ -1303,7 +1303,7 @@ async fn test_ssh_remote_worktree_trust(cx_a: &mut TestAppContext, server_cx: &m
     assert_eq!(
         lsp_inlay_hint_request_count.load(Ordering::Acquire),
         0,
-        "在信任批准前,不得查询内联提示"
+        "inlay hints must not be queried before trust approval"
     );
 
     trusted_worktrees.update(cx_a, |store, cx| {
@@ -1319,7 +1319,7 @@ async fn test_ssh_remote_worktree_trust(cx_a: &mut TestAppContext, server_cx: &m
         assert_eq!(
             LanguageSettings::for_buffer(buffer_before_approval.read(cx), cx).language_servers,
             ["override-rust-analyzer".to_string()],
-            "在信任批准后,远程 .zed/设置.json 应同步"
+            "remote .zed/settings.json should sync after trust approval"
         )
     });
     let _fake_language_server = fake_language_server.await.unwrap();
@@ -1330,7 +1330,7 @@ async fn test_ssh_remote_worktree_trust(cx_a: &mut TestAppContext, server_cx: &m
     cx_a.executor().advance_clock(Duration::from_secs(1));
     assert!(
         lsp_inlay_hint_request_count.load(Ordering::Acquire) > 0,
-        "在信任批准后,应查询内联提示"
+        "inlay hints should be queried after trust approval"
     );
 
     let can_trust_a = trusted_worktrees.update(cx_a, |store, cx| {
@@ -1339,8 +1339,8 @@ async fn test_ssh_remote_worktree_trust(cx_a: &mut TestAppContext, server_cx: &m
     let can_trust_b = trusted_worktrees.update(cx_a, |store, cx| {
         store.can_trust(&worktree_store, worktree_ids[1], cx)
     });
-    assert!(can_trust_a, "trust() 后 project_a 应被信任");
-    assert!(!can_trust_b, "project_b 仍应受限");
+    assert!(can_trust_a, "project_a should be trusted after trust()");
+    assert!(!can_trust_b, "project_b should still be restricted");
 
     trusted_worktrees.update(cx_a, |store, cx| {
         store.trust(
@@ -1356,14 +1356,14 @@ async fn test_ssh_remote_worktree_trust(cx_a: &mut TestAppContext, server_cx: &m
     let can_trust_b = trusted_worktrees.update(cx_a, |store, cx| {
         store.can_trust(&worktree_store, worktree_ids[1], cx)
     });
-    assert!(can_trust_a, "project_a 应保持被信任状态");
-    assert!(can_trust_b, "project_b 现应被信任");
+    assert!(can_trust_a, "project_a should remain trusted");
+    assert!(can_trust_b, "project_b should now be trusted");
 
     let has_restricted_after = trusted_worktrees.read_with(cx_a, |store, cx| {
         store.has_restricted_worktrees(&worktree_store, cx)
     });
     assert!(
         !has_restricted_after,
-        "信任两者后,不应存在受限的工作树"
+        "should have no restricted worktrees after trusting both"
     );
 }

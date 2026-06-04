@@ -179,9 +179,9 @@ impl Editor {
             match toggle_task.await {
                 Ok(code_action_spawn) => match code_action_spawn.await {
                     Ok(()) => {}
-                    Err(e) => log::error!("无法启动切换的代码操作:{e:#}"),
+                    Err(e) => log::error!("failed to spawn a toggled code action: {e:#}"),
                 },
-                Err(e) => log::error!("无法切换代码操作:{e:#}"),
+                Err(e) => log::error!("failed to toggle code actions: {e:#}"),
             }
         })
     }
@@ -297,7 +297,7 @@ impl Editor {
                     let focus_handle = self.focus_handle.clone();
                     move |_window, cx| {
                         Tooltip::for_action_in(
-                            "切换代码操作",
+                            "Toggle Code Actions",
                             &ToggleCodeActions {
                                 deployed_from: None,
                                 quick_launch: false,

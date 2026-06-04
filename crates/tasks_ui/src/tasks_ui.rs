@@ -414,12 +414,12 @@ mod tests {
                 ".zed": {
                     "tasks.json": r#"[
                             {
-                                "label": "示例任务",
+                                "label": "example task",
                                 "command": "echo",
                                 "args": ["4"]
                             },
                             {
-                                "label": "另一个任务",
+                                "label": "another one",
                                 "command": "echo",
                                 "args": ["55"]
                             },

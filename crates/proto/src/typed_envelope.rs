@@ -68,7 +68,7 @@ impl ProtoLspResponse<Box<dyn AnyTypedEnvelope>> {
             .downcast::<TypedEnvelope<T::Response>>()
             .map_err(|_| {
                 anyhow::anyhow!(
-                    "无法将 LspResponse 下行转型为 {} (消息 {})",
+                    "cannot downcast LspResponse to {} for message {}",
                     T::Response::NAME,
                     T::NAME,
                 )

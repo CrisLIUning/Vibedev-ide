@@ -94,7 +94,7 @@ impl picker::PickerDelegate for WslPickerDelegate {
     }
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
-        Arc::from("输入 WSL 发行版名称")
+        Arc::from("Enter WSL distro name")
     }
 
     fn update_matches(

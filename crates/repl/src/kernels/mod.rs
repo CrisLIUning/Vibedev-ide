@@ -190,7 +190,7 @@ pub fn start_kernel_tasks<S: KernelSession + 'static>(
             while let Some((name, result)) = tasks.next().await {
                 if let Err(err) = result {
                     session.update(cx, |session, cx| {
-                        session.kernel_errored(format!("处理 {name} 失败: {err}"), cx);
+                        session.kernel_errored(format!("handling failed for {name}: {err}"), cx);
                         cx.notify();
                     });
                 }
@@ -237,7 +237,7 @@ impl PythonEnvKernelSpecification {
     pub fn is_uv(&self) -> bool {
         matches!(
             self.environment_kind.as_deref(),
-            Some("uv" | "uv (工作区)")
+            Some("uv" | "uv (Workspace)")
         )
     }
 }
@@ -312,11 +312,11 @@ impl KernelSpecification {
             Self::PythonEnv(spec) => SharedString::from(
                 spec.environment_kind
                     .clone()
-                    .unwrap_or_else(|| "Python 环境".to_string()),
+                    .unwrap_or_else(|| "Python Environment".to_string()),
             ),
-            Self::JupyterServer(_) => "Jupyter 服务器".into(),
-            Self::SshRemote(_) => "SSH 远程".into(),
-            Self::WslRemote(_) => "WSL 远程".into(),
+            Self::JupyterServer(_) => "Jupyter Server".into(),
+            Self::SshRemote(_) => "SSH Remote".into(),
+            Self::WslRemote(_) => "WSL Remote".into(),
         }
     }
 
@@ -356,9 +356,9 @@ impl KernelSpecification {
                 .as_ref()
                 .map(|kind| SharedString::from(kind.clone())),
             Self::Jupyter(_) => Some("Jupyter".into()),
-            Self::JupyterServer(_) => Some("Jupyter 服务器".into()),
-            Self::SshRemote(_) => Some("SSH 远程".into()),
-            Self::WslRemote(_) => Some("WSL 远程".into()),
+            Self::JupyterServer(_) => Some("Jupyter Server".into()),
+            Self::SshRemote(_) => Some("SSH Remote".into()),
+            Self::WslRemote(_) => Some("WSL Remote".into()),
         }
     }
 
@@ -384,22 +384,22 @@ fn extract_environment_kind(toolchain_json: &serde_json::Value) -> Option<String
         "Conda" => "Conda",
         "Pixi" => "pixi",
         "Homebrew" => "Homebrew",
-        "Pyenv" => "全局 (Pyenv)",
+        "Pyenv" => "global (Pyenv)",
         "GlobalPaths" => "global",
         "PyenvVirtualEnv" => "Pyenv",
         "Pipenv" => "Pipenv",
         "Poetry" => "Poetry",
-        "MacPythonOrg" => "全局 (Python.org)",
-        "MacCommandLineTools" => "全局 (Xcode 命令行工具)",
+        "MacPythonOrg" => "global (Python.org)",
+        "MacCommandLineTools" => "global (Command Line Tools for Xcode)",
         "LinuxGlobal" => "global",
-        "MacXCode" => "全局 (Xcode)",
+        "MacXCode" => "global (Xcode)",
         "Venv" => "venv",
         "VirtualEnv" => "virtualenv",
         "VirtualEnvWrapper" => "virtualenvwrapper",
-        "WindowsStore" => "全局 (Windows Store)",
-        "WindowsRegistry" => "全局 (Windows 注册表)",
+        "WindowsStore" => "global (Windows Store)",
+        "WindowsRegistry" => "global (Windows Registry)",
         "Uv" => "uv",
-        "UvWorkspace" => "uv (工作区)",
+        "UvWorkspace" => "uv (Workspace)",
         _ => kind_str,
     };
     Some(label.to_string())
@@ -481,7 +481,7 @@ pub fn python_env_kernel_specifications(
 
                         if let Some(distro) = wsl_distro {
                             log::debug!(
-                                "python_env_kernel_specifications: 正在为工具链 {} 返回 WslRemote",
+                                "python_env_kernel_specifications: returning WslRemote for toolchain {}",
                                 toolchain.name
                             );
                             return Some(KernelSpecification::WslRemote(WslKernelSpecification {
@@ -497,7 +497,7 @@ pub fn python_env_kernel_specifications(
                         );
                         return Some(KernelSpecification::SshRemote(
                             SshRemoteKernelSpecification {
-                                name: format!("远程 {}", toolchain.name),
+                                name: format!("Remote {}", toolchain.name),
                                 path: toolchain.path.clone(),
                                 kernelspec: default_kernelspec,
                             },
@@ -694,13 +694,13 @@ impl KernelStatus {
 impl ToString for KernelStatus {
     fn to_string(&self) -> String {
         match self {
-            KernelStatus::Idle => "空闲".to_string(),
-            KernelStatus::Busy => "忙碌".to_string(),
-            KernelStatus::Starting => "启动中".to_string(),
-            KernelStatus::Error => "错误".to_string(),
-            KernelStatus::ShuttingDown => "正在关闭".to_string(),
-            KernelStatus::Shutdown => "已关闭".to_string(),
-            KernelStatus::Restarting => "重启中".to_string(),
+            KernelStatus::Idle => "Idle".to_string(),
+            KernelStatus::Busy => "Busy".to_string(),
+            KernelStatus::Starting => "Starting".to_string(),
+            KernelStatus::Error => "Error".to_string(),
+            KernelStatus::ShuttingDown => "Shutting Down".to_string(),
+            KernelStatus::Shutdown => "Shutdown".to_string(),
+            KernelStatus::Restarting => "Restarting".to_string(),
         }
     }
 }

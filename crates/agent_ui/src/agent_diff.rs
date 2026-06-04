@@ -91,7 +91,7 @@ impl AgentDiffPane {
 
         let project = thread.read(cx).project().clone();
         let editor = cx.new(|cx| {
-            let workspace_entity = workspace.upgrade().expect("工作区必须存在");
+            let workspace_entity = workspace.upgrade().expect("workspace must exist");
             let diff_display_editor = SplittableEditor::new(
                 EditorSettings::get_global(cx).diff_view_style,
                 multibuffer.clone(),
@@ -537,7 +537,7 @@ impl Item for AgentDiffPane {
         Label::new(if let Some(title) = title {
             format!("Review: {}", title)
         } else {
-            "审查".to_string()
+            "Review".to_string()
         })
         .color(if params.selected {
             Color::Default

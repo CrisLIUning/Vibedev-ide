@@ -30,7 +30,7 @@ impl std::fmt::Debug for Command {
         let filtered_env = self
             .env
             .iter()
-            .map(|(k, v)| (k, if should_redact(k) { "[已脱敏]" } else { v }))
+            .map(|(k, v)| (k, if should_redact(k) { "[REDACTED]" } else { v }))
             .collect::<Vec<_>>();
 
         f.debug_struct("Command")

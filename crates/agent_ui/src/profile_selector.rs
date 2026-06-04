@@ -165,11 +165,11 @@ impl Render for ProfileSelector {
         }
 
         if !self.provider.profiles_supported(cx) {
-            return Button::new("tools-not-supported-button", "工具不支持")
+            return Button::new("tools-not-supported-button", "Tools Unsupported")
                 .disabled(true)
                 .label_size(LabelSize::Small)
                 .color(Color::Muted)
-                .tooltip(Tooltip::text("此模型不支持工具。"))
+                .tooltip(Tooltip::text("This model does not support tools."))
                 .into_any_element();
         }
 
@@ -181,7 +181,7 @@ impl Render for ProfileSelector {
 
         let selected_profile = profile
             .map(|profile| profile.name.clone())
-            .unwrap_or_else(|| "未知".into());
+            .unwrap_or_else(|| "Unknown".into());
 
         let icon = if self.picker_handle.is_deployed() {
             IconName::ChevronUp
@@ -201,7 +201,7 @@ impl Render for ProfileSelector {
                     .gap_1()
                     .child(
                         container()
-                            .child(Label::new("更改配置文件"))
+                            .child(Label::new("Change Profile"))
                             .child(KeyBinding::for_action(&ToggleProfileSelector, cx)),
                     )
                     .child(
@@ -209,7 +209,7 @@ impl Render for ProfileSelector {
                             .pt_1()
                             .border_t_1()
                             .border_color(cx.theme().colors().border_variant)
-                            .child(Label::new("循环切换配置"))
+                            .child(Label::new("Cycle Through Profiles"))
                             .child(KeyBinding::for_action(&CycleModeSelector, cx)),
                     )
                     .into_any()
@@ -342,9 +342,9 @@ impl ProfilePickerDelegate {
 
     fn documentation(candidate: &ProfileCandidate) -> Option<&'static str> {
         match candidate.id.as_str() {
-            builtin_profiles::WRITE => Some("获取帮助以编写任何内容。"),
-            builtin_profiles::ASK => Some("就您的代码库进行对话。"),
-            builtin_profiles::MINIMAL => Some("在无工具情况下进行对话。"),
+            builtin_profiles::WRITE => Some("Get help to write anything."),
+            builtin_profiles::ASK => Some("Chat about your codebase."),
+            builtin_profiles::MINIMAL => Some("Chat about anything with no tools."),
             _ => None,
         }
     }
@@ -431,12 +431,12 @@ impl PickerDelegate for ProfilePickerDelegate {
     type ListItem = AnyElement;
 
     fn placeholder_text(&self, _: &mut Window, _: &mut App) -> Arc<str> {
-        "搜索配置…".into()
+        "Search profiles…".into()
     }
 
     fn no_matches_text(&self, _window: &mut Window, _cx: &mut App) -> Option<SharedString> {
         let text = if self.candidates.is_empty() {
-            "无配置。".into()
+            "No profiles.".into()
         } else {
             "No profiles match your search.".into()
         };
@@ -669,7 +669,7 @@ impl PickerDelegate for ProfilePickerDelegate {
                 .border_color(cx.theme().colors().border_variant)
                 .p_1p5()
                 .child(
-                    Button::new("configure", "配置")
+                    Button::new("configure", "Configure")
                         .full_width()
                         .style(ButtonStyle::Outlined)
                         .key_binding(

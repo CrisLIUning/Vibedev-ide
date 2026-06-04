@@ -78,8 +78,8 @@ impl AgentTool for UpdatePlanTool {
         _cx: &mut App,
     ) -> SharedString {
         match input {
-            Ok(input) if input.plan.is_empty() => "清除计划".into(),
-            Ok(_) | Err(_) => "更新计划".into(),
+            Ok(input) if input.plan.is_empty() => "Clear plan".into(),
+            Ok(_) | Err(_) => "Update plan".into(),
         }
     }
 
@@ -94,7 +94,7 @@ impl AgentTool for UpdatePlanTool {
 
             event_stream.update_plan(Self::to_plan(input));
 
-            Ok("计划已更新".to_string())
+            Ok("Plan updated".to_string())
         })
     }
 
@@ -147,7 +147,7 @@ mod tests {
             .await
             .expect("tool should succeed");
 
-        assert_eq!(result, "计划已更新".to_string());
+        assert_eq!(result, "Plan updated".to_string());
 
         let plan = event_rx.expect_plan().await;
         assert_eq!(
@@ -180,7 +180,7 @@ mod tests {
         let input = sample_input();
 
         cx.update(|cx| {
-            tool.replay(input.clone(), "计划已更新".to_string(), event_stream, cx)
+            tool.replay(input.clone(), "Plan updated".to_string(), event_stream, cx)
                 .expect("replay should succeed");
         });
 
@@ -212,10 +212,10 @@ mod tests {
         let tool = UpdatePlanTool;
 
         let title = cx.update(|cx| tool.initial_title(Ok(sample_input()), cx));
-        assert_eq!(title, SharedString::from("更新计划"));
+        assert_eq!(title, SharedString::from("Update plan"));
 
         let title =
             cx.update(|cx| tool.initial_title(Ok(UpdatePlanToolInput { plan: Vec::new() }), cx));
-        assert_eq!(title, SharedString::from("清除计划"));
+        assert_eq!(title, SharedString::from("Clear plan"));
     }
 }

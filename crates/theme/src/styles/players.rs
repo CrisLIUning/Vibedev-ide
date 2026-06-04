@@ -24,7 +24,7 @@ pub struct PlayerColors(pub Vec<PlayerColor>);
 impl Default for PlayerColors {
     /// Don't use this!
     /// We have to have a default to be `[refineable::Refinable]`.
-    /// TODO "找到一种方法,使 Refinable 不需要此默认值"
+    /// TODO "Find a way to not need this for Refinable"
     fn default() -> Self {
         Self::dark()
     }

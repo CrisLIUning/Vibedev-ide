@@ -58,7 +58,7 @@ impl LanguageModelImageExt for LanguageModelImage {
 
     fn from_base64_image(data: &str, mime_type: &str) -> Result<Option<LanguageModelImage>> {
         let format = image::ImageFormat::from_mime_type(mime_type)
-            .ok_or_else(|| anyhow!("不支持的图片 MIME 类型 `{}`", mime_type))?;
+            .ok_or_else(|| anyhow!("unsupported image MIME type `{}`", mime_type))?;
         let bytes = base64::engine::general_purpose::STANDARD.decode(data.as_bytes())?;
         let dynamic_image = image::load_from_memory_with_format(&bytes, format)?;
         language_model_image_from_dynamic_image(dynamic_image)
@@ -223,8 +223,8 @@ mod tests {
 
         let base64_png = base64::engine::general_purpose::STANDARD.encode(raw_png);
         let lm_image = LanguageModelImage::from_base64_image(&base64_png, "image/png")
-            .expect("from_base64_image 不应报错")
-            .expect("from_base64_image 应该成功");
+            .expect("from_base64_image should not error")
+            .expect("from_base64_image should succeed");
 
         assert_downscaled_from_original(lm_image.source.as_ref(), 4096, 4096);
     }
@@ -236,16 +236,16 @@ mod tests {
         let mut jpeg_bytes = Vec::new();
         image::codecs::jpeg::JpegEncoder::new(&mut jpeg_bytes)
             .write_image(&[255, 0, 0], 1, 1, image::ExtendedColorType::Rgb8)
-            .expect("编码 jpeg");
+            .expect("encode jpeg");
         let jpeg_data = base64::engine::general_purpose::STANDARD.encode(jpeg_bytes);
 
         let image = LanguageModelImage::from_base64_image(&jpeg_data, "image/jpeg")
-            .expect("from_base64_image 不应报错")
-            .expect("from_base64_image 应该成功");
+            .expect("from_base64_image should not error")
+            .expect("from_base64_image should succeed");
         let png_bytes = base64_to_png_bytes(image.source.as_ref());
 
         assert_eq!(
-            image::guess_format(&png_bytes).expect("猜测图片格式"),
+            image::guess_format(&png_bytes).expect("guess image format"),
             image::ImageFormat::Png
         );
         assert_eq!(png_dimensions(&png_bytes), (1, 1));

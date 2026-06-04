@@ -85,7 +85,7 @@ impl AppDatabase {
             #[cfg(any(feature = "test-support", test))]
             return &TEST_APP_DATABASE.0;
 
-            panic!("数据库未初始化")
+            panic!("database not initialized")
         }
     }
 }
@@ -220,7 +220,7 @@ async fn open_fallback_db<M: Migrator>() -> ThreadSafeConnection {
         .build()
         .await
         .expect(
-            "备用内存数据库失败。初始化查询或迁移可能存在根本性错误",
+            "Fallback in memory database failed. Likely initialization queries or migrations have fundamental errors",
         )
 }
 

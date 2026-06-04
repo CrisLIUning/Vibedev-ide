@@ -27,7 +27,7 @@ impl Render for UniformListExample {
                                 .on_click(move |_event, _window, _cx| {
                                     println!("clicked Item {item:?}");
                                 })
-                                .child(format!("项目 {item}")),
+                                .child(format!("Item {item}")),
                         );
                     }
                     items

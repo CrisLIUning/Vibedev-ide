@@ -358,7 +358,7 @@ impl PickerDelegate for ThemeSelectorDelegate {
     type ListItem = ui::ListItem;
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
-        "选择主题...".into()
+        "Select Theme...".into()
     }
 
     fn match_count(&self) -> usize {
@@ -377,7 +377,7 @@ impl PickerDelegate for ThemeSelectorDelegate {
         let theme_appearance = self.new_theme.appearance;
         let system_appearance = SystemAppearance::global(cx).0;
 
-        telemetry::event!("设置已更改", setting = "theme", value = theme_name);
+        telemetry::event!("Settings Changed", setting = "theme", value = theme_name);
 
         update_settings_file(self.fs.clone(), cx, move |settings, _| {
             theme_settings::set_theme(settings, theme_name, theme_appearance, system_appearance);
@@ -514,7 +514,7 @@ impl PickerDelegate for ThemeSelectorDelegate {
                 .border_t_1()
                 .border_color(cx.theme().colors().border_variant)
                 .child(
-                    Button::new("docs", "查看主题文档")
+                    Button::new("docs", "View Theme Docs")
                         .end_icon(
                             Icon::new(IconName::ArrowUpRight)
                                 .size(IconSize::Small)
@@ -525,7 +525,7 @@ impl PickerDelegate for ThemeSelectorDelegate {
                         })),
                 )
                 .child(
-                    Button::new("more-themes", "安装主题").on_click(cx.listener({
+                    Button::new("more-themes", "Install Themes").on_click(cx.listener({
                         move |_, _, window, cx| {
                             window.dispatch_action(
                                 Box::new(Extensions {

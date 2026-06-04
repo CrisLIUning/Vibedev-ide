@@ -295,12 +295,12 @@ impl LanguageModel for DeepSeekLanguageModel {
 
         vec![
             LanguageModelEffortLevel {
-                name: "高".into(),
+                name: "High".into(),
                 value: "high".into(),
                 is_default: true,
             },
             LanguageModelEffortLevel {
-                name: "最大".into(),
+                name: "Max".into(),
                 value: "max".into(),
                 is_default: false,
             },
@@ -422,12 +422,12 @@ pub fn into_deepseek(
                                 text_parts.push(text.to_string());
                             }
                             LanguageModelToolResultContent::Image(_) => {
-                                text_parts.push("工具返回了图片".to_string());
+                                text_parts.push("[Tool responded with an image]".to_string());
                             }
                         }
                     }
                     let content = if text_parts.is_empty() {
-                        "工具返回了空字符串".to_string()
+                        "<Tool returned an empty string>".to_string()
                     } else {
                         text_parts.join("\n")
                     };
@@ -710,19 +710,19 @@ impl Render for ConfigurationView {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let env_var_set = self.state.read(cx).api_key_state.is_from_env_var();
         let configured_card_label = if env_var_set {
-            format!("API 密钥已在 {API_KEY_ENV_VAR_NAME} 环境变量中设置")
+            format!("API key set in {API_KEY_ENV_VAR_NAME} environment variable")
         } else {
             let api_url = DeepSeekLanguageModelProvider::api_url(cx);
             if api_url == DEEPSEEK_API_URL {
-                "API 密钥已配置".to_string()
+                "API key configured".to_string()
             } else {
-                format!("已为 {} 配置 API 密钥", api_url)
+                format!("API key configured for {}", api_url)
             }
         };
 
         if self.load_credentials_task.is_some() {
             div()
-                .child(Label::new("正在加载凭据..."))
+                .child(Label::new("Loading credentials..."))
                 .into_any_element()
         } else if self.should_render_editor(cx) {
             v_flex()
@@ -733,14 +733,14 @@ impl Render for ConfigurationView {
                     List::new()
                         .child(
                             ListBulletItem::new("")
-                                .child(Label::new("从"))
+                                .child(Label::new("Get your API key from the"))
                                 .child(ButtonLink::new(
-                                    "DeepSeek 控制台",
+                                    "DeepSeek console",
                                     "https://platform.deepseek.com/api_keys",
                                 )),
                         )
                         .child(ListBulletItem::new(
-                            "在下方粘贴您的 API 密钥并按回车键以开始使用助手",
+                            "Paste your API key below and hit enter to start using the assistant",
                         )),
                 )
                 .child(self.api_key_editor.clone())

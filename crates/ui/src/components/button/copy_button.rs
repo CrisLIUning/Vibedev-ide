@@ -47,7 +47,7 @@ impl CopyButton {
             message: message.into(),
             icon_size: IconSize::Small,
             disabled: false,
-            tooltip_label: "复制".into(),
+            tooltip_label: "Copy".into(),
             visible_on_hover: None,
             custom_on_click: None,
         }
@@ -94,7 +94,7 @@ impl RenderOnce for CopyButton {
         let is_copied = state.read(cx).is_copied();
 
         let (icon, color, tooltip) = if is_copied {
-            (IconName::Check, Color::Success, "已复制!".into())
+            (IconName::Check, Color::Success, "Copied!".into())
         } else {
             (IconName::Copy, Color::Muted, self.tooltip_label)
         };
@@ -140,15 +140,15 @@ impl Component for CopyButton {
     }
 
     fn description() -> Option<&'static str> {
-        Some("封装将字符串复制到剪贴板逻辑的图标按钮。")
+        Some("An icon button that encapsulates the logic to copy a string into the clipboard.")
     }
 
     fn preview(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
-        let label_text = "这是一个示例标签";
+        let label_text = "Here's an example label";
 
         let examples = vec![
             single_example(
-                "默认",
+                "Default",
                 h_flex()
                     .gap_1()
                     .child(Label::new(label_text).size(LabelSize::Small))
@@ -156,7 +156,7 @@ impl Component for CopyButton {
                     .into_any_element(),
             ),
             single_example(
-                "多种图标尺寸",
+                "Multiple Icon Sizes",
                 h_flex()
                     .gap_1()
                     .child(Label::new(label_text).size(LabelSize::Small))
@@ -172,18 +172,18 @@ impl Component for CopyButton {
                     .into_any_element(),
             ),
             single_example(
-                "自定义工具提示标签",
+                "Custom Tooltip Label",
                 h_flex()
                     .gap_1()
                     .child(Label::new(label_text).size(LabelSize::Small))
                     .child(
                         CopyButton::new("preview-tooltip", label_text)
-                            .tooltip_label("自定义工具提示标签"),
+                            .tooltip_label("Custom Tooltip Label"),
                     )
                     .into_any_element(),
             ),
             single_example(
-                "悬停时可见",
+                "Visible On Hover",
                 h_flex()
                     .group("container")
                     .gap_1()

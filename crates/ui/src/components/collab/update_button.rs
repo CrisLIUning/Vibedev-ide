@@ -98,13 +98,13 @@ impl UpdateButton {
     }
 
     pub fn updated(version: impl Into<SharedString>) -> Self {
-        Self::new(IconName::Download, "重启以更新")
+        Self::new(IconName::Download, "Restart to Update")
             .tooltip(version)
             .with_dismiss()
     }
 
     pub fn errored(error: impl Into<SharedString>) -> Self {
-        Self::new(IconName::Warning, "更新失败")
+        Self::new(IconName::Warning, "Failed to Update")
             .icon_color(Color::Warning)
             .tooltip(error)
             .with_dismiss()
@@ -156,7 +156,7 @@ impl RenderOnce for UpdateButton {
                         IconButton::new("dismiss-update-button", IconName::Close)
                             .icon_size(IconSize::Indicator)
                             .when_some(self.on_dismiss, |this, handler| this.on_click(handler))
-                            .tooltip(Tooltip::text("关闭")),
+                            .tooltip(Tooltip::text("Dismiss")),
                     ),
                 )
             })
@@ -174,7 +174,7 @@ impl Component for UpdateButton {
 
     fn description() -> Option<&'static str> {
         Some(
-            "显示在标题栏中的按钮组件,用于展示自动更新状态并允许用户重启 VibeDev。",
+            "A button component displayed in the title bar to show auto-update status and allow users to restart Zed.",
         )
     }
 
@@ -186,29 +186,29 @@ impl Component for UpdateButton {
                 .gap_6()
                 .children(vec![
                     example_group_with_title(
-                        "进度状态",
+                        "Progress States",
                         vec![
-                            single_example("检查中", UpdateButton::checking().into_any_element()),
+                            single_example("Checking", UpdateButton::checking().into_any_element()),
                             single_example(
-                                "下载中",
+                                "Downloading",
                                 UpdateButton::downloading(version).into_any_element(),
                             ),
                             single_example(
-                                "安装中",
+                                "Installing",
                                 UpdateButton::installing(version).into_any_element(),
                             ),
                         ],
                     ),
                     example_group_with_title(
-                        "可操作状态",
+                        "Actionable States",
                         vec![
                             single_example(
-                                "准备更新",
+                                "Ready to Update",
                                 UpdateButton::updated(version).into_any_element(),
                             ),
                             single_example(
-                                "错误",
-                                UpdateButton::errored("网络超时").into_any_element(),
+                                "Error",
+                                UpdateButton::errored("Network timeout").into_any_element(),
                             ),
                         ],
                     ),

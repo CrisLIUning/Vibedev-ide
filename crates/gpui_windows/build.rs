@@ -43,7 +43,7 @@ mod shader_compilation {
         let rust_binding_path = format!("{}/shaders_bytes.rs", out_dir);
         if Path::new(&rust_binding_path).exists() {
             fs::remove_file(&rust_binding_path)
-                .expect("无法删除现有的 Rust 绑定文件");
+                .expect("Failed to remove existing Rust binding file");
         }
         for module in modules {
             compile_shader_for_module(
@@ -94,7 +94,7 @@ mod shader_compilation {
             "x86_64" => "x64",
             "aarch64" => "arm64",
             _ => Err(format!(
-                "不支持的架构: {}",
+                "Unsupported architecture: {}",
                 std::env::consts::ARCH
             ))?,
         };
@@ -135,7 +135,7 @@ mod shader_compilation {
             return path.to_string_lossy().into_owned();
         }
 
-        panic!("无法找到 fxc.exe");
+        panic!("Failed to find fxc.exe");
     }
 
     fn compile_shader_for_module(
@@ -215,7 +215,7 @@ mod shader_compilation {
     }
 
     fn generate_rust_binding(const_name: &str, head_file: &str, output_path: &str) {
-        let header_content = fs::read_to_string(head_file).expect("无法读取头文件");
+        let header_content = fs::read_to_string(head_file).expect("Failed to read header file");
         let const_definition = {
             let global_var_start = header_content.find("const BYTE").unwrap();
             let global_var = &header_content[global_var_start..];
@@ -231,10 +231,10 @@ mod shader_compilation {
             .create(true)
             .append(true)
             .open(output_path)
-            .expect("无法打开 Rust 绑定文件");
+            .expect("Failed to open Rust binding file");
         options
             .write_all(rust_binding.as_bytes())
-            .expect("无法写入 Rust 绑定文件");
+            .expect("Failed to write Rust binding file");
     }
 }
 

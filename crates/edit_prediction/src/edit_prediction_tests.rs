@@ -2390,7 +2390,7 @@ fn test_active_buffer_diagnostics_collection_limits(cx: &mut TestAppContext) {
                     range: text::PointUtf16::new(row, 0)..text::PointUtf16::new(row, 4),
                     diagnostic: Diagnostic {
                         severity: DiagnosticSeverity::ERROR,
-                        message: format!("第 {row} 行"),
+                        message: format!("row {row}"),
                         group_id: row as usize,
                         is_primary: true,
                         source_kind: language::DiagnosticSourceKind::Pushed,
@@ -2411,12 +2411,12 @@ fn test_active_buffer_diagnostics_collection_limits(cx: &mut TestAppContext) {
     assert!(
         active_buffer_diagnostics
             .iter()
-            .any(|diagnostic| diagnostic.message == "第 12 行")
+            .any(|diagnostic| diagnostic.message == "row 12")
     );
     assert!(
         active_buffer_diagnostics
             .iter()
-            .all(|diagnostic| diagnostic.message != "第 0 行" && diagnostic.message != "第 24 行")
+            .all(|diagnostic| diagnostic.message != "row 0" && diagnostic.message != "row 24")
     );
 
     let text = (0..300)
@@ -2431,7 +2431,7 @@ fn test_active_buffer_diagnostics_collection_limits(cx: &mut TestAppContext) {
                 range: text::PointUtf16::new(150, 0)..text::PointUtf16::new(150, 4),
                 diagnostic: Diagnostic {
                     severity: DiagnosticSeverity::ERROR,
-                    message: "长代码片段".to_string(),
+                    message: "long snippet".to_string(),
                     group_id: 1,
                     is_primary: true,
                     source_kind: language::DiagnosticSourceKind::Pushed,
@@ -2484,7 +2484,7 @@ fn empty_response() -> PredictEditsV3Response {
 
 fn prompt_from_request(request: &PredictEditsV3Request) -> String {
     zeta_prompt::format_zeta_prompt(&request.input, zeta_prompt::ZetaFormat::default())
-        .expect("默认 zeta 提示词格式化应在编辑预测测试中成功")
+        .expect("default zeta prompt formatting should succeed in edit prediction tests")
 }
 
 fn assert_no_predict_request_ready(
@@ -2494,7 +2494,7 @@ fn assert_no_predict_request_ready(
     )>,
 ) {
     if requests.next().now_or_never().flatten().is_some() {
-        panic!("节流期间出现意外的预测请求。");
+        panic!("Unexpected prediction request while throttled.");
     }
 }
 
@@ -2530,8 +2530,8 @@ fn init_test_with_fake_client_and_legacy_data_collection(
                     legacy_data_collection_choice.to_string(),
                 )
                 .now_or_never()
-                .expect("遗留数据收集写入应立即完成")
-                .expect("遗留数据收集写入应成功");
+                .expect("legacy data collection write should complete immediately")
+                .expect("legacy data collection write should succeed");
         }
 
         let (predict_req_tx, predict_req_rx) = mpsc::unbounded();
@@ -3466,7 +3466,7 @@ async fn test_edit_prediction_settled(cx: &mut TestAppContext) {
         cx.run_until_parked();
         assert!(
             settled_events.lock().is_empty(),
-            "当区域 A 仍在被编辑时,不应触发已确定事件"
+            "no settled events should fire while region A is still being edited"
         );
     }
 
@@ -3800,7 +3800,7 @@ async fn test_toggle_data_collection_from_kv_enabled_state(cx: &mut TestAppConte
     cx.update(|cx| {
         assert!(
             ep_store.read(cx).is_data_collection_enabled(cx),
-            "切换前数据收集应通过 KV 存储启用"
+            "data collection should be enabled via KV store before toggle"
         );
     });
 
@@ -3825,7 +3825,7 @@ async fn test_toggle_data_collection_from_kv_enabled_state(cx: &mut TestAppConte
     cx.update(|cx| {
         assert!(
             !ep_store.read(cx).is_data_collection_enabled(cx),
-            "从 KV 启用状态关闭后数据收集应被禁用"
+            "data collection should be disabled after toggling off from KV-enabled state"
         );
     });
 }
@@ -3857,7 +3857,7 @@ async fn test_upsell_dismissed_when_data_collection_choice_in_kv_store(cx: &mut 
         cx.update(|cx| {
             assert!(
                 !should_show_upsell_modal(cx),
-                "当数据收集选择为 '{value}' 时应隐藏推广弹窗"
+                "upsell should be suppressed when data collection choice is '{value}'"
             );
         });
     }

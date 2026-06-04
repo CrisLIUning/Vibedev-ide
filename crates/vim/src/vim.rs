@@ -361,7 +361,7 @@ pub fn init(cx: &mut App) {
         workspace.register_action(|_, _: &zed_actions::vim::OpenDefaultKeymap, _, cx| {
             cx.emit(workspace::Event::OpenBundledFile {
                 text: settings::vim_keymap(),
-                title: "默认 Vim 键位映射",
+                title: "Default Vim Bindings",
                 language: "JSON",
             });
         });

@@ -120,7 +120,7 @@ impl PlatformAtlas for WgpuAtlas {
             };
             let tile = lock
                 .allocate(size, key.texture_kind())
-                .context("分配失败")?;
+                .context("failed to allocate")?;
             lock.upload_texture(tile.texture_id, tile.bounds, &bytes);
             lock.tiles_by_key.insert(key.clone(), tile);
             Ok(Some(tile))
@@ -419,7 +419,7 @@ mod tests {
                     force_fallback_adapter: false,
                 })
                 .await
-                .map_err(|error| anyhow::anyhow!("请求适配器失败: {error}"))?;
+                .map_err(|error| anyhow::anyhow!("failed to request adapter: {error}"))?;
             let (device, queue) = adapter
                 .request_device(&wgpu::DeviceDescriptor {
                     label: Some("wgpu_atlas_test_device"),
@@ -432,7 +432,7 @@ mod tests {
                     experimental_features: wgpu::ExperimentalFeatures::disabled(),
                 })
                 .await
-                .map_err(|error| anyhow::anyhow!("请求设备失败: {error}"))?;
+                .map_err(|error| anyhow::anyhow!("failed to request device: {error}"))?;
             Ok((Arc::new(device), Arc::new(queue)))
         })
     }

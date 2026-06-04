@@ -14,7 +14,7 @@ fn parse_env_map_from_noisy_output(output: &str) -> Result<collections::HashMap<
             return Ok(env_map);
         }
     }
-    anyhow::bail!("无法在 Shell 输出中找到 JSON: {output}")
+    anyhow::bail!("Failed to find JSON in shell output: {output}")
 }
 
 pub fn print_env() {
@@ -65,7 +65,7 @@ fn parse_env_output(
             }
 
             anyhow::bail!(
-                "无法从 json 反序列化环境变量:{parse_error}。输出:{env_output}"
+                "Failed to deserialize environment variables from json: {parse_error}. output: {env_output}"
             );
         }
     }
@@ -136,7 +136,7 @@ async fn capture_unix(
     };
     let quoted_dir = shell_kind
         .try_quote(&dir_str)
-        .context("目录名中包含意外的空字符")?;
+        .context("unexpected null in directory name")?;
 
     // cd into the directory, triggering directory specific side-effects (asdf, direnv, etc)
     command_string.push_str(&format!("cd {};", quoted_dir));
@@ -161,14 +161,14 @@ async fn capture_unix(
         &process_output.status,
         || {
             format!(
-                "登录 Shell 以 {} 退出,但环境变量已成功捕获。stderr: {:?}",
+                "login shell exited with {} but environment was captured successfully. stderr: {:?}",
                 process_output.status,
                 String::from_utf8_lossy(&process_output.stderr),
             )
         },
         || {
             format!(
-                "登录 Shell 退出,状态码: {}。标准输出: {:?},标准错误: {:?}",
+                "login shell exited with {}. stdout: {:?}, stderr: {:?}",
                 process_output.status,
                 String::from_utf8_lossy(&process_output.stdout),
                 String::from_utf8_lossy(&process_output.stderr),
@@ -228,7 +228,7 @@ async fn capture_windows(
         shell_kind
             .try_quote(value)
             .map(|quoted| quoted.into_owned())
-            .context("目录名中包含意外的空字符")
+            .context("unexpected null in directory name")
     };
     let mut cmd = crate::command::new_command(shell_path);
     cmd.args(args);
@@ -279,7 +279,7 @@ async fn capture_windows(
     let output = cmd
         .output()
         .await
-        .with_context(|| format!("命令 {cmd:?}"))?;
+        .with_context(|| format!("command {cmd:?}"))?;
     let env_output = String::from_utf8_lossy(&output.stdout);
 
     parse_env_output(
@@ -287,14 +287,14 @@ async fn capture_windows(
         &output.status,
         || {
             format!(
-                "命令 {cmd:?} 以 {} 退出,但环境变量已成功捕获。stderr:{:?}",
+                "Command {cmd:?} exited with {} but environment was captured successfully. stderr: {:?}",
                 output.status,
                 String::from_utf8_lossy(&output.stderr),
             )
         },
         || {
             format!(
-                "命令 {cmd:?} 失败,状态码: {}。标准输出: {:?},标准错误: {:?}",
+                "Command {cmd:?} failed with {}. stdout: {:?}, stderr: {:?}",
                 output.status,
                 String::from_utf8_lossy(&output.stdout),
                 String::from_utf8_lossy(&output.stderr),
@@ -335,10 +335,10 @@ mod tests {
         let env_map = parse_env_output(
             &env_output,
             &exit_status(1),
-            || "Shell 以 1 退出,但环境变量已成功捕获".to_string(),
-            || panic!("对于有效的环境输出,不应评估失败捕获错误"),
+            || "shell exited with 1 but environment was captured successfully".to_string(),
+            || panic!("failed capture error should not be evaluated for valid environment output"),
         )
-        .expect("即使 Shell 非零退出,也应返回有效的环境输出");
+        .expect("valid environment output should be returned despite non-zero shell exit");
         assert_eq!(
             env_map.get("PATH").map(String::as_str),
             Some(path!("/usr/bin"))

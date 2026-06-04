@@ -502,30 +502,30 @@ impl TerminalView {
             .is_some_and(|terminal_panel| terminal_panel.read(cx).assistant_enabled());
         let context_menu = ContextMenu::build(window, cx, |menu, _, _| {
             menu.context(self.focus_handle.clone())
-                .action("新建终端", Box::new(NewTerminal::default()))
+                .action("New Terminal", Box::new(NewTerminal::default()))
                 .action(
-                    "新建居中终端",
+                    "New Center Terminal",
                     Box::new(NewCenterTerminal::default()),
                 )
                 .separator()
-                .action("复制", Box::new(Copy))
-                .action("粘贴", Box::new(Paste))
-                .action("粘贴文本", Box::new(PasteText))
-                .action("全选", Box::new(SelectAll))
-                .action("清除", Box::new(Clear))
+                .action("Copy", Box::new(Copy))
+                .action("Paste", Box::new(Paste))
+                .action("Paste Text", Box::new(PasteText))
+                .action("Select All", Box::new(SelectAll))
+                .action("Clear", Box::new(Clear))
                 .when(
                     assistant_enabled && !matches!(self.mode, TerminalMode::Embedded { .. }),
                     |menu| {
                         menu.separator()
-                            .action("内联助手", Box::new(InlineAssist::default()))
+                            .action("Inline Assist", Box::new(InlineAssist::default()))
                             .when(has_selection, |menu| {
-                                menu.action("添加到 Agent 对话线程", Box::new(AddSelectionToThread))
+                                menu.action("Add to Agent Thread", Box::new(AddSelectionToThread))
                             })
                     },
                 )
                 .separator()
                 .action(
-                    "关闭终端标签页",
+                    "Close Terminal Tab",
                     Box::new(CloseActiveItem {
                         save_intent: None,
                         close_pinned: true,
@@ -990,7 +990,7 @@ impl TerminalView {
                 .size(ButtonSize::Compact)
                 .icon_color(Color::Default)
                 .shape(ui::IconButtonShape::Square)
-                .tooltip(move |_window, cx| Tooltip::for_action("重新运行任务", &RerunTask, cx))
+                .tooltip(move |_window, cx| Tooltip::for_action("Rerun task", &RerunTask, cx))
                 .on_click(move |_, window, cx| {
                     window.dispatch_action(Box::new(terminal_rerun_override(&task_id)), cx);
                 }),
@@ -1342,7 +1342,7 @@ impl Item for TerminalView {
                     .child(Label::new(title.clone()))
                     .child(h_flex().flex_grow().child(Divider::horizontal()))
                     .child(
-                        Label::new(format!("进程 ID (PID): {}", pid))
+                        Label::new(format!("Process ID (PID): {}", pid))
                             .color(Color::Muted)
                             .size(LabelSize::Small),
                     )
@@ -1621,7 +1621,7 @@ impl Item for TerminalView {
     ) -> Vec<(SharedString, Box<dyn gpui::Action>)> {
         let terminal = self.terminal.read(cx);
         if terminal.task().is_none() {
-            vec![("重命名".into(), Box::new(RenameTerminal))]
+            vec![("Rename".into(), Box::new(RenameTerminal))]
         } else {
             Vec::new()
         }
@@ -1717,7 +1717,7 @@ impl Item for TerminalView {
         if self.terminal().read(cx).task().is_none() {
             if let Some((new_id, old_id)) = workspace.database_id().zip(self.workspace_id) {
                 log::debug!(
-                    "正在更新终端的工作区 ID,旧: {old_id:?},新: {new_id:?}",
+                    "Updating workspace id for the terminal, old: {old_id:?}, new: {new_id:?}",
                 );
                 let db = TerminalDb::global(cx);
                 let entity_id = cx.entity_id().as_u64();
@@ -2095,12 +2095,12 @@ mod tests {
                 .unwrap()
                 .handle_drop(pane, dropped, window, cx)
         });
-        assert!(handled, "handle_drop 应对 {:?} 返回 true", dropped);
+        assert!(handled, "handle_drop should return true for {:?}", dropped);
 
         let mut input_log = terminal.update(cx, |terminal, _| terminal.take_input_log());
-        assert_eq!(input_log.len(), 1, "预期终端仅有一次写入");
+        assert_eq!(input_log.len(), 1, "expected exactly one write to terminal");
         let written =
-            String::from_utf8(input_log.remove(0)).expect("终端写入应为有效的 UTF-8");
+            String::from_utf8(input_log.remove(0)).expect("terminal write should be valid UTF-8");
         assert_eq!(written, expected_text);
     }
 
@@ -2544,7 +2544,7 @@ mod tests {
 
                 assert!(
                     workspace.read(cx).pane_for(&terminal_view).is_some(),
-                    "run_until_parked 后终端视图未在工作区注册"
+                    "terminal view not registered with workspace after run_until_parked"
                 );
 
                 // Dragging an external file should write its path to the terminal

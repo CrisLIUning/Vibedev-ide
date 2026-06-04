@@ -42,7 +42,7 @@ pub fn write(
 ) -> Task<anyhow::Result<()>> {
     let kvp = KeyValueStore::global(cx);
     let key = thread_id.to_key_string();
-    let payload = match serde_json::to_string(prompt).context("序列化草稿提示") {
+    let payload = match serde_json::to_string(prompt).context("serializing draft prompt") {
         Ok(payload) => payload,
         Err(err) => return Task::ready(Err(err)),
     };

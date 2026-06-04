@@ -276,16 +276,16 @@ impl Component for Tooltip {
 
     fn description() -> Option<&'static str> {
         Some(
-            "悬停在元素上时出现的工具提示,可选择显示键位绑定或附加元数据。",
+            "A tooltip that appears when hovering over an element, optionally showing a keybinding or additional metadata.",
         )
     }
 
     fn preview(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
         Some(
             example_group(vec![single_example(
-                "仅文本",
-                Button::new("delete-example", "删除")
-                    .tooltip(Tooltip::text("这是一个工具提示!"))
+                "Text only",
+                Button::new("delete-example", "Delete")
+                    .tooltip(Tooltip::text("This is a tooltip!"))
                     .into_any_element(),
             )])
             .into_any_element(),

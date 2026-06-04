@@ -345,7 +345,7 @@ mod tests {
         editor
             .outline_symbols_at_cursor
             .as_ref()
-            .expect("应该有大纲符号")
+            .expect("Should have outline symbols")
             .1
             .iter()
             .map(|s| s.text.as_str())
@@ -477,7 +477,7 @@ mod tests {
             assert_eq!(
                 outline_symbol_names(editor),
                 vec!["struct Foo", "bar"],
-                "光标位于 Foo > bar 内部,因此预期包含链"
+                "cursor is inside Foo > bar, so we expect the containing chain"
             );
         });
     }
@@ -518,7 +518,7 @@ mod tests {
             assert_eq!(
                 outline_symbol_names(editor),
                 vec!["fn main"],
-                "Tree-sitter 应该生成 'fn main'"
+                "Tree-sitter should produce 'fn main'"
             );
         });
 
@@ -533,7 +533,7 @@ mod tests {
             assert_eq!(
                 outline_symbol_names(editor),
                 vec!["lsp_main_symbol"],
-                "切换到 LSP 后,应该看到 LSP 符号"
+                "After switching to LSP, should see LSP symbols"
             );
         });
 
@@ -553,7 +553,7 @@ mod tests {
             assert_eq!(
                 outline_symbol_names(editor),
                 vec!["fn main"],
-                "切换回 tree-sitter 后,应该再次看到 tree-sitter 符号"
+                "After switching back to tree-sitter, should see tree-sitter symbols again"
             );
         });
     }
@@ -599,7 +599,7 @@ mod tests {
         cx.run_until_parked();
 
         let first_count = request_count.load(atomic::Ordering::Acquire);
-        assert_eq!(first_count, 1, "应该只发起了一次请求");
+        assert_eq!(first_count, 1, "Should have made exactly one request");
 
         // Move cursor within the same buffer version — should use cache
         cx.update_editor(|editor, window, cx| {
@@ -612,7 +612,7 @@ mod tests {
         assert_eq!(
             first_count,
             request_count.load(atomic::Ordering::Acquire),
-            "不编辑仅移动光标应使用缓存的符号"
+            "Moving cursor without editing should use cached symbols"
         );
     }
 
@@ -759,7 +759,7 @@ mod tests {
             let (_, symbols) = editor
                 .outline_symbols_at_cursor
                 .as_ref()
-                .expect("应该有大纲符号");
+                .expect("Should have outline symbols");
             assert_eq!(symbols.len(), 1);
 
             let symbol = &symbols[0];
@@ -769,19 +769,19 @@ mod tests {
             for (range, _style) in &symbol.highlight_ranges {
                 assert!(
                     symbol.text.is_char_boundary(range.start),
-                    "高亮范围起始位置 {} 不是 {:?} 中的字符边界",
+                    "highlight range start {} is not a char boundary in {:?}",
                     range.start,
                     symbol.text
                 );
                 assert!(
                     symbol.text.is_char_boundary(range.end),
-                    "高亮范围结束位置 {} 不是 {:?} 中的字符边界",
+                    "highlight range end {} is not a char boundary in {:?}",
                     range.end,
                     symbol.text
                 );
                 assert!(
                     range.end <= symbol.text.len(),
-                    "高亮范围结束位置 {} 超出了文本长度 {}(针对 {:?})",
+                    "highlight range end {} exceeds text length {} for {:?}",
                     range.end,
                     symbol.text.len(),
                     symbol.text
@@ -821,7 +821,7 @@ mod tests {
             // (no symbols to show in breadcrumbs)
             assert!(
                 editor.outline_symbols_at_cursor.is_none(),
-                "空的 LSP 响应应导致没有大纲符号"
+                "Empty LSP response should result in no outline symbols"
             );
         });
     }
@@ -865,14 +865,14 @@ mod tests {
             assert_eq!(
                 outline_symbol_names(editor),
                 vec!["fn main"],
-                "当 document_symbols 关闭时,应使用 tree-sitter"
+                "With document_symbols off, should use tree-sitter"
             );
         });
 
         assert_eq!(
             request_count.load(atomic::Ordering::Acquire),
             0,
-            "设置关闭时不应发起任何 LSP 文档符号请求"
+            "Should not have made any LSP document symbol requests when setting is off"
         );
     }
 

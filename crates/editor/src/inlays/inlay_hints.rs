@@ -4289,7 +4289,7 @@ let c = 3;"#
                 let visible = visible_hint_labels(editor, cx);
                 assert!(
                     visible.iter().any(|h| h.starts_with("chunk_0")),
-                    "初始应包含 chunk_0 提示,结果为: {visible:?}"
+                    "Should have chunk_0 hints initially, got: {visible:?}"
                 );
             })
             .unwrap();
@@ -4371,7 +4371,7 @@ let c = 3;"#
                 let visible = visible_hint_labels(editor, cx);
                 assert!(
                     visible.iter().any(|h| h.starts_with("chunk_0")),
-                    "chunk_0 提示(来自编辑任务)应存在。结果为: {visible:?}"
+                    "chunk_0 hints (from edit task) should be present. Got: {visible:?}"
                 );
                 assert!(
                     visible.iter().any(|h| h.starts_with("chunk_50")),
@@ -4644,7 +4644,7 @@ let c = 3;"#
                                         let prefix = match name {
                                             "Rust" => "rs_hint",
                                             "TypeScript" => "ts_hint",
-                                            other => panic!("意外的语言: {other}"),
+                                            other => panic!("Unexpected language: {other}"),
                                         };
                                         async move {
                                             Ok(Some(vec![lsp::InlayHint {
@@ -4731,12 +4731,12 @@ let c = 3;"#
                 assert_eq!(
                     rs_hints.len(),
                     1,
-                    "初始应恰好有 1 个 Rust 提示,结果为: {rs_hints:?}"
+                    "Should have exactly 1 Rust hint initially, got: {rs_hints:?}"
                 );
                 assert_eq!(
                     ts_hints.len(),
                     1,
-                    "初始应恰好有 1 个 TypeScript 提示,结果为: {ts_hints:?}"
+                    "Should have exactly 1 TypeScript hint initially, got: {ts_hints:?}"
                 );
             })
             .unwrap();
@@ -4787,7 +4787,7 @@ let c = 3;"#
                 assert_eq!(
                     rs_hints.len(),
                     1,
-                    "编辑后 Rust 提示应仍然存在。结果为: {rs_hints:?}"
+                    "Rust hints should still be present after editing. Got: {rs_hints:?}"
                 );
             })
             .unwrap();

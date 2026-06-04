@@ -282,7 +282,7 @@ impl DebugPanel {
                         .update(cx, |session, cx| {
                             session
                                 .console_output(cx)
-                                .unbounded_send(format!("错误: {:#}", redacted_error))
+                                .unbounded_send(format!("error: {:#}", redacted_error))
                                 .ok();
                             session.shutdown(cx)
                         })
@@ -297,7 +297,7 @@ impl DebugPanel {
                 *state_task = Some(boot_task);
             }
             SessionState::Running(_) => {
-                debug_panic!("会话状态应处于构建中,因为我们才刚刚开始");
+                debug_panic!("Session state should be in building because we are just starting it");
             }
         });
     }
@@ -412,7 +412,7 @@ impl DebugPanel {
                         session
                             .console_output(cx)
                             .unbounded_send(format!(
-                                "会话重启失败,错误: {}",
+                                "Session failed to restart with error: {}",
                                 error
                             ))
                             .ok();
@@ -507,9 +507,9 @@ impl DebugPanel {
             if should_prompt {
                 let response = cx.prompt(
                     gpui::PromptLevel::Warning,
-                    "此调试会话仍在运行。确定要终止它吗?",
+                    "This Debug Session is still running. Are you sure you want to terminate it?",
                     None,
-                    &["是", "否"],
+                    &["Yes", "No"],
                 );
                 if response.await == Ok(1) {
                     return;
@@ -626,7 +626,7 @@ impl DebugPanel {
                     let focus_handle = focus_handle.clone();
                     move |_window, cx| {
                         Tooltip::for_action_in(
-                            "启动调试会话",
+                            "Start Debug Session",
                             &crate::Start,
                             &focus_handle,
                             cx,
@@ -641,14 +641,14 @@ impl DebugPanel {
                 .on_click(|_, window, cx| {
                     window.dispatch_action(zed_actions::OpenProjectDebugTasks.boxed_clone(), cx);
                 })
-                .tooltip(Tooltip::text("编辑 debug.json"))
+                .tooltip(Tooltip::text("Edit debug.json"))
         };
 
         let documentation_button = || {
             IconButton::new("debug-open-documentation", IconName::CircleHelp)
                 .icon_size(IconSize::Small)
                 .on_click(move |_, _, cx| cx.open_url("https://zed.dev/docs/debugger"))
-                .tooltip(Tooltip::text("打开文档"))
+                .tooltip(Tooltip::text("Open Documentation"))
         };
 
         let logs_button = || {
@@ -657,7 +657,7 @@ impl DebugPanel {
                 .on_click(move |_, window, cx| {
                     window.dispatch_action(debugger_tools::OpenDebugAdapterLogs.boxed_clone(), cx)
                 })
-                .tooltip(Tooltip::text("打开调试适配器日志"))
+                .tooltip(Tooltip::text("Open Debug Adapter Logs"))
         };
 
         let close_bottom_panel_button = {
@@ -667,7 +667,7 @@ impl DebugPanel {
                     .on_click(move |_, window, cx| {
                         window.dispatch_action(workspace::ToggleBottomDock.boxed_clone(), cx)
                     })
-                    .tooltip(Tooltip::text("关闭面板")),
+                    .tooltip(Tooltip::text("Close Panel")),
             )
         };
 
@@ -716,7 +716,7 @@ impl DebugPanel {
                                                     let focus_handle = focus_handle.clone();
                                                     move |_window, cx| {
                                                         Tooltip::for_action_in(
-                                                            "暂停程序",
+                                                            "Pause Program",
                                                             &Pause,
                                                             &focus_handle,
                                                             cx,
@@ -740,7 +740,7 @@ impl DebugPanel {
                                                     let focus_handle = focus_handle.clone();
                                                     move |_window, cx| {
                                                         Tooltip::for_action_in(
-                                                            "继续程序",
+                                                            "Continue Program",
                                                             &Continue,
                                                             &focus_handle,
                                                             cx,
@@ -764,7 +764,7 @@ impl DebugPanel {
                                                 let focus_handle = focus_handle.clone();
                                                 move |_window, cx| {
                                                     Tooltip::for_action_in(
-                                                        "单步跳过",
+                                                        "Step Over",
                                                         &StepOver,
                                                         &focus_handle,
                                                         cx,
@@ -786,7 +786,7 @@ impl DebugPanel {
                                                 let focus_handle = focus_handle.clone();
                                                 move |_window, cx| {
                                                     Tooltip::for_action_in(
-                                                        "单步进入",
+                                                        "Step In",
                                                         &StepInto,
                                                         &focus_handle,
                                                         cx,
@@ -808,7 +808,7 @@ impl DebugPanel {
                                                 let focus_handle = focus_handle.clone();
                                                 move |_window, cx| {
                                                     Tooltip::for_action_in(
-                                                        "单步跳出",
+                                                        "Step Out",
                                                         &StepOut,
                                                         &focus_handle,
                                                         cx,
@@ -830,7 +830,7 @@ impl DebugPanel {
                                                 let focus_handle = focus_handle.clone();
                                                 move |_window, cx| {
                                                     Tooltip::for_action_in(
-                                                        "重新运行会话",
+                                                        "Rerun Session",
                                                         &RerunSession,
                                                         &focus_handle,
                                                         cx,
@@ -868,9 +868,9 @@ impl DebugPanel {
                                                     .supports_terminate_threads_request
                                                     .unwrap_or_default()
                                                 {
-                                                    "终止线程"
+                                                    "Terminate Thread"
                                                 } else {
-                                                    "终止所有线程"
+                                                    "Terminate All Threads"
                                                 };
                                                 move |_window, cx| {
                                                     Tooltip::for_action_in(
@@ -903,7 +903,7 @@ impl DebugPanel {
                                                 let focus_handle = focus_handle.clone();
                                                 move |_window, cx| {
                                                     Tooltip::for_action_in(
-                                                        "断开连接",
+                                                        "Detach",
                                                         &Detach,
                                                         &focus_handle,
                                                         cx,
@@ -1184,7 +1184,7 @@ impl DebugPanel {
                             .read(cx)
                             .project_path_for_absolute_path(path, cx)
                             .context(
-                                "无法获取活动工作树中 .zed/debug.json 的项目路径",
+                                "Couldn't get project path for .zed/debug.json in active worktree",
                             )
                     })??;
 
@@ -1588,7 +1588,7 @@ impl Panel for DebugPanel {
 
     fn icon_tooltip(&self, _window: &Window, cx: &App) -> Option<&'static str> {
         if DebuggerSettings::get_global(cx).button {
-            Some("调试面板")
+            Some("Debug Panel")
         } else {
             None
         }
@@ -1820,7 +1820,7 @@ impl Render for DebugPanel {
                         .justify_center()
                         .gap_2()
                         .child(
-                            Button::new("spawn-new-session-empty-state", "新建会话")
+                            Button::new("spawn-new-session-empty-state", "New Session")
                                 .start_icon(
                                     Icon::new(IconName::Plus)
                                         .size(IconSize::Small)
@@ -1831,7 +1831,7 @@ impl Render for DebugPanel {
                                 }),
                         )
                         .child(
-                            Button::new("edit-debug-settings", "编辑 debug.json")
+                            Button::new("edit-debug-settings", "Edit debug.json")
                                 .start_icon(
                                     Icon::new(IconName::Code)
                                         .size(IconSize::Small)
@@ -1845,7 +1845,7 @@ impl Render for DebugPanel {
                                 }),
                         )
                         .child(
-                            Button::new("open-debugger-docs", "调试器文档")
+                            Button::new("open-debugger-docs", "Debugger Docs")
                                 .start_icon(
                                     Icon::new(IconName::Book)
                                         .size(IconSize::Small)
@@ -1856,7 +1856,7 @@ impl Render for DebugPanel {
                         .child(
                             Button::new(
                                 "spawn-new-session-install-extensions",
-                                "调试器扩展",
+                                "Debugger Extensions",
                             )
                             .start_icon(
                                 Icon::new(IconName::Blocks)
@@ -1902,7 +1902,7 @@ impl Render for DebugPanel {
                                 .justify_between()
                                 .border_b_1()
                                 .border_color(cx.theme().colors().border_variant)
-                                .child(Label::new("断点").size(LabelSize::Small))
+                                .child(Label::new("Breakpoints").size(LabelSize::Small))
                                 .child(
                                     h_flex().visible_on_hover("base-breakpoint-list").child(
                                         self.breakpoint_list.read(cx).render_control_strip(),
@@ -1915,7 +1915,7 @@ impl Render for DebugPanel {
                         .when(!has_breakpoints, |this| {
                             this.child(
                                 v_flex().size_full().items_center().justify_center().child(
-                                    Label::new("未设置断点")
+                                    Label::new("No Breakpoints Set")
                                         .size(LabelSize::Small)
                                         .color(Color::Muted),
                                 ),

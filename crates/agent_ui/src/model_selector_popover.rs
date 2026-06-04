@@ -55,7 +55,7 @@ impl Render for ModelSelectorPopover {
         let model_name = model
             .as_ref()
             .map(|model| model.name.clone())
-            .unwrap_or_else(|| SharedString::from("选择模型"));
+            .unwrap_or_else(|| SharedString::from("Select a Model"));
 
         let model_icon = model.as_ref().and_then(|model| model.icon.clone());
 

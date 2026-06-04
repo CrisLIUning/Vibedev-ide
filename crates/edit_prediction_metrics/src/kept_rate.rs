@@ -678,7 +678,7 @@ mod test_kept_rate {
         let eprintln_index = candidate_tokens
             .iter()
             .position(|&token| token == "eprintln")
-            .expect("未找到 eprintln token");
+            .expect("eprintln token not found");
 
         for annotation in &result.token_annotations[..eprintln_index] {
             assert_eq!(*annotation, TokenAnnotation::Context);

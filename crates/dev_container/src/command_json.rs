@@ -33,12 +33,12 @@ where
     T: for<'de> Deserialize<'de>,
 {
     let output = command.output().await.map_err(|e| {
-        log::error!("运行命令 {:?} 时出错: {e}", command);
+        log::error!("Error running command {:?}: {e}", command);
         DevContainerError::CommandFailed(command.get_program().display().to_string())
     })?;
 
     deserialize_json_output(output).map_err(|e| {
-        log::error!("运行命令 {:?} 时出错: {e}", command);
+        log::error!("Error running command {:?}: {e}", command);
         DevContainerError::CommandFailed(command.get_program().display().to_string())
     })
 }
@@ -53,11 +53,11 @@ where
             return Ok(None);
         }
         serde_json_lenient::from_str(&raw)
-            .map_err(|e| format!("从原始 JSON 反序列化时出错: {e}"))
+            .map_err(|e| format!("Error deserializing from raw json: {e}"))
     } else {
         let std_err = String::from_utf8_lossy(&output.stderr);
         Err(format!(
-            "发送了不成功的输出; 无法反序列化. StdErr: {std_err}"
+            "Sent non-successful output; cannot deserialize. StdErr: {std_err}"
         ))
     }
 }

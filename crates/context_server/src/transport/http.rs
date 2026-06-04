@@ -24,7 +24,7 @@ impl std::fmt::Display for TransportError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             TransportError::AuthRequired { .. } => {
-                write!(f, "需要 OAuth 授权")
+                write!(f, "OAuth authorization required")
             }
         }
     }
@@ -306,7 +306,7 @@ impl HttpTransport {
                             }
                         }
                         Err(e) => {
-                            let _ = error_tx.send(format!("SSE 流错误: {}", e)).await;
+                            let _ = error_tx.send(format!("SSE stream error: {}", e)).await;
                             break;
                         }
                     }

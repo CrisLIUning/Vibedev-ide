@@ -101,7 +101,7 @@ mod tests {
         assert!(settings_json::parse_json_with_comments::<Foo>(&input).is_err());
 
         let ParseStatus::Failed { error } = result else {
-            panic!("预期解析失败")
+            panic!("Expected parse to fail")
         };
 
         assert_eq!(

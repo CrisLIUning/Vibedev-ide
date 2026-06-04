@@ -55,7 +55,7 @@ fn render_theme_section(tab_index: &mut isize, cx: &mut App) -> impl IntoElement
     return v_flex()
         .gap_2()
         .child(
-            h_flex().justify_between().child(Label::new("主题")).child(
+            h_flex().justify_between().child(Label::new("Theme")).child(
                 ToggleButtonGroup::single_row(
                     "theme-selector-onboarding-dark-light",
                     [
@@ -65,9 +65,9 @@ fn render_theme_section(tab_index: &mut isize, cx: &mut App) -> impl IntoElement
                     ]
                     .map(|mode| {
                         const MODE_NAMES: [SharedString; 3] = [
-                            SharedString::new_static("浅色"),
-                            SharedString::new_static("深色"),
-                            SharedString::new_static("系统"),
+                            SharedString::new_static("Light"),
+                            SharedString::new_static("Dark"),
+                            SharedString::new_static("System"),
                         ];
                         ToggleButtonSimple::new(
                             MODE_NAMES[mode as usize].clone(),
@@ -338,7 +338,7 @@ fn render_base_keymap_section(tab_index: &mut isize, cx: &mut App) -> impl IntoE
         BaseKeymap::TextMate | BaseKeymap::None => None,
     };
 
-    return v_flex().gap_2().child(Label::new("基础键位映射")).child(
+    return v_flex().gap_2().child(Label::new("Base Keymap")).child(
         ToggleButtonGroup::two_rows(
             "base_keymap_selection",
             [
@@ -392,8 +392,8 @@ fn render_vim_mode_switch(tab_index: &mut isize, cx: &mut App) -> impl IntoEleme
     };
     SwitchField::new(
         "onboarding-vim-mode",
-        Some("Vim 模式"),
-        Some("从 Neovim 转来?试试我们一流的 Vim 模式实现".into()),
+        Some("Vim Mode"),
+        Some("Coming from Neovim? Use our first-class implementation of Vim Mode".into()),
         toggle_state,
         {
             let fs = <dyn Fs>::global(cx);
@@ -433,7 +433,7 @@ fn render_worktree_auto_trust_switch(tab_index: &mut isize, cx: &mut App) -> imp
 
     SwitchField::new(
         "onboarding-auto-trust-worktrees",
-        Some("默认信任所有项目"),
+        Some("Trust All Projects By Default"),
         Some("Automatically mark all new projects as trusted to unlock all VibeDev's features".into()),
         toggle_state,
         {
@@ -517,9 +517,9 @@ fn render_import_settings_section(tab_index: &mut isize, cx: &mut App) -> impl I
             v_flex()
                 .gap_0p5()
                 .max_w_5_6()
-                .child(Label::new("导入设置"))
+                .child(Label::new("Import Settings"))
                 .child(
-                    Label::new("从其他编辑器自动拉取您的设置")
+                    Label::new("Automatically pull your settings from other editors")
                         .color(Color::Muted),
                 ),
         )
@@ -552,7 +552,7 @@ fn render_registry_agent_button(
             .color(Color::Success)
             .into_any_element()
     } else {
-        Label::new("安装")
+        Label::new("Install")
             .size(LabelSize::XSmall)
             .color(Color::Muted)
             .into_any_element()
@@ -596,7 +596,7 @@ fn render_vibedev_agent_button() -> impl IntoElement {
         )
         .name("VibeDev")
         .state(
-            Label::new("登录")
+            Label::new("Sign In")
                 .size(LabelSize::XSmall)
                 .color(Color::Muted)
                 .into_any_element(),
@@ -632,7 +632,7 @@ fn render_ai_section(_user_store: &Entity<UserStore>, cx: &mut App) -> impl Into
             .grid()
             .grid_cols(column_count)
             .gap_2()
-            // VIBEDEV: VibeDev sign-in card replaces the native "VibeDev Agent" card.
+            // VIBEDEV: VibeDev sign-in card replaces the native "Zed Agent" card.
             .child(render_vibedev_agent_button()),
         |grid, agent_id| {
             let Some(agent) = registry_agents
@@ -648,9 +648,9 @@ fn render_ai_section(_user_store: &Entity<UserStore>, cx: &mut App) -> impl Into
 
     v_flex()
         .gap_0p5()
-        .child(Label::new("助手设置"))
+        .child(Label::new("Agent Setup"))
         .child(
-            Label::new("安装你喜欢的助手并开始第一个对话线程。")
+            Label::new("Install your favorite agents and start your first thread.")
                 .color(Color::Muted),
         )
         .child(grid)

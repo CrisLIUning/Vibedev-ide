@@ -338,7 +338,7 @@ impl Item for SubView {
         window.defer(cx, move |window, cx| {
             let new_pane = weak_running.update(cx, |running, cx| {
                 let Some(project) = running.project.upgrade() else {
-                    return Err(anyhow!("调试器项目已丢弃"));
+                    return Err(anyhow!("Debugger project has been dropped"));
                 };
 
                 let new_pane = new_debugger_pane(running.workspace.clone(), project, window, cx);
@@ -606,7 +606,7 @@ pub(crate) fn new_debugger_pane(
                                     let focus_handle = focus_handle.clone();
                                     move |_window, cx| {
                                         let zoomed_text =
-                                            if zoomed { "最小化" } else { "展开" };
+                                            if zoomed { "Minimize" } else { "Expand" };
                                         Tooltip::for_action_in(
                                             zoomed_text,
                                             &ToggleExpandItem,
@@ -1187,7 +1187,7 @@ impl RunningState {
             } else if let Some((task, locator_name, extra_config)) = build_output {
                 let locator_name =
                     locator_name.with_context(|| {
-                        format!("无法找到构建任务的有效定位器,且配置无效,错误:{}", request_type.err()
+                        format!("Could not find a valid locator for a build task and configure is invalid with error: {}", request_type.err()
                             .map(|err| err.to_string())
                             .unwrap_or_default())
                     })?;
@@ -1292,7 +1292,7 @@ impl RunningState {
             .clone()
             .filter(|title| !title.is_empty())
             .or_else(|| command.clone())
-            .unwrap_or_else(|| "调试终端".to_string());
+            .unwrap_or_else(|| "Debug terminal".to_string());
         let kind = task::SpawnInTerminal {
             id: task::TaskId("debug".to_string()),
             full_label: title.clone(),
@@ -2008,27 +2008,27 @@ mod tests {
         let workspace = init_test_workspace(&project, cx).await;
         let cx = &mut VisualTestContext::from_window(*workspace, cx);
 
-        start_debug_session(&workspace, cx, |_| {}).expect("调试会话启动失败");
+        start_debug_session(&workspace, cx, |_| {}).expect("debug session starts");
         cx.run_until_parked();
 
         let running_state = workspace
             .update(cx, |multi_workspace, _window, cx| {
                 multi_workspace.workspace().update(cx, |workspace, cx| {
-                    let debug_panel = workspace.panel::<DebugPanel>(cx).expect("调试面板");
+                    let debug_panel = workspace.panel::<DebugPanel>(cx).expect("debug panel");
                     let active_session = debug_panel
                         .read(cx)
                         .active_session()
-                        .expect("活动调试会话");
+                        .expect("active debug session");
                     active_session.read(cx).running_state().clone()
                 })
             })
-            .expect("工作区更新失败");
+            .expect("workspace update succeeds");
 
         let (source_pane, stale_host_pane) = running_state.read_with(cx, |running_state, _| {
             let panes = running_state.panes.panes();
             let mut panes = panes.into_iter();
-            let source_pane = panes.next().expect("源窗格").clone();
-            let stale_host_pane = panes.next().expect("过时的主机窗格").clone();
+            let source_pane = panes.next().expect("source pane").clone();
+            let stale_host_pane = panes.next().expect("stale host pane").clone();
             (source_pane, stale_host_pane)
         });
 
@@ -2037,7 +2037,7 @@ mod tests {
             source_pane.read_with(cx, |source_pane, _| {
                 let item = source_pane
                     .item_for_index(0)
-                    .expect("源窗格包含调试器子视图")
+                    .expect("source pane contains debugger subview")
                     .boxed_clone();
                 DraggedTab {
                     pane: source_pane_entity,
@@ -2053,7 +2053,7 @@ mod tests {
             source_pane
                 .active_item()
                 .and_then(|item| item.downcast::<SubView>())
-                .expect("活动项是调试器子视图")
+                .expect("active item is a debugger subview")
         });
         active_subview.update(cx, |subview, _| {
             subview.set_host_pane(stale_host_pane.downgrade());

@@ -325,7 +325,7 @@ impl Editor {
             }
             Some(CompletionsMenuSource::SnippetChoices)
             | Some(CompletionsMenuSource::SnippetsOnly) => {
-                log::error!("bug:未处理 SnippetChoices requested_source");
+                log::error!("bug: SnippetChoices requested_source is not handled");
                 None
             }
         };
@@ -992,7 +992,7 @@ impl Editor {
                         lsp_store.apply_code_action(buffer_handle, command, false, cx)
                     })
                     .await
-                    .context("应用补全后命令")?;
+                    .context("applying post-completion command")?;
                 if let Some(workspace) = editor.read_with(cx, |editor, _| editor.workspace())? {
                     Self::open_project_transaction(
                         &editor,
@@ -1014,7 +1014,7 @@ impl Editor {
                             buffer.merge_transactions(additional_edits_tx.id, tx_id, cx)
                         });
                     })
-                    .context("合并事务")?;
+                    .context("merge transactions")?;
             }
 
             Ok(())

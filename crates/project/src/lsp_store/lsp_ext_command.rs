@@ -65,7 +65,7 @@ impl LspCommand for ExpandMacro {
     type ProtoRequest = proto::LspExtExpandMacro;
 
     fn display_name(&self) -> &str {
-        "展开宏"
+        "Expand macro"
     }
 
     fn check_capabilities(&self, _: AdapterServerCapabilities) -> bool {
@@ -197,7 +197,7 @@ impl LspCommand for OpenDocs {
     type ProtoRequest = proto::LspExtOpenDocs;
 
     fn display_name(&self) -> &str {
-        "打开文档"
+        "Open docs"
     }
 
     fn check_capabilities(&self, _: AdapterServerCapabilities) -> bool {
@@ -212,7 +212,7 @@ impl LspCommand for OpenDocs {
         _: &App,
     ) -> Result<OpenDocsParams> {
         let uri = lsp::Uri::from_file_path(path)
-            .map_err(|()| anyhow::anyhow!("{path:?} 不是有效的 URI"))?;
+            .map_err(|()| anyhow::anyhow!("{path:?} is not a valid URI"))?;
         Ok(OpenDocsParams {
             text_document: lsp::TextDocumentIdentifier { uri },
             position: point_to_lsp(self.position),
@@ -331,7 +331,7 @@ impl LspCommand for SwitchSourceHeader {
     type ProtoRequest = proto::LspExtSwitchSourceHeader;
 
     fn display_name(&self) -> &str {
-        "切换源文件/头文件"
+        "Switch source header"
     }
 
     fn check_capabilities(&self, _: AdapterServerCapabilities) -> bool {
@@ -413,7 +413,7 @@ impl LspCommand for GoToParentModule {
     type ProtoRequest = proto::LspExtGoToParentModule;
 
     fn display_name(&self) -> &str {
-        "转到父模块"
+        "Go to parent module"
     }
 
     fn check_capabilities(&self, _: AdapterServerCapabilities) -> bool {
@@ -671,7 +671,7 @@ impl LspCommand for GetLspRunnables {
     type ProtoRequest = proto::LspExtRunnables;
 
     fn display_name(&self) -> &str {
-        "LSP 可运行项"
+        "LSP Runnables"
     }
 
     fn check_capabilities(&self, _: AdapterServerCapabilities) -> bool {
@@ -842,9 +842,9 @@ mod tests {
         });
 
         let runnable: Runnable =
-            serde_json::from_value(json).expect("Shell runnable 应该反序列化");
+            serde_json::from_value(json).expect("shell runnable should deserialize");
         let RunnableArgs::Shell(shell) = &runnable.args else {
-            panic!("期望 Shell 变体,得到 {:?}", runnable.args);
+            panic!("expected Shell variant, got {:?}", runnable.args);
         };
         assert_eq!(shell.program, "cargo");
         assert_eq!(shell.args[0], "nextest");
@@ -868,9 +868,9 @@ mod tests {
         });
 
         let runnable: Runnable =
-            serde_json::from_value(json).expect("cargo runnable 应该反序列化");
+            serde_json::from_value(json).expect("cargo runnable should deserialize");
         let RunnableArgs::Cargo(cargo) = &runnable.args else {
-            panic!("期望 Cargo 变体,得到 {:?}", runnable.args);
+            panic!("expected Cargo variant, got {:?}", runnable.args);
         };
         assert_eq!(
             cargo.cargo_args,

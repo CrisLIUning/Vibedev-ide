@@ -335,7 +335,7 @@ impl LspCommand for PrepareRename {
     type ProtoRequest = proto::PrepareRename;
 
     fn display_name(&self) -> &str {
-        "准备重命名"
+        "Prepare rename"
     }
 
     fn check_capabilities(&self, capabilities: AdapterServerCapabilities) -> bool {
@@ -505,7 +505,7 @@ impl LspCommand for PrepareRename {
                 Ok(PrepareRenameResponse::Success(start..end))
             } else {
                 anyhow::bail!(
-                    "远程项目 PrepareRenameResponse 中缺少起始或结束位置"
+                    "Missing start or end position in remote project PrepareRenameResponse"
                 );
             }
         } else if message.only_unprepared_rename_supported {
@@ -527,7 +527,7 @@ impl LspCommand for PerformRename {
     type ProtoRequest = proto::PerformRename;
 
     fn display_name(&self) -> &str {
-        "重命名"
+        "Rename"
     }
 
     fn check_capabilities(&self, capabilities: AdapterServerCapabilities) -> bool {
@@ -656,7 +656,7 @@ impl LspCommand for GetDefinitions {
     type ProtoRequest = proto::GetDefinition;
 
     fn display_name(&self) -> &str {
-        "获取定义"
+        "Get definition"
     }
 
     fn check_capabilities(&self, capabilities: AdapterServerCapabilities) -> bool {
@@ -768,7 +768,7 @@ impl LspCommand for GetDeclarations {
     type ProtoRequest = proto::GetDeclaration;
 
     fn display_name(&self) -> &str {
-        "获取声明"
+        "Get declaration"
     }
 
     fn check_capabilities(&self, capabilities: AdapterServerCapabilities) -> bool {
@@ -871,7 +871,7 @@ impl LspCommand for GetImplementations {
     type ProtoRequest = proto::GetImplementation;
 
     fn display_name(&self) -> &str {
-        "获取实现"
+        "Get implementation"
     }
 
     fn check_capabilities(&self, capabilities: AdapterServerCapabilities) -> bool {
@@ -973,7 +973,7 @@ impl LspCommand for GetTypeDefinitions {
     type ProtoRequest = proto::GetTypeDefinition;
 
     fn display_name(&self) -> &str {
-        "获取类型定义"
+        "Get type definition"
     }
 
     fn check_capabilities(&self, capabilities: AdapterServerCapabilities) -> bool {
@@ -1367,11 +1367,11 @@ impl LspCommand for GetReferences {
     type ProtoRequest = proto::GetReferences;
 
     fn display_name(&self) -> &str {
-        "查找所有引用"
+        "Find all references"
     }
 
     fn status(&self) -> Option<String> {
-        Some("正在查找引用...".to_owned())
+        Some("Finding references...".to_owned())
     }
 
     fn check_capabilities(&self, capabilities: AdapterServerCapabilities) -> bool {
@@ -1546,7 +1546,7 @@ impl LspCommand for GetDocumentHighlights {
     type ProtoRequest = proto::GetDocumentHighlights;
 
     fn display_name(&self) -> &str {
-        "获取文档高亮"
+        "Get document highlights"
     }
 
     fn check_capabilities(&self, capabilities: AdapterServerCapabilities) -> bool {
@@ -1702,7 +1702,7 @@ impl LspCommand for GetDocumentSymbols {
     type ProtoRequest = proto::GetDocumentSymbols;
 
     fn display_name(&self) -> &str {
-        "获取文档符号"
+        "Get document symbols"
     }
 
     fn check_capabilities(&self, capabilities: AdapterServerCapabilities) -> bool {
@@ -1900,7 +1900,7 @@ impl LspCommand for GetSignatureHelp {
     type ProtoRequest = proto::GetSignatureHelp;
 
     fn display_name(&self) -> &str {
-        "获取签名帮助"
+        "Get signature help"
     }
 
     fn check_capabilities(&self, capabilities: AdapterServerCapabilities) -> bool {
@@ -2024,7 +2024,7 @@ impl LspCommand for GetHover {
     type ProtoRequest = proto::GetHover;
 
     fn display_name(&self) -> &str {
-        "获取悬停提示"
+        "Get hover"
     }
 
     fn check_capabilities(&self, capabilities: AdapterServerCapabilities) -> bool {
@@ -2264,7 +2264,7 @@ impl LspCommand for GetCompletions {
     type ProtoRequest = proto::GetCompletions;
 
     fn display_name(&self) -> &str {
-        "获取补全"
+        "Get completion"
     }
 
     fn check_capabilities(&self, capabilities: AdapterServerCapabilities) -> bool {
@@ -2593,7 +2593,7 @@ pub(crate) fn parse_completion_text_edit(
         let end = snapshot.clip_point_utf16(range.end, Bias::Left);
         if start != range.start.0 || end != range.end.0 {
             log::info!(
-                "补全超出预期范围, start: {start:?}, end: {end:?}, range: {range:?}"
+                "completion out of expected range, start: {start:?}, end: {end:?}, range: {range:?}"
             );
             return None;
         }
@@ -2628,7 +2628,7 @@ impl LspCommand for GetCodeActions {
     type ProtoRequest = proto::GetCodeActions;
 
     fn display_name(&self) -> &str {
-        "获取代码操作"
+        "Get code actions"
     }
 
     fn check_capabilities(&self, capabilities: AdapterServerCapabilities) -> bool {
@@ -2720,7 +2720,7 @@ impl LspCommand for GetCodeActions {
                 .read(cx)
                 .language_server_for_id(server_id)
                 .with_context(|| {
-                    format!("找不到刚刚返回响应的语言服务器 {server_id}")
+                    format!("Missing the language server that just returned a response {server_id}")
                 })
         })?;
 
@@ -2895,7 +2895,7 @@ impl LspCommand for OnTypeFormatting {
     type ProtoRequest = proto::OnTypeFormatting;
 
     fn display_name(&self) -> &str {
-        "输入时格式化"
+        "Formatting on typing"
     }
 
     fn check_capabilities(&self, capabilities: AdapterServerCapabilities) -> bool {
@@ -3193,7 +3193,7 @@ impl InlayHints {
             1 => {
                 let (server_id, lsp_resolve_state) = resolve_state_data.with_context(|| {
                     format!(
-                        "可解析的提示缺少 lsp 解析数据: {message_hint:?}"
+                        "No lsp resolve data for the hint that can be resolved: {message_hint:?}"
                     )
                 })?;
                 ResolveState::CanResolve(server_id, lsp_resolve_state)
@@ -3401,7 +3401,7 @@ impl LspCommand for InlayHints {
     type ProtoRequest = proto::InlayHints;
 
     fn display_name(&self) -> &str {
-        "内联提示"
+        "Inlay hints"
     }
 
     fn check_capabilities(&self, capabilities: AdapterServerCapabilities) -> bool {
@@ -3553,7 +3553,7 @@ impl LspCommand for SemanticTokensFull {
     type ProtoRequest = proto::SemanticTokens;
 
     fn display_name(&self) -> &str {
-        "完整语义标记"
+        "Semantic tokens full"
     }
 
     fn check_capabilities(&self, capabilities: AdapterServerCapabilities) -> bool {
@@ -3608,7 +3608,7 @@ impl LspCommand for SemanticTokensFull {
             }),
             Some(lsp::SemanticTokensResult::Partial(_)) => {
                 anyhow::bail!(
-                    "内联提示收到了意外的语义标记部分结果响应"
+                    "Unexpected semantic tokens response with partial result for inlay hints"
                 )
             }
             None => Ok(Default::default()),
@@ -3704,7 +3704,7 @@ impl LspCommand for SemanticTokensDelta {
     type ProtoRequest = proto::SemanticTokens;
 
     fn display_name(&self) -> &str {
-        "语义标记增量"
+        "Semantic tokens delta"
     }
 
     fn check_capabilities(&self, capabilities: AdapterServerCapabilities) -> bool {
@@ -3776,7 +3776,7 @@ impl LspCommand for SemanticTokensDelta {
             }
             Some(lsp::SemanticTokensFullDeltaResult::PartialTokensDelta { .. }) => {
                 anyhow::bail!(
-                    "内联提示收到了意外的语义标记部分结果响应"
+                    "Unexpected semantic tokens response with partial result for inlay hints"
                 )
             }
             None => Ok(Default::default()),
@@ -3784,7 +3784,7 @@ impl LspCommand for SemanticTokensDelta {
     }
 
     fn to_proto(&self, _: u64, _: &Buffer) -> proto::SemanticTokens {
-        unimplemented!("远程客户端端从不发起增量请求")
+        unimplemented!("Delta requests are never initialted on the remote client side")
     }
 
     async fn from_proto(
@@ -3793,7 +3793,7 @@ impl LspCommand for SemanticTokensDelta {
         _: Entity<Buffer>,
         _: AsyncApp,
     ) -> Result<Self> {
-        unimplemented!("远程客户端端从不发起增量请求")
+        unimplemented!("Delta requests are never initialted on the remote client side")
     }
 
     fn response_to_proto(
@@ -3857,7 +3857,7 @@ impl LspCommand for GetCodeLens {
     type ProtoRequest = proto::GetCodeLens;
 
     fn display_name(&self) -> &str {
-        "代码透镜"
+        "Code Lens"
     }
 
     fn check_capabilities(&self, capabilities: AdapterServerCapabilities) -> bool {
@@ -3994,7 +3994,7 @@ impl LspCommand for LinkedEditingRange {
     type ProtoRequest = proto::LinkedEditingRange;
 
     fn display_name(&self) -> &str {
-        "链接编辑范围"
+        "Linked editing range"
     }
 
     fn check_capabilities(&self, capabilities: AdapterServerCapabilities) -> bool {
@@ -4425,7 +4425,7 @@ impl LspCommand for GetDocumentDiagnostics {
     type ProtoRequest = proto::GetDocumentDiagnostics;
 
     fn display_name(&self) -> &str {
-        "获取诊断"
+        "Get diagnostics"
     }
 
     fn check_capabilities(&self, _: AdapterServerCapabilities) -> bool {
@@ -4614,7 +4614,7 @@ impl LspCommand for GetDocumentColor {
     type ProtoRequest = proto::GetDocumentColor;
 
     fn display_name(&self) -> &str {
-        "文档颜色"
+        "Document color"
     }
 
     fn check_capabilities(&self, server_capabilities: AdapterServerCapabilities) -> bool {
@@ -4757,7 +4757,7 @@ impl LspCommand for GetFoldingRanges {
     type ProtoRequest = proto::GetFoldingRanges;
 
     fn display_name(&self) -> &str {
-        "折叠范围"
+        "Folding ranges"
     }
 
     fn check_capabilities(&self, server_capabilities: AdapterServerCapabilities) -> bool {
@@ -4960,7 +4960,7 @@ fn process_unchanged_diagnostics_report(
             } => {
                 if server_id != *existing_server_id || &uri != existing_uri {
                     debug_panic!(
-                        "意外状态:文件 {uri} 报告了两组不同的诊断信息"
+                        "Unexpected state: file {uri} has two different sets of diagnostics reported"
                     );
                 }
                 match existing_diagnostics {
@@ -5011,7 +5011,7 @@ fn process_full_diagnostics_report(
             } => {
                 if server_id != *existing_server_id || &uri != existing_uri {
                     debug_panic!(
-                        "意外状态:文件 {uri} 报告了两组不同的诊断信息"
+                        "Unexpected state: file {uri} has two different sets of diagnostics reported"
                     );
                 }
                 match existing_diagnostics {

@@ -994,16 +994,16 @@ impl Vim {
                     file.path().display(file.path_style(cx)).into_owned()
                 }
             } else {
-                "[未命名]".into()
+                "[No Name]".into()
             };
             let buffer = buffer.read(cx);
             let lines = buffer.max_point().row + 1;
             let current_line = point.row;
             let percentage = current_line as f32 / lines as f32;
-            let modified = if buffer.is_dirty() { " [已修改]" } else { "" };
+            let modified = if buffer.is_dirty() { " [modified]" } else { "" };
             vim.set_status_label(
                 format!(
-                    "{}{} {} 行 --{:.0}%--",
+                    "{}{} {} lines --{:.0}%--",
                     filename,
                     modified,
                     lines,

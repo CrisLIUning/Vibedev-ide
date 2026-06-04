@@ -9,7 +9,7 @@ mod updater;
 fn main() {
     if let Err(e) = windows_impl::run() {
         log::error!("Error: Zed update failed, {:?}", e);
-        windows_impl::show_error(format!("错误: {:?}", e));
+        windows_impl::show_error(format!("Error: {:?}", e));
     }
 }
 
@@ -115,7 +115,7 @@ mod windows_impl {
             MessageBoxW(
                 None,
                 &HSTRING::from(content),
-                windows::core::w!("错误: VibeDev 更新失败。"),
+                windows::core::w!("Error: Zed update failed."),
                 MB_ICONERROR | MB_SYSTEMMODAL,
             )
         };

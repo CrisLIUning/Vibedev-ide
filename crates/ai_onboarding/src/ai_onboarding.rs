@@ -141,7 +141,7 @@ impl ZedAiOnboarding {
                 .child(
                     IconButton::new("dismiss_onboarding", IconName::Close)
                         .icon_size(IconSize::Small)
-                        .tooltip(Tooltip::text("关闭"))
+                        .tooltip(Tooltip::text("Dismiss"))
                         .on_click(move |_, window, cx| {
                             telemetry::event!("Banner Dismissed", source = "AI Onboarding",);
                             callback(window, cx)
@@ -158,15 +158,15 @@ impl ZedAiOnboarding {
             .w_full()
             .relative()
             .gap_1()
-            .child(Headline::new("欢迎使用 VibeDev AI"))
+            .child(Headline::new("Welcome to Zed AI"))
             .child(
-                Label::new("登录即可免费试用 VibeDev Pro 14 天")
+                Label::new("Sign in to try Zed Pro free for 14 days.")
                     .color(Color::Muted)
                     .mb_2(),
             )
             .child(PlanDefinitions.sign_in_upsell())
             .child(
-                Button::new("sign_in", "免费试用 VibeDev Pro")
+                Button::new("sign_in", "Try Zed Pro for Free")
                     .disabled(signing_in)
                     .full_width()
                     .style(ButtonStyle::Tinted(ui::TintColor::Accent))
@@ -188,7 +188,7 @@ impl ZedAiOnboarding {
                 .relative()
                 .min_w_0()
                 .gap_1()
-                .child(Headline::new("欢迎使用 VibeDev AI"))
+                .child(Headline::new("Welcome to Zed AI"))
                 .child(YoungAccountBanner)
                 .child(
                     v_flex()
@@ -198,7 +198,7 @@ impl ZedAiOnboarding {
                             h_flex()
                                 .gap_2()
                                 .child(
-                                    Label::new("专业版")
+                                    Label::new("Pro")
                                         .size(LabelSize::Small)
                                         .color(Color::Accent)
                                         .buffer_font(cx),
@@ -212,7 +212,7 @@ impl ZedAiOnboarding {
                             // chance of jumping to zed.dev/account/upgrade).
                             // Whole Welcome-to-Zed-AI card is queued for a
                             // VibeDev-branded replacement in a follow-up.
-                            Button::new("pro", "开始使用")
+                            Button::new("pro", "Get Started")
                                 .full_width()
                                 .disabled(true)
                                 .style(ButtonStyle::Tinted(ui::TintColor::Accent))
@@ -225,7 +225,7 @@ impl ZedAiOnboarding {
                 .w_full()
                 .relative()
                 .gap_1()
-                .child(Headline::new("欢迎使用 VibeDev AI"))
+                .child(Headline::new("Welcome to Zed AI"))
                 .child(
                     v_flex()
                         .mt_2()
@@ -234,13 +234,13 @@ impl ZedAiOnboarding {
                             h_flex()
                                 .gap_2()
                                 .child(
-                                    Label::new("免费")
+                                    Label::new("Free")
                                         .size(LabelSize::Small)
                                         .color(Color::Muted)
                                         .buffer_font(cx),
                                 )
                                 .child(
-                                    Label::new("(当前方案)")
+                                    Label::new("(Current Plan)")
                                         .size(LabelSize::Small)
                                         .color(Color::Custom(
                                             cx.theme().colors().text_muted.opacity(0.6),
@@ -260,7 +260,7 @@ impl ZedAiOnboarding {
                             h_flex()
                                 .gap_2()
                                 .child(
-                                    Label::new("专业版试用")
+                                    Label::new("Pro Trial")
                                         .size(LabelSize::Small)
                                         .color(Color::Accent)
                                         .buffer_font(cx),
@@ -269,10 +269,10 @@ impl ZedAiOnboarding {
                         )
                         .child(PlanDefinitions.pro_trial(true))
                         .child(
-                            // VIBEDEV: "开始免费试用" disabled — we don't
+                            // VIBEDEV: "Start Free Trial" disabled — we don't
                             // ship Zed Pro trial. Same rationale as the
                             // "Upgrade to Pro" button above.
-                            Button::new("pro", "开始免费试用")
+                            Button::new("pro", "Start Free Trial")
                                 .full_width()
                                 .disabled(true)
                                 .style(ButtonStyle::Tinted(ui::TintColor::Accent))
@@ -289,9 +289,9 @@ impl ZedAiOnboarding {
             .relative()
             .gap_1()
             .child(Self::pro_trial_stamp(cx))
-            .child(Headline::new("欢迎使用 VibeDev Pro 试用版"))
+            .child(Headline::new("Welcome to the Zed Pro Trial"))
             .child(
-                Label::new("在接下来的 14 天内,您将享有以下权益:")
+                Label::new("Here's what you get for the next 14 days:")
                     .color(Color::Muted)
                     .mb_2(),
             )
@@ -306,9 +306,9 @@ impl ZedAiOnboarding {
             .relative()
             .gap_1()
             .child(Self::certified_user_stamp(cx))
-            .child(Headline::new("欢迎使用 VibeDev Pro"))
+            .child(Headline::new("Welcome to Zed Pro"))
             .child(
-                Label::new("您将享有以下权益:")
+                Label::new("Here's what you get:")
                     .color(Color::Muted)
                     .mb_2(),
             )
@@ -323,9 +323,9 @@ impl ZedAiOnboarding {
             .relative()
             .gap_1()
             .child(Self::business_stamp(cx))
-            .child(Headline::new("欢迎使用 VibeDev Business"))
+            .child(Headline::new("Welcome to Zed Business"))
             .child(
-                Label::new("您将享有以下权益:")
+                Label::new("Here's what you get:")
                     .color(Color::Muted)
                     .mb_2(),
             )
@@ -340,9 +340,9 @@ impl ZedAiOnboarding {
             .relative()
             .gap_1()
             .child(Self::student_stamp(cx))
-            .child(Headline::new("欢迎使用 VibeDev 学生版"))
+            .child(Headline::new("Welcome to Zed Student"))
             .child(
-                Label::new("您将享有以下权益:")
+                Label::new("Here's what you get:")
                     .color(Color::Muted)
                     .mb_2(),
             )
@@ -410,31 +410,31 @@ impl Component for ZedAiOnboarding {
                 .gap_4()
                 .children(vec![
                     single_example(
-                        "未登录",
+                        "Not Signed-in",
                         onboarding(SignInStatus::SignedOut, None, false),
                     ),
                     single_example(
-                        "新账户",
+                        "Young Account",
                         onboarding(SignInStatus::SignedIn, None, true),
                     ),
                     single_example(
-                        "免费方案",
+                        "Free Plan",
                         onboarding(SignInStatus::SignedIn, Some(Plan::ZedFree), false),
                     ),
                     single_example(
-                        "专业版试用",
+                        "Pro Trial",
                         onboarding(SignInStatus::SignedIn, Some(Plan::ZedProTrial), false),
                     ),
                     single_example(
-                        "专业版方案",
+                        "Pro Plan",
                         onboarding(SignInStatus::SignedIn, Some(Plan::ZedPro), false),
                     ),
                     single_example(
-                        "商业版计划",
+                        "Business Plan",
                         onboarding(SignInStatus::SignedIn, Some(Plan::ZedBusiness), false),
                     ),
                     single_example(
-                        "学生版计划",
+                        "Student Plan",
                         onboarding(SignInStatus::SignedIn, Some(Plan::ZedStudent), false),
                     ),
                 ])

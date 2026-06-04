@@ -326,9 +326,9 @@ impl From<TerminalDockPosition> for DockPosition {
 impl DockPosition {
     fn label(&self) -> &'static str {
         match self {
-            Self::Left => "左",
-            Self::Bottom => "下",
-            Self::Right => "右",
+            Self::Left => "Left",
+            Self::Bottom => "Bottom",
+            Self::Right => "Right",
         }
     }
 
@@ -518,7 +518,7 @@ impl Dock {
             .position(|entry| entry.panel.enabled(cx))
             .with_context(|| {
                 format!(
-                    "无法为 {} 停靠栏找到任何已启用的面板。",
+                    "Couldn't find any enabled panel for the {} dock.",
                     self.position.label()
                 )
             })
@@ -717,7 +717,7 @@ impl Dock {
             Ok(ix) => {
                 if cfg!(debug_assertions) {
                     panic!(
-                        "面板 `{}` 和 `{}` 具有相同的激活优先级。每个面板必须具有唯一的优先级,以确保状态栏顺序是确定的。",
+                        "Panels `{}` and `{}` have the same activation priority. Each panel must have a unique priority so the status bar order is deterministic.",
                         T::panel_key(),
                         self.panel_entries[ix].panel.panel_key()
                     );
@@ -1227,7 +1227,7 @@ impl Render for PanelButtons {
                     .panel
                     .icon_tooltip(window, cx)
                     .ok_or_else(|| {
-                        anyhow::anyhow!("无法在没有图标提示的情况下渲染面板按钮")
+                        anyhow::anyhow!("can't render a panel button without an icon tooltip")
                     })
                     .log_err()?;
                 let name = entry.panel.persistent_name();
@@ -1242,7 +1242,7 @@ impl Render for PanelButtons {
                     let action = dock.toggle_action();
 
                     let tooltip: SharedString =
-                        format!("关闭{}停靠栏", dock.position.label()).into();
+                        format!("Close {} Dock", dock.position.label()).into();
 
                     (action, tooltip)
                 } else {
@@ -1271,7 +1271,7 @@ impl Render for PanelButtons {
                                         let is_current = position == dock_position;
                                         let panel = panel.clone();
                                         menu = menu.toggleable_entry(
-                                            format!("停靠到{}", position.label()),
+                                            format!("Dock {}", position.label()),
                                             is_current,
                                             IconPosition::Start,
                                             None,
@@ -1292,7 +1292,7 @@ impl Render for PanelButtons {
                                     let dock_for_flex = dock_for_menu.clone();
                                     let workspace_for_flex = workspace_for_menu.clone();
                                     menu = menu.toggleable_entry(
-                                        "弹性宽度",
+                                        "Flex Width",
                                         currently_flexible,
                                         IconPosition::Start,
                                         None,
@@ -1315,7 +1315,7 @@ impl Render for PanelButtons {
                                     let dock_for_fixed = dock_for_menu.clone();
                                     let workspace_for_fixed = workspace_for_menu.clone();
                                     menu = menu.toggleable_entry(
-                                        "固定宽度",
+                                        "Fixed Width",
                                         !currently_flexible,
                                         IconPosition::Start,
                                         None,

@@ -258,8 +258,8 @@ fn load_bundled_fonts(asset_source: &dyn AssetSource, db: &mut usvg::fontdb::Dat
     for path in font_paths {
         match asset_source.load(path) {
             Ok(Some(data)) => db.load_font_data(data.into_owned()),
-            Ok(None) => log::warn!("未找到内置字体: {path}"),
-            Err(error) => log::warn!("加载内置字体 {path} 失败: {error}"),
+            Ok(None) => log::warn!("Bundled font not found: {path}"),
+            Err(error) => log::warn!("Failed to load bundled font {path}: {error}"),
         }
     }
 }
@@ -338,7 +338,7 @@ mod tests {
             assert_eq!(
                 is_emoji_presentation(s.chars().next().unwrap()),
                 expected,
-                "对于字符 {:?}",
+                "for char {:?}",
                 s
             );
         }

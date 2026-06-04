@@ -349,7 +349,7 @@ fn clean_error_message(message: &str) -> String {
     }
 
     if lower.contains("invalid api key") || lower.contains("invalid_api_key") {
-        return "Vercel AI Gateway 认证失败。请检查您的 Vercel AI Gateway 密钥是否以 vck_ 开头且处于活跃状态。".to_string();
+        return "Authentication failed for Vercel AI Gateway. Check that your Vercel AI Gateway key starts with vck_ and is active.".to_string();
     }
 
     message.to_string()
@@ -656,43 +656,43 @@ impl Render for ConfigurationView {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let env_var_set = self.state.read(cx).api_key_state.is_from_env_var();
         let configured_card_label = if env_var_set {
-            format!("API 密钥已在 {API_KEY_ENV_VAR_NAME} 环境变量中设置")
+            format!("API key set in {API_KEY_ENV_VAR_NAME} environment variable")
         } else {
             let api_url = VercelAiGatewayLanguageModelProvider::api_url(cx);
             if api_url == API_URL {
-                "API 密钥已配置".to_string()
+                "API key configured".to_string()
             } else {
-                format!("已为 {} 配置 API 密钥", api_url)
+                format!("API key configured for {}", api_url)
             }
         };
 
         if self.load_credentials_task.is_some() {
-            div().child(Label::new("正在加载凭据...")).into_any()
+            div().child(Label::new("Loading credentials...")).into_any()
         } else if self.should_render_editor(cx) {
             v_flex()
                 .size_full()
                 .on_action(cx.listener(Self::save_api_key))
                 .child(Label::new(
-                    "要在 Vercel AI Gateway 中使用 VibeDev 的智能体,您需要添加 API 密钥。请按照以下步骤操作:",
+                    "To use Zed's agent with Vercel AI Gateway, you need to add an API key. Follow these steps:",
                 ))
                 .child(
                     List::new()
                         .child(
                             ListBulletItem::new("")
-                                .child(Label::new("在以下位置创建 API 密钥:"))
+                                .child(Label::new("Create an API key in"))
                                 .child(ButtonLink::new(
-                                    "Vercel AI Gateway 控制台",
+                                    "Vercel AI Gateway's console",
                                     "https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%2Fapi-keys&title=Go+to+AI+Gateway",
                                 )),
                         )
                         .child(ListBulletItem::new(
-                            "在下方粘贴您的 API 密钥并按回车键以开始使用助手",
+                            "Paste your API key below and hit enter to start using the assistant",
                         )),
                 )
                 .child(self.api_key_editor.clone())
                 .child(
                     Label::new(format!(
-                        "您也可以设置 {API_KEY_ENV_VAR_NAME} 环境变量并重启 VibeDev。",
+                        "You can also set the {API_KEY_ENV_VAR_NAME} environment variable and restart Zed.",
                     ))
                     .size(LabelSize::Small)
                     .color(Color::Muted),
@@ -702,7 +702,7 @@ impl Render for ConfigurationView {
             ConfiguredApiCard::new(configured_card_label)
                 .disabled(env_var_set)
                 .when(env_var_set, |this| {
-                    this.tooltip_label(format!("要重置 API 密钥,请取消设置 {API_KEY_ENV_VAR_NAME} 环境变量。"))
+                    this.tooltip_label(format!("To reset your API key, unset the {API_KEY_ENV_VAR_NAME} environment variable."))
                 })
                 .on_click(cx.listener(|this, _, window, cx| this.reset_api_key(window, cx)))
                 .into_any_element()

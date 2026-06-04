@@ -38,7 +38,7 @@ impl Child {
             .spawn()
             .with_context(|| {
                 format!(
-                    "无法启动命令 {}",
+                    "failed to spawn command {}",
                     crate::redact::redact_command(&format!("{command:?}"))
                 )
             })?;
@@ -62,7 +62,7 @@ impl Child {
             .spawn()
             .with_context(|| {
                 format!(
-                    "无法启动命令 {}",
+                    "failed to spawn command {}",
                     crate::redact::redact_command(&format!("{command:?}"))
                 )
             })?;

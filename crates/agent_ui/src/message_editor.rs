@@ -322,7 +322,7 @@ async fn resolve_pasted_context_items(
 ) -> (Vec<ResolvedPastedContextItem>, Vec<Entity<Worktree>>) {
     let mut items = Vec::new();
     let mut added_worktrees = Vec::new();
-    let default_image_name: SharedString = "图片".into();
+    let default_image_name: SharedString = "Image".into();
 
     for entry in entries {
         match entry {
@@ -513,14 +513,14 @@ impl MessageEditor {
                 let has_selection = editor.has_non_empty_selection(&editor.display_snapshot(cx));
 
                 Some(ContextMenu::build(window, cx, |menu, _, _| {
-                    menu.action("剪切", Box::new(editor::actions::Cut))
+                    menu.action("Cut", Box::new(editor::actions::Cut))
                         .action_disabled_when(
                             !has_selection,
-                            "复制",
+                            "Copy",
                             Box::new(editor::actions::Copy),
                         )
-                        .action("粘贴", Box::new(editor::actions::Paste))
-                        .action("粘贴为纯文本", Box::new(PasteRaw))
+                        .action("Paste", Box::new(editor::actions::Paste))
+                        .action("Paste as Plain Text", Box::new(PasteRaw))
                 }))
             });
 
@@ -1477,7 +1477,7 @@ impl MessageEditor {
                     .ok()
                     .and_then(|r| r.ok())
                     .flatten()
-                    .ok_or_else(|| anyhow!("无法确定默认分支"))?;
+                    .ok_or_else(|| anyhow!("Could not determine default branch"))?;
 
                 cx.update(|window, cx| {
                     let mention_uri = MentionUri::GitDiff {
@@ -1645,7 +1645,7 @@ impl MessageEditor {
             files: true,
             directories: false,
             multiple: true,
-            prompt: Some("选择图片".into()),
+            prompt: Some("Select Images".into()),
         });
 
         window
@@ -1655,7 +1655,7 @@ impl MessageEditor {
                     _ => return Ok::<(), anyhow::Error>(()),
                 };
 
-                let default_image_name: SharedString = "图片".into();
+                let default_image_name: SharedString = "Image".into();
                 let images = cx
                     .background_spawn(async move {
                         paths
@@ -1792,7 +1792,7 @@ impl MessageEditor {
                         MentionUri::parse(&uri, path_style)
                     } else {
                         Ok(MentionUri::PastedImage {
-                            name: "图片".to_string(),
+                            name: "Image".to_string(),
                         })
                     };
                     let Some(mention_uri) = mention_uri.log_err() else {
@@ -2274,13 +2274,13 @@ mod tests {
         let skill_file_path = PathBuf::from("/tmp/SKILL.md");
         let skill = AvailableSkill {
             name: "deploy".into(),
-            description: "部署应用".into(),
+            description: "Deploy the app".into(),
             source: "".into(),
             skill_file_path: skill_file_path.clone(),
         };
         let session_capabilities = SessionCapabilities::new(
             acp::PromptCapabilities::default(),
-            vec![acp::AvailableCommand::new("help", "获取帮助")],
+            vec![acp::AvailableCommand::new("help", "Get help")],
             vec![skill],
         );
 
@@ -2304,7 +2304,7 @@ mod tests {
         // `/:<name>`); project-local skills carry their worktree root
         // name. The empty-scope encoding means a worktree literally
         // named `global` no longer collides with the global source.
-        let commands = vec![acp::AvailableCommand::new("help", "获取帮助")];
+        let commands = vec![acp::AvailableCommand::new("help", "Get help")];
         let skills = vec![make_skill("deploy", ""), make_skill("deploy", "zed")];
         let no_skills: Vec<AvailableSkill> = Vec::new();
 
@@ -2324,7 +2324,7 @@ mod tests {
                 MessageEditor::classify_slash_command("/zed:deploy", &commands, &no_skills),
                 SlashCommandClassification::Unrecognized { .. }
             ),
-            "限定范围的技能需要是一级可用技能"
+            "scope-qualified skills should require a first-class available skill"
         );
 
         // Scope-qualified forms both classify as Recognized, each pointing at the
@@ -2383,10 +2383,10 @@ mod tests {
         // test_classify_non_command_slashes, preserved here for regression).
         assert!(
             matches!(
-                MessageEditor::classify_slash_command("查看 /docs 了解信息", &commands, &skills),
+                MessageEditor::classify_slash_command("check /docs for info", &commands, &skills),
                 SlashCommandClassification::NotSlashCommand
             ),
-            "文本中间的 /docs 不应被视为斜杠命令"
+            "mid-text /docs should not be treated as a slash command"
         );
     }
 
@@ -2712,7 +2712,7 @@ mod tests {
         // Now simulate Claude providing its list of available commands (which doesn't include file)
         session_capabilities
             .write()
-            .set_available_commands(vec![acp::AvailableCommand::new("help", "获取帮助")]);
+            .set_available_commands(vec![acp::AvailableCommand::new("help", "Get help")]);
 
         // Unrecognized command when we DO have a command list: still sends as prose.
         editor.update_in(cx, |editor, window, cx| {
@@ -2842,7 +2842,7 @@ mod tests {
             acp::PromptCapabilities::default(),
             vec![
                 acp::AvailableCommand::new("quick-math", "2 + 2 = 4 - 1 = 3"),
-                acp::AvailableCommand::new("say-hello", "向你想要的人问好").input(
+                acp::AvailableCommand::new("say-hello", "Say hello to whoever you want").input(
                     acp::AvailableCommandInput::Unstructured(acp::UnstructuredCommandInput::new(
                         "<name>",
                     )),
@@ -2893,7 +2893,7 @@ mod tests {
                 current_completion_labels_with_documentation(editor),
                 &[
                     ("quick-math".into(), "2 + 2 = 4 - 1 = 3".into()),
-                    ("say-hello".into(), "向你想要的人问好".into())
+                    ("say-hello".into(), "Say hello to whoever you want".into())
                 ]
             );
             editor.set_text("", window, cx);
@@ -2933,7 +2933,7 @@ mod tests {
 
             assert_eq!(
                 current_completion_labels_with_documentation(editor),
-                &[("say-hello".into(), "向你想要的人问好".into())]
+                &[("say-hello".into(), "Say hello to whoever you want".into())]
             );
         });
 
@@ -3078,7 +3078,7 @@ mod tests {
             events
                 .iter()
                 .any(|e| matches!(e, MessageEditorEvent::SlashAutocompleteOpened)),
-            "期望发出 SlashAutocompleteOpened 事件;实际看到的事件:{events:?}",
+            "expected SlashAutocompleteOpened to have been emitted; saw events: {events:?}",
         );
     }
 
@@ -3219,8 +3219,8 @@ mod tests {
                     format!("seven.txt b{slash}"),
                     format!("six.txt b{slash}"),
                     format!("five.txt b{slash}"),
-                    "文件和目录".into(),
-                    "符号".into()
+                    "Files & Directories".into(),
+                    "Symbols".into()
                 ]
             );
             editor.set_text("", window, cx);
@@ -3254,15 +3254,15 @@ mod tests {
                     format!("seven.txt b{slash}"),
                     format!("six.txt b{slash}"),
                     format!("five.txt b{slash}"),
-                    "文件和目录".into(),
-                    "符号".into(),
-                    "对话线程".into(),
-                    "获取".into()
+                    "Files & Directories".into(),
+                    "Symbols".into(),
+                    "Threads".into(),
+                    "Fetch".into()
                 ]
             );
         });
 
-        // Select and confirm "文件"
+        // Select and confirm "File"
         editor.update_in(&mut cx, |editor, window, cx| {
             assert!(editor.has_visible_completions_menu());
             editor.context_menu_next(&editor::actions::ContextMenuNext, window, cx);
@@ -3401,7 +3401,7 @@ mod tests {
 
         let plain_text_language = Arc::new(language::Language::new(
             language::LanguageConfig {
-                name: "纯文本".into(),
+                name: "Plain Text".into(),
                 matcher: language::LanguageMatcher {
                     path_suffixes: vec!["txt".to_string()],
                     ..Default::default()
@@ -3416,7 +3416,7 @@ mod tests {
         language_registry.add(plain_text_language);
 
         let mut fake_language_servers = language_registry.register_fake_lsp(
-            "纯文本",
+            "Plain Text",
             language::FakeLspAdapter {
                 capabilities: lsp::ServerCapabilities {
                     workspace_symbol_provider: Some(lsp::OneOf::Left(true)),
@@ -3764,7 +3764,7 @@ mod tests {
         let thread_store = Some(cx.new(|cx| ThreadStore::new(cx)));
 
         let session_id = acp::SessionId::new("thread-123");
-        let title = Some("之前的对话".into());
+        let title = Some("Previous Conversation".into());
 
         let message_editor = cx.update(|window, cx| {
             cx.new(|cx| {
@@ -3854,7 +3854,7 @@ mod tests {
                 );
                 editor.insert_thread_summary(
                     acp::SessionId::new("thread-123"),
-                    Some("之前的对话".into()),
+                    Some("Previous Conversation".into()),
                     window,
                     cx,
                 );
@@ -4547,7 +4547,7 @@ mod tests {
                         .anchor_to_buffer_anchor(
                             snapshot.anchor_before(MultiBufferOffset(range.start)),
                         )
-                        .expect("选择提及锚点应映射到缓冲区")
+                        .expect("selection mention anchor should map to a buffer")
                         .0,
                     range.len(),
                     uri.name().into(),
@@ -4560,7 +4560,7 @@ mod tests {
                     window,
                     cx,
                 ) else {
-                    panic!("预期提及折痕插入失败");
+                    panic!("expected mention crease insertion");
                 };
                 drop(tx);
 
@@ -4591,7 +4591,7 @@ mod tests {
             message_editor
                 .serialize_selection_with_mentions(false, cx)
                 .map(|(text, _)| text)
-                .expect("选择提及应该可以序列化")
+                .expect("selection mentions should serialize")
         });
         let expected_text = format!(
             "{} 需要处理\n{} 看起来正常",
@@ -4710,7 +4710,7 @@ mod tests {
                         .anchor_to_buffer_anchor(
                             snapshot.anchor_before(MultiBufferOffset(range.start)),
                         )
-                        .expect("选择提及锚点应映射到缓冲区")
+                        .expect("selection mention anchor should map to a buffer")
                         .0,
                     range.len(),
                     uri.name().into(),
@@ -4723,7 +4723,7 @@ mod tests {
                     window,
                     cx,
                 ) else {
-                    panic!("预期提及折痕插入失败");
+                    panic!("expected mention crease insertion");
                 };
                 drop(tx);
 
@@ -4858,14 +4858,14 @@ mod tests {
         assert_eq!(
             resource_uris.len(),
             2,
-            "快照应为每个选区提及发出一个 Resource 块;实际得到 {blocks:#?}"
+            "snapshot should emit one Resource block per selection mention; got {blocks:#?}"
         );
         assert!(resource_uris.contains(&fixture.first_uri.to_uri().to_string().as_str()));
         for block in &blocks {
             if let acp::ContentBlock::Text(text) = block {
                 assert!(
                     !text.text.split_whitespace().any(|word| word == "selection"),
-                    "文本块不能包含裸的折叠占位符:{:?}",
+                    "text block must not contain bare fold placeholder: {:?}",
                     text.text
                 );
             }
@@ -4902,7 +4902,7 @@ mod tests {
                 Some(ClipboardEntry::String(entry)) => Some(entry.text().to_string()),
                 _ => None,
             })
-            .expect("剪切应将序列化文本写入剪贴板");
+            .expect("cut should write serialized text to clipboard");
         assert_eq!(clipboard_text, expected_text);
 
         let remaining_text = fixture.message_editor.read_with(&cx, |message_editor, cx| {
@@ -4937,7 +4937,7 @@ mod tests {
                 Some(ClipboardEntry::String(entry)) => Some(entry.text().to_string()),
                 _ => None,
             })
-            .expect("剪切应将序列化文本写入剪贴板");
+            .expect("cut should write serialized text to clipboard");
         assert_eq!(
             clipboard_text,
             format!("{} needs work\n", fixture.first_uri.as_link())
@@ -4946,7 +4946,7 @@ mod tests {
         let remaining_text = fixture.message_editor.read_with(&cx, |message_editor, cx| {
             message_editor.editor.read(cx).text(cx)
         });
-        assert_eq!(remaining_text, "选区看起来正常");
+        assert_eq!(remaining_text, "selection looks fine");
     }
 
     #[gpui::test]
@@ -4979,7 +4979,7 @@ mod tests {
 
         assert!(
             result.is_none(),
-            "serialize_selection_with_mentions 应返回 None 以便运行默认编辑器剪切"
+            "serialize_selection_with_mentions should return None so the default editor cut runs"
         );
     }
 
@@ -5199,7 +5199,7 @@ mod tests {
         let image_name = temporary_image_path
             .file_name()
             .and_then(|n| n.to_str())
-            .unwrap_or("图片")
+            .unwrap_or("Image")
             .to_string();
         std::fs::remove_file(&temporary_image_path).expect("remove temp png");
 

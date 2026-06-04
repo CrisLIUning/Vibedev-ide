@@ -71,7 +71,7 @@ impl Database {
             };
 
             log::info!(
-                "正在创建频道 '{}',parent_path='{}',max_order={},new_order={}",
+                "Creating channel '{}' with parent_path='{}', max_order={}, new_order={}",
                 name,
                 parent_path,
                 max_order,
@@ -269,7 +269,7 @@ impl Database {
                 > 0;
 
             if channel_has_active_participants {
-                Err(anyhow!("通话进行中无法删除频道"))?;
+                Err(anyhow!("can't delete channel while a call is in progress"))?;
             }
 
             channel::Entity::delete_many()
@@ -744,7 +744,7 @@ impl Database {
             | Some(ChannelRole::Banned)
             | Some(ChannelRole::Guest)
             | None => Err(anyhow!(
-                "用户不是频道管理员或频道不存在"
+                "user is not a channel admin or channel does not exist"
             ))?,
         }
     }
@@ -763,7 +763,7 @@ impl Database {
             | Some(ChannelRole::Guest)
             | Some(ChannelRole::Talker)
             | None => Err(anyhow!(
-                "用户不是频道成员或频道不存在"
+                "user is not a channel member or channel does not exist"
             ))?,
         }
     }
@@ -782,7 +782,7 @@ impl Database {
             | Some(ChannelRole::Guest)
             | Some(ChannelRole::Talker) => Ok(role.unwrap()),
             Some(ChannelRole::Banned) | None => Err(anyhow!(
-                "用户不是频道参与者或频道不存在"
+                "user is not a channel participant or channel does not exist"
             ))?,
         }
     }
@@ -990,7 +990,7 @@ impl Database {
             }
 
             log::info!(
-                "正在对频道 {} 重新排序 (parent_path: '{}', order: {})",
+                "Reordering channel {} (parent_path: '{}', order: {})",
                 channel.id,
                 channel.parent_path,
                 channel.channel_order
@@ -1004,7 +1004,7 @@ impl Database {
             let sibling_channel = match direction {
                 proto::reorder_channel::Direction::Up => {
                     log::info!(
-                        "正在查找 parent_path='{}' 且 order < {} 的同级频道",
+                        "Looking for sibling with parent_path='{}' and order < {}",
                         channel.parent_path,
                         channel.channel_order
                     );
@@ -1021,7 +1021,7 @@ impl Database {
                 }
                 proto::reorder_channel::Direction::Down => {
                     log::info!(
-                        "正在查找 parent_path='{}' 且 order > {} 的同级频道",
+                        "Looking for sibling with parent_path='{}' and order > {}",
                         channel.parent_path,
                         channel.channel_order
                     );
@@ -1041,7 +1041,7 @@ impl Database {
             let mut sibling_channel = match sibling_channel {
                 Some(sibling) => {
                     log::info!(
-                        "找到同级频道 {} (parent_path: '{}', order: {})",
+                        "Found sibling {} (parent_path: '{}', order: {})",
                         sibling.id,
                         sibling.parent_path,
                         sibling.channel_order
@@ -1077,7 +1077,7 @@ impl Database {
             channel.channel_order = sibling_order;
 
             log::info!(
-                "重新排序完成。已交换频道 {} 和 {}",
+                "Reorder complete. Swapped channels {} and {}",
                 channel.id,
                 sibling_channel.id
             );

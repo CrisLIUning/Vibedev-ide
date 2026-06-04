@@ -286,14 +286,14 @@ impl ComponentStatus {
     pub fn description(&self) -> &str {
         match self {
             ComponentStatus::WorkInProgress => {
-                "这些组件仍在设计或改进中,目前不应在应用中使用。"
+                "These components are still being designed or refined. They shouldn't be used in the app yet."
             }
             ComponentStatus::EngineeringReady => {
-                "这些组件设计已完成或部分实现,已准备好由工程师完成实现。"
+                "These components are design complete or partially implemented, and are ready for an engineer to complete their implementation."
             }
-            ComponentStatus::Live => "这些组件已准备好在应用中使用。",
+            ComponentStatus::Live => "These components are ready for use in the app.",
             ComponentStatus::Deprecated => {
-                "不再建议在应用中使用这些组件,它们可能会在未来的版本中被移除。"
+                "These components are no longer recommended for use in the app, and may be removed in a future release."
             }
         }
     }

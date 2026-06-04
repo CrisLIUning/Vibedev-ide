@@ -12,7 +12,7 @@ pub enum EmptyMessage {
 #[derive(IntoElement, RegisterComponent)]
 pub struct List {
     /// Message to display when the list is empty
-    /// Defaults to "无项目"
+    /// Defaults to "No items"
     empty_message: EmptyMessage,
     header: Option<ListHeader>,
     toggle: Option<bool>,
@@ -28,7 +28,7 @@ impl Default for List {
 impl List {
     pub fn new() -> Self {
         Self {
-            empty_message: EmptyMessage::Text("无项目".into()),
+            empty_message: EmptyMessage::Text("No items".into()),
             header: None,
             toggle: None,
             children: SmallVec::new(),
@@ -101,7 +101,7 @@ impl Component for List {
 
     fn description() -> Option<&'static str> {
         Some(
-            "一个容器组件,用于显示列表项集合,支持可选的标题和空状态。",
+            "A container component for displaying a collection of list items with optional header and empty state.",
         )
     }
 
@@ -110,28 +110,28 @@ impl Component for List {
             v_flex()
                 .gap_6()
                 .children(vec![example_group_with_title(
-                    "基础列表",
+                    "Basic Lists",
                     vec![
                         single_example(
-                            "简单列表",
+                            "Simple List",
                             List::new()
-                                .child(ListItem::new("item1").child(Label::new("项目 1")))
-                                .child(ListItem::new("item2").child(Label::new("项目 2")))
-                                .child(ListItem::new("item3").child(Label::new("项目 3")))
+                                .child(ListItem::new("item1").child(Label::new("Item 1")))
+                                .child(ListItem::new("item2").child(Label::new("Item 2")))
+                                .child(ListItem::new("item3").child(Label::new("Item 3")))
                                 .into_any_element(),
                         ),
                         single_example(
-                            "带标题",
+                            "With Header",
                             List::new()
-                                .header(ListHeader::new("章节标题"))
-                                .child(ListItem::new("item1").child(Label::new("项目 1")))
-                                .child(ListItem::new("item2").child(Label::new("项目 2")))
+                                .header(ListHeader::new("Section Header"))
+                                .child(ListItem::new("item1").child(Label::new("Item 1")))
+                                .child(ListItem::new("item2").child(Label::new("Item 2")))
                                 .into_any_element(),
                         ),
                         single_example(
-                            "空列表",
+                            "Empty List",
                             List::new()
-                                .empty_message("没有可显示的项目")
+                                .empty_message("No items to display")
                                 .into_any_element(),
                         ),
                     ],

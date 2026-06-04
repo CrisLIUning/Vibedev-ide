@@ -180,7 +180,7 @@ fn parse_choices<'a>(
 
                 anyhow::ensure!(
                     chunk_end.is_some(),
-                    "占位符选项未包含结束管道符 '|'"
+                    "Placeholder choice doesn't contain closing pipe-character '|'"
                 );
 
                 let (chunk, rest) = source.split_at(chunk_end.unwrap());

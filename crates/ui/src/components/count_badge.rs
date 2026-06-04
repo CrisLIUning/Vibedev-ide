@@ -58,7 +58,7 @@ impl Component for CountBadge {
     }
 
     fn description() -> Option<&'static str> {
-        Some("显示数字计数的小型胶囊形徽章。")
+        Some("A small, pill-shaped badge that displays a numeric count.")
     }
 
     fn preview(_window: &mut Window, cx: &mut App) -> Option<AnyElement> {
@@ -75,14 +75,14 @@ impl Component for CountBadge {
             v_flex()
                 .gap_6()
                 .child(example_group_with_title(
-                    "计数徽章",
+                    "Count Badge",
                     vec![
                         single_example(
-                            "基本计数",
+                            "Basic Count",
                             container().child(CountBadge::new(3)).into_any_element(),
                         ),
                         single_example(
-                            "上限计数",
+                            "Capped Count",
                             container().child(CountBadge::new(150)).into_any_element(),
                         ),
                     ],

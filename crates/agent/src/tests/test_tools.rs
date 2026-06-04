@@ -50,7 +50,7 @@ impl AgentTool for StreamingEchoTool {
         _input: Result<Self::Input, serde_json::Value>,
         _cx: &mut App,
     ) -> SharedString {
-        "流式回显".into()
+        "Streaming Echo".into()
     }
 
     fn run(
@@ -120,7 +120,7 @@ impl AgentTool for StreamingJsonErrorContextTool {
                     Ok(ToolInputPayload::InvalidJson { error_message }) => {
                         let partial_text = last_partial_text.unwrap_or_default();
                         return Err(format!(
-                            "在无效的 JSON 之前看到了部分文本 '{partial_text}': {error_message}"
+                            "Saw partial text '{partial_text}' before invalid JSON: {error_message}"
                         ));
                     }
                     Err(error) => {
@@ -337,7 +337,7 @@ impl AgentTool for ToolRequiringPermission2 {
         _input: Result<Self::Input, serde_json::Value>,
         _cx: &mut App,
     ) -> SharedString {
-        "此工具也需要权限".into()
+        "This tool also requires permission".into()
     }
 
     fn run(

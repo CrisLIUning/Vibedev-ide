@@ -1904,7 +1904,7 @@ mod test {
 
         assert!(
             !state.is_following_tail(),
-            "用户向起始位置滚动时, follow-tail 应当取消"
+            "follow-tail should disengage when the user scrolls toward the start"
         );
     }
 
@@ -1944,7 +1944,7 @@ mod test {
         assert_eq!(offset.offset_in_item, px(0.));
         assert!(
             !state.is_following_tail(),
-            "当滚动条手动重新定位列表时, follow-tail 应当取消"
+            "follow-tail should disengage when the scrollbar manually repositions the list"
         );
 
         // A subsequent draw should preserve the user's manual position instead
@@ -2111,7 +2111,7 @@ mod test {
 
         assert_eq!(
             -scroll_offset.y, max_offset.y,
-            "当列表固定在底部时, 滚动条偏移量 ({}) 应等于最大偏移量 ({})",
+            "scrollbar offset ({}) should equal max offset ({}) when list is pinned to bottom",
             -scroll_offset.y, max_offset.y,
         );
     }
@@ -2271,7 +2271,7 @@ mod test {
         });
         assert!(
             state.is_following_tail(),
-            "通过滚动条滚动回底部后,尾部跟随模式应该重新启用"
+            "follow_tail should re-engage after scrolling back to the bottom via the scrollbar"
         );
     }
 

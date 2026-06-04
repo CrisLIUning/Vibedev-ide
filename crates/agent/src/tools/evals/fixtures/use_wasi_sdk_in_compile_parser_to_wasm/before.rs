@@ -289,7 +289,7 @@ fn standardize_path(path: PathBuf, home: &Path) -> PathBuf {
 impl Config {
     #[must_use]
     pub fn initial() -> Self {
-        let home_dir = etcetera::home_dir().expect("无法确定主目录");
+        let home_dir = etcetera::home_dir().expect("Cannot determine home directory");
         Self {
             parser_directories: vec![
                 home_dir.join("github"),
@@ -445,9 +445,9 @@ impl Loader {
 
     pub fn find_all_languages(&mut self, config: &Config) -> Result<()> {
         if config.parser_directories.is_empty() {
-            eprintln!("警告:您尚未配置任何解析器目录!");
-            eprintln!("请运行 `tree-sitter init-config` 并编辑生成的");
-            eprintln!("配置文件以指明我们应在哪里查找");
+            eprintln!("Warning: You have not configured any parser directories!");
+            eprintln!("Please run `tree-sitter init-config` and edit the resulting");
+            eprintln!("configuration file to indicate where we should look for");
             eprintln!("语言语法。\n");
         }
         for parser_container_dir in &config.parser_directories {
@@ -562,7 +562,7 @@ impl Loader {
                 // one to use by applying the configurations' content regexes.
                 else {
                     let file_contents = fs::read(path)
-                        .with_context(|| format!("读取路径 {} 失败", path.display()))?;
+                        .with_context(|| format!("Failed to read path {}", path.display()))?;
                     let file_contents = String::from_utf8_lossy(&file_contents);
                     let mut best_score = -2isize;
                     let mut best_configuration_id = None;
@@ -720,7 +720,7 @@ impl Loader {
 
         if !recompile {
             recompile = needs_recompile(&output_path, &paths_to_check)
-                .with_context(|| "比较源文件和二进制文件时间戳失败")?;
+                .with_context(|| "Failed to compare source and binary timestamps")?;
         }
 
         #[cfg(feature = "wasm")]
@@ -780,7 +780,7 @@ impl Loader {
         if recompile {
             fs::create_dir_all(lock_path.parent().unwrap()).with_context(|| {
                 format!(
-                    "创建目录 {} 失败",
+                    "Failed to create directory {}",
                     lock_path.parent().unwrap().display()
                 )
             })?;
@@ -799,11 +799,11 @@ impl Loader {
         }
 
         let library = unsafe { Library::new(&output_path) }
-            .with_context(|| format!("打开动态库 {} 时出错", output_path.display()))?;
+            .with_context(|| format!("Error opening dynamic library {}", output_path.display()))?;
         let language = unsafe {
             let language_fn = library
                 .get::<Symbol<unsafe extern "C" fn() -> Language>>(language_fn_name.as_bytes())
-                .with_context(|| format!("加载符号 {language_fn_name} 失败"))?;
+                .with_context(|| format!("Failed to load symbol {language_fn_name}"))?;
             language_fn()
         };
         mem::forget(library);
@@ -916,7 +916,7 @@ impl Loader {
                                 if !found_non_static {
                                     found_non_static = true;
                                     eprintln!(
-                                        "警告:在外部扫描器中发现非静态的非 tree-sitter 函数"
+                                        "Warning: Found non-static non-tree-sitter functions in the external scanner"
                                     );
                                 }
                                 eprintln!("  `{function_name}`");
@@ -928,7 +928,7 @@ impl Loader {
                 }
                 if found_non_static {
                     eprintln!(
-                        "请考虑将这些函数设为静态,当其他 tree-sitter 项目使用相同的函数名时,它们可能会导致冲突"
+                        "Consider making these functions static, they can cause conflicts when another tree-sitter project uses the same function name"
                     );
                 }
 
@@ -1002,7 +1002,7 @@ impl Loader {
             EmccSource::Podman
         } else {
             anyhow::bail!(
-                "您的 PATH 环境变量中必须包含 emcc、docker 或 podman 才能运行此命令"
+                "You must have either emcc, docker, or podman on your PATH to run this command"
             );
         };
 
@@ -1094,12 +1094,12 @@ impl Loader {
         command.arg("parser.c");
         let status = command
             .spawn()
-            .with_context(|| "运行 emcc 命令失败")?
+            .with_context(|| "Failed to run emcc command")?
             .wait()?;
-        anyhow::ensure!(status.success(), "emcc 命令执行失败");
+        anyhow::ensure!(status.success(), "emcc command failed");
         let source_path = src_path.join(output_name);
         fs::rename(&source_path, &output_path).with_context(|| {
-            format!("无法将 wasm 输出文件从 {source_path:?} 重命名为 {output_path:?}")
+            format!("failed to rename wasm output file from {source_path:?} to {output_path:?}")
         })?;
 
         Ok(())
@@ -1113,7 +1113,7 @@ impl Loader {
     ) -> Option<&'a HighlightConfiguration> {
         match self.language_configuration_for_injection_string(string) {
             Err(e) => {
-                eprintln!("无法为注入字符串 '{string}' 加载语言:{e}",);
+                eprintln!("Failed to load language for injection string '{string}': {e}",);
                 None
             }
             Ok(None) => None,
@@ -1121,7 +1121,7 @@ impl Loader {
                 match configuration.highlight_config(language, None) {
                     Err(e) => {
                         eprintln!(
-                            "无法为注入字符串 '{string}' 加载属性表:{e}",
+                            "Failed to load property sheet for injection string '{string}': {e}",
                         );
                         None
                     }
@@ -1177,7 +1177,7 @@ impl Loader {
                                     .map(|path| {
                                        let path = parser_path.join(path);
                                         // prevent p being above/outside of parser_path
-                                        anyhow::ensure!(path.starts_with(parser_path), "外部文件路径 {path:?} 位于解析器目录 {parser_path:?} 之外");
+                                        anyhow::ensure!(path.starts_with(parser_path), "External file path {path:?} is outside of parser directory {parser_path:?}");
                                         Ok(path)
                                     })
                                     .collect::<Result<Vec<_>>>()
@@ -1240,7 +1240,7 @@ impl Loader {
                 Some(e) if e.kind() == std::io::ErrorKind::NotFound => {}
                 _ => {
                     eprintln!(
-                        "警告:解析 {} 失败 -- {e}",
+                        "Warning: Failed to parse {} -- {e}",
                         parser_path.join("tree-sitter.json").display()
                     );
                 }
@@ -1295,7 +1295,7 @@ impl Loader {
 
     fn grammar_json_name(grammar_path: &Path) -> Result<String> {
         let file = fs::File::open(grammar_path).with_context(|| {
-            format!("无法打开位于 {} 的 grammar.json", grammar_path.display())
+            format!("Failed to open grammar.json at {}", grammar_path.display())
         })?;
 
         let first_three_lines = BufReader::new(file)
@@ -1304,7 +1304,7 @@ impl Loader {
             .collect::<Result<Vec<_>, _>>()
             .with_context(|| {
                 format!(
-                    "无法读取位于 {} 的 grammar.json 的前三行",
+                    "Failed to read the first three lines of grammar.json at {}",
                     grammar_path.display()
                 )
             })?
@@ -1314,7 +1314,7 @@ impl Loader {
             .captures(&first_three_lines)
             .and_then(|c| c.get(1))
             .with_context(|| {
-                format!("无法从位于 {grammar_path:?} 的 grammar.json 解析语言名称")
+                format!("Failed to parse the language name from grammar.json at {grammar_path:?}")
             })?;
 
         Ok(name.as_str().to_string())
@@ -1329,17 +1329,17 @@ impl Loader {
         if let Some(scope) = scope {
             if let Some(config) = self
                 .language_configuration_for_scope(scope)
-                .with_context(|| format!("无法为作用域 '{scope}' 加载语言"))?
+                .with_context(|| format!("Failed to load language for scope '{scope}'"))?
             {
                 Ok(config.0)
             } else {
-                anyhow::bail!("未知作用域 '{scope}'")
+                anyhow::bail!("Unknown scope '{scope}'")
             }
         } else if let Some((lang, _)) = self
             .language_configuration_for_file_name(path)
             .with_context(|| {
                 format!(
-                    "无法为文件名 {} 加载语言",
+                    "Failed to load language for file name {}",
                     path.file_name().unwrap().to_string_lossy()
                 )
             })?
@@ -1349,7 +1349,7 @@ impl Loader {
             Ok(self.language_for_id(self.language_configurations[id].language_id)?)
         } else if let Some(lang) = self
             .languages_at_path(current_dir)
-            .with_context(|| "无法在当前目录中加载语言")?
+            .with_context(|| "Failed to load language in current directory")?
             .first()
             .cloned()
         {
@@ -1357,7 +1357,7 @@ impl Loader {
         } else if let Some(lang) = self.language_configuration_for_first_line_regex(path)? {
             Ok(lang.0)
         } else {
-            anyhow::bail!("未找到语言");
+            anyhow::bail!("No language found");
         }
     }
 
@@ -1554,7 +1554,7 @@ impl LanguageConfiguration<'_> {
         error.row = source[range.start..offset_within_section]
             .matches('\n')
             .count();
-        Error::from(error).context(format!("查询文件 {} 中存在错误", path.display()))
+        Error::from(error).context(format!("Error in query file {}", path.display()))
     }
 
     #[allow(clippy::type_complexity)]
@@ -1571,7 +1571,7 @@ impl LanguageConfiguration<'_> {
                 let abs_path = self.root_path.join(path);
                 let prev_query_len = query.len();
                 query += &fs::read_to_string(&abs_path)
-                    .with_context(|| format!("读取查询文件 {} 失败", path.display()))?;
+                    .with_context(|| format!("Failed to read query file {}", path.display()))?;
                 path_ranges.push((path.clone(), prev_query_len..query.len()));
             }
         } else {
@@ -1589,7 +1589,7 @@ impl LanguageConfiguration<'_> {
             let path = queries_path.join(default_path);
             if path.exists() {
                 query = fs::read_to_string(&path)
-                    .with_context(|| format!("读取查询文件 {} 失败", path.display()))?;
+                    .with_context(|| format!("Failed to read query file {}", path.display()))?;
                 path_ranges.push((PathBuf::from(default_path), 0..query.len()));
             }
         }
@@ -1603,7 +1603,7 @@ fn needs_recompile(lib_path: &Path, paths_to_check: &[PathBuf]) -> Result<bool> 
         return Ok(true);
     }
     let lib_mtime = mtime(lib_path)
-        .with_context(|| format!("读取 {} 的修改时间失败", lib_path.display()))?;
+        .with_context(|| format!("Failed to read mtime of {}", lib_path.display()))?;
     for path in paths_to_check {
         if mtime(path)? > lib_mtime {
             return Ok(true);

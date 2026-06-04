@@ -355,7 +355,7 @@ impl LicenseDetectionWatcher {
         // resolve symlinks so that the file size from metadata is correct
         let Some(abs_path) = fs.canonicalize(&abs_path).await.ok() else {
             log::debug!(
-                "`{abs_path:?}` 许可证文件可能已被删除(规范化路径时出错)"
+                "`{abs_path:?}` license file probably deleted (error canonicalizing the path)"
             );
             return None;
         };
@@ -376,11 +376,11 @@ impl LicenseDetectionWatcher {
         let is_eligible = detect_license(&text).is_some();
         if is_eligible {
             log::debug!(
-                "`{abs_path:?}` 匹配符合数据收集条件的许可证(如果已启用)"
+                "`{abs_path:?}` matches a license that is eligible for data collection (if enabled)"
             );
         } else {
             log::debug!(
-                "`{abs_path:?}` 不匹配符合数据收集条件的许可证"
+                "`{abs_path:?}` does not match a license that is eligible for data collection"
             );
         }
         Some(is_eligible)
@@ -436,7 +436,7 @@ mod tests {
             walked_entries += 1;
             if walked_entries % 10000 == 0 {
                 println!(
-                    "目前已访问 {} 个文件,位于 {}",
+                    "So far visited {} files in {}",
                     walked_entries,
                     homedir.display()
                 );
@@ -467,7 +467,7 @@ mod tests {
             println!("{}", path);
         }
         panic!(
-            "检测到 {} 个许可证,{} 个未识别",
+            "{} licenses detected, {} unrecognized",
             detected.len(),
             unrecognized.len()
         );

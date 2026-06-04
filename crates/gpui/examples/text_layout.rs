@@ -17,34 +17,34 @@ impl Render for HelloWorld {
             .gap_2()
             .p_4()
             .size_full()
-            .child(div().child("文本左对齐"))
-            .child(div().text_center().child("文本居中"))
-            .child(div().text_right().child("文本右对齐"))
-            .child(div().text_decoration_1().child("文本左对齐 (下划线)"))
+            .child(div().child("Text left"))
+            .child(div().text_center().child("Text center"))
+            .child(div().text_right().child("Text right"))
+            .child(div().text_decoration_1().child("Text left (underline)"))
             .child(
                 div()
                     .text_center()
                     .text_decoration_1()
-                    .child("文本居中 (下划线)"),
+                    .child("Text center (underline)"),
             )
             .child(
                 div()
                     .text_right()
                     .text_decoration_1()
-                    .child("文本右对齐 (下划线)"),
+                    .child("Text right (underline)"),
             )
-            .child(div().line_through().child("文本左对齐 (删除线)"))
+            .child(div().line_through().child("Text left (line_through)"))
             .child(
                 div()
                     .text_center()
                     .line_through()
-                    .child("文本居中 (删除线)"),
+                    .child("Text center (line_through)"),
             )
             .child(
                 div()
                     .text_right()
                     .line_through()
-                    .child("文本右对齐 (删除线)"),
+                    .child("Text right (line_through)"),
             )
             .child(
                 div()
@@ -60,7 +60,7 @@ impl Render for HelloWorld {
                             .whitespace_nowrap()
                             .overflow_hidden()
                             .text_center()
-                            .child("长文本不换行居中对齐"),
+                            .child("A long non-wrapping text align center"),
                     )
                     .child(
                         div()

@@ -921,13 +921,13 @@ impl Item for MarkdownPreviewView {
             .map(|editor_state| {
                 let buffer = editor_state.editor.read(cx).buffer().read(cx);
                 let title = buffer.title(cx);
-                format!("预览 {}", title).into()
+                format!("Preview {}", title).into()
             })
             .unwrap_or_else(|| SharedString::from("Markdown Preview"))
     }
 
     fn telemetry_event_text(&self) -> Option<&'static str> {
-        Some("Markdown 预览已打开")
+        Some("Markdown Preview Opened")
     }
 
     fn can_save(&self, cx: &App) -> bool {
@@ -1045,7 +1045,7 @@ impl Render for MarkdownPreviewView {
                                 ContextMenu::build(window, cx, move |menu, _, _cx| {
                                     menu.when_some(focus, |menu, focus| menu.context(focus))
                                         .when_some(context_menu_link, |menu, url| {
-                                            menu.entry("复制链接", None, move |_, cx| {
+                                            menu.entry("Copy Link", None, move |_, cx| {
                                                 cx.write_to_clipboard(ClipboardItem::new_string(
                                                     url.to_string(),
                                                 ));
@@ -1481,7 +1481,7 @@ mod tests {
             Some(ImageSource::Resource(Resource::Path(path))) => {
                 assert_eq!(path.as_ref(), expected_path);
             }
-            _ => panic!("预期预览图片解析为本地路径"),
+            _ => panic!("Expected preview image to resolve to a local path"),
         }
     }
 }

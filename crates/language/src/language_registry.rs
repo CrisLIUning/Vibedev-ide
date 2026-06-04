@@ -257,7 +257,7 @@ impl LanguageRegistry {
             && !existing_adapter.adapter.is_extension()
         {
             log::warn!(
-                "未注册扩展提供的语言服务器 {name:?},因为已存在同名的内置语言服务器",
+                "not registering extension-provided language server {name:?}, since a builtin language server exists with that name",
             );
             return;
         }
@@ -304,7 +304,7 @@ impl LanguageRegistry {
             && !existing_adapter.adapter.is_extension()
         {
             log::warn!(
-                "未为语言 {language_name:?} 注册扩展提供的语言服务器 {:?},因为已存在同名的内置语言服务器",
+                "not registering extension-provided language server {:?} for language {language_name:?}, since a builtin language server exists with that name",
                 adapter.name(),
             );
             return;
@@ -919,7 +919,7 @@ impl LanguageRegistry {
                                 if let Some(mut txs) = state.loading_languages.remove(&id) {
                                     for tx in txs.drain(..) {
                                         let _ = tx.send(Err(anyhow!(
-                                            "加载语言 {name} 失败: {e}",
+                                            "failed to load language {name}: {e}",
                                         )));
                                     }
                                 }

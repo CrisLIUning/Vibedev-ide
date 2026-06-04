@@ -32,7 +32,7 @@ impl<T> TableRow<T> {
     pub fn from_vec(data: Vec<T>, expected_length: usize) -> Self {
         Self::try_from_vec(data, expected_length).unwrap_or_else(|e| {
             let name = type_name::<Vec<T>>();
-            panic!("预期 {name} 创建成功: {e}");
+            panic!("Expected {name} to be created successfully: {e}");
         })
     }
 
@@ -43,7 +43,7 @@ impl<T> TableRow<T> {
     pub fn try_from_vec(data: Vec<T>, expected_len: usize) -> Result<Self, String> {
         if data.len() != expected_len {
             Err(format!(
-                "行长度 {} 与预期 {} 不匹配",
+                "Row length {} does not match expected {}",
                 data.len(),
                 expected_len
             ))
@@ -60,7 +60,7 @@ impl<T> TableRow<T> {
         let col = col.into();
         self.0.get(col).unwrap_or_else(|| {
             panic!(
-                "预期类型为 `{}` 的表格行包含 {col:?}",
+                "Expected table row of `{}` to have {col:?}",
                 type_name::<T>()
             )
         })

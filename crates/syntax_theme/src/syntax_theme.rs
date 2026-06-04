@@ -199,12 +199,12 @@ mod bundled_themes {
     }
 
     fn load_theme(json: &str, theme_name: &str) -> Arc<SyntaxTheme> {
-        let theme_file: ThemeFile = serde_json::from_str(json).expect("解析主题 JSON 失败");
+        let theme_file: ThemeFile = serde_json::from_str(json).expect("failed to parse theme JSON");
         let theme_entry = theme_file
             .themes
             .iter()
             .find(|entry| entry.name == theme_name)
-            .unwrap_or_else(|| panic!("在主题 JSON 中未找到主题 {theme_name:?}"));
+            .unwrap_or_else(|| panic!("theme {theme_name:?} not found in theme JSON"));
 
         let highlights = theme_entry
             .style

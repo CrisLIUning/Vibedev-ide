@@ -1165,14 +1165,14 @@ impl Item for Editor {
 
         if is_markdown {
             actions.push((
-                "打开 Markdown 预览".into(),
+                "Open Markdown Preview".into(),
                 Box::new(OpenMarkdownPreview) as Box<dyn gpui::Action>,
             ));
         }
 
         if is_svg {
             actions.push((
-                "打开 SVG 预览".into(),
+                "Open SVG Preview".into(),
                 Box::new(OpenSvgPreview) as Box<dyn gpui::Action>,
             ));
         }
@@ -1341,7 +1341,7 @@ impl SerializableItem for Editor {
                                 .update(cx, |project, cx| project.open_local_buffer(&abs_path, cx))
                                 .await
                                 .with_context(|| {
-                                    format!("无法为 {abs_path:?} 打开缓冲区")
+                                    format!("Failed to open buffer for {abs_path:?}")
                                 })?;
 
                             if let Some(contents) = contents {
@@ -2258,14 +2258,14 @@ mod tests {
         assert_chunks_are_contiguous(&chunks, 0..text.len());
         assert!(
             chunks.len() <= 4,
-            "得到 {} 个块,预期 <= num_cpus (4)",
+            "got {} chunks, expected <= num_cpus (4)",
             chunks.len()
         );
         for chunk in &chunks {
             let end = chunk.end;
             assert!(
                 end == text.len() || text.as_bytes()[end - 1] == b'\n',
-                "结束于 {end} 的块不是行边界",
+                "chunk ending at {end} is not a line boundary",
             );
         }
     }
@@ -2331,26 +2331,26 @@ mod tests {
 
     #[track_caller]
     fn assert_chunks_are_contiguous(chunks: &[Range<usize>], expected: Range<usize>) {
-        assert!(!chunks.is_empty(), "预期至少一个块");
+        assert!(!chunks.is_empty(), "expected at least one chunk");
         assert_eq!(
             chunks.first().unwrap().start,
             expected.start,
-            "第一个块不在 {} 开始",
+            "first chunk does not start at {}",
             expected.start
         );
         assert_eq!(
             chunks.last().unwrap().end,
             expected.end,
-            "最后一个块不在 {} 结束",
+            "last chunk does not end at {}",
             expected.end
         );
         for chunk in chunks {
-            assert!(chunk.start < chunk.end, "空块: {:?}", chunk);
+            assert!(chunk.start < chunk.end, "empty chunk: {:?}", chunk);
         }
         for window in chunks.windows(2) {
             assert_eq!(
                 window[0].end, window[1].start,
-                "块 {:?} 和 {:?} 之间存在间隙或重叠",
+                "gap or overlap between chunks {:?} and {:?}",
                 window[0], window[1],
             );
         }

@@ -25,7 +25,7 @@ use crate::provider::open_ai::{OpenAiResponseEventMapper, into_open_ai_response}
 
 const PROVIDER_ID: LanguageModelProviderId = LanguageModelProviderId::new("openai-subscribed");
 const PROVIDER_NAME: LanguageModelProviderName =
-    LanguageModelProviderName::new("ChatGPT 订阅");
+    LanguageModelProviderName::new("ChatGPT Subscription");
 
 const CODEX_BASE_URL: &str = "https://chatgpt.com/backend-api/codex";
 const OPENAI_TOKEN_URL: &str = "https://auth.openai.com/oauth/token";
@@ -133,7 +133,7 @@ impl OpenAiSubscribedProvider {
                             Ok(creds) => s.credentials = Some(creds),
                             Err(err) => {
                                 log::warn!(
-                                    "反序列化 ChatGPT 订阅凭据失败: {err}"
+                                    "Failed to deserialize ChatGPT subscription credentials: {err}"
                                 );
                             }
                         }
@@ -223,14 +223,14 @@ impl LanguageModelProvider for OpenAiSubscribedProvider {
                     Ok(())
                 } else {
                     Err(anyhow!(
-                        "请使用 ChatGPT Plus 或 Pro 订阅登录以使用此提供商。"
+                        "Sign in with your ChatGPT Plus or Pro subscription to use this provider."
                     )
                     .into())
                 }
             })
         } else {
             Task::ready(Err(anyhow!(
-                "请使用 ChatGPT Plus 或 Pro 订阅登录以使用此提供商。"
+                "Sign in with your ChatGPT Plus or Pro subscription to use this provider."
             )
             .into()))
         }
@@ -401,11 +401,11 @@ impl LanguageModel for OpenAiSubscribedLanguageModel {
             .filter_map(|effort| {
                 let (name, value) = match effort {
                     ReasoningEffort::None => return None,
-                    ReasoningEffort::Minimal => ("极低", "minimal"),
-                    ReasoningEffort::Low => ("低", "low"),
-                    ReasoningEffort::Medium => ("中", "medium"),
-                    ReasoningEffort::High => ("高", "high"),
-                    ReasoningEffort::XHigh => ("极高", "xhigh"),
+                    ReasoningEffort::Minimal => ("Minimal", "minimal"),
+                    ReasoningEffort::Low => ("Low", "low"),
+                    ReasoningEffort::Medium => ("Medium", "medium"),
+                    ReasoningEffort::High => ("High", "high"),
+                    ReasoningEffort::XHigh => ("Extra High", "xhigh"),
                 };
 
                 Some(LanguageModelEffortLevel {
@@ -566,7 +566,7 @@ async fn get_fresh_credentials(
                             .map_err(|e| Arc::new(e))?;
                         if current_generation != generation {
                             return Err(Arc::new(anyhow!(
-                                "令牌刷新期间发生登出"
+                                "Sign-out occurred during token refresh"
                             )));
                         }
 
@@ -603,12 +603,12 @@ async fn get_fresh_credentials(
                     persist_result
                 }
                 Err(RefreshError::Fatal(e)) => {
-                    log::error!("ChatGPT 订阅令牌刷新严重失败: {e:?}");
+                    log::error!("ChatGPT subscription token refresh failed fatally: {e:?}");
                     let _ = state_clone.update(cx, |s, cx| {
                         s.refresh_task = None;
                         s.credentials = None;
                         s.last_auth_error =
-                            Some("您的会话已过期,请重新登录。".into());
+                            Some("Your session has expired. Please sign in again.".into());
                         cx.notify();
                     });
                     // Also clear the keychain so stale credentials aren't loaded next time.
@@ -623,7 +623,7 @@ async fn get_fresh_credentials(
                     Err(Arc::new(e))
                 }
                 Err(RefreshError::Transient(e)) => {
-                    log::warn!("ChatGPT 订阅令牌刷新暂时失败: {e:?}");
+                    log::warn!("ChatGPT subscription token refresh failed transiently: {e:?}");
                     let _ = state_clone.update(cx, |s, _| {
                         s.refresh_task = None;
                     });
@@ -681,7 +681,7 @@ async fn do_oauth_flow(
                 path: CODEX_CALLBACK_PATH,
             },
         )
-        .context("启动 OAuth 回调服务器失败")?;
+        .context("Failed to start OAuth callback server")?;
 
     // PKCE verifier: 32 random bytes → base64url (no padding)
     let mut verifier_bytes = [0u8; 32];
@@ -721,17 +721,17 @@ async fn do_oauth_flow(
     // Await the callback
     let callback = callback_rx
         .await
-        .map_err(|_| anyhow!("OAuth 回调已取消"))?
-        .context("OAuth 回调失败")?;
+        .map_err(|_| anyhow!("OAuth callback was cancelled"))?
+        .context("OAuth callback failed")?;
 
     // Validate CSRF state
     if callback.state != oauth_state {
-        return Err(anyhow!("OAuth 状态不匹配"));
+        return Err(anyhow!("OAuth state mismatch"));
     }
 
     let tokens = exchange_code(&http_client, &callback.code, &verifier, &redirect_uri)
         .await
-        .context("令牌交换失败")?;
+        .context("Token exchange failed")?;
 
     let jwt = tokens
         .id_token
@@ -774,12 +774,12 @@ async fn exchange_code(
 
     if !response.status().is_success() {
         return Err(anyhow!(
-            "令牌交换失败 (HTTP {}): {body}",
+            "Token exchange failed (HTTP {}): {body}",
             response.status()
         ));
     }
 
-    serde_json::from_str::<TokenResponse>(&body).context("解析令牌响应失败")
+    serde_json::from_str::<TokenResponse>(&body).context("Failed to parse token response")
 }
 
 async fn refresh_token(
@@ -810,7 +810,7 @@ async fn refresh_token(
         .map_err(|e| RefreshError::Transient(e.into()))?;
 
     if !status.is_success() {
-        let err = anyhow!("令牌刷新失败 (HTTP {}): {body}", status);
+        let err = anyhow!("Token refresh failed (HTTP {}): {body}", status);
         // 400/401/403 indicate a revoked or invalid refresh token.
         // 5xx and other errors are treated as transient.
         if status == http_client::StatusCode::BAD_REQUEST
@@ -899,7 +899,7 @@ fn now_ms() -> u64 {
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_millis() as u64)
         .unwrap_or_else(|err| {
-            log::error!("系统时钟早于 UNIX 纪元: {err}");
+            log::error!("System clock is before UNIX epoch: {err}");
             0
         })
 }
@@ -939,13 +939,13 @@ fn do_sign_in(state: &Entity<State>, http_client: &Arc<dyn HttpClient>, cx: &mut
                     }
                     Err(err) => {
                         log::error!(
-                            "ChatGPT 订阅登录无法保存凭据: {err:?}"
+                            "ChatGPT subscription sign-in failed to persist credentials: {err:?}"
                         );
                         weak_state
                             .update(cx, |s, cx| {
                                 s.sign_in_task = None;
                                 s.last_auth_error =
-                                    Some("保存凭据失败,请重试。".into());
+                                    Some("Failed to save credentials. Please try again.".into());
                                 cx.notify();
                             })
                             .log_err();
@@ -953,11 +953,11 @@ fn do_sign_in(state: &Entity<State>, http_client: &Arc<dyn HttpClient>, cx: &mut
                 }
             }
             Err(err) => {
-                log::error!("ChatGPT 订阅登录失败: {err:?}");
+                log::error!("ChatGPT subscription sign-in failed: {err:?}");
                 weak_state
                     .update(cx, |s, cx| {
                         s.sign_in_task = None;
-                        s.last_auth_error = Some("登录失败,请重试。".into());
+                        s.last_auth_error = Some("Sign-in failed. Please try again.".into());
                         cx.notify();
                     })
                     .log_err();
@@ -994,7 +994,7 @@ fn do_sign_out(state: &gpui::WeakEntity<State>, cx: &mut App) -> Task<Result<()>
         credentials_provider
             .delete_credentials(CREDENTIALS_KEY, &*cx)
             .await
-            .context("无法从密钥链中删除 ChatGPT 订阅凭据")?;
+            .context("Failed to delete ChatGPT subscription credentials from keychain")?;
         anyhow::Ok(())
     })
 }
@@ -1011,15 +1011,15 @@ impl Render for ConfigurationView {
         if state.is_authenticated() {
             let label = state
                 .email()
-                .map(|e| format!("已登录为 {e}"))
-                .unwrap_or_else(|| "已登录".to_string());
+                .map(|e| format!("Signed in as {e}"))
+                .unwrap_or_else(|| "Signed in".to_string());
 
             let weak_state = self.state.downgrade();
 
             return v_flex()
                 .child(
                     ConfiguredApiCard::new(SharedString::from(label))
-                        .button_label("退出登录")
+                        .button_label("Sign Out")
                         .on_click(cx.listener(move |_this, _, _window, cx| {
                             do_sign_out(&weak_state, cx).detach_and_log_err(cx);
                         })),
@@ -1033,15 +1033,15 @@ impl Render for ConfigurationView {
 
         let is_signing_in = state.is_signing_in();
         let button_label = if is_signing_in {
-            "正在登录…"
+            "Signing in…"
         } else {
-            "登录以使用 ChatGPT 订阅"
+            "Sign in to use ChatGPT Subscription"
         };
 
         v_flex()
             .gap_2()
             .child(Label::new(
-                "请使用 ChatGPT Plus 或 Pro 订阅登录,以在 VibeDev 的助手中使用 OpenAI 模型。",
+                "Sign in with your ChatGPT Plus or Pro subscription to use OpenAI models in Zed's agent.",
             ))
             .child(
                 Button::new("sign-in", button_label)

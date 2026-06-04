@@ -5,8 +5,8 @@
 //! through a caller-supplied notifier (so the host application can present
 //! them with the same UI it uses for settings/keymap errors).
 //!
-//! Empty or whitespace-only files are treated as "无用户 `AGENTS.md`".
-//! Read errors are also treated as "无用户 `AGENTS.md`" for the purpose of
+//! Empty or whitespace-only files are treated as "no user `AGENTS.md`".
+//! Read errors are also treated as "no user `AGENTS.md`" for the purpose of
 //! the system prompt, but the error itself is exposed via
 //! [`UserAgentsMdState::Error`] and forwarded to the notifier.
 //!
@@ -120,7 +120,7 @@ fn spawn_watcher(
 
         // `watch_config_file` swallows file-open errors (it emits an empty
         // string when the file is missing or unreadable), so we probe the
-        // path on each event to tell "缺失/为空" apart from "exists but
+        // path on each event to tell "missing / empty" apart from "exists but
         // failed to read". This mirrors how `settings.json` is watched, with
         // the extra probe being the only addition: settings.json doesn't need
         // to surface read errors because invalid JSON is reported separately,
@@ -175,7 +175,7 @@ mod tests {
         // FakeFs requires the parent directory to exist before insert_file.
         let config_dir = paths::agents_file()
             .parent()
-            .expect("AGENTS.md 路径应有父目录")
+            .expect("AGENTS.md path should have a parent")
             .to_path_buf();
         fs.create_dir(&config_dir).await.unwrap();
 

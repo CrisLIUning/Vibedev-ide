@@ -47,7 +47,7 @@ impl ActiveToolchain {
         Self {
             active_toolchain: None,
             active_buffer: None,
-            term: SharedString::new_static("工具链"),
+            term: SharedString::new_static("Toolchain"),
             workspace: workspace.weak_handle(),
 
             _update_toolchain_task: Self::spawn_tracker_task(window, cx),
@@ -247,7 +247,7 @@ impl Render for ActiveToolchain {
                         });
                     }
                 }))
-                .tooltip(Tooltip::text(format!("选择 {}", &self.term))),
+                .tooltip(Tooltip::text(format!("Select {}", &self.term))),
         )
     }
 }

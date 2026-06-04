@@ -2331,28 +2331,28 @@ mod tests {
         context_menu.update_in(cx, |context_menu, window, cx| {
             assert_eq!(
                 None, context_menu.selected_index,
-                "菜单初始时无选中项"
+                "No selection is in the menu initially"
             );
 
             context_menu.select_first(&SelectFirst, window, cx);
             assert_eq!(
                 Some(2),
                 context_menu.selected_index,
-                "应选中第一个可选条目,跳过标题和分隔符"
+                "Should select first selectable entry, skipping the header and the separator"
             );
 
             context_menu.select_next(&SelectNext, window, cx);
             assert_eq!(
                 Some(5),
                 context_menu.selected_index,
-                "应选中下一个可选条目,跳过途中的 2 个分隔符"
+                "Should select next selectable entry, skipping 2 separators along the way"
             );
 
             context_menu.select_next(&SelectNext, window, cx);
             assert_eq!(
                 Some(2),
                 context_menu.selected_index,
-                "应循环回到第一个可选条目"
+                "Should wrap around to first selectable entry"
             );
         });
 
@@ -2360,21 +2360,21 @@ mod tests {
             assert_eq!(
                 Some(2),
                 context_menu.selected_index,
-                "应从第一个可选条目开始"
+                "Should start from the first selectable entry"
             );
 
             context_menu.select_previous(&SelectPrevious, window, cx);
             assert_eq!(
                 Some(5),
                 context_menu.selected_index,
-                "应循环回到上一个可选条目(最后一个)"
+                "Should wrap around to previous selectable entry (last)"
             );
 
             context_menu.select_previous(&SelectPrevious, window, cx);
             assert_eq!(
                 Some(2),
                 context_menu.selected_index,
-                "应返回上一个可选条目(第一个)"
+                "Should go back to previous selectable entry (first)"
             );
         });
 
@@ -2383,20 +2383,20 @@ mod tests {
             assert_eq!(
                 Some(2),
                 context_menu.selected_index,
-                "应从第一个可选条目开始"
+                "Should start from the first selectable entry"
             );
 
             context_menu.select_previous(&SelectPrevious, window, cx);
             assert_eq!(
                 Some(5),
                 context_menu.selected_index,
-                "应循环回到最后一个可选条目"
+                "Should wrap around to last selectable entry"
             );
             context_menu.select_next(&SelectNext, window, cx);
             assert_eq!(
                 Some(2),
                 context_menu.selected_index,
-                "应循环回到第一个可选条目"
+                "Should wrap around to first selectable entry"
             );
         });
     }

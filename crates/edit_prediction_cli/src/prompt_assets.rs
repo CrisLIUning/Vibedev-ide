@@ -18,7 +18,7 @@ pub fn get_prompt(name: &'static str) -> Cow<'static, str> {
     }
     let contents = std::fs::read_to_string(&filesystem_path)
         .context(name)
-        .expect("读取提示词失败");
+        .expect("Failed to read prompt");
     let leaked = contents.leak();
     PROMPT_CACHE.write().unwrap().insert(name, leaked);
     return Cow::Borrowed(leaked);
@@ -35,12 +35,12 @@ pub fn get_prompt(name: &'static str) -> Cow<'static, str> {
     match EmbeddedPrompts::get(name) {
         Some(file) => match file.data {
             Cow::Borrowed(bytes) => {
-                Cow::Borrowed(std::str::from_utf8(bytes).expect("提示词文件不是有效的 UTF-8 格式"))
+                Cow::Borrowed(std::str::from_utf8(bytes).expect("prompt file is not valid UTF-8"))
             }
             Cow::Owned(bytes) => {
-                Cow::Owned(String::from_utf8(bytes).expect("提示词文件不是有效的 UTF-8 格式"))
+                Cow::Owned(String::from_utf8(bytes).expect("prompt file is not valid UTF-8"))
             }
         },
-        None => panic!("未找到提示词文件: {name}"),
+        None => panic!("prompt file not found: {name}"),
     }
 }

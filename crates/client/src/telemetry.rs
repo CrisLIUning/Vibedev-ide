@@ -173,7 +173,7 @@ pub fn os_version() -> String {
                file
            } else {
                log::error!(
-                   "加载 /etc/os-release, /usr/lib/os-release 或 /var/run/os-release 失败"
+                   "Failed to load /etc/os-release, /usr/lib/os-release, or /var/run/os-release"
                );
                "".to_string()
            };

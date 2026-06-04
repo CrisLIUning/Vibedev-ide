@@ -130,7 +130,7 @@ mod tests {
             if line.contains("|") {
                 assert!(
                     line.starts_with("|"),
-                    "表格行应以 | 开头: {:?}",
+                    "Table line should start with |: {:?}",
                     line
                 );
             }
@@ -189,7 +189,7 @@ mod tests {
         // Should have separator row inserted after first row
         assert!(
             md.contains("| --- | --- |"),
-            "缺少分隔行: {}",
+            "Missing separator row: {}",
             md
         );
         assert!(md.contains("| Feature | Supported |"));

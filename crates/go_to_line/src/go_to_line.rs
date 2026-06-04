@@ -134,7 +134,7 @@ impl GoToLine {
         let line_editor_change = cx.subscribe_in(&line_editor, window, Self::on_line_editor_event);
 
         let current_text = format!(
-            "当前行: {} / {} (列 {})",
+            "Current Line: {} of {} (column {})",
             line,
             last_line + 1,
             column
@@ -316,13 +316,13 @@ impl Render for GoToLine {
             } else {
                 self.current_line.saturating_sub(offset.unsigned_abs())
             };
-            format!("跳转到第 {target_line} 行 (距当前 {offset:+})").into()
+            format!("Go to line {target_line} ({offset:+} from current)").into()
         } else {
             match self.line_and_char_from_query(cx) {
                 Some((line, Some(character))) => {
-                    format!("跳转到第 {line} 行, 第 {character} 个字符").into()
+                    format!("Go to line {line}, character {character}").into()
                 }
-                Some((line, None)) => format!("跳转到第 {line} 行").into(),
+                Some((line, None)) => format!("Go to line {line}").into(),
                 None => self.current_text.clone(),
             }
         };

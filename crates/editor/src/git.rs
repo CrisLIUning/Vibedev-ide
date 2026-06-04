@@ -89,7 +89,7 @@ pub(super) struct StoredReviewComment {
     pub(super) is_editing: bool,
 }
 
-/// Represents an active diff review overlay that appears when clicking the "添加审查" button.
+/// Represents an active diff review overlay that appears when clicking the "Add Review" button.
 pub(super) struct DiffReviewOverlay {
     pub(super) anchor_range: Range<Anchor>,
     /// The block ID for the overlay.
@@ -428,7 +428,7 @@ impl Editor {
         // Create the prompt editor for the review input
         let prompt_editor = cx.new(|cx| {
             let mut editor = Editor::single_line(window, cx);
-            editor.set_placeholder_text("添加审查评论...", window, cx);
+            editor.set_placeholder_text("Add a review comment...", window, cx);
             editor
         });
 
@@ -471,7 +471,7 @@ impl Editor {
 
         let block_ids = self.insert_blocks([block], None, cx);
         let Some(block_id) = block_ids.into_iter().next() else {
-            log::error!("插入差异审查浮层失败");
+            log::error!("Failed to insert diff review overlay block");
             return;
         };
 
@@ -815,7 +815,7 @@ impl Editor {
                     .border_color(icon_color.opacity(0.5))
             })
             .child(Icon::new(IconName::Plus).size(IconSize::Small))
-            .tooltip(Tooltip::text("添加审查(拖动以选择多行)"))
+            .tooltip(Tooltip::text("Add Review (drag to select multiple lines)"))
             .on_mouse_down(
                 gpui::MouseButton::Left,
                 cx.listener(move |editor, _event: &gpui::MouseDownEvent, window, cx| {
@@ -1295,7 +1295,7 @@ impl Editor {
                 .ok();
             }
             Err(err) => {
-                let message = format!("复制永久链接失败:{err}");
+                let message = format!("Failed to copy permalink: {err}");
 
                 anyhow::Result::<()>::Err(err).log_err();
 
@@ -1336,7 +1336,7 @@ impl Editor {
                 .ok();
             }
             Err(err) => {
-                let message = format!("打开永久链接失败:{err}");
+                let message = format!("Failed to open permalink: {err}");
 
                 anyhow::Result::<()>::Err(err).log_err();
 
@@ -2097,9 +2097,9 @@ impl Editor {
                     let start_line = start + 1;
                     let end_line = end + 1;
                     if start_line == end_line {
-                        format!("第 {start_line} 行")
+                        format!("Line {start_line}")
                     } else {
-                        format!("第 {start_line}-{end_line} 行")
+                        format!("Lines {start_line}-{end_line}")
                     }
                 })
                 .collect();
@@ -2228,7 +2228,7 @@ impl Editor {
                                 IconButton::new("diff-review-close", IconName::Close)
                                     .icon_color(ui::Color::Muted)
                                     .icon_size(action_icon_size)
-                                    .tooltip(Tooltip::text("关闭"))
+                                    .tooltip(Tooltip::text("Close"))
                                     .on_click(|_, window, cx| {
                                         window
                                             .dispatch_action(Box::new(crate::actions::Cancel), cx);
@@ -2238,7 +2238,7 @@ impl Editor {
                                 IconButton::new("diff-review-add", IconName::Return)
                                     .icon_color(ui::Color::Muted)
                                     .icon_size(action_icon_size)
-                                    .tooltip(Tooltip::text("添加评论"))
+                                    .tooltip(Tooltip::text("Add comment"))
                                     .on_click(|_, window, cx| {
                                         window.dispatch_action(
                                             Box::new(crate::actions::SubmitDiffReviewComment),
@@ -2398,7 +2398,7 @@ impl Editor {
                         )
                         .icon_color(ui::Color::Muted)
                         .icon_size(action_icon_size)
-                        .tooltip(Tooltip::text("取消"))
+                        .tooltip(Tooltip::text("Cancel"))
                         .on_click(move |_, window, cx| {
                             window.dispatch_action(
                                 Box::new(crate::actions::CancelEditReviewComment {
@@ -2415,7 +2415,7 @@ impl Editor {
                         )
                         .icon_color(ui::Color::Muted)
                         .icon_size(action_icon_size)
-                        .tooltip(Tooltip::text("确认"))
+                        .tooltip(Tooltip::text("Confirm"))
                         .on_click(move |_, window, cx| {
                             window.dispatch_action(
                                 Box::new(crate::actions::ConfirmEditReviewComment {
@@ -2465,11 +2465,11 @@ impl Editor {
         });
 
         let Some((buffer, selection)) = buffer_and_selection else {
-            return Task::ready(Err(anyhow!("无法确定缓冲区和选区")));
+            return Task::ready(Err(anyhow!("failed to determine buffer and selection")));
         };
 
         let Some(project) = self.project() else {
-            return Task::ready(Err(anyhow!("编辑器没有关联项目")));
+            return Task::ready(Err(anyhow!("editor does not have project")));
         };
 
         project.update(cx, |project, cx| {
@@ -2643,13 +2643,13 @@ pub(super) fn render_diff_hunk_controls(
         .shadow_md()
         .when(show_stage_restore, |el| {
             el.child(if status.has_secondary_hunk() {
-                Button::new(("stage", row as u64), "暂存")
+                Button::new(("stage", row as u64), "Stage")
                     .alpha(if status.is_pending() { 0.66 } else { 1.0 })
                     .tooltip({
                         let focus_handle = editor.focus_handle(cx);
                         move |_window, cx| {
                             Tooltip::for_action_in(
-                                "暂存代码块",
+                                "Stage Hunk",
                                 &::git::ToggleStaged,
                                 &focus_handle,
                                 cx,
@@ -2669,13 +2669,13 @@ pub(super) fn render_diff_hunk_controls(
                         }
                     })
             } else {
-                Button::new(("unstage", row as u64), "取消暂存")
+                Button::new(("unstage", row as u64), "Unstage")
                     .alpha(if status.is_pending() { 0.66 } else { 1.0 })
                     .tooltip({
                         let focus_handle = editor.focus_handle(cx);
                         move |_window, cx| {
                             Tooltip::for_action_in(
-                                "取消暂存代码块",
+                                "Unstage Hunk",
                                 &::git::ToggleStaged,
                                 &focus_handle,
                                 cx,
@@ -2698,12 +2698,12 @@ pub(super) fn render_diff_hunk_controls(
         })
         .when(show_stage_restore, |el| {
             el.child(
-                Button::new(("restore", row as u64), "恢复")
+                Button::new(("restore", row as u64), "Restore")
                     .tooltip({
                         let focus_handle = editor.focus_handle(cx);
                         move |_window, cx| {
                             Tooltip::for_action_in(
-                                "恢复代码块",
+                                "Restore Hunk",
                                 &::git::Restore,
                                 &focus_handle,
                                 cx,
@@ -2734,7 +2734,7 @@ pub(super) fn render_diff_hunk_controls(
                         .tooltip({
                             let focus_handle = editor.focus_handle(cx);
                             move |_window, cx| {
-                                Tooltip::for_action_in("下一个代码块", &GoToHunk, &focus_handle, cx)
+                                Tooltip::for_action_in("Next Hunk", &GoToHunk, &focus_handle, cx)
                             }
                         })
                         .on_click({
@@ -2766,7 +2766,7 @@ pub(super) fn render_diff_hunk_controls(
                             let focus_handle = editor.focus_handle(cx);
                             move |_window, cx| {
                                 Tooltip::for_action_in(
-                                    "上一个代码块",
+                                    "Previous Hunk",
                                     &GoToPreviousHunk,
                                     &focus_handle,
                                     cx,

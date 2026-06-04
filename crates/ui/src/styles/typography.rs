@@ -251,7 +251,7 @@ impl Component for Headline {
     }
 
     fn description() -> Option<&'static str> {
-        Some("用于强调文本并在 UI 中建立视觉层级的标题元素。")
+        Some("A headline element used to emphasize text and create visual hierarchy in the UI.")
     }
 
     fn preview(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
@@ -260,30 +260,30 @@ impl Component for Headline {
                 .gap_1()
                 .children(vec![
                     single_example(
-                        "超大",
-                        Headline::new("超大标题")
+                        "XLarge",
+                        Headline::new("XLarge Headline")
                             .size(HeadlineSize::XLarge)
                             .into_any_element(),
                     ),
                     single_example(
-                        "大",
-                        Headline::new("大标题")
+                        "Large",
+                        Headline::new("Large Headline")
                             .size(HeadlineSize::Large)
                             .into_any_element(),
                     ),
                     single_example(
-                        "中(默认)",
-                        Headline::new("中等标题").into_any_element(),
+                        "Medium (Default)",
+                        Headline::new("Medium Headline").into_any_element(),
                     ),
                     single_example(
-                        "小",
-                        Headline::new("小标题")
+                        "Small",
+                        Headline::new("Small Headline")
                             .size(HeadlineSize::Small)
                             .into_any_element(),
                     ),
                     single_example(
-                        "超小",
-                        Headline::new("超小标题")
+                        "XSmall",
+                        Headline::new("XSmall Headline")
                             .size(HeadlineSize::XSmall)
                             .into_any_element(),
                     ),

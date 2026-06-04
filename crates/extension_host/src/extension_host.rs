@@ -697,7 +697,7 @@ impl ExtensionStore {
             if response.status().is_client_error() {
                 let text = String::from_utf8_lossy(body.as_slice());
                 bail!(
-                    "状态错误 {}, 响应: {text:?}",
+                    "status error {}, response: {text:?}",
                     response.status().as_u16()
                 );
             }
@@ -1196,7 +1196,7 @@ impl ExtensionStore {
             .count();
 
         log::info!(
-            "扩展已更新。正在加载 {},正在重新加载 {},正在卸载 {}",
+            "extensions updated. loading {}, reloading {}, unloading {}",
             extensions_to_load.len() - reload_count,
             reload_count,
             extensions_to_unload.len() - reload_count
@@ -1212,7 +1212,7 @@ impl ExtensionStore {
             })
             .collect::<Vec<_>>();
 
-        telemetry::event!("扩展已加载", id_and_versions = extension_ids);
+        telemetry::event!("Extensions Loaded", id_and_versions = extension_ids);
 
         let themes_to_remove = old_index
             .themes
@@ -1466,7 +1466,7 @@ impl ExtensionStore {
                     }
                     Err(e) => {
                         log::error!(
-                            "加载扩展失败: {}, {:#}",
+                            "Failed to load extension: {}, {:#}",
                             extension.manifest.id,
                             e
                         );
@@ -1621,7 +1621,7 @@ impl ExtensionStore {
                 }
                 let language_config_path = language_path.join(LanguageConfig::FILE_NAME);
                 let config = fs.load(&language_config_path).await.with_context(|| {
-                    format!("正在从 {language_config_path:?} 加载语言配置")
+                    format!("loading language config from {language_config_path:?}")
                 })?;
                 let config = ::toml::from_str::<LanguageConfig>(&config)?;
 
@@ -1852,14 +1852,14 @@ impl ExtensionStore {
                     .join(&response.tmp_dir, &missing_extension.id)
                     .with_context(|| {
                         format!(
-                            "构建目标路径失败: {:?}, {:?}",
+                            "failed to construct destination path: {:?}, {:?}",
                             response.tmp_dir, missing_extension.id,
                         )
                     })?,
                 path_style,
             );
             log::info!(
-                "正在上传扩展 {} 到 {:?}",
+                "Uploading extension {} to {:?}",
                 missing_extension.clone().id,
                 dest_dir
             );
@@ -1871,7 +1871,7 @@ impl ExtensionStore {
                 .await?;
 
             log::info!(
-                "扩展 {} 上传完成",
+                "Finished uploading extension {}",
                 missing_extension.clone().id
             );
 
@@ -1886,7 +1886,7 @@ impl ExtensionStore {
 
             if let Err(e) = result {
                 log::error!(
-                    "安装扩展 {} 失败: {}",
+                    "Failed to install extension {}: {}",
                     missing_extension.id,
                     e
                 );

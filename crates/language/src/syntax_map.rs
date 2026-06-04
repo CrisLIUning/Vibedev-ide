@@ -50,7 +50,7 @@ impl Drop for SyntaxSnapshot {
                 std::thread::Builder::new()
                     .name("SyntaxSnapshot::drop".into())
                     .spawn(move || while let Ok(_) = rx.recv() {})
-                    .expect("无法生成释放线程");
+                    .expect("failed to spawn drop thread");
                 tx
             });
         // This does allocate a new Arc, but it's cheap and avoids blocking the main thread without needing to use an `Option` or `MaybeUninit`.
@@ -430,7 +430,7 @@ impl SyntaxSnapshot {
 
                 debug_assert!(
                     tree.root_node().end_byte() <= text.len(),
-                    "语法树大小 {} 超过了文本大小 {}",
+                    "tree's size {}, is larger than text size {}",
                     tree.root_node().end_byte(),
                     text.len(),
                 );
@@ -540,7 +540,7 @@ impl SyntaxSnapshot {
         budget: &mut Option<Duration>,
     ) -> Result<(), ParseTimeout> {
         log::trace!(
-            "重新解析。失效范围:{:?}",
+            "reparse. invalidated ranges:{:?}",
             LogOffsetRanges(&invalidated_ranges, text),
         );
 
@@ -571,7 +571,7 @@ impl SyntaxSnapshot {
             let step = queue.pop();
             let position = if let Some(step) = &step {
                 log::trace!(
-                    "解析步骤深度:{},范围:{:?},语言:{} ({:?})",
+                    "parse step depth:{}, range:{:?}, language:{} ({:?})",
                     step.depth,
                     LogAnchorRange(&step.range, text),
                     step.language.name(),
@@ -614,7 +614,7 @@ impl SyntaxSnapshot {
                     if changed_regions.intersects(layer, text) {
                         if let SyntaxLayerContent::Parsed { language, .. } = &layer.content {
                             log::trace!(
-                                "丢弃层。语言:{},范围:{:?}。变更区域:{:?}",
+                                "discard layer. language:{}, range:{:?}. changed_regions:{:?}",
                                 language.name(),
                                 LogAnchorRange(&layer.range, text),
                                 LogChangedRegions(&changed_regions, text),
@@ -681,7 +681,7 @@ impl SyntaxSnapshot {
                         old_layer.map(|layer| (&layer.content, layer.range.clone()))
                     {
                         log::trace!(
-                            "现有层。语言:{},范围:{:?},包含范围:{:?}",
+                            "existing layer. language:{}, range:{:?}, included_ranges:{:?}",
                             language.name(),
                             LogAnchorRange(&layer_range, text),
                             LogIncludedRanges(&old_tree.included_ranges())
@@ -722,7 +722,7 @@ impl SyntaxSnapshot {
                         }
 
                         log::trace!(
-                            "更新层。语言:{},范围:{:?},包含范围:{:?}",
+                            "update layer. language:{}, range:{:?}, included_ranges:{:?}",
                             language.name(),
                             LogAnchorRange(&step.range, text),
                             LogIncludedRanges(&included_ranges),
@@ -779,7 +779,7 @@ impl SyntaxSnapshot {
                         }
 
                         log::trace!(
-                            "创建层。语言:{},范围:{:?},包含范围:{:?}",
+                            "create layer. language:{}, range:{:?}, included_ranges:{:?}",
                             language.name(),
                             LogAnchorRange(&step.range, text),
                             LogIncludedRanges(&included_ranges),

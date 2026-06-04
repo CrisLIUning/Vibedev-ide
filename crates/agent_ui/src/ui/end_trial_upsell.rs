@@ -26,7 +26,7 @@ impl RenderOnce for EndTrialUpsell {
                 h_flex()
                     .gap_2()
                     .child(
-                        Label::new("专业版")
+                        Label::new("Pro")
                             .size(LabelSize::Small)
                             .color(Color::Accent)
                             .buffer_font(cx),
@@ -35,7 +35,7 @@ impl RenderOnce for EndTrialUpsell {
             )
             .child(PlanDefinitions.pro_plan())
             .child(
-                Button::new("cta-button", "升级到 VibeDev Pro")
+                Button::new("cta-button", "Upgrade to Zed Pro")
                     .full_width()
                     .style(ButtonStyle::Tinted(ui::TintColor::Accent))
                     .on_click(move |_, _window, _cx| {
@@ -51,13 +51,13 @@ impl RenderOnce for EndTrialUpsell {
                 h_flex()
                     .gap_2()
                     .child(
-                        Label::new("免费")
+                        Label::new("Free")
                             .size(LabelSize::Small)
                             .color(Color::Muted)
                             .buffer_font(cx),
                     )
                     .child(
-                        Label::new("(当前方案)")
+                        Label::new("(Current Plan)")
                             .size(LabelSize::Small)
                             .color(Color::Custom(cx.theme().colors().text_muted.opacity(0.6)))
                             .buffer_font(cx),
@@ -67,9 +67,9 @@ impl RenderOnce for EndTrialUpsell {
             .child(PlanDefinitions.free_plan());
 
         AgentPanelOnboardingCard::new()
-            .child(Headline::new("您的 VibeDev Pro 试用已过期"))
+            .child(Headline::new("Your Zed Pro Trial has expired"))
             .child(
-                Label::new("您已被自动重置为 Free 方案。")
+                Label::new("You've been automatically reset to the Free plan.")
                     .color(Color::Muted)
                     .mb_2(),
             )
@@ -79,7 +79,7 @@ impl RenderOnce for EndTrialUpsell {
                 h_flex().absolute().top_4().right_4().child(
                     IconButton::new("dismiss_onboarding", IconName::Close)
                         .icon_size(IconSize::Small)
-                        .tooltip(Tooltip::text("关闭"))
+                        .tooltip(Tooltip::text("Dismiss"))
                         .on_click({
                             let callback = self.dismiss_upsell.clone();
                             move |_, window, cx| {

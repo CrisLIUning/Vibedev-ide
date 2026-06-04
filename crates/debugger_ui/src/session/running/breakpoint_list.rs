@@ -197,9 +197,9 @@ impl BreakpointList {
     ) {
         self.strip_mode = Some(prop);
         let placeholder = match prop {
-            ActiveBreakpointStripMode::Log => "设置日志消息",
-            ActiveBreakpointStripMode::Condition => "设置条件",
-            ActiveBreakpointStripMode::HitCondition => "设置命中条件",
+            ActiveBreakpointStripMode::Log => "Set Log Message",
+            ActiveBreakpointStripMode::Condition => "Set Condition",
+            ActiveBreakpointStripMode::HitCondition => "Set Hit Condition",
         };
         let mut is_exception_breakpoint = true;
         let active_value = self.selected_ix.and_then(|ix| {
@@ -585,21 +585,21 @@ impl BreakpointList {
         let focus_handle = self.focus_handle.clone();
 
         let remove_breakpoint_tooltip = selection_kind.map(|(kind, _)| match kind {
-            SelectedBreakpointKind::Source => "从断点列表中移除断点",
+            SelectedBreakpointKind::Source => "Remove breakpoint from a breakpoint list",
             SelectedBreakpointKind::Exception => {
-                "无法从断点列表中移除异常断点"
+                "Exception Breakpoints cannot be removed from the breakpoint list"
             }
-            SelectedBreakpointKind::Data => "从断点列表中移除数据断点",
+            SelectedBreakpointKind::Data => "Remove data breakpoint from a breakpoint list",
         });
 
         let toggle_label = selection_kind.map(|(_, is_enabled)| {
             if is_enabled {
                 (
-                    "禁用断点",
-                    "禁用断点但保留在列表中",
+                    "Disable Breakpoint",
+                    "Disable a breakpoint without removing it from the list",
                 )
             } else {
-                ("启用断点", "重新启用断点")
+                ("Enable Breakpoint", "Re-enable a breakpoint")
             }
         });
 
@@ -641,7 +641,7 @@ impl BreakpointList {
                             let focus_handle = focus_handle.clone();
                             move |_window, cx| {
                                 Tooltip::with_meta_in(
-                                    "移除断点",
+                                    "Remove Breakpoint",
                                     Some(&UnsetBreakpoint),
                                     tooltip,
                                     &focus_handle,
@@ -853,9 +853,9 @@ impl LineBreakpoint {
                 move |_window, cx| {
                     Tooltip::for_action_in(
                         if is_enabled {
-                            "禁用断点"
+                            "Disable Breakpoint"
                         } else {
-                            "启用断点"
+                            "Enable Breakpoint"
                         },
                         &ToggleEnableBreakpoint,
                         &focus_handle,
@@ -944,7 +944,7 @@ impl LineBreakpoint {
                         }))
                         .when_some(self.dir.as_ref(), |this, parent_dir| {
                             this.tooltip(Tooltip::text(format!(
-                                "工作树父路径: {parent_dir}"
+                                "Worktree parent path: {parent_dir}"
                             )))
                         }),
                 )
@@ -1013,9 +1013,9 @@ impl DataBreakpoint {
                     move |_window, cx| {
                         Tooltip::for_action_in(
                             if is_enabled {
-                                "禁用数据断点"
+                                "Disable Data Breakpoint"
                             } else {
-                                "启用数据断点"
+                                "Enable Data Breakpoint"
                             },
                             &ToggleEnableBreakpoint,
                             &focus_handle,
@@ -1117,9 +1117,9 @@ impl ExceptionBreakpoint {
                     move |_window, cx| {
                         Tooltip::for_action_in(
                             if is_enabled {
-                                "禁用异常断点"
+                                "Disable Exception Breakpoint"
                             } else {
-                                "启用异常断点"
+                                "Enable Exception Breakpoint"
                             },
                             &ToggleEnableBreakpoint,
                             &focus_handle,
@@ -1433,9 +1433,9 @@ impl RenderOnce for BreakpointOptionsStrip {
                         .on_click(self.on_click_callback(ActiveBreakpointStripMode::Log))
                         .tooltip(|_window, cx|  {
                             Tooltip::with_meta(
-                                "设置日志消息",
+                                "Set Log Message",
                                 None,
-                                "设置命中断点时要显示的日志消息(而非暂停执行)。",
+                                "Set log message to display (instead of stopping) when a breakpoint is hit.",
                                 cx,
                             )
                         }),
@@ -1469,9 +1469,9 @@ impl RenderOnce for BreakpointOptionsStrip {
                             .on_click(self.on_click_callback(ActiveBreakpointStripMode::Condition))
                             .tooltip(|_window, cx|  {
                                 Tooltip::with_meta(
-                                    "设置条件",
+                                    "Set Condition",
                                     None,
-                                    "设置命中断点时要评估的条件。仅当条件满足时,程序执行才会暂停。",
+                                    "Set condition to evaluate when a breakpoint is hit. Program execution will stop only when the condition is met.",
                                     cx,
                                 )
                             }),
@@ -1504,9 +1504,9 @@ impl RenderOnce for BreakpointOptionsStrip {
                         .on_click(self.on_click_callback(ActiveBreakpointStripMode::HitCondition))
                         .tooltip(|_window, cx|  {
                             Tooltip::with_meta(
-                                "设置命中条件",
+                                "Set Hit Condition",
                                 None,
-                                "设置用于控制忽略断点命中次数的表达式。",
+                                "Set expression that controls how many hits of the breakpoint are ignored.",
                                 cx,
                             )
                         }),

@@ -90,7 +90,7 @@ mod macos_build {
         builder
             .with_config(config)
             .generate()
-            .expect("无法生成绑定")
+            .expect("unable to generate bindings")
             .write_to_file(&output_path);
 
         output_path

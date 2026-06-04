@@ -106,7 +106,7 @@ impl WslRunningKernel {
             let runtime_dir = dirs::runtime_dir();
             fs.create_dir(&runtime_dir)
                 .await
-                .with_context(|| format!("无法创建 jupyter 运行时目录 {runtime_dir:?}"))?;
+                .with_context(|| format!("Failed to create jupyter runtime dir {runtime_dir:?}"))?;
             let connection_path = runtime_dir.join(format!("kernel-zed-wsl-{entity_id}.json"));
             let content = serde_json::to_string(&connection_info)?;
             fs.atomic_write(connection_path.clone(), content).await?;
@@ -130,7 +130,7 @@ impl WslRunningKernel {
 
             let output = wslpath_cmd.output().await?;
             if !output.status.success() {
-                anyhow::bail!("转换路径到 WSL 路径失败: {:?}", output);
+                anyhow::bail!("Failed to convert path to WSL path: {:?}", output);
             }
             let wsl_connection_path = String::from_utf8_lossy(&output.stdout).trim().to_string();
 
@@ -142,7 +142,7 @@ impl WslRunningKernel {
 
             anyhow::ensure!(
                 !kernel_specification.kernelspec.argv.is_empty(),
-                "内核规范 {} 中的 argv 为空",
+                "Empty argv in kernelspec {}",
                 kernel_specification.name
             );
 
@@ -277,7 +277,7 @@ impl WslRunningKernel {
                 .stdin(util::command::Stdio::piped())
                 .kill_on_drop(true)
                 .spawn()
-                .context("启动内核进程失败")?;
+                .context("failed to start the kernel process")?;
 
             let session_id = Uuid::new_v4().to_string();
 
@@ -312,7 +312,7 @@ impl WslRunningKernel {
                     }
 
                     anyhow::bail!(
-                        "WSL 内核进程过早退出,状态: {:?}\n标准错误: {}\n标准输出: {}",
+                        "WSL kernel process exited prematurely with status: {:?}\nstderr: {}\nstdout: {}",
                         status,
                         stderr_content,
                         stdout_content
@@ -328,7 +328,7 @@ impl WslRunningKernel {
                 &session_id,
             )
             .await
-            .context("创建 iopub 连接失败。WSL 环境中是否安装了 `ipykernel`?请尝试在 WSL 发行版中运行 `pip install ipykernel`。")?;
+            .context("Failed to create iopub connection. Is `ipykernel` installed in the WSL environment? Try running `pip install ipykernel` inside your WSL distribution.")?;
 
             let peer_identity = runtimelib::peer_identity_for_session(&session_id)?;
             let shell_socket = runtimelib::create_client_shell_connection_with_identity(
@@ -364,7 +364,7 @@ impl WslRunningKernel {
                     let reader = BufReader::new(stderr);
                     let mut lines = reader.lines();
                     while let Some(Ok(line)) = lines.next().await {
-                        log::warn!("wsl 内核标准错误: {}", line);
+                        log::warn!("wsl kernel stderr: {}", line);
                     }
                 }
             })
@@ -389,10 +389,10 @@ impl WslRunningKernel {
                             return;
                         }
 
-                        format!("WSL 内核: 内核进程退出,状态: {:?}", status)
+                        format!("WSL kernel: kernel process exited with status: {:?}", status)
                     }
                     Err(err) => {
-                        format!("WSL 内核: 内核进程出错退出: {:?}", err)
+                        format!("WSL kernel: kernel process exited with error: {:?}", err)
                     }
                 };
 
@@ -578,10 +578,10 @@ pub async fn wsl_kernel_specifications(
                         );
                     }
                 } else {
-                    log::error!("wsl_kernel_specifications 命令执行失败");
+                    log::error!("wsl_kernel_specifications command failed");
                 }
             } else if let Err(e) = output {
-                log::error!("wsl_kernel_specifications 命令执行失败: {}", e);
+                log::error!("wsl_kernel_specifications command execution failed: {}", e);
             }
 
             Vec::new()

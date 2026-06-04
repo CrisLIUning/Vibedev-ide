@@ -54,9 +54,9 @@ enum Preset {
 impl Preset {
     fn label(self) -> &'static str {
         match self {
-            Preset::TenMillion => "1000 万",
-            Preset::FiftyMillion => "5000 万",
-            Preset::HundredMillion => "1 亿",
+            Preset::TenMillion => "10 M",
+            Preset::FiftyMillion => "50 M",
+            Preset::HundredMillion => "100 M",
         }
     }
 
@@ -145,7 +145,7 @@ impl HelloWeb {
                             run.elapsed = Some(elapsed_ms);
                             this.history.push(
                                 format!(
-                                    "π({}) = {} ({:.0} 毫秒, {} 个块)",
+                                    "π({}) = {} ({:.0} ms, {} chunks)",
                                     format_number(run.limit),
                                     format_number(total),
                                     elapsed_ms,
@@ -228,9 +228,9 @@ impl Render for HelloWeb {
 
         // -- Go button --
         let (go_bg, go_text, go_label) = if is_running {
-            (BG_OVERLAY, TEXT_DIM, "运行中…")
+            (BG_OVERLAY, TEXT_DIM, "Running…")
         } else {
-            (ACCENT_GREEN, BG_BASE, "计算质数")
+            (ACCENT_GREEN, BG_BASE, "Count Primes")
         };
         let go_button = div()
             .id("go")
@@ -254,7 +254,7 @@ impl Render for HelloWeb {
 
             let status_text: SharedString = if let Some(total) = run.total {
                 format!(
-                    "在 {} 以下找到 {} 个质数,耗时 {:.0} 毫秒",
+                    "Found {} primes below {} in {:.0} ms",
                     format_number(total),
                     format_number(run.limit),
                     run.elapsed.unwrap_or(0.0),
@@ -262,7 +262,7 @@ impl Render for HelloWeb {
                 .into()
             } else {
                 format!(
-                    "搜索至 {} … {}/{} 个块  ({}%)",
+                    "Searching up to {} … {}/{} chunks  ({}%)",
                     format_number(run.limit),
                     run.chunks_done,
                     NUM_CHUNKS,
@@ -309,7 +309,7 @@ impl Render for HelloWeb {
             div().flex().flex_col().w_full().child(
                 div()
                     .text_color(rgb(TEXT_DIM))
-                    .child("选择范围并点击“计算质数”开始。"),
+                    .child("Select a range and press Count Primes to begin."),
             )
         };
 
@@ -345,7 +345,7 @@ impl Render for HelloWeb {
                 div()
                     .text_xl()
                     .text_color(rgb(TEXT_PRIMARY))
-                    .child("质数筛选 — GPUI Web"),
+                    .child("Prime Sieve — GPUI Web"),
             )
             .child(div().text_sm().text_color(rgb(TEXT_DIM)).child(format!(
                 "Background threads: {} · Chunks per run: {}",
@@ -367,7 +367,7 @@ impl Render for HelloWeb {
                         div()
                             .text_sm()
                             .text_color(rgb(ACCENT_YELLOW))
-                            .child("计算以下范围内的质数:"),
+                            .child("Count primes below:"),
                     )
                     .child(preset_row)
                     .child(go_button),
@@ -394,7 +394,7 @@ impl Render for HelloWeb {
                         .rounded_lg()
                         .bg(rgb(BG_SURFACE))
                         .gap_2()
-                        .child(div().text_sm().text_color(rgb(TEXT_DIM)).child("历史记录"))
+                        .child(div().text_sm().text_color(rgb(TEXT_DIM)).child("History"))
                         .child(history_section),
                 )
             })
@@ -416,7 +416,7 @@ fn main() {
             },
             |_, cx| cx.new(HelloWeb::new),
         )
-        .expect("打开窗口失败");
+        .expect("failed to open window");
         cx.activate(true);
     });
 }

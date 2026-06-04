@@ -234,14 +234,14 @@ impl SemanticTokenRules {
     pub fn load(file_path: &Path) -> anyhow::Result<Self> {
         let rules_content = std::fs::read(file_path).with_context(|| {
             anyhow::anyhow!(
-                "无法从 {} 读取语义 token 规则",
+                "Could not read semantic token rules from {}",
                 file_path.display()
             )
         })?;
 
         serde_json_lenient::from_slice::<SemanticTokenRules>(&rules_content).with_context(|| {
             anyhow::anyhow!(
-                "无法从 {} 解析语义 token 规则",
+                "Failed to parse semantic token rules from {}",
                 file_path.display()
             )
         })

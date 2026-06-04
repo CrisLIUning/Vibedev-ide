@@ -52,12 +52,12 @@ impl AgentTool for RenameTool {
     ) -> SharedString {
         if let Ok(input) = input {
             format!(
-                "将 `{}` 重命名为 `{}`",
+                "Rename `{}` to `{}`",
                 input.symbol.symbol_name, input.new_name
             )
             .into()
         } else {
-            "重命名符号".into()
+            "Rename symbol".into()
         }
     }
 
@@ -72,7 +72,7 @@ impl AgentTool for RenameTool {
             let input = input
                 .recv()
                 .await
-                .map_err(|e| format!("接收工具输入失败: {e}"))?;
+                .map_err(|e| format!("Failed to receive tool input: {e}"))?;
 
             let resolved = input.symbol.resolve(&project, cx).await?;
 
@@ -87,11 +87,11 @@ impl AgentTool for RenameTool {
 
             let transaction = rename_task
                 .await
-                .map_err(|e| format!("重命名失败: {e}"))?;
+                .map_err(|e| format!("Rename failed: {e}"))?;
 
             if transaction.0.is_empty() {
                 return Ok(format!(
-                    "未做任何更改。语言服务器无法重命名 '{}'。",
+                    "No changes were made. The language server could not rename '{}'.",
                     input.symbol.symbol_name
                 ));
             }
@@ -100,7 +100,7 @@ impl AgentTool for RenameTool {
             project
                 .update(cx, |project, cx| project.save_buffers(buffers, cx))
                 .await
-                .map_err(|e| format!("重命名成功,但无法保存重命名后的文件:{e}"))?;
+                .map_err(|e| format!("Rename succeeded, but failed to save renamed files: {e}"))?;
 
             let mut output = format!(
                 "已在 {} 个文件中将 `{}` 重命名为 `{}`:\n",
@@ -114,7 +114,7 @@ impl AgentTool for RenameTool {
                     let path = buffer
                         .file()
                         .map(|f| f.full_path(cx).display().to_string())
-                        .unwrap_or_else(|| "<无标题>".to_string());
+                        .unwrap_or_else(|| "<untitled>".to_string());
                     writeln!(output, "- {path}").ok();
                 });
             }

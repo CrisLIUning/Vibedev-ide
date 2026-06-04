@@ -323,7 +323,7 @@ impl OpenRequest {
         let url = parse_ssh_url(file)?;
         let host = match url
             .host()
-            .with_context(|| format!("SSH URL 缺少主机: {url}"))?
+            .with_context(|| format!("missing host in ssh url: {url}"))?
         {
             url::Host::Domain(host) => host.to_string(),
             url::Host::Ipv4(host) => host.to_string(),
@@ -337,7 +337,7 @@ impl OpenRequest {
         let port = url.port();
         anyhow::ensure!(
             self.open_paths.is_empty(),
-            "无法同时打开本地和 SSH 路径"
+            "cannot open both local and ssh paths"
         );
         let mut connection_options =
             RemoteSettings::get_global(cx).connection_options_for(host, port, username);
@@ -349,7 +349,7 @@ impl OpenRequest {
         if let Some(ssh_connection) = &self.remote_connection {
             anyhow::ensure!(
                 *ssh_connection == connection_options,
-                "无法打开多个不同的远程连接"
+                "cannot open multiple different remote connections"
             );
         }
         self.remote_connection = Some(connection_options);
@@ -370,14 +370,14 @@ fn parse_ssh_url(url: &str) -> Result<url::Url> {
     // TODO: Add IPv6 support: "ssh://[2600::]:~/foo"
     let ssh_target = url
         .strip_prefix("ssh://")
-        .with_context(|| format!("无效的 SSH URL: {url}"))?;
+        .with_context(|| format!("invalid ssh url: {url}"))?;
 
     let (authority, path) = if let Some((authority, path)) = ssh_target.rsplit_once(":~/") {
         (authority, format!("/~/{path}"))
     } else if let Some((authority, path)) = ssh_target.rsplit_once(":/") {
         (authority, format!("/{path}"))
     } else {
-        anyhow::bail!("无效的 SSH URL: {url}");
+        anyhow::bail!("invalid ssh url: {url}");
     };
 
     let (userinfo, host) = authority
@@ -385,7 +385,7 @@ fn parse_ssh_url(url: &str) -> Result<url::Url> {
         .map_or((None, authority), |(userinfo, host)| (Some(userinfo), host));
     anyhow::ensure!(
         !host.is_empty() && !host.starts_with('[') && !host.contains(':'),
-        "无效的 SSH URL: {url}"
+        "invalid ssh url: {url}"
     );
 
     let normalized_authority = if let Some(userinfo) = userinfo {
@@ -542,7 +542,7 @@ pub async fn open_paths_with_positions(
                 .fs
                 .canonicalize(Path::new(raw))
                 .await
-                .with_context(|| format!("正在打开 --差异 路径 {raw:?}"))
+                .with_context(|| format!("opening --diff path {raw:?}"))
         };
         for diff_pair in diff_paths {
             let (old_path, new_path) =
@@ -569,7 +569,7 @@ pub async fn open_paths_with_positions(
 
     for (item, path) in items.iter_mut().zip(&paths) {
         if let Some(Err(error)) = item {
-            *error = anyhow!("打开 {path:?} 时出错:{error:#}");
+            *error = anyhow!("error opening {path:?}: {error:#}");
         }
     }
 
@@ -983,10 +983,10 @@ async fn open_local_workspace(
                 .map(|p| p.path.display().to_string())
                 .collect::<Vec<_>>()
                 .join(", ");
-            log::error!("无法打开工作区 [{paths}]:{error:#}");
+            log::error!("failed to open workspace [{paths}]: {error:#}");
             responses
                 .send(CliResponse::Stderr {
-                    message: format!("打开 [{paths}] 时出错:{error:#}"),
+                    message: format!("error opening [{paths}]: {error:#}"),
                 })
                 .log_err();
             return true;
@@ -1392,12 +1392,12 @@ mod tests {
             });
             assert!(
                 matches!(request.kind, Some(OpenRequestKind::FocusApp)),
-                "期望 {url} 的 FocusApp,得到 {:?}",
+                "expected FocusApp for {url}, got {:?}",
                 request.kind
             );
             assert!(
                 request.is_focus_app_only(),
-                "期望 {url} 的 is_focus_app_only"
+                "expected is_focus_app_only for {url}"
             );
         }
     }
@@ -1491,7 +1491,7 @@ mod tests {
             OpenRequestKind::GitCommit { sha } => {
                 assert_eq!(sha, "abc123");
             }
-            _ => panic!("期望 GitCommit 变体"),
+            _ => panic!("expected GitCommit variant"),
         }
         // Verify path was added to open_paths for workspace routing
         assert_eq!(request.open_paths, vec!["path/to/repo"]);
@@ -1512,7 +1512,7 @@ mod tests {
             OpenRequestKind::GitCommit { sha } => {
                 assert_eq!(sha, "def456");
             }
-            _ => panic!("期望 GitCommit 变体"),
+            _ => panic!("expected GitCommit variant"),
         }
         assert_eq!(request.open_paths, vec!["path with spaces"]);
 
@@ -1528,7 +1528,7 @@ mod tests {
                 )
                 .unwrap_err()
                 .to_string()
-                .contains("缺少 repo")
+                .contains("missing repo")
             );
         });
 
@@ -1547,7 +1547,7 @@ mod tests {
             result
                 .unwrap_err()
                 .to_string()
-                .contains("缺少 repo 查询参数")
+                .contains("missing repo query parameter")
         );
     }
 
@@ -1722,7 +1722,7 @@ mod tests {
             .update(cx, |multi_workspace, _, cx| {
                 multi_workspace.workspace().update(cx, |workspace, cx| {
                     let items = workspace.items(cx).collect::<Vec<_>>();
-                    assert_eq!(items.len(), 2, "工作区应该有两个项目");
+                    assert_eq!(items.len(), 2, "Workspace should have two items");
                 });
             })
             .unwrap();
@@ -1746,7 +1746,7 @@ mod tests {
             .update(cx, |multi_workspace, _, cx| {
                 multi_workspace.workspace().update(cx, |workspace, cx| {
                     let items = workspace.items(cx).collect::<Vec<_>>();
-                    assert_eq!(items.len(), 1, "工作区应该有两个项目");
+                    assert_eq!(items.len(), 1, "Workspace should have two items");
                 });
             })
             .unwrap();
@@ -1911,7 +1911,7 @@ mod tests {
             Some(OpenRequestKind::GitClone { repo_url }) => {
                 assert_eq!(repo_url, "https://github.com/zed-industries/zed.git");
             }
-            _ => panic!("期望 GitClone 类型"),
+            _ => panic!("Expected GitClone kind"),
         }
     }
 
@@ -1936,7 +1936,7 @@ mod tests {
             Some(OpenRequestKind::GitClone { repo_url }) => {
                 assert_eq!(repo_url, "https://github.com/zed-industries/zed.git");
             }
-            _ => panic!("期望 GitClone 类型"),
+            _ => panic!("Expected GitClone kind"),
         }
     }
 
@@ -1962,7 +1962,7 @@ mod tests {
             Some(OpenRequestKind::GitClone { repo_url }) => {
                 assert_eq!(repo_url, "https://github.com/zed-industries/zed.git");
             }
-            _ => panic!("期望 GitClone 类型"),
+            _ => panic!("Expected GitClone kind"),
         }
     }
 
@@ -2117,7 +2117,7 @@ mod tests {
             .update(cx, |workspace, _, cx| {
                 let items = workspace.workspace().read(cx).items(cx).collect::<Vec<_>>();
                 // Should have 2 items now (file2.txt and new_file.txt)
-                assert_eq!(items.len(), 2, "聚焦窗口应有 2 个项目");
+                assert_eq!(items.len(), 2, "Focused window should have 2 items");
             })
             .unwrap();
 
@@ -2125,7 +2125,7 @@ mod tests {
         multi_workspace_1
             .update(cx, |workspace, _, cx| {
                 let items = workspace.workspace().read(cx).items(cx).collect::<Vec<_>>();
-                assert_eq!(items.len(), 1, "其他窗口应仍只有 1 个项目");
+                assert_eq!(items.len(), 1, "Other window should still have 1 item");
             })
             .unwrap();
     }
@@ -2182,7 +2182,7 @@ mod tests {
                 let flag = multi_workspace.workspace().read(cx).open_in_dev_container();
                 assert!(
                     !flag,
-                    "open_in_dev_container 标志应被 suggest_on_worktree_updated 消费"
+                    "open_in_dev_container flag should be consumed by suggest_on_worktree_updated"
                 );
             })
             .unwrap();
@@ -2245,7 +2245,7 @@ mod tests {
                     .open_in_dev_container();
                 assert!(
                     !flag,
-                    "当不存在 devcontainer 配置时,应清除 open_in_dev_container 标志"
+                    "open_in_dev_container flag should be cleared when no devcontainer config exists"
                 );
             })
             .unwrap();

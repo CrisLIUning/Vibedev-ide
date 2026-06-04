@@ -96,7 +96,7 @@ impl ListDirectoryTool {
             writeln!(output, "\n# Files:\n{}", files.join("\n")).unwrap();
         }
         if output.is_empty() {
-            writeln!(output, "{input_path} 为空。").unwrap();
+            writeln!(output, "{input_path} is empty.").unwrap();
         }
         Ok(output)
     }
@@ -110,7 +110,7 @@ impl ListDirectoryTool {
         let worktree = project
             .read(cx)
             .worktree_for_id(project_path.worktree_id, cx)
-            .with_context(|| format!("{input_path} 不在已知的工作树中"))?;
+            .with_context(|| format!("{input_path} is not in a known worktree"))?;
 
         let global_settings = WorktreeSettings::get_global(cx);
         let worktree_settings = WorktreeSettings::get(Some(project_path.into()), cx);
@@ -122,7 +122,7 @@ impl ListDirectoryTool {
         };
 
         if !entry.is_dir() {
-            return Err(anyhow!("{input_path} 不是目录。"));
+            return Err(anyhow!("{input_path} is not a directory."));
         }
 
         let mut folders = Vec::new();
@@ -165,7 +165,7 @@ impl ListDirectoryTool {
         }
 
         if output.is_empty() {
-            writeln!(output, "{input_path} 为空。").unwrap();
+            writeln!(output, "{input_path} is empty.").unwrap();
         }
 
         Ok(output)
@@ -264,7 +264,7 @@ impl AgentTool for ListDirectoryTool {
                 let worktree = project
                     .worktree_for_id(project_path.worktree_id, cx)
                     .with_context(|| {
-                        format!("{} 不在已知的工作树中", &input.path)
+                        format!("{} is not in a known worktree", &input.path)
                     })?;
 
                 let global_settings = WorktreeSettings::get_global(cx);
@@ -285,7 +285,7 @@ impl AgentTool for ListDirectoryTool {
                 let worktree_settings = WorktreeSettings::get(Some((&project_path).into()), cx);
                 if worktree_settings.is_path_excluded(&project_path.path) {
                     anyhow::bail!(
-                        "无法列出目录,因为其路径与用户的工作树 `file_scan_exclusions` 设置匹配: {}",
+                        "Cannot list directory because its path matches the user's worktree`file_scan_exclusions` setting: {}",
                         &input.path
                     );
                 }
@@ -1166,14 +1166,14 @@ mod tests {
         let skill_dir = agent_skills::global_skills_dir().join("my-skill");
         fs.create_dir(&skill_dir).await.unwrap();
         fs.insert_file(
-            skill_dir.join("技能.md"),
+            skill_dir.join("SKILL.md"),
             b"---\nname: my-skill\ndescription: x\n---\nbody".to_vec(),
         )
         .await;
-        fs.insert_file(skill_dir.join("评分标准.md"), b"# rubric".to_vec())
+        fs.insert_file(skill_dir.join("rubric.md"), b"# rubric".to_vec())
             .await;
         fs.create_dir(&skill_dir.join("scripts")).await.unwrap();
-        fs.insert_file(skill_dir.join("脚本/运行.py"), b"print('hi')".to_vec())
+        fs.insert_file(skill_dir.join("scripts/run.py"), b"print('hi')".to_vec())
             .await;
 
         let project = Project::test(fs.clone(), [path!("/project").as_ref()], cx).await;
@@ -1197,19 +1197,19 @@ mod tests {
         // nested resource directory — listed by their absolute paths.
         assert!(
             output.contains("# Folders:"),
-            "预期包含文件夹部分: {output}"
+            "expected folders section: {output}"
         );
         assert!(
             output.contains("scripts"),
-            "预期包含嵌套目录: {output}"
+            "expected nested directory: {output}"
         );
         assert!(
-            output.contains("技能.md"),
-            "预期出现技能.md: {output}"
+            output.contains("SKILL.md"),
+            "expected SKILL.md to appear: {output}"
         );
         assert!(
-            output.contains("评分标准.md"),
-            "预期出现评分标准.md: {output}"
+            output.contains("rubric.md"),
+            "expected rubric.md to appear: {output}"
         );
     }
 
@@ -1241,7 +1241,7 @@ mod tests {
 
         assert!(
             result.is_err(),
-            "路径超出技能目录应被拒绝"
+            "path outside skills dir should be rejected"
         );
     }
 }

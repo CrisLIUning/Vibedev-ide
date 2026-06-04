@@ -130,7 +130,7 @@ impl HeadlessExtensionStore {
 
         if manifest.version.as_ref() != extension.version.as_str() {
             anyhow::bail!(
-                "版本不匹配: ({}) != ({})",
+                "mismatched versions: ({}) != ({})",
                 manifest.version,
                 extension.version
             )

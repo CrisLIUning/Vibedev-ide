@@ -101,11 +101,11 @@ impl Canvas {
         assert_eq!(
             src_stride * src_size.y() as usize,
             src_bytes.len(),
-            "src_bytes 中的像素数与步长和大小不匹配。"
+            "Number of pixels in src_bytes does not match stride and size."
         );
         assert!(
             src_stride >= src_size.x() as usize * src_format.bytes_per_pixel() as usize,
-            "src_stride 必须大于或等于 src_size.x()"
+            "src_stride must be >= than src_size.x()"
         );
 
         let dst_rect = RectI::new(dst_point, src_size);
@@ -267,7 +267,7 @@ impl Format {
 /// The antialiasing strategy that should be used when rasterizing glyphs.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum RasterizationOptions {
-    /// "黑白" rendering. Each pixel is either entirely on or off.
+    /// "Black-and-white" rendering. Each pixel is either entirely on or off.
     Bilevel,
     /// Grayscale antialiasing. Only one channel is used.
     GrayscaleAa,

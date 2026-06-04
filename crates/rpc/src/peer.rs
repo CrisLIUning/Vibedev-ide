@@ -1134,12 +1134,12 @@ mod tests {
 
         assert!(
             result.is_err(),
-            "当连接写入任务已消失时,流请求应该失败"
+            "stream request should fail when the connection write task has gone away"
         );
         assert_eq!(
             client.pending_stream_request_count(client_to_server_conn_id),
             Some(0),
-            "失败的流请求不应在响应通道中留下记账信息"
+            "failed stream request should not leave response channel bookkeeping behind"
         );
     }
 
@@ -1202,7 +1202,7 @@ mod tests {
         let error = stream.next().await.unwrap().unwrap_err();
         assert!(
             format!("{error}").contains("boom"),
-            "预期错误应显示服务器消息,实际得到:{error}"
+            "expected error to surface server message, got: {error}"
         );
 
         // The error alone (without an EndStream) should terminate the stream.
@@ -1302,7 +1302,7 @@ mod tests {
         assert_eq!(
             client.pending_stream_request_count(client_to_server_conn_id),
             Some(0),
-            "一旦消费者放弃流,流通道应该被移除"
+            "stream channel should be removed once the consumer has dropped the stream"
         );
 
         drop(server_task);

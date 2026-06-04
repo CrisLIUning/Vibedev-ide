@@ -35,7 +35,7 @@ impl Render for GradientViewer {
                     .gap_2()
                     .justify_between()
                     .items_center()
-                    .child("渐变示例")
+                    .child("Gradient Examples")
                     .child(
                         div().flex().gap_2().items_center().child(
                             div()
@@ -72,7 +72,7 @@ impl Render for GradientViewer {
                             .justify_center()
                             .bg(gpui::red())
                             .text_color(gpui::white())
-                            .child("纯色"),
+                            .child("Solid Color"),
                     )
                     .child(
                         div()
@@ -83,7 +83,7 @@ impl Render for GradientViewer {
                             .justify_center()
                             .bg(gpui::blue())
                             .text_color(gpui::white())
-                            .child("纯色"),
+                            .child("Solid Color"),
                     ),
             )
             .child(

@@ -71,7 +71,7 @@ pub mod core_media {
                 );
                 anyhow::ensure!(
                     result == 0,
-                    "获取采样计时信息时出错,代码 {result}"
+                    "error getting sample timing info, code {result}"
                 );
                 Ok(timing_info)
             }
@@ -265,7 +265,7 @@ pub mod core_video {
             };
             anyhow::ensure!(
                 result == kCVReturnSuccess,
-                "无法创建纹理缓存,代码: {result}"
+                "could not create texture cache, code: {result}"
             );
             unsafe { Ok(CVMetalTextureCache::wrap_under_create_rule(this)) }
         }
@@ -298,7 +298,7 @@ pub mod core_video {
             };
             anyhow::ensure!(
                 result == kCVReturnSuccess,
-                "无法创建纹理,代码: {result}"
+                "could not create texture, code: {result}"
             );
             unsafe { Ok(CVMetalTexture::wrap_under_create_rule(this)) }
         }

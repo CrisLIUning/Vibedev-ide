@@ -29,7 +29,7 @@ fn remove_formatters_on_save_inner(value: &mut Value, path: &[&str]) -> Result<(
 
     anyhow::ensure!(
         obj.get("formatter").is_none(),
-        r#"在 "format_on_save" 和 "formatter" 中同时设置格式化工具已弃用。请将格式化工具从 {} 迁移到 {}"#,
+        r#"Setting formatters in both "format_on_save" and "formatter" is deprecated. Please migrate the formatters from {} into {}"#,
         fmt_path(path, "format_on_save"),
         fmt_path(path, "formatter")
     );

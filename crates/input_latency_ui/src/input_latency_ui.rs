@@ -143,7 +143,7 @@ fn format_report(snapshot: &InputLatencySnapshot, previous: &ReporterState) -> S
     let total = histogram.len();
 
     if total == 0 {
-        return "尚未记录输入延迟样本。\n\n请先在缓冲区中输入或点击。".to_string();
+        return "No input latency samples recorded yet.\n\nTry typing or clicking in a buffer first.".to_string();
     }
 
     let percentiles: &[(&str, f64)] = &[
@@ -160,27 +160,27 @@ fn format_report(snapshot: &InputLatencySnapshot, previous: &ReporterState) -> S
     let now = chrono::Local::now();
 
     let mut report = String::new();
-    report.push_str("输入延迟直方图\n");
+    report.push_str("Input Latency Histogram\n");
     report.push_str("=======================\n");
 
     let timestamp = now.format("%Y-%m-%d %H:%M:%S %Z");
-    report.push_str(&format!("时间戳: {timestamp}\n"));
-    report.push_str(&format!("样本数: {total}\n"));
+    report.push_str(&format!("Timestamp: {timestamp}\n"));
+    report.push_str(&format!("Samples: {total}\n"));
     if snapshot.mid_draw_events_dropped > 0 {
         report.push_str(&format!(
-            "已排除绘制中途事件: {}\n",
+            "Mid-draw events excluded: {}\n",
             snapshot.mid_draw_events_dropped
         ));
     }
 
-    write_latency_percentiles(&mut report, "百分位数", histogram, percentiles);
-    write_latency_distribution(&mut report, "分布", histogram);
+    write_latency_percentiles(&mut report, "Percentiles", histogram, percentiles);
+    write_latency_distribution(&mut report, "Distribution", histogram);
 
     let coalesce = &snapshot.events_per_frame_histogram;
     let coalesce_total = coalesce.len();
     if coalesce_total > 0 {
         report.push('\n');
-        report.push_str("每帧合并的事件数:\n");
+        report.push_str("Events coalesced per frame:\n");
         for (label, quantile) in percentiles {
             let value = if *quantile == 0.0 {
                 coalesce.min()
@@ -189,11 +189,11 @@ fn format_report(snapshot: &InputLatencySnapshot, previous: &ReporterState) -> S
             } else {
                 coalesce.value_at_quantile(*quantile)
             };
-            report.push_str(&format!("  {label}: {value:>6} 个事件\n"));
+            report.push_str(&format!("  {label}: {value:>6} events\n"));
         }
 
         report.push('\n');
-        report.push_str("分布:\n");
+        report.push_str("Distribution:\n");
         let bar_width = 30usize;
         let max_count = coalesce.max();
         for n in 1..=max_count {
@@ -209,7 +209,7 @@ fn format_report(snapshot: &InputLatencySnapshot, previous: &ReporterState) -> S
             let bar_len = (fraction * bar_width as f64) as usize;
             let bar = "\u{2588}".repeat(bar_len);
             report.push_str(&format!(
-                "  {n:>6} 个事件: {count:>6} ({:>5.1}%) {bar}\n",
+                "  {n:>6} events: {count:>6} ({:>5.1}%) {bar}\n",
                 fraction * 100.0,
             ));
         }
@@ -224,14 +224,14 @@ fn format_report(snapshot: &InputLatencySnapshot, previous: &ReporterState) -> S
         let delta_total = total - prev_total;
 
         report.push('\n');
-        report.push_str("自上次报告以来的变化\n");
+        report.push_str("Delta Since Last Report\n");
         report.push_str("-----------------------\n");
         let prev_ts = prev_timestamp.format("%Y-%m-%d %H:%M:%S %Z");
         let elapsed_secs = (now - *prev_timestamp).num_seconds().max(0);
         report.push_str(&format!(
-            "上次报告: {prev_ts} ({elapsed_secs}秒前)\n"
+            "Previous report: {prev_ts} ({elapsed_secs}s ago)\n"
         ));
-        report.push_str(&format!("新增样本: {delta_total}\n"));
+        report.push_str(&format!("New samples: {delta_total}\n"));
 
         if delta_total > 0 {
             let mut delta_histogram = histogram.clone();
@@ -239,13 +239,13 @@ fn format_report(snapshot: &InputLatencySnapshot, previous: &ReporterState) -> S
 
             write_latency_percentiles(
                 &mut report,
-                "百分位数 (仅限新增样本)",
+                "Percentiles (new samples only)",
                 &delta_histogram,
                 percentiles,
             );
             write_latency_distribution(
                 &mut report,
-                "分布 (仅限新增样本)",
+                "Distribution (new samples only)",
                 &delta_histogram,
             );
         }

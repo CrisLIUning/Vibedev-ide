@@ -170,7 +170,7 @@ impl TestServer {
         cx.update(|cx| {
             gpui_tokio::init(cx);
             if cx.has_global::<SettingsStore>() {
-                panic!("同一个 cx 被用于创建两个测试客户端")
+                panic!("Same cx used to create two test clients")
             }
             let settings = SettingsStore::test(cx);
             cx.set_global(settings);
@@ -529,7 +529,7 @@ impl TestServer {
                         .await;
                 } else {
                     panic!(
-                        "边 {}->{} 在 {} 创建之前被引用",
+                        "Edge {}->{} referenced before {} was created",
                         parent, channel, parent
                     )
                 }

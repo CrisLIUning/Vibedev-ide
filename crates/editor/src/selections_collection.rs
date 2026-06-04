@@ -535,13 +535,13 @@ impl SelectionsCollection {
         let result = change(&mut mutable_collection);
         assert!(
             !mutable_collection.disjoint.is_empty() || mutable_collection.pending.is_some(),
-            "必须至少有一个选区"
+            "There must be at least one selection"
         );
         if cfg!(debug_assertions) {
             mutable_collection.disjoint.iter().for_each(|selection| {
                 assert!(
                      selection.start.cmp(&selection.end, &snapshot).is_le(),
-                    "不相交选区的起始位置大于结束位置: {:?}",
+                    "disjoint selection has start > end: {:?}",
                     mutable_collection.disjoint
                 );
                 assert!(
@@ -557,14 +557,14 @@ impl SelectionsCollection {
                 mutable_collection
                     .disjoint
                     .is_sorted_by(|first, second| first.end.cmp(&second.start, &snapshot).is_le()),
-                "不相交选区未排序: {:?}",
+                "disjoint selections are not sorted: {:?}",
                 mutable_collection.disjoint
             );
             if let Some(pending) = &mutable_collection.pending {
                 let selection = &pending.selection;
                 assert!(
                     selection.start.cmp(&selection.end, &snapshot).is_le(),
-                    "待定选区的起始位置大于结束位置: {:?}",
+                    "pending selection has start > end: {:?}",
                     selection
                 );
                 assert!(
@@ -1113,7 +1113,7 @@ fn resolve_selections_point<'a>(
         let end = summaries.next().unwrap();
         assert!(
             start <= end,
-            "锚点: 起始: {:?}, 结束: {:?}; 解析为: 起始: {:?}, 结束: {:?}",
+            "anchors: start: {:?}, end: {:?}; resolved to: start: {:?}, end: {:?}",
             s.start,
             s.end,
             start,
@@ -1147,7 +1147,7 @@ fn resolve_selections_display<'a>(
         );
         assert!(
             display_start <= display_end,
-            "显示起始: {:?}, 显示结束: {:?}",
+            "display_start: {:?}, display_end: {:?}",
             display_start,
             display_end
         );
@@ -1184,13 +1184,13 @@ where
             .dimensions_from_points::<D>(to_convert.flat_map(|s| {
                 let start = map.display_point_to_point(s.start, Bias::Left);
                 let end = map.display_point_to_point(s.end, Bias::Right);
-                assert!(start <= end, "起始: {:?}, 结束: {:?}", start, end);
+                assert!(start <= end, "start: {:?}, end: {:?}", start, end);
                 [start, end]
             }));
     selections.map(move |s| {
         let start = converted_endpoints.next().unwrap();
         let end = converted_endpoints.next().unwrap();
-        assert!(start <= end, "起始: {:?}, 结束: {:?}", start, end);
+        assert!(start <= end, "start: {:?}, end: {:?}", start, end);
         Selection {
             id: s.id,
             start,
@@ -1228,7 +1228,7 @@ fn coalesce_selections<D: Ord + fmt::Debug + Copy>(
         }
         assert!(
             selection.start <= selection.end,
-            "选区.起始: {:?}, 选区.结束: {:?}, 选区.反向: {:?}",
+            "selection.start: {:?}, selection.end: {:?}, selection.reversed: {:?}",
             selection.start,
             selection.end,
             selection.reversed

@@ -53,7 +53,7 @@ pub struct MaxOutputTokensError;
 
 impl std::fmt::Display for MaxOutputTokensError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "已达到输出 token 上限")
+        write!(f, "output token limit reached")
     }
 }
 
@@ -202,7 +202,7 @@ impl AgentThreadEntry {
             Self::AssistantMessage(message) => message.to_markdown(cx),
             Self::ToolCall(tool_call) => tool_call.to_markdown(cx),
             Self::CompletedPlan(entries) => {
-                let mut md = String::from("## 计划\n\n");
+                let mut md = String::from("## Plan\n\n");
                 for entry in entries {
                     let source = entry.content.read(cx).source().to_string();
                     md.push_str(&format!("- [x] {}\n", source));
@@ -589,7 +589,7 @@ pub enum AuthorizationKind {
     /// This is the default for tool authorization prompts.
     PermissionGrant,
     /// The user is choosing between actions for the tool to take next
-    /// (for example, "保存" vs "放弃" before editing a dirty buffer).
+    /// (for example, "Save" vs "Discard" before editing a dirty buffer).
     /// The tool call always transitions to `InProgress` regardless of the
     /// selected `PermissionOptionKind`; the caller interprets the chosen
     /// `option_id` to decide what to do.
@@ -2448,7 +2448,7 @@ impl AcpThread {
                         if r.stop_reason == acp::StopReason::MaxTokens {
                             this.had_error = true;
                             cx.emit(AcpThreadEvent::Error);
-                            log::error!("已达到最大 Token 数。使用情况: {:?}", this.token_usage);
+                            log::error!("Max tokens reached. Usage: {:?}", this.token_usage);
 
                             let exceeded_max_output_tokens =
                                 this.token_usage.as_ref().is_some_and(|u| {
@@ -2458,11 +2458,11 @@ impl AcpThread {
 
                             if exceeded_max_output_tokens {
                                 log::error!(
-                                    "已达到最大输出 Token 数。用量: {:?}",
+                                    "Max output tokens reached. Usage: {:?}",
                                     this.token_usage
                                 );
                             } else {
-                                log::error!("已达到最大 Token 数。使用情况: {:?}", this.token_usage);
+                                log::error!("Max tokens reached. Usage: {:?}", this.token_usage);
                             }
                             return Err(anyhow!(MaxOutputTokensError));
                         }
@@ -2538,7 +2538,7 @@ impl AcpThread {
 
                         this.had_error = true;
                         cx.emit(AcpThreadEvent::Error);
-                        log::error!("运行轮次时出错: {:?}", e);
+                        log::error!("Error in run turn: {:?}", e);
                         Err(e)
                     }
                 }
@@ -2689,7 +2689,7 @@ impl AcpThread {
                     git.compare_checkpoints(old_checkpoint.clone(), new_checkpoint, cx)
                 })
                 .await
-                .context("无法比较检查点")
+                .context("failed to compare checkpoints")
                 .log_err()
             else {
                 return Ok(());
@@ -5639,7 +5639,7 @@ mod tests {
         assert_eq!(
             *title_updated_events.borrow(),
             1,
-            "设置临时标题应触发 TitleUpdated"
+            "setting a provisional title should emit TitleUpdated"
         );
 
         let result = thread.update(cx, |thread, cx| {
@@ -5650,7 +5650,7 @@ mod tests {
                 cx,
             )
         });
-        result.expect("会话信息更新应成功");
+        result.expect("session info update should succeed");
 
         thread.read_with(cx, |thread, _| {
             assert_eq!(
@@ -5659,18 +5659,18 @@ mod tests {
             );
             assert!(
                 !thread.has_provisional_title(),
-                "会话信息标题更新应清除临时标题"
+                "session info title update should clear provisional title"
             );
         });
 
         assert_eq!(
             *title_updated_events.borrow(),
             2,
-            "会话信息标题更新应触发 TitleUpdated"
+            "session info title update should emit TitleUpdated"
         );
         assert!(
             connection.set_title_calls.borrow().is_empty(),
-            "会话信息标题更新不应传播回连接"
+            "session info title update should not propagate back to the connection"
         );
     }
 
@@ -5878,7 +5878,7 @@ mod tests {
         assert_eq!(
             thread.read_with(cx, |t, _| t.status()),
             ThreadStatus::Generating,
-            "处理程序暂停时线程应处于生成状态"
+            "thread should be generating while the handler is parked"
         );
 
         // Replace the in-flight send_task with a no-op. Dropping the original
@@ -5892,13 +5892,13 @@ mod tests {
         let result = request.await;
         assert!(
             matches!(result, Ok(None)),
-            "外部任务应在 tx 被丢弃时解析为 Ok(None),实际得到 {result:?}"
+            "outer task should resolve to Ok(None) on dropped tx, got {result:?}"
         );
 
         assert_eq!(
             thread.read_with(cx, |t, _| t.status()),
             ThreadStatus::Idle,
-            "即使 tx 被丢弃而未发送,也必须清除 running_turn"
+            "running_turn must be cleared even when tx was dropped without send"
         );
     }
 }

@@ -99,7 +99,7 @@ impl Render for ApiKeysWithProviders {
                                 div()
                                     .w_full()
                                     .child(
-                                        Label::new("立即使用您环境中以下提供商的 API 密钥:")
+                                        Label::new("Start now using API keys from your environment for the following providers:")
                                             .color(Color::Muted)
                                     )
                             )
@@ -127,7 +127,7 @@ impl RenderOnce for ApiKeysWithoutProviders {
                 h_flex()
                     .gap_2()
                     .child(
-                        Label::new("API 密钥")
+                        Label::new("API Keys")
                             .size(LabelSize::Small)
                             .color(Color::Muted)
                             .buffer_font(cx),
@@ -135,10 +135,10 @@ impl RenderOnce for ApiKeysWithoutProviders {
                     .child(Divider::horizontal()),
             )
             .child(List::new().child(ListBulletItem::new(
-                "添加您自己的密钥以在不登录的情况下使用 AI。",
+                "Add your own keys to use AI without signing in.",
             )))
             .child(
-                Button::new("configure-providers", "配置提供商")
+                Button::new("configure-providers", "Configure Providers")
                     .full_width()
                     .style(ButtonStyle::Outlined)
                     .on_click(move |_, window, cx| {

@@ -705,27 +705,27 @@ impl VariableList {
             cx.update(|window, cx| {
                 let context_menu = ContextMenu::build(window, cx, |menu, _, _| {
                     menu.when_some(entry.as_variable(), |menu, _| {
-                        menu.action("复制名称", CopyVariableName.boxed_clone())
-                            .action("复制值", CopyVariableValue.boxed_clone())
+                        menu.action("Copy Name", CopyVariableName.boxed_clone())
+                            .action("Copy Value", CopyVariableValue.boxed_clone())
                             .when(supports_set_variable, |menu| {
-                                menu.action("编辑值", EditVariable.boxed_clone())
+                                menu.action("Edit Value", EditVariable.boxed_clone())
                             })
                             .when(supports_go_to_memory, |menu| {
-                                menu.action("转到内存", GoToMemory.boxed_clone())
+                                menu.action("Go To Memory", GoToMemory.boxed_clone())
                             })
-                            .action("监视变量", AddWatch.boxed_clone())
+                            .action("Watch Variable", AddWatch.boxed_clone())
                             .when_some(can_toggle_data_breakpoint, |mut menu, data_info| {
                                 menu = menu.separator();
                                 if let Some(access_types) = data_info.access_types {
                                     for access in access_types {
                                         menu = menu.action(
                                             format!(
-                                                "切换 {} 数据断点",
+                                                "Toggle {} Data Breakpoint",
                                                 match access {
-                                                    dap::DataBreakpointAccessType::Read => "读取",
-                                                    dap::DataBreakpointAccessType::Write => "写入",
+                                                    dap::DataBreakpointAccessType::Read => "Read",
+                                                    dap::DataBreakpointAccessType::Write => "Write",
                                                     dap::DataBreakpointAccessType::ReadWrite =>
-                                                        "读取/写入",
+                                                        "Read/Write",
                                                 }
                                             ),
                                             crate::ToggleDataBreakpoint {
@@ -738,7 +738,7 @@ impl VariableList {
                                     menu
                                 } else {
                                     menu.action(
-                                        "切换数据断点",
+                                        "Toggle Data Breakpoint",
                                         crate::ToggleDataBreakpoint { access_type: None }
                                             .boxed_clone(),
                                     )
@@ -746,12 +746,12 @@ impl VariableList {
                             })
                     })
                     .when(entry.as_watcher().is_some(), |menu| {
-                        menu.action("复制名称", CopyVariableName.boxed_clone())
-                            .action("复制值", CopyVariableValue.boxed_clone())
+                        menu.action("Copy Name", CopyVariableName.boxed_clone())
+                            .action("Copy Value", CopyVariableValue.boxed_clone())
                             .when(supports_set_variable, |menu| {
-                                menu.action("编辑值", EditVariable.boxed_clone())
+                                menu.action("Edit Value", EditVariable.boxed_clone())
                             })
-                            .action("移除监视", RemoveWatch.boxed_clone())
+                            .action("Remove Watch", RemoveWatch.boxed_clone())
                     })
                     .context(focus_handle.clone())
                 });
@@ -1344,7 +1344,7 @@ impl VariableList {
                         }
                     })
                     .tooltip(move |_window, cx| {
-                        Tooltip::for_action_in("移除监视", &RemoveWatch, &focus_handle, cx)
+                        Tooltip::for_action_in("Remove Watch", &RemoveWatch, &focus_handle, cx)
                     })
                     .icon_size(ui::IconSize::Indicator),
                 ),

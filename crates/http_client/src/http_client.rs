@@ -329,7 +329,7 @@ impl HttpClient for BlockedHttpClient {
         Box::pin(async {
             Err(std::io::Error::new(
                 std::io::ErrorKind::PermissionDenied,
-                "BlockedHttpClient 禁止的请求",
+                "BlockedHttpClient disallowed request",
             )
             .into())
         })

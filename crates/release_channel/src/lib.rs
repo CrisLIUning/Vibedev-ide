@@ -198,10 +198,10 @@ impl ReleaseChannel {
     pub fn display_name(&self) -> &'static str {
         match self {
             // VIBEDEV: branded product name (upstream returned "Zed*").
-            ReleaseChannel::Dev => "VibeDev Dev",
-            ReleaseChannel::Nightly => "VibeDev Nightly",
-            ReleaseChannel::Preview => "VibeDev Preview",
-            ReleaseChannel::Stable => "VibeDev",
+            ReleaseChannel::Dev => "Zed Dev",
+            ReleaseChannel::Nightly => "Zed Nightly",
+            ReleaseChannel::Preview => "Zed Preview",
+            ReleaseChannel::Stable => "Zed",
         }
     }
 
@@ -221,9 +221,9 @@ impl ReleaseChannel {
     pub fn app_id(&self) -> &'static str {
         // VIBEDEV: AppUserModelID / WM_CLASS / macOS bundle id. Moved off the
         // "dev.zed.Zed-*" ids so the Windows taskbar / jump-list name resolves
-        // fresh to "VibeDev Dev" (Windows caches the jump-list name per
-        // AppUserModelID; the old id kept showing "VibeDev Dev"). This is NOT the
-        // settings/data dir — that is keyed by `paths::APP_NAME` ("VibeDev"), changed
+        // fresh to "Zed Dev" (Windows caches the jump-list name per
+        // AppUserModelID; the old id kept showing "Zed Dev"). This is NOT the
+        // settings/data dir — that is keyed by `paths::APP_NAME` ("Zed"), changed
         // separately (with migration) in the Phase 5 data-dir step.
         match self {
             ReleaseChannel::Dev => "ai.vibedev.VibeDev-Dev",

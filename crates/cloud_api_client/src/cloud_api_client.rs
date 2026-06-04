@@ -29,32 +29,32 @@ struct Credentials {
 #[derive(Debug, Error)]
 pub enum ClientApiError {
     /// 401 — credentials are invalid or expired.
-    #[error("未授权")]
+    #[error("Unauthorized")]
     Unauthorized,
     /// No credentials have been set on the client.
-    #[error("未登录")]
+    #[error("not signed in")]
     NotSignedIn,
     /// Connection-level failure: DNS, TCP, TLS, timeout, etc.
     /// The HTTP request never received a response.
-    #[error("连接 {host} 失败")]
+    #[error("connection to {host} failed")]
     ConnectionFailed {
         host: String,
         #[source]
         source: anyhow::Error,
     },
     /// Server returned a non-success HTTP status (other than 401).
-    #[error("{host} 返回 {status}")]
+    #[error("{host} returned {status}")]
     ServerError {
         host: String,
         status: StatusCode,
         body: String,
     },
     /// Failed to read or parse the response body after a successful HTTP status.
-    #[error("无效的响应")]
+    #[error("invalid response")]
     InvalidResponse(#[source] anyhow::Error),
     /// Failed to build the HTTP request (URL construction, serialization, etc.).
     /// This typically indicates a programming error.
-    #[error("构建请求失败")]
+    #[error("failed to build request")]
     RequestBuildFailed(#[source] anyhow::Error),
 }
 
@@ -168,7 +168,7 @@ impl CloudApiClient {
             .map_err(|_| anyhow!("failed to set URL scheme"))?;
 
         let credentials = self.credentials.read();
-        let credentials = credentials.as_ref().context("未提供凭据")?;
+        let credentials = credentials.as_ref().context("no credentials provided")?;
         let authorization_header = format!("{} {}", credentials.user_id, credentials.access_token);
 
         Ok(Tokio::spawn_result(cx, async move {
@@ -338,7 +338,7 @@ impl CloudApiClient {
             response.body_mut().read_to_string(&mut body).await?;
 
             anyhow::bail!(
-                "提交 Agent 反馈失败。\n状态: {:?}\n内容: {body}",
+                "Failed to submit agent feedback.\nStatus: {:?}\nBody: {body}",
                 response.status()
             )
         }
@@ -366,7 +366,7 @@ impl CloudApiClient {
             response.body_mut().read_to_string(&mut body).await?;
 
             anyhow::bail!(
-                "提交智能体反馈评论失败。\n状态: {:?}\n内容: {body}",
+                "Failed to submit agent feedback comments.\nStatus: {:?}\nBody: {body}",
                 response.status()
             )
         }
@@ -394,7 +394,7 @@ impl CloudApiClient {
             response.body_mut().read_to_string(&mut body).await?;
 
             anyhow::bail!(
-                "提交编辑预测反馈失败。\n状态: {:?}\n内容: {body}",
+                "Failed to submit edit prediction feedback.\nStatus: {:?}\nBody: {body}",
                 response.status()
             )
         }

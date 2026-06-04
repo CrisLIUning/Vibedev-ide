@@ -245,7 +245,7 @@ impl DebugAdapter for JsDebugAdapter {
                                 "request": {
                                     "type": "string",
                                     "enum": ["launch"],
-                                    "description": "启动新进程的请求"
+                                    "description": "Request to launch a new process"
                                 }
                             }
                         },
@@ -255,20 +255,20 @@ impl DebugAdapter for JsDebugAdapter {
                                 "type": {
                                     "type": "string",
                                     "enum": ["pwa-node", "node", "chrome", "pwa-chrome", "msedge", "pwa-msedge", "node-terminal"],
-                                    "description": "调试会话的类型",
+                                    "description": "The type of debug session",
                                     "default": "pwa-node"
                                 },
                                 "program": {
                                     "type": "string",
-                                    "description": "要调试的程序或文件的路径"
+                                    "description": "Path to the program or file to debug"
                                 },
                                 "cwd": {
                                     "type": "string",
-                                    "description": "被调试程序的工作目录的绝对路径"
+                                    "description": "Absolute path to the working directory of the program being debugged"
                                 },
                                 "args": {
                                     "type": ["array", "string"],
-                                    "description": "传递给程序的命令行参数",
+                                    "description": "Command line arguments passed to the program",
                                     "items": {
                                         "type": "string"
                                     },
@@ -276,33 +276,33 @@ impl DebugAdapter for JsDebugAdapter {
                                 },
                                 "env": {
                                     "type": "object",
-                                    "description": "传递给程序的环境变量",
+                                    "description": "Environment variables passed to the program",
                                     "default": {}
                                 },
                                 "envFile": {
                                     "type": ["string", "array"],
-                                    "description": "包含环境变量定义的文件路径",
+                                    "description": "Path to a file containing environment variable definitions",
                                     "items": {
                                         "type": "string"
                                     }
                                 },
                                 "stopOnEntry": {
                                     "type": "boolean",
-                                    "description": "启动后自动暂停程序",
+                                    "description": "Automatically stop program after launch",
                                     "default": false
                                 },
                                 "attachSimplePort": {
                                     "type": "number",
-                                    "description": "如果设置,将通过指定端口附加到进程。这对于 Node.js 程序通常不再需要,并且会失去调试子进程的能力,但在某些特殊场景(如 Deno 和 Docker 启动)中可能有用。如果设置为 0,将自动选择一个随机端口,并在启动参数中添加 --inspect-brk。"
+                                    "description": "If set, attaches to the process via the given port. This is generally no longer necessary for Node.js programs and loses the ability to debug child processes, but can be useful in more esoteric scenarios such as with Deno and Docker launches. If set to 0, a random port will be chosen and --inspect-brk added to the launch arguments automatically."
                                 },
                                 "runtimeExecutable": {
                                     "type": ["string", "null"],
-                                    "description": "要使用的运行时,可以是绝对路径或 PATH 中可用的运行时名称",
+                                    "description": "Runtime to use, an absolute path or the name of a runtime available on PATH",
                                     "default": "node"
                                 },
                                 "runtimeArgs": {
                                     "type": ["array", "null"],
-                                    "description": "传递给运行时可执行文件的参数",
+                                    "description": "Arguments passed to the runtime executable",
                                     "items": {
                                         "type": "string"
                                     },
@@ -310,7 +310,7 @@ impl DebugAdapter for JsDebugAdapter {
                                 },
                                 "outFiles": {
                                     "type": "array",
-                                    "description": "用于定位生成的 JavaScript 文件的 Glob 模式",
+                                    "description": "Glob patterns for locating generated JavaScript files",
                                     "items": {
                                         "type": "string"
                                     },
@@ -318,58 +318,58 @@ impl DebugAdapter for JsDebugAdapter {
                                 },
                                 "sourceMaps": {
                                     "type": "boolean",
-                                    "description": "如果存在 JavaScript 源映射则使用",
+                                    "description": "Use JavaScript source maps if they exist",
                                     "default": true
                                 },
                                 "pauseForSourceMap": {
                                     "type": "boolean",
-                                    "description": "在设置断点之前等待源映射加载完成。",
+                                    "description": "Wait for source maps to load before setting breakpoints.",
                                     "default": true
                                 },
                                 "sourceMapRenames": {
                                     "type": "boolean",
-                                    "description": "是否在源映射中使用“names”映射。",
+                                    "description": "Whether to use the \"names\" mapping in sourcemaps.",
                                     "default": true
                                 },
                                 "sourceMapPathOverrides": {
                                     "type": "object",
-                                    "description": "将源映射中指定的源文件位置重写为磁盘上的实际位置",
+                                    "description": "Rewrites the locations of source files from what the sourcemap says to their locations on disk",
                                     "default": {}
                                 },
                                 "restart": {
                                     "type": ["boolean", "object"],
-                                    "description": "Node.js 终止后重启会话",
+                                    "description": "Restart session after Node.js has terminated",
                                     "default": false
                                 },
                                 "trace": {
                                     "type": ["boolean", "object"],
-                                    "description": "启用调试适配器的日志记录",
+                                    "description": "Enables logging of the Debug Adapter",
                                     "default": false
                                 },
                                 "console": {
                                     "type": "string",
                                     "enum": ["internalConsole", "integratedTerminal"],
-                                    "description": "在何处启动调试目标",
+                                    "description": "Where to launch the debug target",
                                     "default": "internalConsole"
                                 },
                                 // Browser-specific
                                 "url": {
                                     "type": ["string", "null"],
-                                    "description": "将导航到此 URL 并附加到它(浏览器调试)"
+                                    "description": "Will navigate to this URL and attach to it (browser debugging)"
                                 },
                                 "webRoot": {
                                     "type": "string",
-                                    "description": "Web 服务器根目录在工作区的绝对路径",
+                                    "description": "Workspace absolute path to the webserver root",
                                     "default": "${ZED_WORKTREE_ROOT}"
                                 },
                                 "userDataDir": {
                                     "type": ["string", "boolean"],
-                                    "description": "自定义 Chrome 用户配置文件的路径(浏览器调试)",
+                                    "description": "Path to a custom Chrome user profile (browser debugging)",
                                     "default": true
                                 },
                                 "skipFiles": {
                                     "type": "array",
-                                    "description": "调试时要跳过的文件的 Glob 模式数组",
+                                    "description": "An array of glob patterns for files to skip when debugging",
                                     "items": {
                                         "type": "string"
                                     },
@@ -377,12 +377,12 @@ impl DebugAdapter for JsDebugAdapter {
                                 },
                                 "timeout": {
                                     "type": "number",
-                                    "description": "连接调试适配器的重试毫秒数",
+                                    "description": "Retry for this number of milliseconds to connect to the debug adapter",
                                     "default": 10000
                                 },
                                 "resolveSourceMapLocations": {
                                     "type": ["array", "null"],
-                                    "description": "用于源映射解析的 minimatch 模式列表",
+                                    "description": "A list of minimatch patterns for source map resolution",
                                     "items": {
                                         "type": "string"
                                     }
@@ -400,7 +400,7 @@ impl DebugAdapter for JsDebugAdapter {
                                 "request": {
                                     "type": "string",
                                     "enum": ["attach"],
-                                    "description": "附加到现有进程的请求"
+                                    "description": "Request to attach to an existing process"
                                 }
                             }
                         },
@@ -410,41 +410,41 @@ impl DebugAdapter for JsDebugAdapter {
                                 "type": {
                                     "type": "string",
                                     "enum": ["pwa-node", "node", "chrome", "pwa-chrome", "edge", "pwa-edge"],
-                                    "description": "调试会话的类型",
+                                    "description": "The type of debug session",
                                     "default": "pwa-node"
                                 },
                                 "processId": {
                                     "type": ["string", "number"],
-                                    "description": "要附加到的进程 ID(Node.js 调试)"
+                                    "description": "ID of process to attach to (Node.js debugging)"
                                 },
                                 "port": {
                                     "type": "number",
-                                    "description": "要附加到的调试端口",
+                                    "description": "Debug port to attach to",
                                     "default": 9229
                                 },
                                 "address": {
                                     "type": "string",
-                                    "description": "要调试的进程的 TCP/IP 地址",
+                                    "description": "TCP/IP address of the process to be debugged",
                                     "default": "localhost"
                                 },
                                 "restart": {
                                     "type": ["boolean", "object"],
-                                    "description": "Node.js 终止后重启会话",
+                                    "description": "Restart session after Node.js has terminated",
                                     "default": false
                                 },
                                 "sourceMaps": {
                                     "type": "boolean",
-                                    "description": "如果存在 JavaScript 源映射则使用",
+                                    "description": "Use JavaScript source maps if they exist",
                                     "default": true
                                 },
                                 "sourceMapPathOverrides": {
                                     "type": "object",
-                                    "description": "将源映射中指定的源文件位置重写为磁盘上的实际位置",
+                                    "description": "Rewrites the locations of source files from what the sourcemap says to their locations on disk",
                                     "default": {}
                                 },
                                 "outFiles": {
                                     "type": "array",
-                                    "description": "用于定位生成的 JavaScript 文件的 Glob 模式",
+                                    "description": "Glob patterns for locating generated JavaScript files",
                                     "items": {
                                         "type": "string"
                                     },
@@ -452,16 +452,16 @@ impl DebugAdapter for JsDebugAdapter {
                                 },
                                 "url": {
                                     "type": "string",
-                                    "description": "将搜索具有此 URL 的页面并附加到它(浏览器调试)"
+                                    "description": "Will search for a page with this URL and attach to it (browser debugging)"
                                 },
                                 "webRoot": {
                                     "type": "string",
-                                    "description": "Web 服务器根目录在工作区的绝对路径",
+                                    "description": "Workspace absolute path to the webserver root",
                                     "default": "${ZED_WORKTREE_ROOT}"
                                 },
                                 "skipFiles": {
                                     "type": "array",
-                                    "description": "调试时要跳过的文件的 Glob 模式数组",
+                                    "description": "An array of glob patterns for files to skip when debugging",
                                     "items": {
                                         "type": "string"
                                     },
@@ -469,23 +469,23 @@ impl DebugAdapter for JsDebugAdapter {
                                 },
                                 "timeout": {
                                     "type": "number",
-                                    "description": "连接调试适配器的重试毫秒数",
+                                    "description": "Retry for this number of milliseconds to connect to the debug adapter",
                                     "default": 10000
                                 },
                                 "resolveSourceMapLocations": {
                                     "type": ["array", "null"],
-                                    "description": "用于源映射解析的 minimatch 模式列表",
+                                    "description": "A list of minimatch patterns for source map resolution",
                                     "items": {
                                         "type": "string"
                                     }
                                 },
                                 "remoteRoot": {
                                     "type": ["string", "null"],
-                                    "description": "包含程序的远程目录路径"
+                                    "description": "Path to the remote directory containing the program"
                                 },
                                 "localRoot": {
                                     "type": ["string", "null"],
-                                    "description": "包含程序的本地目录路径"
+                                    "description": "Path to the local directory containing the program"
                                 }
                             },
                             "oneOf": [
@@ -509,7 +509,7 @@ impl DebugAdapter for JsDebugAdapter {
         cx: &mut AsyncApp,
     ) -> Result<DebugAdapterBinary> {
         if self.checked.set(()).is_ok() {
-            delegate.output_to_console(format!("正在检查 {} 的最新版本...", self.name()));
+            delegate.output_to_console(format!("Checking latest version of {}...", self.name()));
             if let Some(version) = self.fetch_latest_adapter_version(delegate).await.log_err() {
                 adapters::download_adapter_from_github(
                     self.name(),
@@ -519,7 +519,7 @@ impl DebugAdapter for JsDebugAdapter {
                 )
                 .await?;
             } else {
-                delegate.output_to_console(format!("{} 调试适配器已是最新版本", self.name()));
+                delegate.output_to_console(format!("{} debug adapter is up to date", self.name()));
             }
         }
 

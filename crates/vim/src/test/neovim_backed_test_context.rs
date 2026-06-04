@@ -66,9 +66,9 @@ impl SharedState {
         }
 
         let message = if self.neovim != marked_text {
-            "测试不正确(当前期望值 != neovim 状态)"
+            "Test is incorrect (currently expected != neovim_state)"
         } else {
-            "编辑器与 nvim 行为不一致"
+            "Editor does not match nvim behavior"
         };
         panic!(
             indoc! {"{}
@@ -109,9 +109,9 @@ impl SharedClipboard {
         }
 
         let message = if expected != self.neovim {
-            "测试不正确(当前期望值 != neovim 状态)"
+            "Test is incorrect (currently expected != neovim_state)"
         } else {
-            "编辑器与 nvim 行为不一致"
+            "Editor does not match nvim behavior"
         };
 
         panic!(
@@ -277,7 +277,7 @@ impl NeovimBackedTestContext {
 
     pub async fn set_shared_wrap(&mut self, columns: u32) {
         if columns < 12 {
-            panic!("nvim 不支持列数小于 12")
+            panic!("nvim doesn't support columns < 12")
         }
         self.neovim.set_option("wrap").await;
         self.neovim

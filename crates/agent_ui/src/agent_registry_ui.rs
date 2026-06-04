@@ -93,7 +93,7 @@ impl AgentRegistryPage {
             let registry_store = AgentRegistryStore::global(cx);
             let query_editor = cx.new(|cx| {
                 let mut input = Editor::single_line(window, cx);
-                input.set_placeholder_text("搜索 Agent...", window, cx);
+                input.set_placeholder_text("Search agents...", window, cx);
                 input
             });
             cx.subscribe(&query_editor, Self::on_query_change).detach();
@@ -291,30 +291,30 @@ impl AgentRegistryPage {
         let fetch_error = registry_store.fetch_error();
 
         let message = if is_fetching {
-            "正在加载注册表..."
+            "Loading registry..."
         } else if fetch_error.is_some() {
-            "加载 Agent 注册表失败。请检查您的连接后重试。"
+            "Failed to load the agent registry. Please check your connection and try again."
         } else {
             match self.filter {
                 RegistryFilter::All => {
                     if has_search {
-                        "没有匹配搜索条件的 Agent。"
+                        "No agents match your search."
                     } else {
-                        "没有可用的 Agent。"
+                        "No agents available."
                     }
                 }
                 RegistryFilter::Installed => {
                     if has_search {
-                        "没有匹配搜索条件的已安装 Agent。"
+                        "No installed agents match your search."
                     } else {
-                        "没有已安装的 Agent。"
+                        "No installed agents."
                     }
                 }
                 RegistryFilter::NotInstalled => {
                     if has_search {
-                        "没有匹配搜索条件的未安装 Agent。"
+                        "No uninstalled agents match your search."
                     } else {
-                        "没有未安装的 Agent。"
+                        "No uninstalled agents."
                     }
                 }
             }
@@ -350,7 +350,7 @@ impl AgentRegistryPage {
             .when_some(fetch_error, |this, _| {
                 let registry_store = self.registry_store.clone();
                 this.child(
-                    Button::new("retry-agent-registry", "重试")
+                    Button::new("retry-agent-registry", "Retry")
                         .style(ButtonStyle::Outlined)
                         .size(ButtonSize::Compact)
                         .on_click(move |_, _, cx| {
@@ -381,7 +381,7 @@ impl AgentRegistryPage {
 
     fn render_missing_agent(&self) -> AgentRegistryCard {
         AgentRegistryCard::new().child(
-            Label::new("缺少注册表条目。")
+            Label::new("Missing registry entry.")
                 .size(LabelSize::Small)
                 .color(Color::Muted),
         )
@@ -416,7 +416,7 @@ impl AgentRegistryPage {
             .icon_size(IconSize::Small)
             .tooltip(move |_, cx| {
                 Tooltip::with_meta(
-                    "访问 Agent 仓库",
+                    "Visit Agent Repository",
                     None,
                     repository_for_tooltip.clone(),
                     cx,
@@ -436,7 +436,7 @@ impl AgentRegistryPage {
             )
             .icon_size(IconSize::Small)
             .tooltip(move |_, cx| {
-                Tooltip::with_meta("访问 Agent 网站", None, website.clone(), cx)
+                Tooltip::with_meta("Visit Agent Website", None, website.clone(), cx)
             })
             .on_click(move |_, _, cx| {
                 cx.open_url(&website_for_click);
@@ -455,7 +455,7 @@ impl AgentRegistryPage {
                             .child(Label::new(format!("v{}", agent.version())).color(Color::Muted))
                             .when(!supports_current_platform, |this| {
                                 this.child(
-                                    Label::new("不支持当前平台")
+                                    Label::new("Not supported on this platform")
                                         .size(LabelSize::Small)
                                         .color(Color::Warning),
                                 )
@@ -497,7 +497,7 @@ impl AgentRegistryPage {
         let button_id = SharedString::from(format!("install-agent-{}", agent.id()));
 
         if !supports_current_platform {
-            return Button::new(button_id, "不可用")
+            return Button::new(button_id, "Unavailable")
                 .style(ButtonStyle::OutlinedGhost)
                 .disabled(true);
         }
@@ -506,7 +506,7 @@ impl AgentRegistryPage {
             RegistryInstallStatus::NotInstalled => {
                 let fs = <dyn Fs>::global(cx);
                 let agent_id = agent.id().to_string();
-                Button::new(button_id, "安装")
+                Button::new(button_id, "Install")
                     .style(ButtonStyle::Tinted(ui::TintColor::Accent))
                     .start_icon(
                         Icon::new(IconName::Download)
@@ -533,7 +533,7 @@ impl AgentRegistryPage {
             RegistryInstallStatus::InstalledRegistry => {
                 let fs = <dyn Fs>::global(cx);
                 let agent_id = agent.id().to_string();
-                Button::new(button_id, "移除")
+                Button::new(button_id, "Remove")
                     .style(ButtonStyle::OutlinedGhost)
                     .on_click(move |_, _, cx| {
                         let agent_id = agent_id.clone();
@@ -552,7 +552,7 @@ impl AgentRegistryPage {
                         });
                     })
             }
-            RegistryInstallStatus::InstalledCustom => Button::new(button_id, "已安装")
+            RegistryInstallStatus::InstalledCustom => Button::new(button_id, "Installed")
                 .style(ButtonStyle::OutlinedGhost)
                 .disabled(true),
         }
@@ -575,9 +575,9 @@ impl Render for AgentRegistryPage {
                             .w_full()
                             .gap_1p5()
                             .justify_between()
-                            .child(Headline::new("ACP 注册表").size(HeadlineSize::Large))
+                            .child(Headline::new("ACP Registry").size(HeadlineSize::Large))
                             .child(
-                                Button::new("learn-more", "了解更多")
+                                Button::new("learn-more", "Learn More")
                                     .style(ButtonStyle::Outlined)
                                     .size(ButtonSize::Medium)
                                     .end_icon(
@@ -585,7 +585,7 @@ impl Render for AgentRegistryPage {
                                             .size(IconSize::Small)
                                             .color(Color::Muted),
                                     )
-                                    // VIBEDEV: "了解更多" used to link to
+                                    // VIBEDEV: "Learn More" used to link to
                                     // zed.dev/blog/acp-registry. Disabled until
                                     // we publish a VibeDev-branded ACP intro.
                                     .on_click(|_, _, _| {}),
@@ -603,7 +603,7 @@ impl Render for AgentRegistryPage {
                                         "registry-filter-buttons",
                                         [
                                             ToggleButtonSimple::new(
-                                                "全部",
+                                                "All",
                                                 cx.listener(|this, _event, _, cx| {
                                                     this.filter = RegistryFilter::All;
                                                     this.filter_registry_agents(cx);
@@ -611,7 +611,7 @@ impl Render for AgentRegistryPage {
                                                 }),
                                             ),
                                             ToggleButtonSimple::new(
-                                                "已安装",
+                                                "Installed",
                                                 cx.listener(|this, _event, _, cx| {
                                                     this.filter = RegistryFilter::Installed;
                                                     this.filter_registry_agents(cx);
@@ -619,7 +619,7 @@ impl Render for AgentRegistryPage {
                                                 }),
                                             ),
                                             ToggleButtonSimple::new(
-                                                "未安装",
+                                                "Not Installed",
                                                 cx.listener(|this, _event, _, cx| {
                                                     this.filter = RegistryFilter::NotInstalled;
                                                     this.filter_registry_agents(cx);
@@ -673,7 +673,7 @@ impl Item for AgentRegistryPage {
     type Event = ItemEvent;
 
     fn tab_content_text(&self, _detail: usize, _cx: &App) -> SharedString {
-        "ACP 注册表".into()
+        "ACP Registry".into()
     }
 
     fn telemetry_event_text(&self) -> Option<&'static str> {

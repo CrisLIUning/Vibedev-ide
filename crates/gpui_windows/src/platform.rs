@@ -99,13 +99,13 @@ impl WindowsPlatformState {
 impl WindowsPlatform {
     pub fn new(headless: bool) -> Result<Self> {
         unsafe {
-            OleInitialize(None).context("无法初始化 Windows OLE")?;
+            OleInitialize(None).context("unable to initialize Windows OLE")?;
         }
         let (directx_devices, text_system, direct_write_text_system) = if !headless {
-            let devices = DirectXDevices::new().context("创建 DirectX 设备")?;
+            let devices = DirectXDevices::new().context("Creating DirectX devices")?;
             let dw_text_system = Arc::new(
                 DirectWriteTextSystem::new(&devices)
-                    .context("创建 DirectWriteTextSystem 时出错")?,
+                    .context("Error creating DirectWriteTextSystem")?,
             );
             (
                 Some(devices),
@@ -157,11 +157,11 @@ impl WindowsPlatform {
         let inner = context
             .inner
             .take()
-            .context("CreateWindowExW 未正确运行")??;
+            .context("CreateWindowExW did not run correctly")??;
         let dispatcher = context
             .dispatcher
             .take()
-            .context("CreateWindowExW 未正确运行")?;
+            .context("CreateWindowExW did not run correctly")?;
         let handle = result?;
 
         let disable_direct_composition = std::env::var(DISABLE_DIRECT_COMPOSITION)
@@ -172,7 +172,7 @@ impl WindowsPlatform {
         let drop_target_helper: Option<IDropTargetHelper> = if !headless {
             Some(unsafe {
                 CoCreateInstance(&CLSID_DragDropHelper, None, CLSCTX_INPROC_SERVER)
-                    .context("创建拖放目标助手时出错。")?
+                    .context("Error creating drop target helper.")?
             })
         } else {
             None
@@ -324,7 +324,7 @@ impl WindowsPlatform {
                             &all_windows,
                             &text_system,
                         ) {
-                            panic!("设备丢失: {err}");
+                            panic!("Device lost: {err}");
                         }
                     }
                     let Some(all_windows) = all_windows.upgrade() else {
@@ -475,7 +475,7 @@ impl Platform for WindowsPlatform {
 
                 match restart_process {
                     Ok(_) => unsafe { PostQuitMessage(0) },
-                    Err(e) => log::error!("无法启动重启脚本: {:?}", e),
+                    Err(e) => log::error!("failed to spawn restart script: {:?}", e),
                 }
             })
             .detach();
@@ -545,7 +545,7 @@ impl Platform for WindowsPlatform {
         self.background_executor()
             .spawn(async move {
                 open_target(&url_string)
-                    .with_context(|| format!("正在打开 URL: {}", url_string))
+                    .with_context(|| format!("Opening url: {}", url_string))
                     .log_err();
             })
             .detach();
@@ -601,7 +601,7 @@ impl Platform for WindowsPlatform {
         self.background_executor()
             .spawn(async move {
                 open_target_in_explorer(&path)
-                    .with_context(|| format!("正在资源管理器中显示路径 {}", path.display()))
+                    .with_context(|| format!("Revealing path {} in explorer", path.display()))
                     .log_err();
             })
             .detach();
@@ -615,7 +615,7 @@ impl Platform for WindowsPlatform {
         self.background_executor()
             .spawn(async move {
                 open_target(&path)
-                    .with_context(|| format!("正在使用系统打开 {}", path.display()))
+                    .with_context(|| format!("Opening {} with system", path.display()))
                     .log_err();
             })
             .detach();
@@ -671,7 +671,7 @@ impl Platform for WindowsPlatform {
 
     // todo(windows)
     fn path_for_auxiliary_executable(&self, _name: &str) -> Result<PathBuf> {
-        anyhow::bail!("尚未实现");
+        anyhow::bail!("not yet implemented");
     }
 
     fn set_cursor_style(&self, style: CursorStyle) {
@@ -745,7 +745,7 @@ impl Platform for WindowsPlatform {
             unsafe {
                 CredWriteW(&credentials, 0).map_err(|err| {
                     anyhow!(
-                        "无法将凭据写入 Windows 凭据管理器: {}",
+                        "Failed to write credentials to Windows Credential Manager: {}",
                         err,
                     )
                 })?;
@@ -814,7 +814,7 @@ impl Platform for WindowsPlatform {
     }
 
     fn register_url_scheme(&self, _: &str) -> Task<anyhow::Result<()>> {
-        Task::ready(Err(anyhow!("register_url_scheme 未实现")))
+        Task::ready(Err(anyhow!("register_url_scheme unimplemented")))
     }
 
     fn perform_dock_menu_action(&self, action: usize) {
@@ -847,13 +847,13 @@ impl WindowsPlatformInner {
             dispatcher: context
                 .dispatcher
                 .as_ref()
-                .context("缺少调度器")?
+                .context("missing dispatcher")?
                 .clone(),
             validation_number: context.validation_number,
             main_receiver: context
                 .main_receiver
                 .take()
-                .context("缺少主接收器")?,
+                .context("missing main receiver")?,
         }))
     }
 
@@ -894,7 +894,7 @@ impl WindowsPlatformInner {
 
     fn handle_gpui_events(&self, message: u32, wparam: WPARAM, lparam: LPARAM) -> Option<isize> {
         if wparam.0 != self.validation_number {
-            log::error!("处理消息时验证码错误: {message}");
+            log::error!("Wrong validation number while processing message: {message}");
             return None;
         }
         match message {
@@ -912,7 +912,7 @@ impl WindowsPlatformInner {
 
     fn close_one_window(&self, target_window: HWND) -> bool {
         let Some(all_windows) = self.raw_window_handles.upgrade() else {
-            log::error!("无法升级原始窗口句柄");
+            log::error!("Failed to upgrade raw window handles");
             return false;
         };
         let mut lock = all_windows.write();
@@ -933,7 +933,7 @@ impl WindowsPlatformInner {
         'tasks: loop {
             'timeout_loop: loop {
                 if start.elapsed().as_millis() >= MAIN_TASK_TIMEOUT {
-                    log::debug!("前台任务超时");
+                    log::debug!("foreground task timeout reached");
                     // we spent our budget on gpui tasks, we likely have a lot of work queued so drain system events first to stay responsive
                     // then quit out of foreground work to allow us to process other gpui events first before returning back to foreground task work
                     // if we don't we might not for example process window quit events
@@ -1001,7 +1001,7 @@ impl WindowsPlatformInner {
             .get(action_idx)
             .map(|dock_menu| dock_menu.action.boxed_clone())
         else {
-            log::error!("未找到索引 {action_idx} 的 Dock 菜单");
+            log::error!("Dock menu for index {action_idx} not found");
             return Some(1);
         };
         self.with_callback(
@@ -1033,7 +1033,7 @@ impl Drop for WindowsPlatform {
     fn drop(&mut self) {
         unsafe {
             DestroyWindow(self.handle)
-                .context("正在销毁平台窗口")
+                .context("Destroying platform window")
                 .log_err();
             OleUninitialize();
         }
@@ -1080,7 +1080,7 @@ fn open_target(target: impl AsRef<OsStr>) -> Result<()> {
     };
     if ret.0 as isize <= 32 {
         Err(anyhow::anyhow!(
-            "无法打开目标: {}",
+            "Unable to open target: {}",
             std::io::Error::last_os_error()
         ))
     } else {
@@ -1089,7 +1089,7 @@ fn open_target(target: impl AsRef<OsStr>) -> Result<()> {
 }
 
 fn open_target_in_explorer(target: &Path) -> Result<()> {
-    let dir = target.parent().context("未找到父文件夹")?;
+    let dir = target.parent().context("No parent folder found")?;
     let desktop = unsafe { SHGetDesktopFolder()? };
 
     let mut dir_item = std::ptr::null_mut();
@@ -1122,9 +1122,9 @@ fn open_target_in_explorer(target: &Path) -> Result<()> {
             // On some systems, the above call mysteriously fails with "file not
             // found" even though the file is there.  In these cases, ShellExecute()
             // seems to work as a fallback (although it won't select the file).
-            open_target(dir).context("正在打开目标父文件夹")
+            open_target(dir).context("Opening target parent folder")
         } else {
-            Err(anyhow::anyhow!("无法打开目标路径: {}", err))
+            Err(anyhow::anyhow!("Can not open target path: {}", err))
         }
     })
 }
@@ -1183,7 +1183,7 @@ fn file_save_dialog(
     if !directory.to_string_lossy().is_empty()
         && let Some(full_path) = directory
             .canonicalize()
-            .context("无法规范化目录")
+            .context("failed to canonicalize directory")
             .log_err()
     {
         let full_path = SanitizedPath::new(&full_path);
@@ -1193,7 +1193,7 @@ fn file_save_dialog(
         unsafe {
             dialog
                 .SetFolder(&path_item)
-                .context("无法设置对话框文件夹")
+                .context("failed to set dialog folder")
                 .log_err()
         };
     }
@@ -1202,14 +1202,14 @@ fn file_save_dialog(
         unsafe {
             dialog
                 .SetFileName(&HSTRING::from(suggested_name))
-                .context("无法设置文件名")
+                .context("failed to set file name")
                 .log_err()
         };
     }
 
     unsafe {
         dialog.SetFileTypes(&[Common::COMDLG_FILTERSPEC {
-            pszName: windows::core::w!("所有文件"),
+            pszName: windows::core::w!("All files"),
             pszSpec: windows::core::w!("*.*"),
         }])?;
         if dialog.Show(window).is_err() {
@@ -1228,7 +1228,7 @@ fn file_save_dialog(
 }
 
 fn load_icon() -> Result<HICON> {
-    let module = unsafe { GetModuleHandleW(None).context("无法获取模块句柄")? };
+    let module = unsafe { GetModuleHandleW(None).context("unable to get module handle")? };
     let handle = unsafe {
         LoadImageW(
             Some(module.into()),
@@ -1238,7 +1238,7 @@ fn load_icon() -> Result<HICON> {
             0,
             LR_DEFAULTSIZE | LR_SHARED,
         )
-        .context("无法加载图标文件")?
+        .context("unable to load icon file")?
     };
     Ok(HICON(handle.0))
 }
@@ -1254,7 +1254,7 @@ fn check_device_lost(device: &ID3D11Device) -> bool {
     match device_state {
         Ok(_) => false,
         Err(err) => {
-            log::error!("检测到 DirectX 设备丢失: {:?}", err);
+            log::error!("DirectX device lost detected: {:?}", err);
             true
         }
     }
@@ -1272,9 +1272,9 @@ fn handle_gpu_device_lost(
     std::thread::sleep(std::time::Duration::from_millis(350));
 
     *directx_devices = try_to_recover_from_device_lost(|| {
-        DirectXDevices::new().context("设备丢失后无法重新创建新的 DirectX 设备")
+        DirectXDevices::new().context("Failed to recreate new DirectX devices after device lost")
     })?;
-    log::info!("DirectX 设备重新创建成功。");
+    log::info!("DirectX devices successfully recreated.");
 
     let lparam = LPARAM(directx_devices as *const _ as _);
     unsafe {
@@ -1338,7 +1338,7 @@ unsafe extern "system" fn window_procedure(
         let creation_context = unsafe { &mut *creation_context };
 
         let Some(main_sender) = creation_context.main_sender.take() else {
-            creation_context.inner = Some(Err(anyhow!("缺少主发送器")));
+            creation_context.inner = Some(Err(anyhow!("missing main sender")));
             return LRESULT(0);
         };
         creation_context.dispatcher = Some(Arc::new(WindowsDispatcher::new(

@@ -995,7 +995,7 @@ mod tests {
                 ui::ListItem::new(ix)
                     .inset(true)
                     .toggle_state(selected)
-                    .child(ui::Label::new(format!("项目 {ix}"))),
+                    .child(ui::Label::new(format!("Item {ix}"))),
             )
         }
     }

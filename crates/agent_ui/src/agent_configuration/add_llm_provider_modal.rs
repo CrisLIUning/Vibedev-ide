@@ -66,7 +66,7 @@ struct AddLlmProviderInput {
 impl AddLlmProviderInput {
     fn new(provider: LlmCompatibleProvider, window: &mut Window, cx: &mut App) -> Self {
         let provider_name =
-            single_line_input("提供商名称", provider.name(), None, 1, window, cx);
+            single_line_input("Provider Name", provider.name(), None, 1, window, cx);
         let api_url = single_line_input("API URL", provider.api_url(), None, 2, window, cx);
         let api_key = cx.new(|cx| {
             InputField::new(
@@ -74,7 +74,7 @@ impl AddLlmProviderInput {
                 cx,
                 "000000000000000000000000000000000000000000000000",
             )
-            .label("API 密钥")
+            .label("API Key")
             .tab_index(3)
             .tab_stop(true)
             .masked(true)
@@ -119,15 +119,15 @@ impl ModelInput {
         let base_tab_index = (3 + (model_index * 4)) as isize;
 
         let model_name = single_line_input(
-            "模型名称",
-            "例如 gpt-5, claude-opus-4, gemini-2.5-pro",
+            "Model Name",
+            "e.g. gpt-5, claude-opus-4, gemini-2.5-pro",
             None,
             base_tab_index + 1,
             window,
             cx,
         );
         let max_completion_tokens = single_line_input(
-            "最大补全 Token",
+            "Max Completion Tokens",
             "200000",
             Some("200000"),
             base_tab_index + 2,
@@ -135,16 +135,16 @@ impl ModelInput {
             cx,
         );
         let max_output_tokens = single_line_input(
-            "最大输出 Token",
-            "最大输出 Token",
+            "Max Output Tokens",
+            "Max Output Tokens",
             Some("32000"),
             base_tab_index + 3,
             window,
             cx,
         );
         let max_tokens = single_line_input(
-            "最大 Token",
-            "最大 Token",
+            "Max Tokens",
+            "Max Tokens",
             Some("200000"),
             base_tab_index + 4,
             window,
@@ -222,7 +222,7 @@ fn save_provider_to_settings(
 ) -> Task<Result<(), SharedString>> {
     let provider_name: Arc<str> = input.provider_name.read(cx).text(cx).into();
     if provider_name.is_empty() {
-        return Task::ready(Err("提供商名称不能为空".into()));
+        return Task::ready(Err("Provider Name cannot be empty".into()));
     }
 
     if LanguageModelRegistry::read_global(cx)
@@ -234,18 +234,18 @@ fn save_provider_to_settings(
         })
     {
         return Task::ready(Err(
-            "提供商名称已被其他提供商占用".into()
+            "Provider Name is already taken by another provider".into()
         ));
     }
 
     let api_url = input.api_url.read(cx).text(cx);
     if api_url.is_empty() {
-        return Task::ready(Err("API URL 不能为空".into()));
+        return Task::ready(Err("API URL cannot be empty".into()));
     }
 
     let api_key = input.api_key.read(cx).text(cx);
     if api_key.is_empty() {
-        return Task::ready(Err("API 密钥不能为空".into()));
+        return Task::ready(Err("API Key cannot be empty".into()));
     }
 
     let mut models = Vec::new();
@@ -254,7 +254,7 @@ fn save_provider_to_settings(
         match model.parse(cx) {
             Ok(model) => {
                 if !model_names.insert(model.name.clone()) {
-                    return Task::ready(Err("模型名称必须唯一".into()));
+                    return Task::ready(Err("Model Names must be unique".into()));
                 }
                 models.push(model)
             }
@@ -343,9 +343,9 @@ impl AddLlmProviderModal {
             .child(
                 h_flex()
                     .justify_between()
-                    .child(Label::new("模型").size(LabelSize::Small))
+                    .child(Label::new("Models").size(LabelSize::Small))
                     .child(
-                        Button::new("add-model", "添加模型")
+                        Button::new("add-model", "Add Model")
                             .start_icon(
                                 Icon::new(IconName::Plus)
                                     .size(IconSize::XSmall)
@@ -392,7 +392,7 @@ impl AddLlmProviderModal {
                     .gap_1()
                     .child(
                         Checkbox::new(("supports-tools", ix), model.capabilities.supports_tools)
-                            .label("支持工具")
+                            .label("Supports tools")
                             .on_click(cx.listener(move |this, checked, _window, cx| {
                                 this.input.models[ix].capabilities.supports_tools = *checked;
                                 cx.notify();
@@ -400,7 +400,7 @@ impl AddLlmProviderModal {
                     )
                     .child(
                         Checkbox::new(("supports-images", ix), model.capabilities.supports_images)
-                            .label("支持图像")
+                            .label("Supports images")
                             .on_click(cx.listener(move |this, checked, _window, cx| {
                                 this.input.models[ix].capabilities.supports_images = *checked;
                                 cx.notify();
@@ -426,7 +426,7 @@ impl AddLlmProviderModal {
                             ("supports-prompt-cache-key", ix),
                             model.capabilities.supports_prompt_cache_key,
                         )
-                        .label("支持 prompt_cache_key")
+                        .label("Supports prompt_cache_key")
                         .on_click(cx.listener(
                             move |this, checked, _window, cx| {
                                 this.input.models[ix].capabilities.supports_prompt_cache_key =
@@ -440,7 +440,7 @@ impl AddLlmProviderModal {
                             ("supports-chat-completions", ix),
                             model.capabilities.supports_chat_completions,
                         )
-                        .label("支持 /chat/completions")
+                        .label("Supports /chat/completions")
                         .on_click(cx.listener(
                             move |this, checked, _window, cx| {
                                 this.input.models[ix].capabilities.supports_chat_completions =
@@ -452,7 +452,7 @@ impl AddLlmProviderModal {
             )
             .when(has_more_than_one_model, |this| {
                 this.child(
-                    Button::new(("remove-model", ix), "移除模型")
+                    Button::new(("remove-model", ix), "Remove Model")
                         .start_icon(
                             Icon::new(IconName::Trash)
                                 .size(IconSize::XSmall)
@@ -520,10 +520,10 @@ impl Render for AddLlmProviderModal {
             }))
             .child(
                 Modal::new("configure-context-server", None)
-                    .header(ModalHeader::new().headline("添加 LLM 提供商").description(
+                    .header(ModalHeader::new().headline("Add LLM Provider").description(
                         match self.provider {
                             LlmCompatibleProvider::OpenAi => {
-                                "此提供商将使用 OpenAI 兼容 API。"
+                                "This provider will use an OpenAI compatible API."
                             }
                         },
                     ))
@@ -563,7 +563,7 @@ impl Render for AddLlmProviderModal {
                             h_flex()
                                 .gap_1()
                                 .child(
-                                    Button::new("cancel", "取消")
+                                    Button::new("cancel", "Cancel")
                                         .key_binding(
                                             KeyBinding::for_action_in(
                                                 &menu::Cancel,
@@ -577,7 +577,7 @@ impl Render for AddLlmProviderModal {
                                         })),
                                 )
                                 .child(
-                                    Button::new("save-server", "保存提供商")
+                                    Button::new("save-server", "Save Provider")
                                         .key_binding(
                                             KeyBinding::for_action_in(
                                                 &menu::Confirm,
@@ -616,17 +616,17 @@ mod tests {
 
         assert_eq!(
             save_provider_validation_errors("", "someurl", "somekey", vec![], cx,).await,
-            Some("提供商名称不能为空".into())
+            Some("Provider Name cannot be empty".into())
         );
 
         assert_eq!(
             save_provider_validation_errors("someprovider", "", "somekey", vec![], cx,).await,
-            Some("API URL 不能为空".into())
+            Some("API URL cannot be empty".into())
         );
 
         assert_eq!(
             save_provider_validation_errors("someprovider", "someurl", "", vec![], cx,).await,
-            Some("API 密钥不能为空".into())
+            Some("API Key cannot be empty".into())
         );
 
         assert_eq!(
@@ -689,7 +689,7 @@ mod tests {
                 cx,
             )
             .await,
-            Some("模型名称必须唯一".into())
+            Some("Model Names must be unique".into())
         );
     }
 
@@ -718,7 +718,7 @@ mod tests {
                 cx,
             )
             .await,
-            Some("提供商名称已被其他提供商占用".into())
+            Some("Provider Name is already taken by another provider".into())
         );
     }
 

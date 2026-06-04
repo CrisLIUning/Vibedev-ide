@@ -688,7 +688,7 @@ impl App {
         let foreground_executor = platform.foreground_executor();
         assert!(
             background_executor.is_main_thread(),
-            "必须在主线程上构造 App"
+            "must construct App on main thread"
         );
 
         let text_system = Arc::new(TextSystem::new(platform.text_system()));

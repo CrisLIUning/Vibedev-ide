@@ -710,11 +710,11 @@ impl PickerDelegate for TabSwitcherDelegate {
     type ListItem = ListItem;
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
-        "搜索所有标签页…".into()
+        "Search all tabs…".into()
     }
 
     fn no_matches_text(&self, _window: &mut Window, _cx: &mut App) -> Option<SharedString> {
-        Some("无标签页".into())
+        Some("No tabs".into())
     }
 
     fn match_count(&self) -> usize {

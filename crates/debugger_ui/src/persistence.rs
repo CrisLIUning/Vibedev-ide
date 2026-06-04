@@ -57,36 +57,36 @@ impl DebuggerPaneItem {
 
     pub(crate) fn to_shared_string(self) -> SharedString {
         match self {
-            DebuggerPaneItem::Console => SharedString::new_static("控制台"),
-            DebuggerPaneItem::Variables => SharedString::new_static("变量"),
-            DebuggerPaneItem::BreakpointList => SharedString::new_static("断点"),
-            DebuggerPaneItem::Frames => SharedString::new_static("栈帧"),
-            DebuggerPaneItem::Modules => SharedString::new_static("模块"),
-            DebuggerPaneItem::LoadedSources => SharedString::new_static("源文件"),
-            DebuggerPaneItem::Terminal => SharedString::new_static("终端"),
-            DebuggerPaneItem::MemoryView => SharedString::new_static("内存视图"),
+            DebuggerPaneItem::Console => SharedString::new_static("Console"),
+            DebuggerPaneItem::Variables => SharedString::new_static("Variables"),
+            DebuggerPaneItem::BreakpointList => SharedString::new_static("Breakpoints"),
+            DebuggerPaneItem::Frames => SharedString::new_static("Frames"),
+            DebuggerPaneItem::Modules => SharedString::new_static("Modules"),
+            DebuggerPaneItem::LoadedSources => SharedString::new_static("Sources"),
+            DebuggerPaneItem::Terminal => SharedString::new_static("Terminal"),
+            DebuggerPaneItem::MemoryView => SharedString::new_static("Memory View"),
         }
     }
     pub(crate) fn tab_tooltip(self) -> SharedString {
         let tooltip = match self {
             DebuggerPaneItem::Console => {
-                "显示程序输出并允许手动输入调试器命令。"
+                "Displays program output and allows manual input of debugger commands."
             }
             DebuggerPaneItem::Variables => {
-                "显示当前栈帧中局部变量和全局变量的当前值。"
+                "Shows current values of local and global variables in the current stack frame."
             }
-            DebuggerPaneItem::BreakpointList => "列出代码中设置的所有活动断点。",
+            DebuggerPaneItem::BreakpointList => "Lists all active breakpoints set in the code.",
             DebuggerPaneItem::Frames => {
-                "显示调用堆栈,允许您在函数调用之间导航。"
+                "Displays the call stack, letting you navigate between function calls."
             }
-            DebuggerPaneItem::Modules => "显示程序加载的所有模块或库。",
+            DebuggerPaneItem::Modules => "Shows all modules or libraries loaded by the program.",
             DebuggerPaneItem::LoadedSources => {
-                "列出调试器当前加载和使用的所有源文件。"
+                "Lists all source files currently loaded and used by the debugger."
             }
             DebuggerPaneItem::Terminal => {
-                "在调试环境中提供交互式终端会话。"
+                "Provides an interactive terminal session within the debugging environment."
             }
-            DebuggerPaneItem::MemoryView => "允许检查内存内容。",
+            DebuggerPaneItem::MemoryView => "Allows inspection of memory contents.",
         };
         SharedString::new_static(tooltip)
     }

@@ -28,7 +28,7 @@ pub async fn run_scoring(
 
     let progress = example_progress.start(Step::Score);
 
-    progress.set_substatus("正在计算指标");
+    progress.set_substatus("computing metrics");
     let example_for_scoring = example.clone();
     example.score = cx
         .background_spawn(async move {
@@ -123,7 +123,7 @@ pub fn print_report(examples: &[Example], verbose: bool) {
     println!("{}", separator);
     println!(
         "{:<40} {:>8} {:>5} {:>7} {:>7} {:>7} {:>7} {:>6} {:>5}",
-        "示例", "DeltaChrF", "括号", "F1", "还原", "QA回退", "QA置信度", "光标", "错误区域"
+        "Example", "DeltaChrF", "Brace", "F1", "Revert", "QaRev", "QaConf", "Cursor", "WrgER"
     );
     println!("{}", separator);
 
@@ -293,8 +293,8 @@ pub fn print_report(examples: &[Example], verbose: bool) {
 
     if skipped_lines > 0 {
         println!(
-            "{:<40} (使用 --verbose 查看全部 {} 个示例)",
-            format!("... 还有 {} 个", skipped_lines),
+            "{:<40} (use --verbose to see all {} examples)",
+            format!("... and {} more", skipped_lines),
             printed_lines + skipped_lines
         );
     }
@@ -357,7 +357,7 @@ pub fn print_report(examples: &[Example], verbose: bool) {
 
         println!(
             "{:<40} {:>8.2} {:>5.1} {:>6.1}% {:>6.1}% {:>7} {:>7} {:>6} {:>5}",
-            "总计 / 平均",
+            "TOTAL / AVERAGE",
             avg_delta_chr_f,
             braces_disbalance_avg,
             total_exact_lines.f1() * 100.0,
@@ -381,7 +381,7 @@ pub fn print_report(examples: &[Example], verbose: bool) {
         // Print additional cursor metrics if available
         if let Some(avg_dist) = avg_cursor_distance {
             println!(
-                "光标: {}/{} 精确匹配 ({:.0}%), 平均距离: {:.1} 字节",
+                "Cursor: {}/{} exact matches ({:.0}%), avg distance: {:.1} bytes",
                 cursor_exact_matches,
                 cursor_total,
                 cursor_exact_matches as f32 / cursor_total as f32 * 100.0,
@@ -391,14 +391,14 @@ pub fn print_report(examples: &[Example], verbose: bool) {
 
         // Print isolated whitespace metrics
         if total_scores > 0 {
-            println!("独立空白字符更改: {}", isolated_ws_str);
+            println!("Isolated whitespace changes: {}", isolated_ws_str);
         }
 
         // Print kept and recall rate metrics
         if kept_rate_count > 0 {
             let avg_kept_rate = kept_rate_sum / kept_rate_count as f64;
             println!(
-                "保留率: {:.1}% 平均 ({} 已评估, 保留字符: {}, 正确删除字符: {}, 丢弃字符: {})",
+                "Kept rate: {:.1}% avg ({} evaluated, kept chars: {}, correctly deleted chars: {}, discarded chars: {})",
                 avg_kept_rate * 100.0,
                 kept_rate_count,
                 kept_chars_total,
@@ -409,7 +409,7 @@ pub fn print_report(examples: &[Example], verbose: bool) {
         if recall_rate_count > 0 {
             let avg_recall_rate = recall_rate_sum / recall_rate_count as f64;
             println!(
-                "召回率: {:.1}% 平均 ({} 已评估)",
+                "Recall rate: {:.1}% avg ({} evaluated)",
                 avg_recall_rate * 100.0,
                 recall_rate_count
             );
@@ -429,7 +429,7 @@ pub fn print_report(examples: &[Example], verbose: bool) {
             let patch_rate = predictions_with_patch as f32 / total_scores as f32 * 100.0;
             println!();
             println!(
-                "Token 变更({}/{} 个预测生成了补丁,{:.1}% — 表格仅包含这些)",
+                "Token changes ({}/{} predictions produced a patch, {:.1}% — table includes only those)",
                 predictions_with_patch, total_scores, patch_rate
             );
             println!(
@@ -439,7 +439,7 @@ pub fn print_report(examples: &[Example], verbose: bool) {
             println!("{}", "─".repeat(LINE_WIDTH));
             println!(
                 "{:<20} {:>8} {:>8} {:>8} {:>8} {:>8}",
-                "插入的 Token",
+                "Inserted tokens",
                 percentile(&patch_inserted_tokens, 25),
                 percentile(&patch_inserted_tokens, 50),
                 percentile(&patch_inserted_tokens, 75),
@@ -448,7 +448,7 @@ pub fn print_report(examples: &[Example], verbose: bool) {
             );
             println!(
                 "{:<20} {:>8} {:>8} {:>8} {:>8} {:>8}",
-                "删除的 Token",
+                "Deleted tokens",
                 percentile(&patch_deleted_tokens, 25),
                 percentile(&patch_deleted_tokens, 50),
                 percentile(&patch_deleted_tokens, 75),
@@ -457,7 +457,7 @@ pub fn print_report(examples: &[Example], verbose: bool) {
             );
             println!(
                 "{:<20} {:>8} {:>8} {:>8} {:>8} {:>8}",
-                "Token 总计",
+                "Total tokens",
                 percentile(&patch_total_tokens, 25),
                 percentile(&patch_total_tokens, 50),
                 percentile(&patch_total_tokens, 75),

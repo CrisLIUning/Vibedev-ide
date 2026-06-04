@@ -78,9 +78,9 @@ impl MoveToApplicationsRequest {
                     "VibeDev is running from a temporary location. Move it to Applications to finish installing it.",
                 ),
                 &[
-                    PromptButton::ok("是"),
-                    PromptButton::cancel("否"),
-                    PromptButton::new("不再询问"),
+                    PromptButton::ok("Yes"),
+                    PromptButton::cancel("No"),
+                    PromptButton::new("Don’t ask me again"),
                 ],
             )
             .await?;
@@ -105,7 +105,7 @@ impl MoveToApplicationsRequest {
                         PromptLevel::Critical,
                         "Failed to move VibeDev to Applications",
                         Some(&error.to_string()),
-                        &["确定"],
+                        &["Ok"],
                     )
                     .await
                     .log_err();
@@ -220,7 +220,7 @@ async fn move_to_applications(app_path: &Path, cx: &mut AsyncWindowContext) -> R
 async fn install_destination(app_path: &Path) -> Result<PathBuf> {
     let app_name = app_path
         .file_name()
-        .context("无效的应用路径:缺少应用包名称")?;
+        .context("invalid app path: missing app bundle name")?;
 
     let system_destination = Path::new("/Applications").join(app_name);
     if system_destination.exists() {
@@ -228,7 +228,7 @@ async fn install_destination(app_path: &Path) -> Result<PathBuf> {
             .await
             .with_context(|| {
                 format!(
-                    "无法替换现有应用:{}",
+                    "failed to replace existing app at {}",
                     system_destination.display()
                 )
             })?;
@@ -242,7 +242,7 @@ async fn install_destination(app_path: &Path) -> Result<PathBuf> {
             .await
             .with_context(|| {
                 format!(
-                    "无法替换现有应用:{}",
+                    "failed to replace existing app at {}",
                     user_destination.display()
                 )
             })?;
@@ -253,18 +253,18 @@ async fn install_destination(app_path: &Path) -> Result<PathBuf> {
         Ok(()) => Ok(system_destination),
         Err(system_error) => {
             let user_applications_directory = user_applications_directory()
-                .context("无法确定可写的应用程序目录")?;
+                .context("could not determine a writable Applications directory")?;
             smol::fs::create_dir_all(&user_applications_directory)
                 .await
                 .with_context(|| {
-                    format!("无法创建 {}", user_applications_directory.display())
+                    format!("failed to create {}", user_applications_directory.display())
                 })?;
             let user_destination = user_applications_directory.join(app_name);
             copy_app_bundle(app_path, &user_destination)
                 .await
                 .with_context(|| {
                     format!(
-                        "系统 Applications 目录复制失败后,无法将应用复制到 {}:{system_error:#}",
+                        "failed to copy app to {} after system Applications copy failed: {system_error:#}",
                         user_destination.display()
                     )
                 })?;
@@ -276,10 +276,10 @@ async fn install_destination(app_path: &Path) -> Result<PathBuf> {
 async fn copy_app_bundle(source: &Path, destination: &Path) -> Result<()> {
     let parent = destination
         .parent()
-        .context("无效的目标路径:缺少父目录")?;
+        .context("invalid destination path: missing parent directory")?;
     smol::fs::create_dir_all(parent)
         .await
-        .with_context(|| format!("无法创建 {}", parent.display()))?;
+        .with_context(|| format!("failed to create {}", parent.display()))?;
 
     let mut source_with_contents: OsString = source.into();
     source_with_contents.push("/");
@@ -294,11 +294,11 @@ async fn copy_app_bundle(source: &Path, destination: &Path) -> Result<()> {
     let output = command
         .output()
         .await
-        .with_context(|| format!("无法为 {} 运行 rsync", source.display()))?;
+        .with_context(|| format!("failed to run rsync for {}", source.display()))?;
 
     anyhow::ensure!(
         output.status.success(),
-        "无法复制应用包:{}",
+        "failed to copy app bundle: {}",
         String::from_utf8_lossy(&output.stderr)
     );
 
@@ -316,5 +316,5 @@ fn restart_into(app_path: PathBuf, cx: &mut AsyncWindowContext) -> Result<()> {
 fn user_applications_directory() -> Option<PathBuf> {
     std::env::var_os("HOME")
         .map(PathBuf::from)
-        .map(|home| home.join("应用程序"))
+        .map(|home| home.join("Applications"))
 }

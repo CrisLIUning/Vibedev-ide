@@ -43,7 +43,7 @@ use crate::GEMINI_ID;
 pub const GEMINI_TERMINAL_AUTH_METHOD_ID: &str = "spawn-gemini-cli";
 const MAX_DEBUG_BACKLOG_MESSAGES: usize = 2000;
 const ACP_RESPONSE_CHANNEL_CANCELLED: &str =
-    "响应通道已取消 — 连接可能已断开";
+    "response channel cancelled — connection may have dropped";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AcpDebugMessageDirection {
@@ -105,7 +105,7 @@ impl AcpDebugMessage {
                     params: object.get("params").cloned(),
                 },
                 Some(Err(err)) => {
-                    log::warn!("跳过无法解析 id 的 JSON-RPC 消息:{err}");
+                    log::warn!("Skipping JSON-RPC message with unparsable id: {err}");
                     return None;
                 }
                 None => AcpDebugMessageContent::Notification {
@@ -117,7 +117,7 @@ impl AcpDebugMessage {
             let id = match parsed_id {
                 Ok(id) => id,
                 Err(err) => {
-                    log::warn!("跳过无法解析 id 的 JSON-RPC 响应:{err}");
+                    log::warn!("Skipping JSON-RPC response with unparsable id: {err}");
                     return None;
                 }
             };
@@ -125,7 +125,7 @@ impl AcpDebugMessage {
             if let Some(error) = object.get("error") {
                 let acp_error =
                     serde_json::from_value::<acp::Error>(error.clone()).unwrap_or_else(|err| {
-                        log::warn!("反序列化 ACP 错误失败:{err}");
+                        log::warn!("Failed to deserialize ACP error: {err}");
                         acp::Error::internal_error().data(error.to_string())
                     });
 
@@ -299,7 +299,7 @@ struct ClientContext {
 }
 
 fn dispatch_queue_closed_error() -> acp::Error {
-    acp::Error::internal_error().data("ACP 前台调度队列已关闭")
+    acp::Error::internal_error().data("ACP foreground dispatch queue closed")
 }
 
 /// Work items sent from `Send` handler closures to the `!Send` foreground thread.
@@ -336,7 +336,7 @@ where
 
     fn reject(self: Box<Self>) {
         let Self { responder, .. } = *self;
-        log::error!("处理入站请求时 ACP 前台调度队列已关闭");
+        log::error!("ACP foreground dispatch queue closed while handling inbound request");
         responder
             .respond_with_error(dispatch_queue_closed_error())
             .log_err();
@@ -367,7 +367,7 @@ where
 
     fn reject(self: Box<Self>) {
         let Self { connection, .. } = *self;
-        log::error!("处理入站通知时 ACP 前台调度队列已关闭");
+        log::error!("ACP foreground dispatch queue closed while handling inbound notification");
         connection
             .send_error_notification(dispatch_queue_closed_error())
             .log_err();
@@ -554,7 +554,7 @@ impl AgentSessionList for AcpSessionList {
 
     fn delete_session(&self, session_id: &acp::SessionId, cx: &mut App) -> Task<Result<()>> {
         if !self.supports_delete(cx) {
-            return Task::ready(Err(anyhow::anyhow!("delete_session 不受支持")));
+            return Task::ready(Err(anyhow::anyhow!("delete_session not supported")));
         }
 
         let conn = self.connection.clone();
@@ -696,7 +696,7 @@ fn connect_client_future(
             transport,
             move |connection: ConnectionTo<Agent>| async move {
                 if connection_tx.send(connection).is_err() {
-                    log::error!("发送 ACP 连接句柄失败 — 接收方已断开");
+                    log::error!("failed to send ACP connection handle — receiver was dropped");
                 }
                 // Keep the connection alive until the transport closes.
                 futures::future::pending::<Result<(), acp::Error>>().await
@@ -801,7 +801,7 @@ impl AcpConnection {
             move |result| match result {
                 Ok(line) => debug_log.record_line(AcpDebugMessageDirection::Incoming, line),
                 Err(err) => {
-                    log::warn!("ACP 传输读取错误:{err}");
+                    log::warn!("ACP transport read error: {err}");
                 }
             }
         });
@@ -850,14 +850,14 @@ impl AcpConnection {
             connect_client_future("vibedev", transport, dispatch_tx.clone(), connection_tx);
         let io_task = cx.background_spawn(async move {
             if let Err(err) = connection_future.await {
-                log::error!("ACP 连接错误:{err}");
+                log::error!("ACP connection error: {err}");
             }
         });
 
         let connection_rx = async move {
             connection_rx
                 .await
-                .context("接收 ACP 连接句柄失败")
+                .context("Failed to receive ACP connection handle")
         }
         .boxed_local();
         let status_fut = child
@@ -866,7 +866,7 @@ impl AcpConnection {
                 let debug_log = debug_log.clone();
                 move |status| match status {
                     Ok(status) => Ok(exited_load_error_with_stderr(status, &debug_log)),
-                    Err(err) => Err(anyhow!("等待 agent server 退出失败: {err}")),
+                    Err(err) => Err(anyhow!("failed to wait for agent server exit: {err}")),
                 }
             })
             .boxed_local();
@@ -999,8 +999,8 @@ impl AcpConnection {
             });
             let meta = acp::Meta::from_iter([("terminal-auth".to_string(), value)]);
             vec![acp::AuthMethod::Agent(
-                acp::AuthMethodAgent::new(GEMINI_TERMINAL_AUTH_METHOD_ID, "登录")
-                    .description("使用 Google 或 Vertex AI 账号登录")
+                acp::AuthMethodAgent::new(GEMINI_TERMINAL_AUTH_METHOD_ID, "Login")
+                    .description("Login with your Google or Vertex AI account")
                     .meta(meta),
             )]
         } else {
@@ -1187,7 +1187,7 @@ impl AcpConnection {
                         let mut sessions = this.sessions.borrow_mut();
                         let Some(session) = sessions.get_mut(&session_id) else {
                             return Err(Arc::new(anyhow!(
-                                "会话在加载完成前已关闭"
+                                "session was closed before load completed"
                             )));
                         };
                         session.session_modes = modes;
@@ -1548,7 +1548,7 @@ fn session_directories_from_work_dirs(
     let cwd = ordered_paths
         .next()
         .cloned()
-        .ok_or_else(|| anyhow!("工作目录不能为空"))?;
+        .ok_or_else(|| anyhow!("Working directory cannot be empty"))?;
     let additional_directories = if supports_additional_directories {
         ordered_paths.cloned().collect()
     } else {
@@ -1964,7 +1964,7 @@ impl AgentConnection for AcpConnection {
     ) -> Task<Result<()>> {
         if !self.supports_close_session() {
             return Task::ready(Err(anyhow!(LoadError::Other(
-                "此代理不支持关闭会话。".into()
+                "Closing sessions is not supported by this agent.".into()
             ))));
         }
 
@@ -1974,7 +1974,7 @@ impl AgentConnection for AcpConnection {
         // that was pre-registered to receive history-replay notifications.
         // Only once the pending ref count hits zero do we actually close the
         // session; the load task will observe the missing sessions entry and
-        // fail with "会话在加载完成前已关闭".
+        // fail with "session was closed before load completed".
         let pending_ref_count = {
             let mut pending_sessions = self.pending_sessions.borrow_mut();
             pending_sessions.get_mut(session_id).map(|pending| {
@@ -2049,14 +2049,14 @@ impl AgentConnection for AcpConnection {
                         .update(cx, |store, cx| {
                             let agent = store
                                 .get_external_agent(&agent_id)
-                                .context("未找到 Agent 服务器")?;
+                                .context("Agent server not found")?;
                             anyhow::Ok(agent.get_command(
                                 terminal.args.clone(),
                                 HashMap::from_iter(terminal.env.clone()),
                                 &mut cx.to_async(),
                             ))
                         })?
-                        .context("获取 Agent 命令失败")?
+                        .context("Failed to get agent command")?
                         .await?;
                     Ok(terminal_auth_task(&command, &agent_id, &terminal))
                 }))
@@ -2081,7 +2081,7 @@ impl AgentConnection for AcpConnection {
 
     fn logout(&self, cx: &mut App) -> Task<Result<()>> {
         if !self.supports_logout() {
-            return Task::ready(Err(anyhow!("此代理不支持注销")));
+            return Task::ready(Err(anyhow!("Logout is not supported by this agent.")));
         }
 
         let conn = self.connection.clone();
@@ -2651,7 +2651,7 @@ pub mod test_support {
 
         let client_conn: ConnectionTo<Agent> = connection_rx
             .await
-            .context("接收模拟 ACP 连接句柄失败")?;
+            .context("failed to receive fake ACP connection handle")?;
 
         let response = into_foreground_future(
             client_conn.send_request(acp::InitializeRequest::new(acp::ProtocolVersion::V1)),
@@ -2719,7 +2719,7 @@ pub mod test_support {
             &mut cx.to_async(),
         )
         .await
-        .expect("初始化 ACP 连接失败")
+        .expect("failed to initialize ACP connection")
     }
 }
 
@@ -2743,7 +2743,7 @@ mod tests {
                 ("EXTRA".into(), "2".into()),
             ])),
         };
-        let method = acp::AuthMethodTerminal::new("login", "登录");
+        let method = acp::AuthMethodTerminal::new("login", "Login");
 
         let task = terminal_auth_task(&command, &AgentId::new("test-agent"), &method);
 
@@ -2757,15 +2757,15 @@ mod tests {
                 ("EXTRA".into(), "2".into()),
             ])
         );
-        assert_eq!(task.label, "登录");
-        assert_eq!(task.command_label, "登录");
+        assert_eq!(task.label, "Login");
+        assert_eq!(task.command_label, "Login");
     }
 
     #[test]
     fn legacy_terminal_auth_task_parses_meta_and_retries_session() {
         let method_id = acp::AuthMethodId::new("legacy-login");
         let method = acp::AuthMethod::Agent(
-            acp::AuthMethodAgent::new(method_id.clone(), "登录").meta(acp::Meta::from_iter([(
+            acp::AuthMethodAgent::new(method_id.clone(), "Login").meta(acp::Meta::from_iter([(
                 "terminal-auth".to_string(),
                 serde_json::json!({
                     "label": "legacy /auth",
@@ -2795,7 +2795,7 @@ mod tests {
     fn legacy_terminal_auth_task_returns_none_for_invalid_meta() {
         let method_id = acp::AuthMethodId::new("legacy-login");
         let method = acp::AuthMethod::Agent(
-            acp::AuthMethodAgent::new(method_id.clone(), "登录").meta(acp::Meta::from_iter([(
+            acp::AuthMethodAgent::new(method_id.clone(), "Login").meta(acp::Meta::from_iter([(
                 "terminal-auth".to_string(),
                 serde_json::json!({
                     "label": "legacy /auth",
@@ -2812,7 +2812,7 @@ mod tests {
     fn first_class_terminal_auth_takes_precedence_over_legacy_meta() {
         let method_id = acp::AuthMethodId::new("login");
         let method = acp::AuthMethod::Terminal(
-            acp::AuthMethodTerminal::new(method_id, "登录")
+            acp::AuthMethodTerminal::new(method_id, "Login")
                 .args(vec!["/auth".into()])
                 .env(std::collections::HashMap::from_iter([(
                     "AUTH_MODE".into(),
@@ -2856,7 +2856,7 @@ mod tests {
                 ("AUTH_MODE".into(), "first-class".into()),
             ])
         );
-        assert_eq!(task.label, "登录");
+        assert_eq!(task.label, "Login");
     }
 
     #[test]
@@ -2886,7 +2886,7 @@ mod tests {
         ]);
 
         let directories =
-            session_directories_from_work_dirs(&work_dirs, true).expect("工作目录应该转换");
+            session_directories_from_work_dirs(&work_dirs, true).expect("work dirs should convert");
 
         assert_eq!(
             directories,
@@ -2936,7 +2936,7 @@ mod tests {
         ]);
 
         let directories = session_directories_from_work_dirs(&work_dirs, false)
-            .expect("工作目录应该转换");
+            .expect("work dirs should convert");
 
         assert_eq!(
             directories,
@@ -3010,15 +3010,15 @@ mod tests {
         let response = cx
             .update(|cx| session_list.list_sessions(AgentSessionListRequest::default(), cx))
             .await
-            .expect("会话列表应该加载");
+            .expect("session list should load");
         let session = response
             .sessions
             .first()
-            .expect("会话列表应该包含返回的会话");
+            .expect("session list should include the returned session");
         let work_dirs = session
             .work_dirs
             .as_ref()
-            .expect("会话应该包含工作目录");
+            .expect("session should include work dirs");
 
         assert_eq!(
             work_dirs.ordered_paths().cloned().collect::<Vec<_>>(),
@@ -3085,7 +3085,7 @@ mod tests {
 
         connection_rx
             .await
-            .expect("接收 ACP 连接失败")
+            .expect("failed to receive ACP connection")
     }
 
     #[gpui::test]
@@ -3111,11 +3111,11 @@ mod tests {
         let missing_capability = harness
             .connection
             .session_directories_from_work_dirs(&work_dirs)
-            .expect("工作目录应该转换");
+            .expect("work dirs should convert");
         assert!(missing_capability.additional_directories.is_empty());
 
         Rc::get_mut(&mut harness.connection)
-            .expect("测试工具应该拥有唯一的 ACP 连接句柄")
+            .expect("test harness should own the only ACP connection handle")
             .agent_capabilities
             .session_capabilities
             .additional_directories = Some(acp::SessionAdditionalDirectoriesCapabilities::new());
@@ -3123,7 +3123,7 @@ mod tests {
         let supported = harness
             .connection
             .session_directories_from_work_dirs(&work_dirs)
-            .expect("工作目录应该转换");
+            .expect("work dirs should convert");
         assert_eq!(
             supported,
             SessionDirectories {
@@ -3174,7 +3174,7 @@ mod tests {
                         async move |request: acp::DeleteSessionRequest, responder, _cx| {
                             deleted_sessions
                                 .lock()
-                                .expect("已删除会话的锁不应该被破坏")
+                                .expect("deleted sessions lock should not be poisoned")
                                 .push(request.session_id);
                             responder.respond(acp::DeleteSessionResponse::default())
                         }
@@ -3197,7 +3197,7 @@ mod tests {
 
         connection_rx
             .await
-            .expect("接收 ACP 连接失败")
+            .expect("failed to receive ACP connection")
     }
 
     #[gpui::test]
@@ -3216,12 +3216,12 @@ mod tests {
         });
         cx.update(|cx| session_list.delete_session(&session_id, cx))
             .await
-            .expect("delete_session 失败");
+            .expect("delete_session failed");
 
         assert_eq!(
             *deleted_sessions
                 .lock()
-                .expect("已删除会话的锁不应该被破坏"),
+                .expect("deleted sessions lock should not be poisoned"),
             vec![session_id]
         );
     }
@@ -3241,16 +3241,16 @@ mod tests {
         let error = cx
             .update(|cx| session_list.delete_session(&session_id, cx))
             .await
-            .expect_err("当不支持时 delete_session 应该失败");
+            .expect_err("delete_session should fail when unsupported");
 
         assert!(
-            error.to_string().contains("delete_session 不受支持"),
-            "意外错误: {error}"
+            error.to_string().contains("delete_session not supported"),
+            "unexpected error: {error}"
         );
         assert!(
             deleted_sessions
                 .lock()
-                .expect("已删除会话的锁不应该被破坏")
+                .expect("deleted sessions lock should not be poisoned")
                 .is_empty()
         );
     }
@@ -3269,19 +3269,19 @@ mod tests {
         let unsupported_logout = cx.update(|cx| harness.connection.logout(cx));
         let error = unsupported_logout
             .await
-            .expect_err("当代理不声明支持时 logout 应该被拒绝");
-        assert_eq!(error.to_string(), "此代理不支持注销");
+            .expect_err("logout should be rejected when the agent does not advertise support");
+        assert_eq!(error.to_string(), "Logout is not supported by this agent.");
         assert_eq!(harness.logout_count.load(Ordering::SeqCst), 0);
 
         Rc::get_mut(&mut harness.connection)
-            .expect("测试工具应该拥有唯一的 ACP 连接句柄")
+            .expect("test harness should own the only ACP connection handle")
             .agent_capabilities
             .auth = acp::AgentAuthCapabilities::new().logout(acp::LogoutCapabilities::new());
 
         assert!(harness.connection.supports_logout());
         cx.update(|cx| harness.connection.logout(cx))
             .await
-            .expect("当代理声明支持时 logout 应该被发送");
+            .expect("logout should be sent when the agent advertises support");
         assert_eq!(harness.logout_count.load(Ordering::SeqCst), 1);
     }
 
@@ -3432,7 +3432,7 @@ mod tests {
                         let updates = std::mem::take(
                             &mut *load_session_updates
                                 .lock()
-                                .expect("load_session_updates 互斥锁已损坏"),
+                                .expect("load_session_updates mutex poisoned"),
                         );
                         for update in updates {
                             cx.send_notification(acp::SessionNotification::new(
@@ -3446,7 +3446,7 @@ mod tests {
                         // `close_session`) with an in-flight load.
                         let gate = load_session_gate
                             .lock()
-                            .expect("load_session_gate 互斥锁已损坏")
+                            .expect("load_session_gate mutex poisoned")
                             .take();
                         if let Some(gate) = gate {
                             gate.recv().await.ok();
@@ -3493,13 +3493,13 @@ mod tests {
 
         let client_conn: ConnectionTo<Agent> = connection_rx
             .await
-            .expect("接收 ACP 连接句柄失败");
+            .expect("Failed to receive ACP connection handle");
 
         let response = into_foreground_future(
             client_conn.send_request(acp::InitializeRequest::new(acp::ProtocolVersion::V1)),
         )
         .await
-        .expect("初始化 ACP 连接失败");
+        .expect("failed to initialize ACP connection");
 
         let agent_capabilities = response.agent_capabilities;
 
@@ -3588,51 +3588,51 @@ mod tests {
             )
         });
 
-        let first_thread = first_load.await.expect("首次加载失败");
-        let second_thread = second_load.await.expect("第二次加载失败");
+        let first_thread = first_load.await.expect("first load failed");
+        let second_thread = second_load.await.expect("second load failed");
         cx.run_until_parked();
 
         assert_eq!(
             first_thread.entity_id(),
             second_thread.entity_id(),
-            "同一会话的并发加载应共享一个 AcpThread"
+            "concurrent loads for the same session should share one AcpThread"
         );
         assert_eq!(
             load_count.load(Ordering::SeqCst),
             1,
-            "并发加载时底层 ACP load_session 应仅调用一次"
+            "underlying ACP load_session should be called exactly once for concurrent loads"
         );
 
         // The session has ref_count 2. The first close should not send the ACP
         // close_session RPC — the session is still referenced.
         cx.update(|cx| connection.clone().close_session(&session_id, cx))
             .await
-            .expect("首次关闭失败");
+            .expect("first close failed");
 
         assert_eq!(
             close_count.load(Ordering::SeqCst),
             0,
-            "ref_count > 0 时不应发送 ACP close_session"
+            "ACP close_session should not be sent while ref_count > 0"
         );
         assert!(
             connection.sessions.borrow().contains_key(&session_id),
-            "首次关闭后会话应仍被跟踪"
+            "session should still be tracked after first close"
         );
 
         // The second close drops ref_count to 0 — now the ACP RPC must be sent.
         cx.update(|cx| connection.clone().close_session(&session_id, cx))
             .await
-            .expect("第二次关闭失败");
+            .expect("second close failed");
         cx.run_until_parked();
 
         assert_eq!(
             close_count.load(Ordering::SeqCst),
             1,
-            "ref_count 降至 0 时应恰好发送一次 ACP close_session"
+            "ACP close_session should be sent exactly once when ref_count reaches 0"
         );
         assert!(
             !connection.sessions.borrow().contains_key(&session_id),
-            "最终关闭后会话应被移除"
+            "session should be removed after final close"
         );
     }
 
@@ -3659,7 +3659,7 @@ mod tests {
         // the client during the `load_session` call, before responding.
         *load_session_updates
             .lock()
-            .expect("load_session_updates 互斥锁已损坏") = vec![
+            .expect("load_session_updates mutex poisoned") = vec![
             acp::SessionUpdate::UserMessageChunk(acp::ContentChunk::new(acp::ContentBlock::Text(
                 acp::TextContent::new(String::from("hello agent")),
             ))),
@@ -3728,7 +3728,7 @@ mod tests {
         let (gate_tx, gate_rx) = async_channel::bounded::<()>(1);
         *load_session_gate
             .lock()
-            .expect("load_session_gate 互斥锁已损坏") = Some(gate_rx);
+            .expect("load_session_gate mutex poisoned") = Some(gate_rx);
 
         let session_id = acp::SessionId::new("session-close-during-load");
         let work_dirs = util::path_list::PathList::new(&[std::path::Path::new("/a")]);
@@ -3777,7 +3777,7 @@ mod tests {
         let err = load_result.expect_err("load should fail after close-during-load");
         assert!(
             err.to_string()
-                .contains("会话在加载完成前已关闭"),
+                .contains("session was closed before load completed"),
             "expected close-during-load error, got: {err}"
         );
 
@@ -3823,7 +3823,7 @@ mod tests {
         let (gate_tx, gate_rx) = async_channel::bounded::<()>(1);
         *load_session_gate
             .lock()
-            .expect("load_session_gate 互斥锁已损坏") = Some(gate_rx);
+            .expect("load_session_gate mutex poisoned") = Some(gate_rx);
 
         let session_id = acp::SessionId::new("session-concurrent-close");
         let work_dirs = util::path_list::PathList::new(&[std::path::Path::new("/a")]);
@@ -3905,7 +3905,7 @@ mod tests {
         );
         assert!(
             !connection.sessions.borrow().contains_key(&session_id),
-            "最终关闭后会话应被移除"
+            "session should be removed after final close"
         );
     }
 }
@@ -4234,7 +4234,7 @@ fn session_thread(
     sessions
         .get(session_id)
         .map(|session| session.thread.clone())
-        .ok_or_else(|| acp::Error::internal_error().data(format!("未知会话:{session_id}")))
+        .ok_or_else(|| acp::Error::internal_error().data(format!("unknown session: {session_id}")))
 }
 
 fn respond_err<T: JsonRpcResponse>(responder: Responder<T>, err: acp::Error) {
@@ -4242,7 +4242,7 @@ fn respond_err<T: JsonRpcResponse>(responder: Responder<T>, err: acp::Error) {
     // error path (e.g. unknown session) would see only the generic internal
     // error returned over the wire with no trace of why on the client side.
     log::warn!(
-        "响应 ACP 请求 `{method}` 时返回错误:{err:?}",
+        "Responding to ACP request `{method}` with error: {err:?}",
         method = responder.method()
     );
     responder.respond_with_error(err).log_err();
@@ -4366,7 +4366,7 @@ fn handle_session_notification(
         let sessions = ctx.sessions.borrow();
         let Some(session) = sessions.get(&notification.session_id) else {
             log::warn!(
-                "收到未知会话的通知:{:?}",
+                "Received session notification for unknown session: {:?}",
                 notification.session_id
             );
             return;
@@ -4455,7 +4455,7 @@ fn handle_session_notification(
         .flatten_acp()
     {
         log::error!(
-            "处理会话更新失败:{:?} - {err:?}",
+            "Failed to handle session update for {:?}: {err:?}",
             notification.session_id
         );
     }

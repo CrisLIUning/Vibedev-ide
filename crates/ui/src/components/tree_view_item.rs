@@ -225,7 +225,7 @@ impl Component for TreeViewItem {
 
     fn description() -> Option<&'static str> {
         Some(
-            "具有父子关系的层级列表,子项可以通过展开或折叠其父项来切换显示。",
+            "A hierarchical list of items that may have a parent-child relationship where children can be toggled into view by expanding or collapsing their parent item.",
         )
     }
 
@@ -242,51 +242,51 @@ impl Component for TreeViewItem {
         Some(
             example_group(vec![
                 single_example(
-                    "基本树视图",
+                    "Basic Tree View",
                     container()
                         .child(
-                            TreeViewItem::new("index-1", "树根项 #1")
+                            TreeViewItem::new("index-1", "Tree Item Root #1")
                                 .root_item(true)
                                 .toggle_state(true),
                         )
-                        .child(TreeViewItem::new("index-2", "树项 #2"))
-                        .child(TreeViewItem::new("index-3", "树项 #3"))
-                        .child(TreeViewItem::new("index-4", "树根项 #2").root_item(true))
-                        .child(TreeViewItem::new("index-5", "树项 #5"))
-                        .child(TreeViewItem::new("index-6", "树项 #6"))
+                        .child(TreeViewItem::new("index-2", "Tree Item #2"))
+                        .child(TreeViewItem::new("index-3", "Tree Item #3"))
+                        .child(TreeViewItem::new("index-4", "Tree Item Root #2").root_item(true))
+                        .child(TreeViewItem::new("index-5", "Tree Item #5"))
+                        .child(TreeViewItem::new("index-6", "Tree Item #6"))
                         .into_any_element(),
                 ),
                 single_example(
-                    "活动子项",
+                    "Active Child",
                     container()
-                        .child(TreeViewItem::new("index-1", "树根项 #1").root_item(true))
-                        .child(TreeViewItem::new("index-2", "树项 #2").toggle_state(true))
-                        .child(TreeViewItem::new("index-3", "树项 #3"))
+                        .child(TreeViewItem::new("index-1", "Tree Item Root #1").root_item(true))
+                        .child(TreeViewItem::new("index-2", "Tree Item #2").toggle_state(true))
+                        .child(TreeViewItem::new("index-3", "Tree Item #3"))
                         .into_any_element(),
                 ),
                 single_example(
-                    "聚焦父项",
+                    "Focused Parent",
                     container()
                         .child(
-                            TreeViewItem::new("index-1", "树根项 #1")
+                            TreeViewItem::new("index-1", "Tree Item Root #1")
                                 .root_item(true)
                                 .focused(true)
                                 .toggle_state(true),
                         )
-                        .child(TreeViewItem::new("index-2", "树项 #2"))
-                        .child(TreeViewItem::new("index-3", "树项 #3"))
+                        .child(TreeViewItem::new("index-2", "Tree Item #2"))
+                        .child(TreeViewItem::new("index-3", "Tree Item #3"))
                         .into_any_element(),
                 ),
                 single_example(
-                    "聚焦子项",
+                    "Focused Child",
                     container()
                         .child(
-                            TreeViewItem::new("index-1", "树根项 #1")
+                            TreeViewItem::new("index-1", "Tree Item Root #1")
                                 .root_item(true)
                                 .toggle_state(true),
                         )
-                        .child(TreeViewItem::new("index-2", "树项 #2").focused(true))
-                        .child(TreeViewItem::new("index-3", "树项 #3"))
+                        .child(TreeViewItem::new("index-2", "Tree Item #2").focused(true))
+                        .child(TreeViewItem::new("index-3", "Tree Item #3"))
                         .into_any_element(),
                 ),
             ])

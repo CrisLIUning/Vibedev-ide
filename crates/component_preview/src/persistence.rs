@@ -33,7 +33,7 @@ impl ComponentPreviewDb {
         active_page_id: String,
     ) -> Result<()> {
         log::debug!(
-            "正在保存活动页面: item_id={item_id:?}, workspace_id={workspace_id:?}, active_page_id={active_page_id}"
+            "Saving active page: item_id={item_id:?}, workspace_id={workspace_id:?}, active_page_id={active_page_id}"
         );
         let query = "INSERT INTO component_previews(item_id, workspace_id, active_page_id)
             VALUES (?1, ?2, ?3)

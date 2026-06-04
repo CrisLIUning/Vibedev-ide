@@ -364,7 +364,7 @@ impl Timer {
         {
             crate::warn!(
                 self.logger =>
-                "计时器 '{}' 耗时 {:?}。这超过了预期的 {:?} 限制",
+                "Timer '{}' took {:?}. Which was longer than the expected limit of {:?}",
                 self.name,
                 elapsed,
                 warn_limit
@@ -374,7 +374,7 @@ impl Timer {
         }
         crate::trace!(
             self.logger =>
-            "计时器 '{}' 完成于 {:?}",
+            "Timer '{}' finished in {:?}",
             self.name,
             elapsed
         );

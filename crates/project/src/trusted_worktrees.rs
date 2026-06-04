@@ -19,7 +19,7 @@
 //! Zed has multiple layers of trust, based on the requests and [`PathTrust`] enum variants.
 //! From the least to the most trusted level:
 //!
-//! * "单文件工作树"
+//! * "single file worktree"
 //!
 //! After opening an empty Zed it's possible to open just a file, same as after opening a directory in Zed it's possible to open a file outside of this directory.
 //! Usual scenario for both cases is opening Zed's settings.json file via `zed: open settings file` command: that starts a language server for a new file open, which originates from a newly created, single file worktree.
@@ -27,14 +27,14 @@
 //! Spawning a language server is potentially dangerous, and Zed needs to restrict that by default.
 //! Each single file worktree requires a separate trust permission, unless a more global level is trusted.
 //!
-//! * "目录工作树"
+//! * "directory worktree"
 //!
 //! If a directory is open in Zed, it's a full worktree which may spawn multiple language servers associated with it.
 //! Each such worktree requires a separate trust permission, so each separate directory worktree has to be trusted separately, unless a more global level is trusted.
 //!
-//! When a directory worktree is trusted and language servers are allowed to be downloaded and started, hence, "单文件工作树" level of trust also.
+//! When a directory worktree is trusted and language servers are allowed to be downloaded and started, hence, "single file worktree" level of trust also.
 //!
-//! * "路径覆盖"
+//! * "path override"
 //!
 //! To ease trusting multiple directory worktrees at once, it's possible to trust a parent directory of a certain directory worktree opened in Zed.
 //! Trusting a directory means trusting all its subdirectories as well, including all current and potential directory worktrees.
@@ -321,7 +321,7 @@ impl TrustedWorktreesStore {
                             &abs_path.to_string_lossy(),
                             worktree_store.read(cx).path_style()
                         ),
-                        "无法信任路径风格 {style:?} 下的非绝对路径 {abs_path:?}",
+                        "Cannot trust non-absolute path {abs_path:?} on path style {style:?}",
                         style = worktree_store.read(cx).path_style()
                     );
                     if let Some((worktree_id, is_file)) =
@@ -588,7 +588,7 @@ impl TrustedWorktreesStore {
         }
     }
 
-    /// Switches the "不信任任何内容" mode to "自动信任所有内容".
+    /// Switches the "trust nothing" mode to "automatically trust everything".
     /// This does not influence already persisted data, but stops adding new worktrees there.
     pub fn auto_trust_all(&mut self, cx: &mut Context<Self>) {
         for (worktree_store, worktrees) in std::mem::take(&mut self.restricted).into_iter().fold(

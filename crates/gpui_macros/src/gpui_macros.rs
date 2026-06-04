@@ -192,7 +192,7 @@ pub fn test(args: TokenStream, function: TokenStream) -> TokenStream {
 /// A variant of `#[gpui::test]` that supports property-based testing.
 ///
 /// A property test, much like a standard GPUI randomized test, allows testing
-/// claims of the form "对于任意可能的 X,Y 都应成立". For example:
+/// claims of the form "for any possible X, Y should hold". For example:
 /// ```
 /// #[gpui::property_test]
 /// fn test_arithmetic(x: i32, y: i32) {

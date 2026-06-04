@@ -364,7 +364,7 @@ impl AgentServerStore {
                 CustomAgentServerSettings::Registry { env, .. } => {
                     let Some(agent) = registry_agents_by_id.get(name) else {
                         if registry_store.is_some() {
-                            log::debug!("在 ACP 注册表中未找到注册代理 '{}'", name);
+                            log::debug!("Registry agent '{}' not found in ACP registry", name);
                         }
                         continue;
                     };
@@ -374,7 +374,7 @@ impl AgentServerStore {
                         RegistryAgent::Binary(agent) => {
                             if !agent.supports_current_platform {
                                 log::warn!(
-                                    "注册代理 '{}' 没有适用于此平台的兼容二进制文件",
+                                    "Registry agent '{}' has no compatible binary for this platform",
                                     name
                                 );
                                 continue;
@@ -605,7 +605,7 @@ impl AgentServerStore {
                     .external_agents
                     .get_mut(&*envelope.payload.name)
                     .map(|entry| entry.server.as_mut())
-                    .with_context(|| format!("未找到代理 `{}`", envelope.payload.name))?;
+                    .with_context(|| format!("agent `{}` not found", envelope.payload.name))?;
                 let new_version_available_tx =
                     downstream_client
                         .clone()
@@ -826,7 +826,7 @@ fn asset_kind_for_archive_url(archive_url: &str) -> Result<AssetKind> {
     } else if archive_path.ends_with(".tar.bz2") || archive_path.ends_with(".tbz2") {
         Ok(AssetKind::TarBz2)
     } else {
-        bail!("URL 中不支持的归档类型: {archive_url}");
+        bail!("unsupported archive type in URL: {archive_url}");
     }
 }
 
@@ -920,17 +920,17 @@ async fn remove_stale_versioned_archive_cache_dirs(
     let current_mtime = fs
         .metadata(current_version_dir)
         .await
-        .with_context(|| format!("读取 {current_version_dir:?} 的元数据"))?
-        .with_context(|| format!("缺少 {current_version_dir:?} 的元数据"))?
+        .with_context(|| format!("reading metadata for {current_version_dir:?}"))?
+        .with_context(|| format!("missing metadata for {current_version_dir:?}"))?
         .mtime;
 
     let mut entries = fs
         .read_dir(base_dir)
         .await
-        .with_context(|| format!("读取归档缓存目录 {base_dir:?}"))?;
+        .with_context(|| format!("reading archive cache directory {base_dir:?}"))?;
 
     while let Some(entry) = entries.next().await {
-        let entry = entry.with_context(|| format!("读取 {base_dir:?} 中的条目"))?;
+        let entry = entry.with_context(|| format!("reading entry in {base_dir:?}"))?;
         let Some(entry_name) = entry.file_name() else {
             continue;
         };
@@ -964,7 +964,7 @@ async fn remove_stale_versioned_archive_cache_dirs(
             },
         )
         .await
-        .with_context(|| format!("删除过期的归档缓存目录 {entry:?}"))?;
+        .with_context(|| format!("removing stale archive cache directory {entry:?}"))?;
     }
 
     Ok(())
@@ -1044,7 +1044,7 @@ impl ExternalAgentServer for LocalRegistryArchiveAgent {
             let platform_key = format!("{}-{}", os, arch);
             let target_config = targets.get(&platform_key).with_context(|| {
                 format!(
-                    "未为平台 '{}' 指定目标。可用平台:{}",
+                    "no target specified for platform '{}'. Available platforms: {}",
                     platform_key,
                     targets
                         .keys()
@@ -1118,7 +1118,7 @@ impl ExternalAgentServer for LocalRegistryArchiveAgent {
                     let cmd_path = version_dir.join(&cmd[2..]);
                     anyhow::ensure!(
                         fs.is_file(&cmd_path).await,
-                        "解压后缺少命令 {}",
+                        "Missing command {} after extraction",
                         cmd_path.to_string_lossy()
                     );
                     cmd_path
@@ -1781,7 +1781,7 @@ mod tests {
             .filter_map(|entry| async move { entry.ok() })
             .map(|path| {
                 path.file_name()
-                    .expect("条目应有名称")
+                    .expect("entry has a name")
                     .to_string_lossy()
                     .into_owned()
             })

@@ -80,7 +80,7 @@ impl CommandPaletteDB {
         let command_name = command_name.into();
         let user_query = user_query.into();
         log::debug!(
-            "正在写入命令调用: command_name={command_name}, user_query={user_query}"
+            "Writing command invocation: command_name={command_name}, user_query={user_query}"
         );
         self.write_command_invocation_internal(command_name, user_query)
             .await
@@ -200,7 +200,7 @@ mod tests {
         let empty_commands = db.list_commands_used();
         match &empty_commands {
             Ok(_) => (),
-            Err(e) => println!("错误: {:?}", e),
+            Err(e) => println!("Error: {:?}", e),
         }
         assert!(empty_commands.is_ok());
         assert_eq!(empty_commands.expect("is ok").len(), 0);

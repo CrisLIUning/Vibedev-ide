@@ -33,7 +33,7 @@ fn parse_platform(output: &str) -> Result<RemotePlatform> {
         "Darwin" => RemoteOs::MacOs,
         "Linux" => RemoteOs::Linux,
         _ => anyhow::bail!(
-            "预构建的远程服务器尚不支持 {os:?}。请参阅 https://zed.dev/docs/remote-development"
+            "Prebuilt remote servers are not yet available for {os:?}. See https://zed.dev/docs/remote-development"
         ),
     };
 
@@ -48,7 +48,7 @@ fn parse_platform(output: &str) -> Result<RemotePlatform> {
         RemoteArch::X86_64
     } else {
         anyhow::bail!(
-            "预构建的远程服务器尚不支持 {arch:?}。请参阅 https://zed.dev/docs/remote-development"
+            "Prebuilt remote servers are not yet available for {arch:?}. See https://zed.dev/docs/remote-development"
         )
     };
 
@@ -141,7 +141,7 @@ fn handle_rpc_messages_over_child_process_stdio(
                 } else {
                     std::io::stderr()
                         .write_fmt(format_args!(
-                            "(远程) {}\n",
+                            "(remote) {}\n",
                             String::from_utf8_lossy(content)
                         ))
                         .ok();
@@ -198,7 +198,7 @@ async fn build_remote_server_from_source(
             return Ok(Some(path));
         } else {
             log::warn!(
-                "ZED_COPY_REMOTE_SERVER 路径不存在,回退至 ZED_BUILD_REMOTE_SERVER: {}",
+                "ZED_COPY_REMOTE_SERVER path does not exist, falling back to ZED_BUILD_REMOTE_SERVER: {}",
                 path.display()
             );
         }
@@ -226,7 +226,7 @@ async fn build_remote_server_from_source(
             .await?;
         anyhow::ensure!(
             output.status.success(),
-            "运行命令失败: {command:?}: 输出: {}",
+            "Failed to run command: {command:?}: output: {}",
             String::from_utf8_lossy(&output.stderr)
         );
         Ok(())
@@ -266,7 +266,7 @@ async fn build_remote_server_from_source(
     if platform.arch.as_str() == std::env::consts::ARCH
         && platform.os.as_str() == std::env::consts::OS
     {
-        delegate.set_status(Some("正在从源码构建远程服务器二进制文件"), cx);
+        delegate.set_status(Some("Building remote server binary from source"), cx);
         log::info!("building remote server binary from source");
         run_cmd(
             new_command("cargo")
@@ -288,28 +288,28 @@ async fn build_remote_server_from_source(
     } else {
         if which("zig", cx).await?.is_none() {
             anyhow::bail!(if cfg!(not(windows)) {
-                "在 $PATH 中未找到 zig,请安装 zig (参见 https://ziglang.org/learn/getting-started 或使用 zigup)"
+                "zig not found on $PATH, install zig (see https://ziglang.org/learn/getting-started or use zigup)"
             } else {
-                "在 $PATH 中未找到 zig,请安装 zig (使用 `winget install -e --id zig.zig` 或参见 https://ziglang.org/learn/getting-started 或使用 zigup)"
+                "zig not found on $PATH, install zig (use `winget install -e --id zig.zig` or see https://ziglang.org/learn/getting-started or use zigup)"
             });
         }
 
         let rustup = which("rustup", cx)
             .await?
             .context("rustup not found on $PATH, install rustup (see https://rustup.rs/)")?;
-        delegate.set_status(Some("正在添加 rustup 目标以进行交叉编译"), cx);
+        delegate.set_status(Some("Adding rustup target for cross-compilation"), cx);
         log::info!("adding rustup target");
         run_cmd(new_command(rustup).args(["target", "add"]).arg(&triple)).await?;
 
         if which("cargo-zigbuild", cx).await?.is_none() {
-            delegate.set_status(Some("正在安装 cargo-zigbuild 以进行交叉编译"), cx);
+            delegate.set_status(Some("Installing cargo-zigbuild for cross-compilation"), cx);
             log::info!("installing cargo-zigbuild");
             run_cmd(new_command("cargo").args(["install", "--locked", "cargo-zigbuild"])).await?;
         }
 
         delegate.set_status(
             Some(&format!(
-                "正在使用 Zig 为 {triple} 从源码构建远程二进制文件"
+                "Building remote binary from source for {triple} with Zig"
             )),
             cx,
         );
@@ -341,7 +341,7 @@ async fn build_remote_server_from_source(
         .with_extension(if platform.os.is_windows() { "exe" } else { "" });
 
     let path = if !build_remote_server.contains("nocompress") {
-        delegate.set_status(Some("正在压缩二进制文件"), cx);
+        delegate.set_status(Some("Compressing binary"), cx);
 
         #[cfg(not(target_os = "windows"))]
         let archive_path = {
@@ -391,7 +391,7 @@ async fn which(
         Ok(path) => Ok(Some(path)),
         Err(which::Error::CannotFindBinaryPath) => Ok(None),
         Err(err) => Err(anyhow::anyhow!(
-            "运行 'which' 查找二进制文件 '{binary_name}' 失败: {err}"
+            "Failed to run 'which' to find the binary '{binary_name}': {err}"
         )),
     }
 }

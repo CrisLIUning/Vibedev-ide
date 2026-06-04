@@ -3108,7 +3108,7 @@ mod test {
         // The prior selections (at higher offsets) are chained before the
         // wrapped selection (at a lower offset), producing unsorted anchors
         // that cause `rope::Cursor::summary` to panic with
-        // "无法向后总结".
+        // "cannot summarize backward".
         cx.set_state("ˇhello two one two one two one", Mode::HelixSelect);
         cx.simulate_keystrokes("/ o n e");
         cx.simulate_keystrokes("enter");

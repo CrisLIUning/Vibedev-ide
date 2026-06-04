@@ -1061,7 +1061,7 @@ impl VisualContext for VisualTestContext {
             .with_window(view.entity_id(), |window, app| {
                 view.update(app, |v, cx| update(v, window, cx))
             })
-            .expect("实体没有当前窗口;请使用 `更新` 而非 `update_in`")
+            .expect("entity has no current window; use `update` instead of `update_in`")
     }
 
     fn replace_root_view<V>(

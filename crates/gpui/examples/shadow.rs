@@ -102,7 +102,7 @@ impl Render for Shadow {
                     .flex_row()
                     .children(vec![
                         example(
-                            "方形",
+                            "Square",
                             Shadow::square()
                                 .shadow(vec![BoxShadow {
                                     color: hsla(0.0, 0.5, 0.5, 0.3),
@@ -112,7 +112,7 @@ impl Render for Shadow {
                                 }]),
                         ),
                         example(
-                            "圆角 4",
+                            "Rounded 4",
                             Shadow::rounded_small()
                                 .shadow(vec![BoxShadow {
                                     color: hsla(0.0, 0.5, 0.5, 0.3),
@@ -122,7 +122,7 @@ impl Render for Shadow {
                                 }]),
                         ),
                         example(
-                            "圆角 8",
+                            "Rounded 8",
                             Shadow::rounded_medium()
                                 .shadow(vec![BoxShadow {
                                     color: hsla(0.0, 0.5, 0.5, 0.3),
@@ -132,7 +132,7 @@ impl Render for Shadow {
                                 }]),
                         ),
                         example(
-                            "圆角 16",
+                            "Rounded 16",
                             Shadow::rounded_large()
                                 .shadow(vec![BoxShadow {
                                     color: hsla(0.0, 0.5, 0.5, 0.3),
@@ -142,7 +142,7 @@ impl Render for Shadow {
                                 }]),
                         ),
                         example(
-                            "圆形",
+                            "Circle",
                             Shadow::base()
                                 .shadow(vec![BoxShadow {
                                     color: hsla(0.0, 0.5, 0.5, 0.3),
@@ -158,19 +158,19 @@ impl Render for Shadow {
                     .flex()
                     .w_full()
                     .children(vec![
-                        example("无", Shadow::base()),
+                        example("None", Shadow::base()),
                         // 2Xsmall shadow
-                        example("2X 小", Shadow::base().shadow_2xs()),
+                        example("2X Small", Shadow::base().shadow_2xs()),
                         // Xsmall shadow
-                        example("超小", Shadow::base().shadow_xs()),
+                        example("Extra Small", Shadow::base().shadow_xs()),
                         // Small shadow
-                        example("小", Shadow::base().shadow_sm()),
+                        example("Small", Shadow::base().shadow_sm()),
                         // Medium shadow
-                        example("中", Shadow::base().shadow_md()),
+                        example("Medium", Shadow::base().shadow_md()),
                         // Large shadow
-                        example("大", Shadow::base().shadow_lg()),
-                        example("超大", Shadow::base().shadow_xl()),
-                        example("2X 大", Shadow::base().shadow_2xl()),
+                        example("Large", Shadow::base().shadow_lg()),
+                        example("Extra Large", Shadow::base().shadow_xl()),
+                        example("2X Large", Shadow::base().shadow_2xl()),
                     ]),
                 // Horizontal list of increasing blur radii
                 div()
@@ -179,7 +179,7 @@ impl Render for Shadow {
                     .flex()
                     .children(vec![
                         example(
-                            "模糊 0",
+                            "Blur 0",
                             Shadow::base().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.0, 0.0, 0.3),
                                 offset: point(px(0.), px(8.)),
@@ -188,7 +188,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "模糊 2",
+                            "Blur 2",
                             Shadow::base().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.0, 0.0, 0.3),
                                 offset: point(px(0.), px(8.)),
@@ -197,7 +197,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "模糊 4",
+                            "Blur 4",
                             Shadow::base().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.0, 0.0, 0.3),
                                 offset: point(px(0.), px(8.)),
@@ -206,7 +206,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "模糊 8",
+                            "Blur 8",
                             Shadow::base().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.0, 0.0, 0.3),
                                 offset: point(px(0.), px(8.)),
@@ -215,7 +215,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "模糊 16",
+                            "Blur 16",
                             Shadow::base().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.0, 0.0, 0.3),
                                 offset: point(px(0.), px(8.)),
@@ -231,7 +231,7 @@ impl Render for Shadow {
                     .flex()
                     .children(vec![
                         example(
-                            "扩展 0",
+                            "Spread 0",
                             Shadow::base().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.0, 0.0, 0.3),
                                 offset: point(px(0.), px(8.)),
@@ -240,7 +240,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "扩展 2",
+                            "Spread 2",
                             Shadow::base().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.0, 0.0, 0.3),
                                 offset: point(px(0.), px(8.)),
@@ -249,7 +249,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "扩展 4",
+                            "Spread 4",
                             Shadow::base().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.0, 0.0, 0.3),
                                 offset: point(px(0.), px(8.)),
@@ -258,7 +258,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "扩展 8",
+                            "Spread 8",
                             Shadow::base().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.0, 0.0, 0.3),
                                 offset: point(px(0.), px(8.)),
@@ -267,7 +267,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "扩展 16",
+                            "Spread 16",
                             Shadow::base().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.0, 0.0, 0.3),
                                 offset: point(px(0.), px(8.)),
@@ -283,7 +283,7 @@ impl Render for Shadow {
                     .flex()
                     .children(vec![
                         example(
-                            "方形 扩展 0",
+                            "Square Spread 0",
                             Shadow::square().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.0, 0.0, 0.3),
                                 offset: point(px(0.), px(8.)),
@@ -292,7 +292,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "方形 扩展 8",
+                            "Square Spread 8",
                             Shadow::square().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.0, 0.0, 0.3),
                                 offset: point(px(0.), px(8.)),
@@ -301,7 +301,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "方形 扩展 16",
+                            "Square Spread 16",
                             Shadow::square().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.0, 0.0, 0.3),
                                 offset: point(px(0.), px(8.)),
@@ -317,7 +317,7 @@ impl Render for Shadow {
                     .flex()
                     .children(vec![
                         example(
-                            "大圆角 扩展 0",
+                            "Rounded Large Spread 0",
                             Shadow::rounded_large().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.0, 0.0, 0.3),
                                 offset: point(px(0.), px(8.)),
@@ -326,7 +326,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "大圆角 扩展 8",
+                            "Rounded Large Spread 8",
                             Shadow::rounded_large().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.0, 0.0, 0.3),
                                 offset: point(px(0.), px(8.)),
@@ -335,7 +335,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "大圆角 扩展 16",
+                            "Rounded Large Spread 16",
                             Shadow::rounded_large().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.0, 0.0, 0.3),
                                 offset: point(px(0.), px(8.)),
@@ -351,7 +351,7 @@ impl Render for Shadow {
                     .flex()
                     .children(vec![
                         example(
-                            "左",
+                            "Left",
                             Shadow::base().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.5, 0.5, 0.3),
                                 offset: point(px(-8.), px(0.)),
@@ -360,7 +360,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "右",
+                            "Right",
                             Shadow::base().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.5, 0.5, 0.3),
                                 offset: point(px(8.), px(0.)),
@@ -369,7 +369,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "顶部",
+                            "Top",
                             Shadow::base().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.5, 0.5, 0.3),
                                 offset: point(px(0.), px(-8.)),
@@ -378,7 +378,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "下",
+                            "Bottom",
                             Shadow::base().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.5, 0.5, 0.3),
                                 offset: point(px(0.), px(8.)),
@@ -394,7 +394,7 @@ impl Render for Shadow {
                     .flex()
                     .children(vec![
                         example(
-                            "方形 左",
+                            "Square Left",
                             Shadow::square().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.5, 0.5, 0.3),
                                 offset: point(px(-8.), px(0.)),
@@ -403,7 +403,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "方形 右",
+                            "Square Right",
                             Shadow::square().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.5, 0.5, 0.3),
                                 offset: point(px(8.), px(0.)),
@@ -412,7 +412,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "方形 上",
+                            "Square Top",
                             Shadow::square().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.5, 0.5, 0.3),
                                 offset: point(px(0.), px(-8.)),
@@ -421,7 +421,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "方形 下",
+                            "Square Bottom",
                             Shadow::square().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.5, 0.5, 0.3),
                                 offset: point(px(0.), px(8.)),
@@ -437,7 +437,7 @@ impl Render for Shadow {
                     .flex()
                     .children(vec![
                         example(
-                            "大圆角 左",
+                            "Rounded Large Left",
                             Shadow::rounded_large().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.5, 0.5, 0.3),
                                 offset: point(px(-8.), px(0.)),
@@ -446,7 +446,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "大圆角 右",
+                            "Rounded Large Right",
                             Shadow::rounded_large().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.5, 0.5, 0.3),
                                 offset: point(px(8.), px(0.)),
@@ -455,7 +455,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "大圆角 上",
+                            "Rounded Large Top",
                             Shadow::rounded_large().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.5, 0.5, 0.3),
                                 offset: point(px(0.), px(-8.)),
@@ -464,7 +464,7 @@ impl Render for Shadow {
                             }]),
                         ),
                         example(
-                            "大圆角 下",
+                            "Rounded Large Bottom",
                             Shadow::rounded_large().shadow(vec![BoxShadow {
                                 color: hsla(0.0, 0.5, 0.5, 0.3),
                                 offset: point(px(0.), px(8.)),
@@ -480,7 +480,7 @@ impl Render for Shadow {
                     .flex()
                     .children(vec![
                         example(
-                            "圆形 多重",
+                            "Circle Multiple",
                             Shadow::base().shadow(vec![
                                 BoxShadow {
                                     color: hsla(0.0 / 360., 1.0, 0.5, 0.3), // Red
@@ -509,7 +509,7 @@ impl Render for Shadow {
                             ]),
                         ),
                         example(
-                            "方形 多重",
+                            "Square Multiple",
                             Shadow::square().shadow(vec![
                                 BoxShadow {
                                     color: hsla(0.0 / 360., 1.0, 0.5, 0.3), // Red
@@ -538,7 +538,7 @@ impl Render for Shadow {
                             ]),
                         ),
                         example(
-                            "大圆角 多重",
+                            "Rounded Large Multiple",
                             Shadow::rounded_large().shadow(vec![
                                 BoxShadow {
                                     color: hsla(0.0 / 360., 1.0, 0.5, 0.3), // Red

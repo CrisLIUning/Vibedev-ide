@@ -211,7 +211,7 @@ mod uniform_list {
                 visible_range.end += 1;
             }
             let Some(ref compute_indents_fn) = self.compute_indents_fn else {
-                panic!("UniformListDecoration 需要 compute_indents_fn");
+                panic!("compute_indents_fn is required for UniformListDecoration");
             };
             let visible_entries = &compute_indents_fn(visible_range.clone(), window, cx);
             let indent_guides = compute_indent_guides(

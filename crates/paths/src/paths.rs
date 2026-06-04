@@ -182,7 +182,7 @@ pub fn state_dir() -> &'static PathBuf {
             return if let Ok(flatpak_xdg_state) = std::env::var("FLATPAK_XDG_STATE_HOME") {
                 flatpak_xdg_state.into()
             } else {
-                dirs::state_dir().expect("无法确定 XDG_STATE_HOME 目录")
+                dirs::state_dir().expect("failed to determine XDG_STATE_HOME directory")
             }
             .join(APP_NAME_LOWERCASE);
         } else {

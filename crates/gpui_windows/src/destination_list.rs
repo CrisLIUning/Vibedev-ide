@@ -47,14 +47,14 @@ impl DockMenuItem {
         match item {
             MenuItem::Action { name, action, .. } => Ok(Self {
                 name: name.clone(),
-                description: if name == "新建窗口" {
-                    "打开新窗口".into()
+                description: if name == "New Window" {
+                    "Opens a new window".into()
                 } else {
                     name
                 },
                 action,
             }),
-            _ => anyhow::bail!("Windows 的停靠菜单仅支持 `MenuItem::Action`。"),
+            _ => anyhow::bail!("Only `MenuItem::Action` is supported for dock menu on Windows."),
         }
     }
 }
@@ -176,7 +176,7 @@ fn add_recent_folders(
         }
 
         if tasks.GetCount().unwrap_or(0) > 0 {
-            list.AppendCategory(&HSTRING::from("最近文件夹"), &tasks)?;
+            list.AppendCategory(&HSTRING::from("Recent Folders"), &tasks)?;
         }
         Ok(())
     }

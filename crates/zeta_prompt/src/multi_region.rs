@@ -324,32 +324,32 @@ fn strip_marker_tags(text: &str) -> String {
 pub fn extract_marker_span(text: &str) -> Result<(usize, usize, String)> {
     let first_tag_start = text
         .find(MARKER_TAG_PREFIX)
-        .context("输出中未找到起始标记")?;
+        .context("no start marker found in output")?;
     let first_num_start = first_tag_start + MARKER_TAG_PREFIX.len();
     let first_num_end = text[first_num_start..]
         .find(MARKER_TAG_SUFFIX)
         .map(|i| i + first_num_start)
-        .context("起始标记格式错误")?;
+        .context("malformed start marker tag")?;
     let start_num: usize = text[first_num_start..first_num_end]
         .parse()
-        .context("起始标记编号不是有效的整数")?;
+        .context("start marker number is not a valid integer")?;
     let first_tag_end = first_num_end + MARKER_TAG_SUFFIX.len();
 
     let last_tag_start = text
         .rfind(MARKER_TAG_PREFIX)
-        .context("输出中未找到结束标记")?;
+        .context("no end marker found in output")?;
     let last_num_start = last_tag_start + MARKER_TAG_PREFIX.len();
     let last_num_end = text[last_num_start..]
         .find(MARKER_TAG_SUFFIX)
         .map(|i| i + last_num_start)
-        .context("结束标记格式错误")?;
+        .context("malformed end marker tag")?;
     let end_num: usize = text[last_num_start..last_num_end]
         .parse()
-        .context("结束标记编号不是有效的整数")?;
+        .context("end marker number is not a valid integer")?;
 
     if start_num == end_num {
         return Err(anyhow!(
-            "起始标记与结束标记相同(标记 {})",
+            "start and end markers are the same (marker {})",
             start_num
         ));
     }
@@ -373,19 +373,19 @@ pub fn apply_marker_span(old_editable: &str, output: &str) -> Result<String> {
 
     let start_idx = start_num
         .checked_sub(1)
-        .context("标记编号从 1 开始")?;
+        .context("marker numbers are 1-indexed")?;
     let end_idx = end_num
         .checked_sub(1)
-        .context("标记编号从 1 开始")?;
+        .context("marker numbers are 1-indexed")?;
     let start_byte = *marker_offsets
         .get(start_idx)
-        .context("起始标记编号超出范围")?;
+        .context("start marker number out of range")?;
     let end_byte = *marker_offsets
         .get(end_idx)
-        .context("结束标记编号超出范围")?;
+        .context("end marker number out of range")?;
 
     if start_byte > end_byte {
-        return Err(anyhow!("起始标记必须位于结束标记之前"));
+        return Err(anyhow!("start marker must come before end marker"));
     }
 
     let old_span = &old_editable[start_byte..end_byte];
@@ -737,11 +737,11 @@ fn apply_marker_span_impl(
     resolve_boundaries: impl Fn(isize, isize) -> Result<(usize, usize)>,
 ) -> Result<String> {
     if tags.is_empty() {
-        return Err(anyhow!("输出中未找到标记标签"));
+        return Err(anyhow!("no marker tags found in output"));
     }
     if tags.len() == 1 {
         return Err(anyhow!(
-            "输出中仅找到一个标记标签,预期至少两个"
+            "only one marker tag found in output, expected at least two"
         ));
     }
 
@@ -755,7 +755,7 @@ fn apply_marker_span_impl(
     let (start_byte, end_byte) = resolve_boundaries(start_value, end_value)?;
 
     if start_byte > end_byte {
-        return Err(anyhow!("起始标记必须位于结束标记之前"));
+        return Err(anyhow!("start marker must come before end marker"));
     }
 
     let mut new_content = String::new();
@@ -787,7 +787,7 @@ pub fn apply_marker_span_v0316(old_editable: &str, output: &str) -> Result<Strin
             let actual: Vec<isize> = tags.iter().map(|t| t.value).collect();
             if actual != expected {
                 eprintln!(
-                    "V0316 标记序列验证失败:预期 {:?},实际 {:?}。尝试尽力解析。",
+                    "V0316 marker sequence validation failed: expected {:?}, got {:?}. Attempting best-effort parse.",
                     expected, actual
                 );
             }
@@ -798,16 +798,16 @@ pub fn apply_marker_span_v0316(old_editable: &str, output: &str) -> Result<Strin
     apply_marker_span_impl(old_editable, &tags, output, |start_val, end_val| {
         let start_idx = (start_val as usize)
             .checked_sub(1)
-            .context("标记编号从 1 开始")?;
+            .context("marker numbers are 1-indexed")?;
         let end_idx = (end_val as usize)
             .checked_sub(1)
-            .context("标记编号从 1 开始")?;
+            .context("marker numbers are 1-indexed")?;
         let start_byte = *marker_offsets
             .get(start_idx)
-            .context("起始标记编号超出范围")?;
+            .context("start marker number out of range")?;
         let end_byte = *marker_offsets
             .get(end_idx)
-            .context("结束标记编号超出范围")?;
+            .context("end marker number out of range")?;
         Ok((start_byte, end_byte))
     })
 }
@@ -825,16 +825,16 @@ pub fn apply_marker_span_v0317(
         let start_idx_signed = anchor_idx as isize + start_delta;
         let end_idx_signed = anchor_idx as isize + end_delta;
         if start_idx_signed < 0 || end_idx_signed < 0 {
-            return Err(anyhow!("相对标记映射在第一个标记之前"));
+            return Err(anyhow!("relative marker maps before first marker"));
         }
-        let start_idx = usize::try_from(start_idx_signed).context("无效的起始标记索引")?;
-        let end_idx = usize::try_from(end_idx_signed).context("无效的结束标记索引")?;
+        let start_idx = usize::try_from(start_idx_signed).context("invalid start marker index")?;
+        let end_idx = usize::try_from(end_idx_signed).context("invalid end marker index")?;
         let start_byte = *marker_offsets
             .get(start_idx)
-            .context("起始标记编号超出范围")?;
+            .context("start marker number out of range")?;
         let end_byte = *marker_offsets
             .get(end_idx)
-            .context("结束标记编号超出范围")?;
+            .context("end marker number out of range")?;
         Ok((start_byte, end_byte))
     })
 }
@@ -850,7 +850,7 @@ pub fn apply_marker_span_v0318(old_editable: &str, output: &str) -> Result<Strin
             let actual: Vec<isize> = tags.iter().map(|t| t.value).collect();
             if actual != expected {
                 eprintln!(
-                    "V0318 标记序列验证失败:预期 {:?},实际 {:?}。尝试尽力解析。",
+                    "V0318 marker sequence validation failed: expected {:?}, got {:?}. Attempting best-effort parse.",
                     expected, actual
                 );
             }
@@ -861,16 +861,16 @@ pub fn apply_marker_span_v0318(old_editable: &str, output: &str) -> Result<Strin
     apply_marker_span_impl(old_editable, &tags, output, |start_val, end_val| {
         let start_idx = (start_val as usize)
             .checked_sub(1)
-            .context("标记编号从 1 开始")?;
+            .context("marker numbers are 1-indexed")?;
         let end_idx = (end_val as usize)
             .checked_sub(1)
-            .context("标记编号从 1 开始")?;
+            .context("marker numbers are 1-indexed")?;
         let start_byte = *marker_offsets
             .get(start_idx)
-            .context("起始标记编号超出范围")?;
+            .context("start marker number out of range")?;
         let end_byte = *marker_offsets
             .get(end_idx)
-            .context("结束标记编号超出范围")?;
+            .context("end marker number out of range")?;
         Ok((start_byte, end_byte))
     })
 }
@@ -1408,7 +1408,7 @@ If you'd like to contribute, please take a look at the contributing guide.
         .unwrap();
         let output = encoded
             .strip_suffix(">>>>>>> UPDATED\n")
-            .expect("应有结束标记");
+            .expect("should have end marker");
         let reconstructed = apply_marker_span(old, output).unwrap();
         assert_eq!(reconstructed, new);
     }
@@ -1582,7 +1582,7 @@ If you'd like to contribute, please take a look at the contributing guide.
             encode_from_old_and_new_v0316(old, new, None, "<|user_cursor|>", "<|end|>").unwrap();
         let stripped = encoded
             .strip_suffix("<|end|>")
-            .expect("应有结束标记");
+            .expect("should have end marker");
         let reconstructed = apply_marker_span_v0316(old, stripped).unwrap();
         assert_eq!(reconstructed, new);
     }
@@ -1605,7 +1605,7 @@ If you'd like to contribute, please take a look at the contributing guide.
             encode_from_old_and_new_v0316(old, new, None, "<|user_cursor|>", "<|end|>").unwrap();
         let stripped = encoded
             .strip_suffix("<|end|>")
-            .expect("应有结束标记");
+            .expect("should have end marker");
         let reconstructed = apply_marker_span_v0316(old, stripped).unwrap();
         assert_eq!(reconstructed, new);
     }
@@ -1684,7 +1684,7 @@ If you'd like to contribute, please take a look at the contributing guide.
             encode_from_old_and_new_v0317(old, new, cursor, "<|user_cursor|>", "<|end|>").unwrap();
         let stripped = encoded
             .strip_suffix("<|end|>")
-            .expect("应有结束标记");
+            .expect("should have end marker");
         let stripped = stripped.replace("<|user_cursor|>", "");
         let reconstructed = apply_marker_span_v0317(old, &stripped, cursor).unwrap();
         assert_eq!(reconstructed, new);
@@ -1721,7 +1721,7 @@ If you'd like to contribute, please take a look at the contributing guide.
             encode_from_old_and_new_v0318(old, new, None, "<|user_cursor|>", "<|end|>").unwrap();
         let stripped = encoded
             .strip_suffix("<|end|>")
-            .expect("应有结束标记");
+            .expect("should have end marker");
         let reconstructed = apply_marker_span_v0318(old, stripped).unwrap();
         assert_eq!(reconstructed, new);
     }
@@ -1737,7 +1737,7 @@ If you'd like to contribute, please take a look at the contributing guide.
 
         let stripped = encoded
             .strip_suffix("<|end|>")
-            .expect("应有结束标记");
+            .expect("should have end marker");
         let reconstructed = apply_marker_span_v0318(old, stripped).unwrap();
         assert_eq!(reconstructed, new);
     }
@@ -1751,7 +1751,7 @@ If you'd like to contribute, please take a look at the contributing guide.
 
         let stripped = encoded
             .strip_suffix("<|end|>")
-            .expect("应有结束标记");
+            .expect("should have end marker");
         let reconstructed = apply_marker_span_v0318(old, stripped).unwrap();
         assert_eq!(reconstructed, new);
     }

@@ -61,7 +61,7 @@ pub async fn latest_github_release(
     if response.status().is_client_error() {
         let text = String::from_utf8_lossy(body.as_slice());
         bail!(
-            "状态错误 {}, 响应: {text:?}",
+            "status error {}, response: {text:?}",
             response.status().as_u16()
         );
     }
@@ -72,7 +72,7 @@ pub async fn latest_github_release(
         Err(err) => {
             log::error!("Error deserializing: {err:?}");
             log::error!(
-                "GitHub API 响应文本: {:?}",
+                "GitHub API response text: {:?}",
                 String::from_utf8_lossy(body.as_slice())
             );
             anyhow::bail!("error deserializing latest release: {err:?}");
@@ -124,7 +124,7 @@ pub async fn get_release_by_tag_name(
     if status.is_client_error() {
         let text = String::from_utf8_lossy(body.as_slice());
         bail!(
-            "状态错误 {}, 响应: {text:?}",
+            "status error {}, response: {text:?}",
             response.status().as_u16()
         );
     }
@@ -132,7 +132,7 @@ pub async fn get_release_by_tag_name(
     let release = serde_json::from_slice::<GithubRelease>(body.as_slice()).map_err(|err| {
         log::error!("Error deserializing: {err:?}");
         log::error!(
-            "GitHub API 响应文本: {:?}",
+            "GitHub API response text: {:?}",
             String::from_utf8_lossy(body.as_slice())
         );
         anyhow!("error deserializing GitHub release: {err:?}")

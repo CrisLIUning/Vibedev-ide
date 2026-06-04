@@ -164,7 +164,7 @@ impl<E: IntoElement + 'static> Element for AnimationElement<E> {
 
             debug_assert!(
                 (0.0..=1.0).contains(&delta),
-                "delta 应始终介于 0 和 1 之间"
+                "delta should always be between 0 and 1"
             );
 
             let element = self.element.take().expect("should only be called once");

@@ -61,7 +61,7 @@ impl Render for BottomListDemo {
                     .flex_col()
                     .gap_1()
                     .child(format!(
-                        "偏移量: {:.0} / 最大值: {:.0} | 比例: {:.3}",
+                        "offset: {:.0} / max: {:.0} | fraction: {:.3}",
                         current_offset.as_f32(),
                         max_offset.as_f32(),
                         raw_fraction,
@@ -75,11 +75,11 @@ impl Render for BottomListDemo {
                             })
                             .child(if bug_detected {
                                 format!(
-                                    "BUG: 比例为 {:.3} (> 1.0) — 滑块超出轨道!",
+                                    "BUG: fraction is {:.3} (> 1.0) — thumb is off-track!",
                                     raw_fraction
                                 )
                             } else {
-                                "OK: 比例 <= 1.0 — 滑块在轨道内.".to_string()
+                                "OK: fraction <= 1.0 — thumb is within track.".to_string()
                             }),
                     ),
             )
@@ -109,7 +109,7 @@ impl Render for BottomListDemo {
                                     rgb(0xFFFFFF)
                                 })
                                 .text_sm()
-                                .child(format!("项目 {index}"))
+                                .child(format!("Item {index}"))
                                 .into_any()
                         })
                         .flex_1(),

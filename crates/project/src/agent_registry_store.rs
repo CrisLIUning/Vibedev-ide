@@ -233,7 +233,7 @@ impl AgentRegistryStore {
                     .await
                 }
                 Err(error) => {
-                    log::error!("AgentRegistryStore::refresh: 获取失败: {error:#}");
+                    log::error!("AgentRegistryStore::refresh: fetch failed: {error:#}");
                     Err(error)
                 }
             };
@@ -338,12 +338,12 @@ async fn fetch_registry_index(
     let (status, body) =
         fetch_url_body(http_client, REGISTRY_URL, REGISTRY_FETCH_TIMEOUT, executor)
             .await
-            .context("正在获取 ACP 注册表")?;
+            .context("fetching ACP registry")?;
 
     if status.is_client_error() {
         let text = String::from_utf8_lossy(body.as_slice());
         bail!(
-            "注册表状态错误 {}, 响应: {text:?}",
+            "registry status error {}, response: {text:?}",
             status.as_u16()
         );
     }
@@ -494,7 +494,7 @@ async fn resolve_icon_path(
         if let Err(error) = download_icon(fs.clone(), http_client, &icon_url, entry, executor).await
         {
             log::warn!(
-                "下载 {} 的 ACP 注册表图标失败: {error:#}",
+                "Failed to download ACP registry icon for {}: {error:#}",
                 entry.id
             );
         }
@@ -519,11 +519,11 @@ async fn download_icon(
     let (status, body) =
         fetch_url_body(http_client, icon_url, REGISTRY_ICON_FETCH_TIMEOUT, executor)
             .await
-            .with_context(|| format!("正在获取 {} 的图标", entry.id))?;
+            .with_context(|| format!("fetching icon for {}", entry.id))?;
 
     if status.is_client_error() {
         let text = String::from_utf8_lossy(body.as_slice());
-        bail!("图标状态错误 {}, 响应: {text:?}", status.as_u16());
+        bail!("icon status error {}, response: {text:?}", status.as_u16());
     }
 
     let icon_path = registry_cache_dir()
@@ -543,7 +543,7 @@ async fn fetch_url_body(
         let mut response = http_client
             .get(url, AsyncBody::default(), true)
             .await
-            .with_context(|| format!("正在请求 {url}"))?;
+            .with_context(|| format!("requesting {url}"))?;
 
         let status = response.status();
         let mut body = Vec::new();
@@ -551,7 +551,7 @@ async fn fetch_url_body(
             .body_mut()
             .read_to_end(&mut body)
             .await
-            .with_context(|| format!("正在读取 {url} 的响应"))?;
+            .with_context(|| format!("reading response from {url}"))?;
 
         Ok((status, body))
     }
@@ -559,7 +559,7 @@ async fn fetch_url_body(
     .await
     .map_err(|_| {
         anyhow!(
-            "获取 {url} 超时({} 秒)",
+            "timed out after {}s while fetching {url}",
             timeout.as_secs()
         )
     })?

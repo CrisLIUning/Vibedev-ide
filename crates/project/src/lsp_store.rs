@@ -1642,12 +1642,12 @@ impl LocalLspStore {
                 }
                 if preserve_existing && had_existing_line_endings {
                     zlog::trace!(
-                        logger => "保存时保留现有行尾符 ({})",
+                        logger => "preserving existing line endings ({}) on save",
                         buffer.line_ending().label()
                     );
                     return;
                 }
-                zlog::trace!(logger => "将行尾符规范化为 {}", desired_line_ending.label());
+                zlog::trace!(logger => "normalizing line endings to {}", desired_line_ending.label());
                 buffer.set_line_ending(desired_line_ending, cx);
             });
         }
@@ -1715,7 +1715,7 @@ impl LocalLspStore {
             )
             .await
             {
-                zlog::error!(logger => "格式化程序失败,跳过: {err:#}");
+                zlog::error!(logger => "Formatter failed, skipping: {err:#}");
             }
         }
 
@@ -1735,7 +1735,7 @@ impl LocalLspStore {
     ) -> anyhow::Result<()> {
         match formatter {
             Formatter::None => {
-                zlog::trace!(logger => "跳过格式化工具 'none'");
+                zlog::trace!(logger => "skipping formatter 'none'");
                 return Ok(());
             }
             Formatter::Auto => {
@@ -1800,7 +1800,7 @@ impl LocalLspStore {
                         })
                     });
                     if diff.edits.is_empty() {
-                        zlog::trace!(logger => "选区内无更改");
+                        zlog::trace!(logger => "No changes within selection");
                         return Ok(());
                     }
                 }
@@ -1818,7 +1818,7 @@ impl LocalLspStore {
                 let logger = zlog::scoped!(logger => "command");
 
                 if buffer.ranges.is_some() {
-                    zlog::debug!(logger => "外部格式化工具不支持范围格式化; 跳过");
+                    zlog::debug!(logger => "External formatter does not support range formatting; skipping");
                     return Ok(());
                 }
 
@@ -4898,7 +4898,7 @@ impl LspStore {
             modeline::parse_modeline(&first_lines_ref, &last_lines_ref)
         };
 
-        log::debug!("已解析 modeline 设置: {:?}", modeline_settings);
+        log::debug!("Parsed modeline settings: {:?}", modeline_settings);
 
         buffer_handle.update(cx, |buffer, _cx| buffer.set_modeline(modeline_settings))
     }
@@ -5604,7 +5604,7 @@ impl LspStore {
 
                 if !available_commands.contains(&command.command) {
                     log::warn!(
-                        "跳过 executeCommand {},未在语言服务器功能中列出",
+                        "Skipping executeCommand for {}, not listed in language server capabilities",
                         command.command
                     );
                     return Ok(ProjectTransaction::default());
@@ -9506,7 +9506,7 @@ impl LspStore {
                                                     Ok(()) => {}
                                                     Err(e) => {
                                                         log::error!(
-                                                            "发送语义令牌 LSP 响应失败: {e:#}",
+                                                            "Failed to send semantic tokens LSP response: {e:#}",
                                                         )
                                                     }
                                                 }
@@ -11860,7 +11860,7 @@ impl LspStore {
                     let uri = match lsp::Uri::from_file_path(&abs_path) {
                         Ok(uri) => uri,
                         Err(()) => {
-                            log::error!("无法将路径转换为 URI: {:?}", abs_path);
+                            log::error!("failed to convert path to URI: {:?}", abs_path);
                             continue;
                         }
                     };

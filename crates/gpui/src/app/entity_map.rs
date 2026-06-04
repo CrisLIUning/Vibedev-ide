@@ -801,7 +801,7 @@ impl<T: 'static> WeakEntity<T> {
         cx.with_window(entity.entity_id(), |window, app| {
             entity.update(app, |entity, cx| update(entity, window, cx))
         })
-        .context("实体没有当前窗口")
+        .context("entity has no current window")
     }
 
     /// Reads the entity referenced by this handle with the given function if
@@ -971,7 +971,7 @@ impl LeakDetector {
             .entry(entity_id)
             .or_insert_with(|| EntityLeakData {
                 handles: HashMap::default(),
-                type_name: type_name.unwrap_or("<未知>"),
+                type_name: type_name.unwrap_or("<unknown>"),
             });
         handles.handles.insert(
             handle_id,
@@ -1020,7 +1020,7 @@ impl LeakDetector {
                     .unwrap();
                 }
             }
-            panic!("{} 的句柄泄漏:\n{out}", data.type_name);
+            panic!("Handles for {} leaked:\n{out}", data.type_name);
         }
     }
 
@@ -1061,14 +1061,14 @@ impl LeakDetector {
                     let backtrace = BacktraceFormatter(backtrace);
                     writeln!(
                         out,
-                        "实体 {} ({entity_id:?}) 的句柄泄漏:\n{:?}",
+                        "Leaked handle for entity {} ({entity_id:?}):\n{:?}",
                         data.type_name, backtrace
                     )
                     .unwrap();
                 } else {
                     writeln!(
                         out,
-                        "实体 {} ({entity_id:?}) 的句柄泄漏:(请设置环境变量 LEAK_BACKTRACE 以查找分配位置)",
+                        "Leaked handle for entity {} ({entity_id:?}): (export LEAK_BACKTRACE to find allocation site)",
                         data.type_name
                     )
                     .unwrap();
@@ -1077,7 +1077,7 @@ impl LeakDetector {
         }
 
         if !out.is_empty() {
-            panic!("自快照以来检测到新的实体泄漏:\n{out}");
+            panic!("New entity leaks detected since snapshot:\n{out}");
         }
     }
 }
@@ -1099,21 +1099,21 @@ impl Drop for LeakDetector {
                     let backtrace = BacktraceFormatter(backtrace);
                     writeln!(
                         out,
-                        "实体 {} ({entity_id:?}) 的句柄泄漏:\n{:?}",
+                        "Leaked handle for entity {} ({entity_id:?}):\n{:?}",
                         data.type_name, backtrace
                     )
                     .unwrap();
                 } else {
                     writeln!(
                         out,
-                        "实体 {} ({entity_id:?}) 的句柄泄漏:(请设置环境变量 LEAK_BACKTRACE 以查找分配位置)",
+                        "Leaked handle for entity {} ({entity_id:?}): (export LEAK_BACKTRACE to find allocation site)",
                         data.type_name
                     )
                     .unwrap();
                 }
             }
         }
-        panic!("退出时存在句柄泄漏:\n{out}");
+        panic!("Exited with leaked handles:\n{out}");
     }
 }
 

@@ -319,13 +319,13 @@ impl Editor {
                         Ok(line_trimmed)
                     } else if let Some(CommentFormat::BlockLine(prefix)) = &comment_prefix {
                         line_trimmed.strip_prefix(prefix).with_context(|| {
-                            format!("行未以前缀 {prefix:?} 开头: {line:?}")
+                            format!("line did not start with prefix {prefix:?}: {line:?}")
                         })
                     } else {
                         line_trimmed
                             .strip_prefix(&line_prefix.trim_start())
                             .with_context(|| {
-                                format!("行未以前缀 {line_prefix:?} 开头: {line:?}")
+                                format!("line did not start with prefix {line_prefix:?}: {line:?}")
                             })
                     }
                 })

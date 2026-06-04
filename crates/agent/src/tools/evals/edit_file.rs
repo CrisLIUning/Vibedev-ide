@@ -148,7 +148,7 @@ impl EvalAssertion {
                 assertions,
             }
             .render(&Templates::new())
-            .context("无法渲染差异判断模板")?;
+            .context("Failed to render diff judge template")?;
 
             let request = LanguageModelRequest {
                 messages: vec![LanguageModelRequestMessage {
@@ -176,7 +176,7 @@ impl EvalAssertion {
             }
 
             let re = regex::Regex::new(r"<score>(\d+)</score>")
-                .context("无法编译分数正则表达式")?;
+                .context("Failed to compile score regex")?;
             if let Some(captures) = re.captures(&output)
                 && let Some(score_match) = captures.get(1)
             {
@@ -187,7 +187,7 @@ impl EvalAssertion {
                 });
             }
 
-            anyhow::bail!("响应中未找到分数。原始输出: {output}");
+            anyhow::bail!("No score found in response. Raw output: {output}");
         })
     }
 
@@ -209,11 +209,11 @@ struct EditEvalOutput {
 
 impl Display for EditEvalOutput {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "分数: {:?}", self.assertion.score)?;
+        writeln!(f, "Score: {:?}", self.assertion.score)?;
         if let Some(message) = self.assertion.message.as_ref() {
-            writeln!(f, "消息: {}", message)?;
+            writeln!(f, "Message: {}", message)?;
         }
-        writeln!(f, "差异:\n{}", self.sample.diff)?;
+        writeln!(f, "Diff:\n{}", self.sample.diff)?;
         writeln!(f, "工具输入:\n{:#?}", self.sample.tool_input)?;
         Ok(())
     }
@@ -317,7 +317,7 @@ impl EditToolTest {
             let registry = LanguageModelRegistry::read_global(cx);
             let provider = registry
                 .provider(&selected_model.provider)
-                .expect("未找到提供者");
+                .expect("Provider not found");
             provider.authenticate(cx)
         })
         .await?;
@@ -329,14 +329,14 @@ impl EditToolTest {
                     model.provider_id() == selected_model.provider
                         && model.id() == selected_model.model
                 })
-                .unwrap_or_else(|| panic!("未找到模型 {}", selected_model.model.0))
+                .unwrap_or_else(|| panic!("Model {} not found", selected_model.model.0))
         }))
     }
 
     async fn eval(&self, mut eval: EvalInput, cx: &mut TestAppContext) -> Result<EditEvalOutput> {
         eval.conversation
             .last_mut()
-            .context("对话不能为空")?
+            .context("Conversation must not be empty")?
             .cache = true;
 
         // Populate the FakeFs so `resolve_path` / `entry_for_path` can find
@@ -446,12 +446,12 @@ impl EditToolTest {
         let output = match result {
             Ok(output) => output,
             Err(output) => {
-                anyhow::bail!("工具返回错误:{}", output);
+                anyhow::bail!("Tool returned error: {}", output);
             }
         };
 
         let EditFileToolOutput::Success { new_text, .. } = &output else {
-            anyhow::bail!("工具返回错误输出:{}", output);
+            anyhow::bail!("Tool returned error output: {}", output);
         };
 
         let sample = EvalSample {
@@ -487,7 +487,7 @@ impl EditToolTest {
                     .spawn(async move { model.stream_completion(request, &async_cx).await })
             })
             .await
-            .map_err(|err| anyhow::anyhow!("补全错误:{}", err))?;
+            .map_err(|err| anyhow::anyhow!("completion error: {}", err))?;
 
         let mut streamed_text = String::new();
         let mut stop_reason = None;
@@ -501,7 +501,7 @@ impl EditToolTest {
                         && tool_use.name.as_ref() == EditFileTool::NAME =>
                 {
                     let input: EditFileToolInput = serde_json::from_value(tool_use.input)
-                        .context("无法将工具输入解析为 EditFileToolInput")?;
+                        .context("Failed to parse tool input as EditFileToolInput")?;
                     return Ok(input);
                 }
                 Ok(LanguageModelCompletionEvent::Text(text)) => {
@@ -521,7 +521,7 @@ impl EditToolTest {
                     parse_errors.push(format!("{json_parse_error}\n原始输入:\n{raw_input:?}"));
                 }
                 Err(err) => {
-                    return Err(anyhow::anyhow!("补全错误:{}", err));
+                    return Err(anyhow::anyhow!("completion error: {}", err));
                 }
                 _ => {}
             }
@@ -543,7 +543,7 @@ impl EditToolTest {
         };
 
         anyhow::bail!(
-            "流结束但未使用 edit_file 工具{stop_reason_suffix}{parse_errors_suffix}{streamed_text_suffix}"
+            "Stream ended without an edit_file tool use{stop_reason_suffix}{parse_errors_suffix}{streamed_text_suffix}"
         )
     }
 }
@@ -680,7 +680,7 @@ async fn retry_on_rate_limit<R>(mut request: impl AsyncFnMut() -> Result<R>) -> 
 
         if let Some(retry_after) = retry_delay {
             let jitter = retry_after.mul_f64(rand::rng().random_range(0.0..1.0));
-            eprintln!("尝试 #{attempt}:{retry_after:?} 后重试 + 抖动 {jitter:?}");
+            eprintln!("Attempt #{attempt}: Retry after {retry_after:?} + jitter of {jitter:?}");
             #[allow(clippy::disallowed_methods)]
             async_io::Timer::after(retry_after + jitter).await;
         } else {
@@ -847,7 +847,7 @@ fn eval_translate_doc_comments() {
             ],
             input_file_path,
             Some(input_file_content.into()),
-            EvalAssertion::judge_diff("文档注释已翻译为意大利语"),
+            EvalAssertion::judge_diff("Doc comments were translated to Italian"),
         ))
     });
 }
@@ -970,7 +970,7 @@ fn eval_disable_cursor_blinking() {
     eval_utils::eval(100, 0.51, eval_utils::NoProcessor, move || {
         run_eval(EvalInput::new(
             vec![
-                message(User, [text("让我们研究一下光标闪烁是如何工作的。")]),
+                message(User, [text("Let's research how to cursor blinking works.")]),
                 message(
                     Assistant,
                     [tool_use(
@@ -1069,7 +1069,7 @@ fn eval_from_pixels_constructor() {
                 ),
                 message(
                     User,
-                    [tool_result("tool_2", GrepTool::NAME, "未找到匹配项")],
+                    [tool_result("tool_2", GrepTool::NAME, "No matches found")],
                 ),
                 message(
                     Assistant,
@@ -1086,7 +1086,7 @@ fn eval_from_pixels_constructor() {
                 ),
                 message(
                     User,
-                    [tool_result("tool_3", GrepTool::NAME, "未找到匹配项")],
+                    [tool_result("tool_3", GrepTool::NAME, "No matches found")],
                 ),
                 message(
                     Assistant,
@@ -1400,7 +1400,7 @@ fn eval_add_overwrite_test() {
                     Assistant,
                     [
                         text(
-                            "让我们看看与文件创建相关的现有测试用例,以了解其模式:",
+                            "Let's look at the existing test cases that are related to file creation to understand the pattern:",
                         ),
                         tool_use(
                             "tool_2",
@@ -1425,7 +1425,7 @@ fn eval_add_overwrite_test() {
                     Assistant,
                     [
                         text(
-                            "现在让我们看看另一个相关的测试,了解它们的结构:",
+                            "Now let's look at another relevant test to understand how they're structured:",
                         ),
                         tool_use(
                             "tool_3",
@@ -1449,7 +1449,7 @@ fn eval_add_overwrite_test() {
                 message(
                     Assistant,
                     [
-                        text("现在让我们看看 `buffer_created` 是如何实现的:"),
+                        text("Now let's look at how `buffer_created` is implemented:"),
                         tool_use(
                             "tool_4",
                             ReadFileTool::NAME,
@@ -1473,7 +1473,7 @@ fn eval_add_overwrite_test() {
             input_file_path,
             Some(input_file_content.into()),
             EvalAssertion::judge_diff(
-                "已创建覆盖文件的新测试,未更改任何之前的测试",
+                "A new test for overwritten files was created, without changing any previous test",
             ),
         ))
     });

@@ -65,7 +65,7 @@ impl ModeIndicator {
     fn current_operators_description(&self, vim: Entity<Vim>, cx: &mut Context<Self>) -> String {
         let recording = Vim::globals(cx)
             .recording_register
-            .map(|reg| format!("正在录制 @{reg} "))
+            .map(|reg| format!("recording @{reg} "))
             .into_iter();
 
         let vim = vim.read(cx);
@@ -128,7 +128,7 @@ impl Render for ModeIndicator {
             (label, None)
         } else {
             let mode_str = if temp_mode {
-                format!("(插入) {}", mode)
+                format!("(insert) {}", mode)
             } else {
                 mode.to_string()
             };

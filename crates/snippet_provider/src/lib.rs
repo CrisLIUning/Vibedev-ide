@@ -56,7 +56,7 @@ pub fn file_to_snippets(
                     name,
                 })),
                 Err(e) => Err(anyhow::anyhow!(
-                    "代码片段 '{name}' 在 {source:?} 中无效: {e:#}"
+                    "Invalid snippet '{name}' in {source:?}: {e:#}"
                 )),
             }
         })

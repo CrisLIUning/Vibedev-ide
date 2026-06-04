@@ -208,7 +208,7 @@ impl ChannelView {
             editor.set_custom_context_menu(move |_, position, window, cx| {
                 let this = this.clone();
                 Some(ui::ContextMenu::build(window, cx, move |menu, _, _| {
-                    menu.entry("复制指向章节的链接", None, move |window, cx| {
+                    menu.entry("Copy Link to Section", None, move |window, cx| {
                         this.update(cx, |this, cx| {
                             this.copy_link_for_position(position, window, cx)
                         })
@@ -333,7 +333,7 @@ impl ChannelView {
                 workspace.show_toast(
                     Toast::new(
                         NotificationId::unique::<CopyLinkForPositionToast>(),
-                        "链接已复制到剪贴板",
+                        "Link copied to clipboard",
                     ),
                     cx,
                 );
@@ -414,7 +414,7 @@ impl ChannelView {
 
             (channel.name.clone(), status.map(Into::into))
         } else {
-            ("<未知>".into(), Some("disconnected".into()))
+            ("<unknown>".into(), Some("disconnected".into()))
         }
     }
 }

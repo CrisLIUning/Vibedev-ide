@@ -63,14 +63,14 @@ impl Rope {
             }
             None if PANIC => {
                 panic!(
-                    "字节索引 {} 超出 rope 范围(长度: {})",
+                    "byte index {} is out of bounds of rope (length: {})",
                     offset,
                     self.len()
                 );
             }
             None => {
                 log::error!(
-                    "字节索引 {} 超出 rope 范围(长度: {})",
+                    "byte index {} is out of bounds of rope (length: {})",
                     offset,
                     self.len()
                 );
@@ -695,13 +695,13 @@ impl<'a> Cursor<'a> {
     pub fn seek_forward(&mut self, end_offset: usize) {
         assert!(
             end_offset >= self.offset,
-            "无法从 {} 向后查找到 {}",
+            "cannot seek backward from {} to {}",
             self.offset,
             end_offset
         );
         assert!(
             end_offset <= self.rope.len(),
-            "无法对 rope 末尾之后的内容进行摘要"
+            "cannot summarize past end of rope"
         );
 
         self.chunks.seek_forward(&end_offset, Bias::Right);
@@ -711,13 +711,13 @@ impl<'a> Cursor<'a> {
     pub fn slice(&mut self, end_offset: usize) -> Rope {
         assert!(
             end_offset >= self.offset,
-            "无法从 {} 向后切片到 {}",
+            "cannot slice backwards from {} to {}",
             self.offset,
             end_offset
         );
         assert!(
             end_offset <= self.rope.len(),
-            "无法对 rope 末尾之后的内容进行摘要"
+            "cannot summarize past end of rope"
         );
 
         let mut slice = Rope::new();
@@ -745,13 +745,13 @@ impl<'a> Cursor<'a> {
     pub fn summary<D: TextDimension>(&mut self, end_offset: usize) -> D {
         assert!(
             end_offset >= self.offset,
-            "无法从 {} 向后汇总到 {}",
+            "cannot summarize backward from {} to {}",
             self.offset,
             end_offset
         );
         assert!(
             end_offset <= self.rope.len(),
-            "无法对 rope 末尾之后的内容进行摘要"
+            "cannot summarize past end of rope"
         );
 
         let mut summary = D::zero(());
@@ -1949,7 +1949,7 @@ mod tests {
                 assert_eq!(
                     actual_line_starts,
                     expected_line_starts,
-                    "使用 next_line() 时实际行首 != 预期行首,针对 {:?} ({:?})",
+                    "actual line starts != expected line starts when using next_line() for {:?} ({:?})",
                     &expected[start_ix..end_ix],
                     start_ix..end_ix
                 );
@@ -1972,7 +1972,7 @@ mod tests {
                 assert_eq!(
                     actual_line_starts,
                     expected_line_starts,
-                    "使用 prev_line() 时实际行首 != 预期行首,针对 {:?} ({:?})",
+                    "actual line starts != expected line starts when using prev_line() for {:?} ({:?})",
                     &expected[start_ix..end_ix],
                     start_ix..end_ix
                 );
@@ -1994,7 +1994,7 @@ mod tests {
                         assert_eq!(
                             moved,
                             expected_next_line_start.is_some(),
-                            "在范围 {} {:?} ({:?}) 中定位后 next_line 的结果不符合预期",
+                            "unexpected result from next_line after seeking to {} in range {:?} ({:?})",
                             offset,
                             start_ix..end_ix,
                             &expected[start_ix..end_ix]
@@ -2003,7 +2003,7 @@ mod tests {
                             assert_eq!(
                                 chunks.offset(),
                                 expected_next_line_start,
-                                "在范围 {} {:?} ({:?}) 中定位后位置无效",
+                                "invalid position after seeking to {} in range {:?} ({:?})",
                                 offset,
                                 start_ix..end_ix,
                                 &expected[start_ix..end_ix]
@@ -2012,7 +2012,7 @@ mod tests {
                             assert_eq!(
                                 chunks.offset(),
                                 end_ix,
-                                "在范围 {} {:?} ({:?}) 中定位后位置无效",
+                                "invalid position after seeking to {} in range {:?} ({:?})",
                                 offset,
                                 start_ix..end_ix,
                                 &expected[start_ix..end_ix]
@@ -2047,7 +2047,7 @@ mod tests {
                         assert_eq!(
                             moved,
                             expected_prev_line_start.is_some(),
-                            "在范围 {} {:?} ({:?}) 中定位后 prev_line 的结果不符合预期",
+                            "unexpected result from prev_line after seeking to {} in range {:?} ({:?})",
                             offset,
                             start_ix..end_ix,
                             &expected[start_ix..end_ix]
@@ -2056,7 +2056,7 @@ mod tests {
                             assert_eq!(
                                 chunks.offset(),
                                 expected_prev_line_start,
-                                "在范围 {} {:?} ({:?}) 中定位后位置无效",
+                                "invalid position after seeking to {} in range {:?} ({:?})",
                                 offset,
                                 start_ix..end_ix,
                                 &expected[start_ix..end_ix]
@@ -2065,7 +2065,7 @@ mod tests {
                             assert_eq!(
                                 chunks.offset(),
                                 start_ix,
-                                "在范围 {} {:?} ({:?}) 中定位后位置无效",
+                                "invalid position after seeking to {} in range {:?} ({:?})",
                                 offset,
                                 start_ix..end_ix,
                                 &expected[start_ix..end_ix]
@@ -2174,7 +2174,7 @@ mod tests {
                 assert_eq!(
                     actual.line_len(row),
                     line.len() as u32,
-                    "第 {} 行的行长度无效",
+                    "invalid line len for row {}",
                     row
                 );
 
@@ -2193,7 +2193,7 @@ mod tests {
             let longest_row = actual.summary().longest_row;
             assert!(
                 expected_longest_rows.contains(&longest_row),
-                "最长行 {} 不正确。预期为 {:?},长度为 {}",
+                "incorrect longest row {}. expected {:?} with length {}",
                 longest_row,
                 expected_longest_rows,
                 longest_line_len,
@@ -2307,14 +2307,14 @@ mod tests {
                 assert_eq!(
                     rope.starts_with(prefix),
                     text.starts_with(prefix),
-                    "starts_with 在 {:?}(位于 {:?})中不匹配",
+                    "starts_with mismatch for {:?} in {:?}",
                     prefix,
                     text
                 );
                 assert_eq!(
                     rope.ends_with(suffix),
                     text.ends_with(suffix),
-                    "ends_with 在 {:?}(位于 {:?})中不匹配",
+                    "ends_with mismatch for {:?} in {:?}",
                     suffix,
                     text
                 );
@@ -2433,7 +2433,7 @@ mod tests {
             assert_eq!(
                 rope.text(),
                 expected,
-                "push_front({:?}) 后文本不匹配",
+                "text mismatch after push_front({:?})",
                 prefix
             );
             assert_eq!(rope.len(), expected.len());
@@ -2442,22 +2442,22 @@ mod tests {
             let expected_summary = TextSummary::from(expected.as_str());
             assert_eq!(
                 actual_summary.len, expected_summary.len,
-                "{:?} 的长度不匹配",
+                "len mismatch for {:?}",
                 expected
             );
             assert_eq!(
                 actual_summary.lines, expected_summary.lines,
-                "{:?} 的行数不匹配",
+                "lines mismatch for {:?}",
                 expected
             );
             assert_eq!(
                 actual_summary.chars, expected_summary.chars,
-                "{:?} 的字符数不匹配",
+                "chars mismatch for {:?}",
                 expected
             );
             assert_eq!(
                 actual_summary.longest_row, expected_summary.longest_row,
-                "{:?} 的最长行不匹配",
+                "longest_row mismatch for {:?}",
                 expected
             );
 
@@ -2466,7 +2466,7 @@ mod tests {
                 assert_eq!(
                     rope.point_to_offset(rope.offset_to_point(ix)),
                     ix,
-                    "偏移量往返转换失败,位置 {},对象 {:?}",
+                    "offset round-trip failed at {} for {:?}",
                     ix,
                     expected
                 );

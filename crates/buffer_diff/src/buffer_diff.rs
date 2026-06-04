@@ -3967,7 +3967,7 @@ mod tests {
                 assert_eq!(
                     optimized_edit,
                     naive_edit,
-                    "patch_for_buffer_range 在点 {:?} 处不匹配,范围 {:?}\nbase_text: {:?}\ninitial_buffer: {:?}\ncurrent_buffer: {:?}",
+                    "patch_for_buffer_range mismatch at point {:?} in range {:?}\nbase_text: {:?}\ninitial_buffer: {:?}\ncurrent_buffer: {:?}",
                     point,
                     range,
                     base_text,
@@ -3991,7 +3991,7 @@ mod tests {
                 assert_eq!(
                     optimized_edit,
                     naive_edit,
-                    "patch_for_base_text_range 在点 {:?} 处不匹配,范围 {:?}\nbase_text: {:?}\ninitial_buffer: {:?}\ncurrent_buffer: {:?}",
+                    "patch_for_base_text_range mismatch at point {:?} in range {:?}\nbase_text: {:?}\ninitial_buffer: {:?}\ncurrent_buffer: {:?}",
                     point,
                     range,
                     base_text,

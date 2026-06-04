@@ -170,7 +170,7 @@ impl Component for Divider {
 
     fn description() -> Option<&'static str> {
         Some(
-            "视觉分隔符,用于在布局中的内容组或区块之间创建分隔。",
+            "Visual separator used to create divisions between groups of content or sections in a layout.",
         )
     }
 
@@ -180,48 +180,48 @@ impl Component for Divider {
                 .gap_6()
                 .children(vec![
                     example_group_with_title(
-                        "水平分隔线",
+                        "Horizontal Dividers",
                         vec![
-                            single_example("默认", Divider::horizontal().into_any_element()),
+                            single_example("Default", Divider::horizontal().into_any_element()),
                             single_example(
-                                "边框颜色",
+                                "Border Color",
                                 Divider::horizontal()
                                     .color(DividerColor::Border)
                                     .into_any_element(),
                             ),
                             single_example(
-                                "内凹",
+                                "Inset",
                                 Divider::horizontal().inset().into_any_element(),
                             ),
                             single_example(
-                                "虚线",
+                                "Dashed",
                                 Divider::horizontal_dashed().into_any_element(),
                             ),
                         ],
                     ),
                     example_group_with_title(
-                        "垂直分隔线",
+                        "Vertical Dividers",
                         vec![
                             single_example(
-                                "默认",
+                                "Default",
                                 div().h_16().child(Divider::vertical()).into_any_element(),
                             ),
                             single_example(
-                                "边框颜色",
+                                "Border Color",
                                 div()
                                     .h_16()
                                     .child(Divider::vertical().color(DividerColor::Border))
                                     .into_any_element(),
                             ),
                             single_example(
-                                "内凹",
+                                "Inset",
                                 div()
                                     .h_16()
                                     .child(Divider::vertical().inset())
                                     .into_any_element(),
                             ),
                             single_example(
-                                "虚线",
+                                "Dashed",
                                 div()
                                     .h_16()
                                     .child(Divider::vertical_dashed())
@@ -230,18 +230,18 @@ impl Component for Divider {
                         ],
                     ),
                     example_group_with_title(
-                        "示例用法",
+                        "Example Usage",
                         vec![single_example(
-                            "内容之间",
+                            "Between Content",
                             v_flex()
                                 .w_full()
                                 .gap_4()
                                 .px_4()
-                                .child(Label::new("区块一"))
+                                .child(Label::new("Section One"))
                                 .child(Divider::horizontal())
-                                .child(Label::new("区块二"))
+                                .child(Label::new("Section Two"))
                                 .child(Divider::horizontal_dashed())
-                                .child(Label::new("区块三"))
+                                .child(Label::new("Section Three"))
                                 .into_any_element(),
                         )],
                     ),

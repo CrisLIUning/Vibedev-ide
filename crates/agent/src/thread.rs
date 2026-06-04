@@ -74,7 +74,7 @@ pub struct NoModelConfiguredError;
 
 impl std::fmt::Display for NoModelConfiguredError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "未配置语言服务器")
+        write!(f, "no language model configured")
     }
 }
 
@@ -344,7 +344,7 @@ impl UserMessage {
                         MentionUri::GitDiff { base_ref } => {
                             write!(
                                 &mut diffs_context,
-                                "\n与 {} 的分支差异:\n{}",
+                                "\nBranch diff against {}:\n{}",
                                 base_ref,
                                 MarkdownCodeBlock {
                                     tag: "diff",
@@ -356,7 +356,7 @@ impl UserMessage {
                         MentionUri::MergeConflict { file_path } => {
                             write!(
                                 &mut merge_conflict_context,
-                                "\n{} 中的合并冲突:\n{}",
+                                "\nMerge conflict in {}:\n{}",
                                 file_path,
                                 MarkdownCodeBlock {
                                     tag: "diff",
@@ -678,7 +678,7 @@ pub trait ThreadEnvironment {
         _cx: &mut App,
     ) -> Result<Rc<dyn SubagentHandle>> {
         Err(anyhow::anyhow!(
-            "不支持恢复子代理会话"
+            "Resuming subagent sessions is not supported"
         ))
     }
 }
@@ -769,12 +769,12 @@ impl ToolPermissionContext {
             return acp_thread::PermissionOptions::Flat(vec![
                 acp::PermissionOption::new(
                     acp::PermissionOptionId::new("allow"),
-                    "是",
+                    "Yes",
                     acp::PermissionOptionKind::AllowOnce,
                 ),
                 acp::PermissionOption::new(
                     acp::PermissionOptionId::new("deny"),
-                    "否",
+                    "No",
                     acp::PermissionOptionKind::RejectOnce,
                 ),
             ]);
@@ -858,7 +858,7 @@ impl ToolPermissionContext {
         };
 
         // Extract patterns from all input values. Only offer a pattern-specific
-        // "始终允许/拒绝" button when every value produces the same pattern.
+        // "always allow/deny" button when every value produces the same pattern.
         let (pattern, pattern_display) = match input_values.as_slice() {
             [single] => extract_for_value(single),
             _ => {
@@ -1151,7 +1151,7 @@ impl Thread {
     ) {
         let Some(model) = Self::resolve_model_from_selection(selection, cx) else {
             log::warn!(
-                "无法解析配置的子代理模型: {}/{}",
+                "failed to resolve configured subagent model: {}/{}",
                 selection.provider.0,
                 selection.model
             );
@@ -2186,7 +2186,7 @@ impl Thread {
                     if running_turn.streaming_tool_inputs.is_empty() {
                         return;
                     }
-                    log::warn!("因流结束而丢弃部分工具输入");
+                    log::warn!("Dropping partial tool inputs because the stream ended");
                     running_turn.streaming_tool_inputs.drain();
                 }
             })?;
@@ -2224,7 +2224,7 @@ impl Thread {
                     _ = timer.fuse() => {}
                     _ = cancellation_rx.changed().fuse() => {
                         if *cancellation_rx.borrow() {
-                            log::debug!("轮次在重试延迟期间被取消,正在退出");
+                            log::debug!("Turn cancelled during retry delay, exiting");
                             return Ok(());
                         }
                     }
@@ -2494,7 +2494,7 @@ impl Thread {
                     .insert(tool_use.id.clone(), sender);
 
                 let tool = tool.clone();
-                log::debug!("正在运行流式工具 {}", tool_use.name);
+                log::debug!("Running streaming tool {}", tool_use.name);
                 return Some(self.run_tool(
                     tool,
                     tool_input,
@@ -2568,7 +2568,7 @@ impl Thread {
                         // to match the pre-multi-part behavior for image-only
                         // tool results.
                         let placeholder = LanguageModelToolResultContent::Text(Arc::from(
-                            "[工具返回了图片,但此模型不支持图片]",
+                            "[Tool responded with an image, but this model doesn't support images]",
                         ));
                         let has_non_image = output
                             .llm_output
@@ -2659,7 +2659,7 @@ impl Thread {
             return None;
         }
 
-        log::debug!("正在运行工具 {}。收到了无效的 JSON", tool_use.name);
+        log::debug!("Running tool {}. Received invalid JSON", tool_use.name);
         let tool_input = ToolInput::invalid_json(error_message);
         Some(self.run_tool(
             tool,
@@ -2860,7 +2860,7 @@ impl Thread {
 
             let succeeded = generate
                 .await
-                .context("生成对话线程标题失败")
+                .context("failed to generate thread title")
                 .log_err()
                 .is_some();
             _ = this.update(cx, |this, cx| {
@@ -3208,7 +3208,7 @@ impl Thread {
         }
 
         if let Some(message) = self.pending_message.as_ref() {
-            markdown.push_str("\n## 助手\n\n");
+            markdown.push_str("\n## Assistant\n\n");
             markdown.push_str(&message.to_markdown());
         }
 
@@ -3380,7 +3380,7 @@ pub struct ToolInput<T> {
 impl<T: DeserializeOwned> ToolInput<T> {
     #[cfg(any(test, feature = "test-support"))]
     pub fn resolved(input: impl Serialize) -> Self {
-        let value = serde_json::to_value(input).expect("序列化工具输入失败");
+        let value = serde_json::to_value(input).expect("failed to serialize tool input");
         Self::ready(value)
     }
 
@@ -3421,7 +3421,7 @@ impl<T: DeserializeOwned> ToolInput<T> {
                 }
             }
         }
-        Err(anyhow!("工具输入未完全接收"))
+        Err(anyhow!("tool input was not fully received"))
     }
 
     pub async fn next(&mut self) -> Result<ToolInputPayload<T>> {
@@ -3429,7 +3429,7 @@ impl<T: DeserializeOwned> ToolInput<T> {
             .rx
             .next()
             .await
-            .ok_or_else(|| anyhow!("工具输入未完全接收"))?;
+            .ok_or_else(|| anyhow!("tool input was not fully received"))?;
 
         Ok(match value {
             ToolInputPayload::Partial(payload) => ToolInputPayload::Partial(payload),
@@ -3583,7 +3583,7 @@ impl From<anyhow::Error> for AgentToolOutput {
     fn from(error: anyhow::Error) -> Self {
         let llm_output = vec![error.into()];
         let raw_output = serde_json::to_value(&llm_output).unwrap_or_else(|e| {
-            log::error!("序列化工具输出失败: {e}");
+            log::error!("Failed to serialize tool output: {e}");
             serde_json::Value::Null
         });
         Self {
@@ -3667,7 +3667,7 @@ where
         cx.spawn(async move |_cx| match task.await {
             Ok(output) => {
                 let raw_output = serde_json::to_value(&output).unwrap_or_else(|e| {
-                    log::error!("序列化工具输出失败: {e}");
+                    log::error!("Failed to serialize tool output: {e}");
                     serde_json::Value::Null
                 });
                 Ok(AgentToolOutput {
@@ -3677,7 +3677,7 @@ where
             }
             Err(error_output) => {
                 let raw_output = serde_json::to_value(&error_output).unwrap_or_else(|e| {
-                    log::error!("序列化工具错误输出失败: {e}");
+                    log::error!("Failed to serialize tool error output: {e}");
                     serde_json::Value::Null
                 });
                 Err(AgentToolOutput {
@@ -3933,12 +3933,12 @@ impl ToolCallEventStream {
             acp_thread::PermissionOptionChoice {
                 allow: acp::PermissionOption::new(
                     acp::PermissionOptionId::new(format!("always_allow_mcp:{tool_id}")),
-                    format!("始终允许 {display_name} MCP 工具"),
+                    format!("Always for {display_name} MCP tool"),
                     acp::PermissionOptionKind::AllowAlways,
                 ),
                 deny: acp::PermissionOption::new(
                     acp::PermissionOptionId::new(format!("always_deny_mcp:{tool_id}")),
-                    format!("始终允许 {display_name} MCP 工具"),
+                    format!("Always for {display_name} MCP tool"),
                     acp::PermissionOptionKind::RejectAlways,
                 ),
                 sub_patterns: vec![],
@@ -3977,10 +3977,10 @@ impl ToolCallEventStream {
     /// if the tool is already allowed, an error if it is denied, and
     /// otherwise prompts the user for a decision. While a prompt is pending,
     /// a subscription to `SettingsStore` watches for changes (for example,
-    /// when the user clicks "始终允许 …" on a sibling tool call and the
+    /// when the user clicks "Always for …" on a sibling tool call and the
     /// new rule becomes globally visible). When settings change, the current
     /// prompt is dismissed and the decision is re-evaluated. This closes the
-    /// gap where an "始终允许 …" decision on one pending tool call would
+    /// gap where an "Always for …" decision on one pending tool call would
     /// not propagate to other pending tool calls in the same turn or in
     /// subagent turns.
     ///
@@ -4033,7 +4033,7 @@ impl ToolCallEventStream {
     /// does not interpret the user's choice as a permission grant — callers
     /// are responsible for handling each `option_id` explicitly. Use this
     /// when a tool needs the user to pick between several side-effecting
-    /// actions (for example, "保存" vs "放弃" for a dirty buffer).
+    /// actions (for example, "Save" vs "Discard" for a dirty buffer).
     pub fn prompt_for_decision(
         &self,
         title: Option<String>,
@@ -4066,13 +4066,13 @@ impl ToolCallEventStream {
                     },
                 )))
             {
-                log::error!("发送工具调用决策提示失败: {error}");
-                return Err(anyhow!("发送工具调用决策提示失败: {error}"));
+                log::error!("Failed to send tool call decision prompt: {error}");
+                return Err(anyhow!("Failed to send tool call decision prompt: {error}"));
             }
 
             let outcome = response_rx
                 .await
-                .map_err(|_| anyhow!("授权通道已关闭"))?;
+                .map_err(|_| anyhow!("authorization channel closed"))?;
             Ok(outcome.option_id)
         })
     }
@@ -4135,7 +4135,7 @@ impl ToolCallEventStream {
             let Some(check_settings) = check_settings else {
                 let outcome = response_rx
                     .await
-                    .map_err(|_| anyhow!("授权通道已关闭"))?;
+                    .map_err(|_| anyhow!("authorization channel closed"))?;
 
                 return Self::persist_permission_outcome(&outcome, fs, cx);
             };
@@ -4161,7 +4161,7 @@ impl ToolCallEventStream {
                 futures::select_biased! {
                     outcome = (&mut response_rx).fuse() => {
                         let outcome = outcome
-                            .map_err(|_| anyhow!("授权通道已关闭"))?;
+                            .map_err(|_| anyhow!("authorization channel closed"))?;
                         return Self::persist_permission_outcome(&outcome, fs.clone(), cx);
                     }
                     _ = settings_changed.fuse() => {
@@ -4242,12 +4242,12 @@ impl ToolCallEventStream {
         if option_id == "allow" || option_id == "deny" {
             debug_assert!(
                 outcome.params.is_none(),
-                "单次权限出现意外参数"
+                "unexpected params for once-only permission"
             );
             return if option_id == "allow" { Ok(()) } else { err() };
         }
 
-        debug_assert!(false, "意外的权限选项 ID: {option_id}");
+        debug_assert!(false, "unexpected permission option_id: {option_id}");
 
         err()
     }
@@ -4271,7 +4271,7 @@ impl ToolCallEventStream {
             }) => {
                 debug_assert!(
                     !sub_patterns.is_empty(),
-                    "工具 {tool} 的 sub_patterns 为空 — 调用方应传递 None"
+                    "empty sub_patterns for tool {tool} — callers should pass None instead"
                 );
                 let tool = tool.to_string();
                 let sub_patterns = sub_patterns.clone();
@@ -4365,7 +4365,7 @@ impl ToolCallEventStreamReceiver {
         if let Some(Ok(ThreadEvent::Plan(plan))) = event {
             plan
         } else {
-            panic!("期望计划但得到: {:?}", event);
+            panic!("Expected plan but got: {:?}", event);
         }
     }
 }
@@ -4555,7 +4555,7 @@ mod tests {
             _input: Result<Self::Input, serde_json::Value>,
             _cx: &mut App,
         ) -> SharedString {
-            "已注册图片工具".into()
+            "Registered Image Tool".into()
         }
 
         fn run(

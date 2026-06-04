@@ -904,7 +904,7 @@ mod test_optimization {
             // Just verify it produces a reasonable score (0-100)
             assert!(
                 score >= 0.0 && score <= 100.0,
-                "分数 {} 超出范围 ({}, {}, {})",
+                "Score {} out of range for ({}, {}, {})",
                 score,
                 original,
                 expected,
@@ -974,7 +974,7 @@ mod test_optimization {
 
             assert!(
                 (optimized_metrics.score - reference_metrics.score).abs() < 1e-10,
-                "分数不匹配 ({:?}, {:?}, {:?}):\n  优化版本: {}\n  参考版本: {}",
+                "Score mismatch for ({:?}, {:?}, {:?}):\n  optimized: {}\n  reference: {}",
                 original,
                 expected,
                 actual,
@@ -1364,7 +1364,7 @@ index abc123..def456 100644
         // "# " vs "# SIP Call" — the "SIP" and "Call" tokens (and a whitespace token) are inserted
         assert!(
             counts.inserted_tokens > 0,
-            "预期插入的 token 数大于 0,但得到 {}",
+            "expected inserted tokens > 0, got {}",
             counts.inserted_tokens
         );
         assert_eq!(counts.deleted_tokens, 0);
@@ -1377,12 +1377,12 @@ index abc123..def456 100644
         let counts = count_patch_token_changes(patch);
         assert!(
             counts.inserted_tokens > 0,
-            "预期插入的 token 数大于 0,但得到 {}",
+            "expected inserted tokens > 0, got {}",
             counts.inserted_tokens
         );
         assert!(
             counts.deleted_tokens > 0,
-            "预期删除的 token 数大于 0,但得到 {}",
+            "expected deleted tokens > 0, got {}",
             counts.deleted_tokens
         );
     }

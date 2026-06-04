@@ -165,7 +165,7 @@ impl LanguageSelectorDelegate {
         if let Some(buffer_language) = buffer_language
             .filter(|buffer_language| buffer_language.name().as_ref() == mat.string.as_str())
         {
-            label.push_str(" (当前)");
+            label.push_str(" (current)");
             let icon = need_icon
                 .then(|| self.language_icon(&buffer_language.config().matcher, cx))
                 .flatten();
@@ -199,7 +199,7 @@ impl PickerDelegate for LanguageSelectorDelegate {
     type ListItem = ListItem;
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
-        "选择语言…".into()
+        "Select a language…".into()
     }
 
     fn match_count(&self) -> usize {
@@ -631,7 +631,7 @@ mod tests {
                 .get(selected_match.candidate_id)
                 .expect("selected match should map to a candidate");
 
-            assert_eq!(selected_candidate.string, "纯文本");
+            assert_eq!(selected_candidate.string, "Plain Text");
             assert!(
                 picker
                     .delegate

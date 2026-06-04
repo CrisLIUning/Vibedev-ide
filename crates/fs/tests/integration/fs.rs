@@ -827,7 +827,7 @@ async fn test_fake_fs_restore(executor: BackgroundExecutor) {
 }
 
 #[gpui::test]
-#[ignore = "压力测试;需要时显式运行"]
+#[ignore = "stress test; run explicitly when needed"]
 async fn test_realfs_watch_stress_reports_missed_paths(
     executor: BackgroundExecutor,
     cx: &mut TestAppContext,
@@ -836,7 +836,7 @@ async fn test_realfs_watch_stress_reports_missed_paths(
     cx.executor().allow_parking();
 
     let fs = RealFs::new(None, executor.clone());
-    let temp_dir = TempDir::new().expect("创建临时目录");
+    let temp_dir = TempDir::new().expect("create temp dir");
     let root = temp_dir.path();
 
     let mut file_paths = Vec::with_capacity(FILE_COUNT);
@@ -845,10 +845,10 @@ async fn test_realfs_watch_stress_reports_missed_paths(
     for index in 0..FILE_COUNT {
         let dir_path = root.join(format!("dir-{index:04}"));
         let file_path = dir_path.join("file.txt");
-        fs.create_dir(&dir_path).await.expect("创建被监视目录");
+        fs.create_dir(&dir_path).await.expect("create watched dir");
         fs.write(&file_path, b"before")
             .await
-            .expect("创建初始文件");
+            .expect("create initial file");
         expected_paths.insert(file_path.clone());
         file_paths.push(file_path);
     }
@@ -858,15 +858,15 @@ async fn test_realfs_watch_stress_reports_missed_paths(
 
     for file_path in &expected_paths {
         _watcher
-            .add(file_path.parent().expect("文件拥有父目录"))
-            .expect("添加显式目录监视");
+            .add(file_path.parent().expect("file has parent"))
+            .expect("add explicit directory watch");
     }
 
     for (index, file_path) in file_paths.iter().enumerate() {
         let content = format!("after-{index}");
         fs.write(file_path, content.as_bytes())
             .await
-            .expect("修改被监视文件");
+            .expect("modify watched file");
     }
 
     let mut changed_paths = BTreeSet::new();
@@ -899,7 +899,7 @@ async fn test_realfs_watch_stress_reports_missed_paths(
     let missed_paths: BTreeSet<_> = expected_paths.difference(&changed_paths).cloned().collect();
 
     eprintln!(
-        "realfs 监视压力测试: 预期={}, 观察到={}, 遗漏={}, 重新扫描={}",
+        "realfs watch stress: expected={}, observed={}, missed={}, rescan={}",
         expected_paths.len(),
         changed_paths.len(),
         missed_paths.len(),
@@ -908,7 +908,7 @@ async fn test_realfs_watch_stress_reports_missed_paths(
 
     assert!(
         missed_paths.is_empty() || rescan_count > 0,
-        "遗漏了 {} 个路径,未报告重新扫描",
+        "missed {} paths without rescan being reported",
         missed_paths.len()
     );
 }

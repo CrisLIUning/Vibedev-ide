@@ -266,14 +266,14 @@ pub fn run_split(args: &SplitArgs, inputs: &[PathBuf]) -> Result<()> {
 
     if args.stratify != Stratify::None {
         eprintln!(
-            "按 {} 分层({} 个唯一组,{} 个样本)",
+            "Stratifying by {} ({} unique groups, {} examples)",
             args.stratify,
             grouped_lines.len(),
             total_lines
         );
     } else {
         eprintln!(
-            "无分层,按行拆分 {} 个样本",
+            "No stratification, splitting {} examples by line",
             total_lines
         );
     }
@@ -549,7 +549,7 @@ mod tests {
 
         assert!(
             train_repos.is_disjoint(&valid_repos),
-            "训练集和验证集不应包含重叠的仓库"
+            "train and valid should have non-overlapping repos"
         );
     }
 

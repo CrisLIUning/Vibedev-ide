@@ -1097,12 +1097,12 @@ mod tests {
             let overlap = compute_reversal_overlap(case.original, case.current, case.predicted);
             assert_eq!(
                 overlap.chars_reversing_user_edits, case.expected_reversal_chars,
-                "测试 '{}': 期望 {} 个反转字符, 实际 {} 个",
+                "Test '{}': expected {} reversal chars, got {}",
                 case.name, case.expected_reversal_chars, overlap.chars_reversing_user_edits
             );
             assert_eq!(
                 overlap.total_chars_in_prediction, case.expected_total_chars,
-                "测试 '{}': 期望 {} 个总字符数, 实际 {} 个",
+                "Test '{}': expected {} total chars, got {}",
                 case.name, case.expected_total_chars, overlap.total_chars_in_prediction
             );
         }
@@ -1123,19 +1123,19 @@ mod tests {
 
         assert!(
             reversed.contains("+++ a/file.rs"),
-            "旧路径应有 +++"
+            "Should have +++ for old path"
         );
         assert!(
             reversed.contains("--- b/file.rs"),
-            "新路径应有 ---"
+            "Should have --- for new path"
         );
         assert!(
             reversed.contains("-    let x = 42;"),
-            "添加的行应变为删除"
+            "Added line should become deletion"
         );
         assert!(
             reversed.contains(" fn main()"),
-            "上下文行应保持不变"
+            "Context lines should be unchanged"
         );
     }
 
@@ -1215,7 +1215,7 @@ mod tests {
         assert_eq!(
             filtered.len(),
             2,
-            "应匹配 myrepo/src/file.rs (去除前缀) 和 src/file.rs (精确匹配)"
+            "Should match myrepo/src/file.rs (stripped) and src/file.rs (exact)"
         );
 
         // "myrepo/src/file.rs" stripped -> "src/file.rs" != "file.rs"
@@ -1225,13 +1225,13 @@ mod tests {
         assert_eq!(
             filtered.len(),
             1,
-            "应仅匹配 src/file.rs (去除前缀为 file.rs)"
+            "Should only match src/file.rs (stripped to file.rs)"
         );
 
         // "myrepo/other.rs" stripped -> "other.rs" == "other.rs"
         let cursor_path = Path::new("other.rs");
         let filtered = filter_edit_history_by_path(&events, cursor_path);
-        assert_eq!(filtered.len(), 1, "应仅匹配 myrepo/other.rs");
+        assert_eq!(filtered.len(), 1, "Should match only myrepo/other.rs");
     }
 
     #[test]
@@ -1246,7 +1246,7 @@ mod tests {
         let reversed = reverse_diff(diff_with_trailing_newline);
         assert!(
             reversed.ends_with('\n'),
-            "反转的差异应保留尾部换行符"
+            "Reversed diff should preserve trailing newline"
         );
 
         let diff_without_trailing_newline = indoc! {"
@@ -1258,7 +1258,7 @@ mod tests {
         let reversed = reverse_diff(diff_without_trailing_newline);
         assert!(
             !reversed.ends_with('\n'),
-            "如果原始差异没有尾部换行符, 反转的差异不应添加"
+            "Reversed diff should not add trailing newline if original didn't have one"
         );
     }
 
@@ -1491,12 +1491,12 @@ mod tests {
             );
             assert_eq!(
                 filtered, case.expected_filtered_diff,
-                "测试 '{}': 过滤后的差异不匹配.\n期望:\n{}\n实际:\n{}",
+                "Test '{}': filtered diff mismatch.\nExpected:\n{}\nGot:\n{}",
                 case.name, case.expected_filtered_diff, filtered
             );
             assert_eq!(
                 line_offset, case.expected_line_offset,
-                "测试 '{}': 行偏移不匹配. 期望 {}, 实际 {}",
+                "Test '{}': line offset mismatch. Expected {}, got {}",
                 case.name, case.expected_line_offset, line_offset
             );
         }
@@ -1708,12 +1708,12 @@ mod tests {
             );
             assert_eq!(
                 overlap.chars_reversing_user_edits, case.expected_reversal_chars,
-                "测试 '{}': 期望 {} 个反转字符, 实际 {} 个",
+                "Test '{}': expected {} reversal chars, got {}",
                 case.name, case.expected_reversal_chars, overlap.chars_reversing_user_edits
             );
             assert_eq!(
                 overlap.total_chars_in_prediction, case.expected_total_chars,
-                "测试 '{}': 期望 {} 个总字符数, 实际 {} 个",
+                "Test '{}': expected {} total chars, got {}",
                 case.name, case.expected_total_chars, overlap.total_chars_in_prediction
             );
         }
@@ -1818,7 +1818,7 @@ mod tests {
             let result = apply_diff_to_string_lenient(case.diff, case.content);
             assert_eq!(
                 result, case.expected_result,
-                "测试 '{}': 期望:\n{}\n实际:\n{}",
+                "Test '{}': expected:\n{}\ngot:\n{}",
                 case.name, case.expected_result, result
             );
         }
@@ -1890,12 +1890,12 @@ mod tests {
             let overlap = compute_reversal_overlap(case.original, case.current, case.predicted);
             assert_eq!(
                 overlap.chars_reversing_user_edits, case.expected_reversal_chars,
-                "测试 '{}': 期望 {} 个反转字符, 实际 {} 个",
+                "Test '{}': expected {} reversal chars, got {}",
                 case.name, case.expected_reversal_chars, overlap.chars_reversing_user_edits
             );
             assert_eq!(
                 overlap.total_chars_in_prediction, case.expected_total_chars,
-                "测试 '{}': 期望 {} 个总字符数, 实际 {} 个",
+                "Test '{}': expected {} total chars, got {}",
                 case.name, case.expected_total_chars, overlap.total_chars_in_prediction
             );
         }
@@ -1946,7 +1946,7 @@ mod tests {
 
         assert!(
             ratio > 0.9,
-            "当预测移除用户添加的内容时, 期望反转率较高, 实际为 {}",
+            "Expected high reversal ratio when prediction removes user addition, got {}",
             ratio
         );
     }
@@ -1984,7 +1984,7 @@ mod tests {
 
         assert!(
             ratio > 0.9,
-            "对于摘要感知计算, 期望反转率较高, 实际为 {}",
+            "Expected high reversal ratio for excerpt-aware computation, got {}",
             ratio
         );
     }
@@ -2007,7 +2007,7 @@ mod tests {
 
         assert_eq!(
             ratio, 0.0,
-            "无编辑历史时, 期望反转率为零"
+            "Expected zero reversal ratio with no edit history"
         );
     }
 
@@ -2044,7 +2044,7 @@ mod tests {
 
         assert_eq!(
             ratio, 0.0,
-            "当编辑历史属于不同文件时, 期望反转率为零"
+            "Expected zero reversal when edit history is for different file"
         );
     }
 
@@ -2081,7 +2081,7 @@ mod tests {
 
         assert!(
             ratio >= 0.0 && ratio <= 1.0,
-            "即使使用宽松回退, 比率也应有效, 实际为 {}",
+            "Ratio should be valid even with lenient fallback, got {}",
             ratio
         );
     }
@@ -2110,7 +2110,7 @@ mod tests {
 
         assert!(
             overlap.ratio() >= 0.0 && overlap.ratio() <= 1.0,
-            "应优雅地处理差异应用失败的情况"
+            "Should handle failed diff application gracefully"
         );
     }
 
@@ -2164,7 +2164,7 @@ mod tests {
 
         assert!(
             ratio > 0.9,
-            "当预测完全反转最近编辑时, 期望反转率较高, 实际为 {}",
+            "Expected high reversal ratio when prediction exactly reverses the most recent edit, got {}",
             ratio
         );
     }

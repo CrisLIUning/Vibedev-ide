@@ -22,7 +22,7 @@ pub async fn validate_header<B>(mut req: Request<B>, next: Next<B>) -> impl Into
         .ok_or_else(|| {
             Error::http(
                 StatusCode::UNAUTHORIZED,
-                "缺少授权标头".to_string(),
+                "missing authorization header".to_string(),
             )
         })?
         .split_whitespace();
@@ -33,21 +33,21 @@ pub async fn validate_header<B>(mut req: Request<B>, next: Next<B>) -> impl Into
     if first == "dev-server-token" {
         Err(Error::http(
             StatusCode::UNAUTHORIZED,
-            "开发服务器已在 VibeDev 0.157 中移除,请升级以使用 SSH 远程功能".to_string(),
+            "Dev servers were removed in Zed 0.157 please upgrade to SSH remoting".to_string(),
         ))?;
     }
 
     let user_id = UserId(first.parse().map_err(|_| {
         Error::http(
             StatusCode::BAD_REQUEST,
-            "授权头中缺少用户 ID".to_string(),
+            "missing user id in authorization header".to_string(),
         )
     })?);
 
     let access_token = auth_header.next().ok_or_else(|| {
         Error::http(
             StatusCode::BAD_REQUEST,
-            "授权头中缺少访问令牌".to_string(),
+            "missing access token in authorization header".to_string(),
         )
     })?;
 
@@ -59,12 +59,12 @@ pub async fn validate_header<B>(mut req: Request<B>, next: Next<B>) -> impl Into
         .header("Authorization", format!("{user_id} {access_token}"))
         .send()
         .await
-        .context("验证访问令牌失败")?;
+        .context("failed to validate access token")?;
     if let Ok(response) = response.error_for_status() {
         let response_body: GetAuthenticatedUserResponse = response
             .json()
             .await
-            .context("解析响应体失败")?;
+            .context("failed to parse response body")?;
 
         let user = User {
             id: UserId(response_body.user.id),
@@ -81,6 +81,6 @@ pub async fn validate_header<B>(mut req: Request<B>, next: Next<B>) -> impl Into
 
     Err(Error::http(
         StatusCode::UNAUTHORIZED,
-        "无效凭据".to_string(),
+        "invalid credentials".to_string(),
     ))
 }

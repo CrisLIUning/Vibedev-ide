@@ -790,7 +790,7 @@ impl ActionLog {
                         // from edits made by the AI at this point.
                         // For now, preserve both to avoid data loss.
                         //
-                        // TODO: Better solution (disable "拒绝" after user makes some
+                        // TODO: Better solution (disable "Reject" after user makes some
                         // edit or find a way to differentiate between AI and user edits)
                         Task::ready(Ok(()))
                     }
@@ -1127,7 +1127,7 @@ impl ActionLogMetrics {
 
 fn telemetry_report_accepted_edits(telemetry: &ActionLogTelemetry, metrics: ActionLogMetrics) {
     telemetry::event!(
-        "助手编辑已接受",
+        "Agent Edits Accepted",
         agent = telemetry.agent_telemetry_id,
         session = telemetry.session_id,
         language = metrics.language,
@@ -1138,7 +1138,7 @@ fn telemetry_report_accepted_edits(telemetry: &ActionLogTelemetry, metrics: Acti
 
 fn telemetry_report_rejected_edits(telemetry: &ActionLogTelemetry, metrics: ActionLogMetrics) {
     telemetry::event!(
-        "助手编辑已拒绝",
+        "Agent Edits Rejected",
         agent = telemetry.agent_telemetry_id,
         session = telemetry.session_id,
         language = metrics.language,
@@ -2422,7 +2422,7 @@ mod tests {
             .unwrap();
         cx.run_until_parked();
 
-        // User clicks "全部接受"
+        // User clicks "Accept All"
         action_log.update(cx, |log, cx| log.keep_all_edits(None, cx));
         cx.run_until_parked();
         assert!(fs.is_file(path!("/dir/new_file").as_ref()).await);
@@ -2440,7 +2440,7 @@ mod tests {
         cx.run_until_parked();
         assert_ne!(unreviewed_hunks(&action_log, cx), vec![]);
 
-        // User clicks "全部拒绝"
+        // User clicks "Reject All"
         action_log
             .update(cx, |log, cx| log.reject_all_edits(None, cx))
             .await;
@@ -3082,12 +3082,12 @@ mod tests {
         assert_eq!(
             unreviewed_hunks(&child_log, cx),
             expected_hunks,
-            "子日志应追踪智能体编辑"
+            "child should track the agent edit"
         );
         assert_eq!(
             unreviewed_hunks(&parent_log, cx),
             expected_hunks,
-            "父日志也应通过链接日志转发追踪智能体编辑"
+            "parent should also track the agent edit via linked log forwarding"
         );
     }
 
@@ -3134,12 +3134,12 @@ mod tests {
         assert_eq!(
             unreviewed_hunks(&child_log, cx),
             expected_hunks,
-            "子日志应追踪创建的文件"
+            "child should track the created file"
         );
         assert_eq!(
             unreviewed_hunks(&parent_log, cx),
             expected_hunks,
-            "父日志也应通过链接日志转发追踪创建的文件"
+            "parent should also track the created file via linked log forwarding"
         );
     }
 
@@ -3184,12 +3184,12 @@ mod tests {
         assert_eq!(
             unreviewed_hunks(&child_log, cx),
             expected_hunks,
-            "子日志应追踪删除的文件"
+            "child should track the deleted file"
         );
         assert_eq!(
             unreviewed_hunks(&parent_log, cx),
             expected_hunks,
-            "父日志也应通过链接日志转发追踪删除的文件"
+            "parent should also track the deleted file via linked log forwarding"
         );
     }
 
@@ -3275,17 +3275,17 @@ mod tests {
         assert_eq!(
             child_1_changed,
             vec![buffer_a.clone()],
-            "子日志 1 应仅追踪 file_a"
+            "child 1 should only track file_a"
         );
         assert_eq!(
             child_2_changed,
             vec![buffer_b.clone()],
-            "子日志 2 应仅追踪 file_b"
+            "child 2 should only track file_b"
         );
         assert_eq!(parent_changed.len(), 2, "parent should track both files");
         assert!(
             parent_changed.contains(&buffer_a) && parent_changed.contains(&buffer_b),
-            "父日志应同时包含 buffer_a 和 buffer_b"
+            "parent should contain both buffer_a and buffer_b"
         );
     }
 
@@ -3310,7 +3310,7 @@ mod tests {
         let abs_path = PathBuf::from(path!("/dir/file"));
         assert!(
             action_log.read_with(cx, |log, _| log.file_read_time(&abs_path).is_none()),
-            "buffer_read 之前 file_read_time 应为 None"
+            "file_read_time should be None before buffer_read"
         );
 
         cx.update(|cx| {
@@ -3319,7 +3319,7 @@ mod tests {
 
         assert!(
             action_log.read_with(cx, |log, _| log.file_read_time(&abs_path).is_some()),
-            "buffer_read 之后应记录 file_read_time"
+            "file_read_time should be recorded after buffer_read"
         );
     }
 
@@ -3344,7 +3344,7 @@ mod tests {
         let abs_path = PathBuf::from(path!("/dir/file"));
         assert!(
             action_log.read_with(cx, |log, _| log.file_read_time(&abs_path).is_none()),
-            "buffer_edited 之前 file_read_time 应为 None"
+            "file_read_time should be None before buffer_edited"
         );
 
         cx.update(|cx| {
@@ -3353,7 +3353,7 @@ mod tests {
 
         assert!(
             action_log.read_with(cx, |log, _| log.file_read_time(&abs_path).is_some()),
-            "buffer_edited 之后应记录 file_read_time"
+            "file_read_time should be recorded after buffer_edited"
         );
     }
 
@@ -3378,7 +3378,7 @@ mod tests {
         let abs_path = PathBuf::from(path!("/dir/file"));
         assert!(
             action_log.read_with(cx, |log, _| log.file_read_time(&abs_path).is_none()),
-            "buffer_created 之前 file_read_time 应为 None"
+            "file_read_time should be None before buffer_created"
         );
 
         cx.update(|cx| {
@@ -3387,7 +3387,7 @@ mod tests {
 
         assert!(
             action_log.read_with(cx, |log, _| log.file_read_time(&abs_path).is_some()),
-            "buffer_created 之后应记录 file_read_time"
+            "file_read_time should be recorded after buffer_created"
         );
     }
 
@@ -3416,7 +3416,7 @@ mod tests {
         });
         assert!(
             action_log.read_with(cx, |log, _| log.file_read_time(&abs_path).is_some()),
-            "buffer_read 之后 file_read_time 应存在"
+            "file_read_time should exist after buffer_read"
         );
 
         cx.update(|cx| {
@@ -3424,7 +3424,7 @@ mod tests {
         });
         assert!(
             action_log.read_with(cx, |log, _| log.file_read_time(&abs_path).is_none()),
-            "will_delete_buffer 之后应移除 file_read_time"
+            "file_read_time should be removed after will_delete_buffer"
         );
     }
 
@@ -3455,11 +3455,11 @@ mod tests {
         });
         assert!(
             child_log.read_with(cx, |log, _| log.file_read_time(&abs_path).is_some()),
-            "子日志应在 buffer_read 时记录 file_read_time"
+            "child should record file_read_time on buffer_read"
         );
         assert!(
             parent_log.read_with(cx, |log, _| log.file_read_time(&abs_path).is_none()),
-            "父日志不应从子日志的 buffer_read 获取 file_read_time"
+            "parent should NOT get file_read_time from child's buffer_read"
         );
 
         cx.update(|cx| {
@@ -3467,7 +3467,7 @@ mod tests {
         });
         assert!(
             parent_log.read_with(cx, |log, _| log.file_read_time(&abs_path).is_none()),
-            "父日志不应从子日志的 buffer_edited 获取 file_read_time"
+            "parent should NOT get file_read_time from child's buffer_edited"
         );
 
         cx.update(|cx| {
@@ -3475,7 +3475,7 @@ mod tests {
         });
         assert!(
             parent_log.read_with(cx, |log, _| log.file_read_time(&abs_path).is_none()),
-            "父日志不应从子日志的 buffer_created 获取 file_read_time"
+            "parent should NOT get file_read_time from child's buffer_created"
         );
     }
 

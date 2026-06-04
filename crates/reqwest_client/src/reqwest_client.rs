@@ -58,7 +58,7 @@ impl ReqwestClient {
             reqwest::Proxy::all(proxy_url.clone())
                 .inspect_err(|e| {
                     log::error!(
-                        "解析代理 URL '{}' 失败: {}",
+                        "Failed to parse proxy URL '{}': {}",
                         proxy_url,
                         e.source().unwrap_or(&e as &_)
                     )
@@ -334,7 +334,7 @@ mod tests {
         let client = ReqwestClient::proxy_and_user_agent(Some(proxy), "test").unwrap();
         assert!(
             client.proxy.is_none(),
-            "无效的代理 URL 不应向客户端添加代理!"
+            "An invalid proxy URL should add no proxy to the client!"
         )
     }
 }

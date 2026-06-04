@@ -25,7 +25,7 @@ impl TryFrom<String> for Role {
             "assistant" => Ok(Self::Assistant),
             "system" => Ok(Self::System),
             "tool" => Ok(Self::Tool),
-            _ => anyhow::bail!("无效的角色 '{value}'"),
+            _ => anyhow::bail!("invalid role '{value}'"),
         }
     }
 }
@@ -381,7 +381,7 @@ pub async fn complete(
         response.body_mut().read_to_end(&mut body).await?;
         let body_str = std::str::from_utf8(&body)?;
         anyhow::bail!(
-            "连接 API 失败: {} {}",
+            "Failed to connect to API: {} {}",
             response.status(),
             body_str
         );
@@ -434,7 +434,7 @@ pub async fn stream_chat_completion(
         let mut body = String::new();
         response.body_mut().read_to_string(&mut body).await?;
         anyhow::bail!(
-            "连接 LM Studio API 失败: {} {}",
+            "Failed to connect to LM Studio API: {} {}",
             response.status(),
             body,
         );
@@ -466,7 +466,7 @@ pub async fn get_models(
 
     anyhow::ensure!(
         response.status().is_success(),
-        "连接 LM Studio API 失败: {} {}",
+        "Failed to connect to LM Studio API: {} {}",
         response.status(),
         body,
     );

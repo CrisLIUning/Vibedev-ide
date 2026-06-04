@@ -151,7 +151,7 @@ pub(crate) fn open_abs_path_at_point(
     true
 }
 
-pub const DEFAULT_THREAD_TITLE: &str = "新建助手对话线程";
+pub const DEFAULT_THREAD_TITLE: &str = "New Agent Thread";
 const PARALLEL_AGENT_LAYOUT_BACKFILL_KEY: &str = "parallel_agent_layout_backfilled";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -243,7 +243,7 @@ actions!(
         ResetTrialUpsell,
         /// Resets the trial end upsell notification.
         ResetTrialEndUpsell,
-        /// Opens the "添加上下文" menu in the message editor.
+        /// Opens the "Add Context" menu in the message editor.
         OpenAddContextMenu,
         /// Interrupts the current generation and sends the message immediately.
         SendImmediately,
@@ -920,7 +920,7 @@ mod tests {
             );
             assert!(
                 !filter.is_hidden(&NewTerminalThread),
-                "NewTerminalThread 默认应该可见"
+                "NewTerminalThread should be visible by default"
             );
         });
 
@@ -943,7 +943,7 @@ mod tests {
             );
             assert!(
                 filter.is_hidden(&NewTerminalThread),
-                "NewTerminalThread 在 agent 禁用时应该隐藏"
+                "NewTerminalThread should be hidden when agent is disabled"
             );
         });
 
@@ -1105,17 +1105,17 @@ mod tests {
     #[test]
     fn test_deserialize_new_external_agent_thread() {
         let action = serde_json::from_str::<NewExternalAgentThread>(r#"{"agent":"gemini"}"#)
-            .expect("应该能反序列化 agent id");
+            .expect("should deserialize agent id");
         assert_eq!(action.agent, AgentId::from("gemini"));
 
         let action = serde_json::from_str::<NewExternalAgentThread>(
             r#"{"agent":{"custom":{"name":"gemini"}}}"#,
         )
-        .expect("应该能反序列化旧版自定义 agent 负载");
+        .expect("should deserialize legacy custom agent payload");
         assert_eq!(action.agent, AgentId::from("gemini"));
 
         let action = serde_json::from_str::<NewExternalAgentThread>(r#"{"agent":"NativeAgent"}"#)
-            .expect("应该能反序列化旧版原生 agent 负载");
+            .expect("should deserialize legacy native agent payload");
         assert_eq!(action.agent, Agent::NativeAgent.id());
 
         assert!(serde_json::from_str::<NewExternalAgentThread>(r#"{}"#).is_err());

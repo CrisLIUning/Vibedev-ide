@@ -181,7 +181,7 @@ impl Mercury {
                 }
 
                 anyhow::bail!(
-                    "请求失败,状态码:{:?}\n内容:{}",
+                    "Request failed with status: {:?}\nBody: {}",
                     response.status(),
                     String::from_utf8_lossy(&body),
                 );
@@ -469,7 +469,7 @@ fn send_feedback(
         }
 
         log::debug!(
-            "Mercury 反馈已发送:request_id={},action={:?}",
+            "Mercury feedback sent: request_id={}, action={:?}",
             body.request_id,
             body.user_action
         );

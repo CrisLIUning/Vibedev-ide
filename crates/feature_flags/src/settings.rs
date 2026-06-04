@@ -54,7 +54,7 @@ pub fn generate_feature_flags_schema() -> Schema {
         property.insert(
             "description".to_string(),
             Value::String(format!(
-                "`{}` 功能标志的覆盖值。默认值: `{}` ({} 变体)。",
+                "Override for the `{}` feature flag. Default: `{}` (the {} variant).",
                 descriptor.name,
                 (descriptor.default_variant_key)(),
                 (descriptor.default_variant_key)(),
@@ -66,11 +66,11 @@ pub fn generate_feature_flags_schema() -> Schema {
 
     json_schema!({
         "type": "object",
-        "description": "功能标志的本地覆盖值, 以标志名称为键。",
+        "description": "Local overrides for feature flags, keyed by flag name.",
         "properties": properties,
         "additionalProperties": {
             "type": "string",
-            "description": "未知功能标志; 保留此项以免移除的标志导致设置验证失败。"
+            "description": "Unknown feature flag; retained so removed flags don't trip settings validation."
         }
     })
 }

@@ -427,13 +427,13 @@ impl AnyAgentTool for ContextServerTool {
                             }
                             Ok(None) => {
                                 log::warn!(
-                                    "跳过 MIME 类型为 `{}` 的 MCP 工具响应图片,无法转换为语言模型输入格式",
+                                    "Skipping MCP tool response image with MIME type `{}` because it cannot be converted for language model input",
                                     mime_type
                                 );
                             }
                             Err(error) => {
                                 log::warn!(
-                                    "无法转换 MIME 类型为 `{}` 的 MCP 工具响应图片为语言模型输入格式: {:#}",
+                                    "Failed to convert MCP tool response image with MIME type `{}` for language model input: {:#}",
                                     mime_type,
                                     error
                                 );
@@ -447,7 +447,7 @@ impl AnyAgentTool for ContextServerTool {
                         log::warn!("Ignoring resource content from tool response");
                     }
                     context_server::types::ToolResponseContent::ResourceLink { .. } => {
-                        log::warn!("忽略工具响应中的资源链接内容");
+                        log::warn!("Ignoring resource link content from tool response");
                     }
                 }
             }

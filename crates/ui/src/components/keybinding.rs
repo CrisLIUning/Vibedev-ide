@@ -565,7 +565,7 @@ impl Component for KeyBinding {
 
     fn description() -> Option<&'static str> {
         Some(
-            "一个显示键绑定的组件,支持不同的平台风格和 Vim 模式。",
+            "A component that displays a key binding, supporting different platform styles and vim mode.",
         )
     }
 
@@ -575,10 +575,10 @@ impl Component for KeyBinding {
     //             .gap_6()
     //             .children(vec![
     //                 example_group_with_title(
-    //                     "基本用法",
+    //                     "Basic Usage",
     //                     vec![
     //                         single_example(
-    //                             "默认",
+    //                             "Default",
     //                             KeyBinding::new_from_gpui(
     //                                 gpui::KeyBinding::new("ctrl-s", gpui::NoAction, None),
     //                                 cx,
@@ -586,7 +586,7 @@ impl Component for KeyBinding {
     //                             .into_any_element(),
     //                         ),
     //                         single_example(
-    //                             "Mac 风格",
+    //                             "Mac Style",
     //                             KeyBinding::new_from_gpui(
     //                                 gpui::KeyBinding::new("cmd-s", gpui::NoAction, None),
     //                                 cx,
@@ -595,7 +595,7 @@ impl Component for KeyBinding {
     //                             .into_any_element(),
     //                         ),
     //                         single_example(
-    //                             "Windows 风格",
+    //                             "Windows Style",
     //                             KeyBinding::new_from_gpui(
     //                                 gpui::KeyBinding::new("ctrl-s", gpui::NoAction, None),
     //                                 cx,
@@ -606,9 +606,9 @@ impl Component for KeyBinding {
     //                     ],
     //                 ),
     //                 example_group_with_title(
-    //                     "Vim 模式",
+    //                     "Vim Mode",
     //                     vec![single_example(
-    //                         "启用 Vim 模式",
+    //                         "Vim Mode Enabled",
     //                         KeyBinding::new_from_gpui(
     //                             gpui::KeyBinding::new("dd", gpui::NoAction, None),
     //                             cx,
@@ -618,10 +618,10 @@ impl Component for KeyBinding {
     //                     )],
     //                 ),
     //                 example_group_with_title(
-    //                     "复杂绑定",
+    //                     "Complex Bindings",
     //                     vec![
     //                         single_example(
-    //                             "组合键",
+    //                             "Multiple Keys",
     //                             KeyBinding::new_from_gpui(
     //                                 gpui::KeyBinding::new("ctrl-k ctrl-b", gpui::NoAction, None),
     //                                 cx,

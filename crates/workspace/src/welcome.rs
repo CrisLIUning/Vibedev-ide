@@ -162,52 +162,52 @@ impl SectionEntry {
 
 const CONTENT: (Section<4>, Section<3>) = (
     Section {
-        title: "开始使用",
+        title: "Get Started",
         entries: [
             SectionEntry {
                 icon: IconName::Plus,
-                title: "新建文件",
+                title: "New File",
                 action: &NewFile,
                 visibility_guard: SectionVisibility::Always,
             },
             SectionEntry {
                 icon: IconName::FolderOpen,
-                title: "打开项目",
+                title: "Open Project",
                 action: &Open::DEFAULT,
                 visibility_guard: SectionVisibility::Always,
             },
             SectionEntry {
                 icon: IconName::CloudDownload,
-                title: "克隆仓库",
+                title: "Clone Repository",
                 action: &GitClone,
                 visibility_guard: SectionVisibility::Always,
             },
             SectionEntry {
                 icon: IconName::ListCollapse,
-                title: "打开命令面板",
+                title: "Open Command Palette",
                 action: &command_palette::Toggle,
                 visibility_guard: SectionVisibility::Always,
             },
         ],
     },
     Section {
-        title: "配置",
+        title: "Configure",
         entries: [
             SectionEntry {
                 icon: IconName::Settings,
-                title: "打开设置",
+                title: "Open Settings",
                 action: &OpenSettings,
                 visibility_guard: SectionVisibility::Always,
             },
             SectionEntry {
                 icon: IconName::Keyboard,
-                title: "自定义键位映射",
+                title: "Customize Keymaps",
                 action: &OpenKeymap,
                 visibility_guard: SectionVisibility::Always,
             },
             SectionEntry {
                 icon: IconName::Blocks,
-                title: "探索扩展",
+                title: "Explore Extensions",
                 action: &Extensions {
                     category_filter: None,
                     id: None,
@@ -326,7 +326,7 @@ impl WelcomePage {
         let focus = self.focus_handle.clone();
         let color = cx.theme().colors();
 
-        let description = "同时运行多个对话线程,自由搭配任何兼容 ACP 的助手,并通过工作树保持工作无冲突。";
+        let description = "Run multiple threads at once, mix and match any ACP-compatible agent, and keep work conflict-free with worktrees.";
 
         v_flex()
             .w_full()
@@ -347,7 +347,7 @@ impl WelcomePage {
                             .color(Color::Muted)
                             .size(IconSize::Small),
                     )
-                    .child(Label::new("与助手协作")),
+                    .child(Label::new("Collaborate with Agents")),
             )
             .child(
                 Label::new(description)
@@ -356,7 +356,7 @@ impl WelcomePage {
                     .mb_2(),
             )
             .child(
-                Button::new("open-agent", "打开助手面板")
+                Button::new("open-agent", "Open Agent Panel")
                     .full_width()
                     .tab_index(tab_index as isize)
                     .style(ButtonStyle::Outlined)
@@ -377,7 +377,7 @@ impl WelcomePage {
     ) -> impl IntoElement {
         v_flex()
             .w_full()
-            .child(SectionHeader::new("最近的项目"))
+            .child(SectionHeader::new("Recent Projects"))
             .children(recent_projects)
     }
 
@@ -445,9 +445,9 @@ impl Render for WelcomePage {
 
         let welcome_label = if self.fallback_to_recent_projects {
             // VIBEDEV: product branding (upstream "Zed").
-            "欢迎回到 VibeDev"
+            "Welcome back to Zed"
         } else {
-            "欢迎使用 VibeDev"
+            "Welcome to Zed"
         };
 
         h_flex()
@@ -490,7 +490,7 @@ impl Render for WelcomePage {
                     .when(!self.fallback_to_recent_projects, |this| {
                         this.child(
                             v_flex().gap_4().child(Divider::horizontal()).child(
-                                Button::new("welcome-exit", "返回新手引导")
+                                Button::new("welcome-exit", "Return to Onboarding")
                                     .tab_index(next_tab_index as isize)
                                     .full_width()
                                     .label_size(LabelSize::XSmall)
@@ -654,7 +654,7 @@ fn project_name(paths: &PathList) -> String {
         .collect::<Vec<_>>()
         .join(", ");
     if joined.is_empty() {
-        "未命名".to_string()
+        "Untitled".to_string()
     } else {
         joined
     }
@@ -667,7 +667,7 @@ mod tests {
     #[test]
     fn test_project_name_empty() {
         let paths = PathList::new::<&str>(&[]);
-        assert_eq!(project_name(&paths), "未命名");
+        assert_eq!(project_name(&paths), "Untitled");
     }
 
     #[test]
@@ -685,8 +685,8 @@ mod tests {
 
     #[test]
     fn test_project_name_root_path_filtered() {
-        // A bare root "/" has no file_name(), falls back to "未命名"
+        // A bare root "/" has no file_name(), falls back to "Untitled"
         let paths = PathList::new(&["/"]);
-        assert_eq!(project_name(&paths), "未命名");
+        assert_eq!(project_name(&paths), "Untitled");
     }
 }

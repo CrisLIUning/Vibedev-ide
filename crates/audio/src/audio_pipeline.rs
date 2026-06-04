@@ -61,7 +61,7 @@ impl Audio {
     fn ensure_output_exists(&mut self, output_audio_device: Option<DeviceId>) -> Result<&Mixer> {
         #[cfg(debug_assertions)]
         log::warn!(
-            "音频在未优化的情况下无法正常播放。请使用 release 构建来调试音频问题"
+            "Audio does not sound correct without optimizations. Use a release build to debug audio issues"
         );
 
         if self.output.is_none() {
@@ -83,7 +83,7 @@ impl Audio {
             let source = this.sound_source(sound, cx).log_err()?;
             let output_mixer = this
                 .ensure_output_exists(output_audio_device)
-                .context("无法获取输出混音器")
+                .context("Could not get output mixer")
                 .log_err()?;
 
             output_mixer.add(source);
@@ -107,7 +107,7 @@ impl Audio {
             .asset_source()
             .load(&path)?
             .map(anyhow::Ok)
-            .with_context(|| format!("路径 {path} 下没有可用的资源"))??
+            .with_context(|| format!("No asset available for path {path}"))??
             .into_owned();
         let cursor = Cursor::new(bytes);
         let source = Decoder::new(cursor)?.buffered();
@@ -158,16 +158,16 @@ pub fn resolve_device(device_id: Option<&DeviceId>, input: bool) -> anyhow::Resu
         if let Some(device) = default_host().device_by_id(id) {
             return Ok(device);
         }
-        log::warn!("未找到选定的音频设备,回退到默认设备");
+        log::warn!("Selected audio device not found, falling back to default");
     }
     if input {
         default_host()
             .default_input_device()
-            .context("无可用音频输入设备")
+            .context("no audio input device available")
     } else {
         default_host()
             .default_output_device()
-            .context("无可用音频输出设备")
+            .context("no audio output device available")
     }
 }
 
@@ -175,7 +175,7 @@ pub fn open_test_output(device_id: Option<DeviceId>) -> anyhow::Result<MixerDevi
     let device = resolve_device(device_id.as_ref(), false)?;
     DeviceSinkBuilder::from_device(device)?
         .open_stream()
-        .context("无法打开输出流")
+        .context("Could not open output stream")
 }
 
 pub fn open_output_stream(
@@ -185,7 +185,7 @@ pub fn open_output_stream(
     let device = resolve_device(device_id.as_ref(), false)?;
     let mut output_handle = DeviceSinkBuilder::from_device(device)?
         .open_stream()
-        .context("无法打开输出流")?;
+        .context("Could not open output stream")?;
     output_handle.log_on_drop(false);
     log::info!("Output stream: {:?}", output_handle);
 

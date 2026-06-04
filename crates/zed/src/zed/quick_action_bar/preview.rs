@@ -55,21 +55,21 @@ impl QuickActionBar {
             match preview_type {
                 PreviewType::Markdown => (
                     "toggle-markdown-preview",
-                    "预览 Markdown",
+                    "Preview Markdown",
                     Box::new(MarkdownOpenPreview) as Box<dyn gpui::Action>,
                     Box::new(MarkdownOpenPreviewToTheSide) as Box<dyn gpui::Action>,
                     &markdown_preview::OpenPreview as &dyn gpui::Action,
                 ),
                 PreviewType::Svg => (
                     "toggle-svg-preview",
-                    "预览 SVG",
+                    "Preview SVG",
                     Box::new(SvgOpenPreview) as Box<dyn gpui::Action>,
                     Box::new(SvgOpenPreviewToTheSide) as Box<dyn gpui::Action>,
                     &svg_preview::OpenPreview as &dyn gpui::Action,
                 ),
                 PreviewType::Csv => (
                     "toggle-csv-preview",
-                    "预览 CSV",
+                    "Preview CSV",
                     Box::new(CsvOpenPreview) as Box<dyn gpui::Action>,
                     Box::new(CsvOpenPreviewToTheSide) as Box<dyn gpui::Action>,
                     &csv_preview::OpenPreview as &dyn gpui::Action,
@@ -90,7 +90,7 @@ impl QuickActionBar {
                     tooltip_text,
                     Some(open_action_for_tooltip),
                     format!(
-                        "{} 在拆分窗格中打开",
+                        "{} to open in a split",
                         text_for_keystroke(&alt_click.modifiers, &alt_click.key, cx)
                     ),
                     cx,

@@ -32,7 +32,7 @@ pub(crate) fn try_to_recover_from_device_lost<T>(mut f: impl FnMut() -> Result<T
         })
         .find_or_last(Result::is_ok)
         .unwrap()
-        .context("DirectXRenderer 多次尝试后仍无法从设备丢失中恢复")
+        .context("DirectXRenderer failed to recover from lost device after multiple attempts")
 }
 
 #[derive(Clone)]
@@ -47,18 +47,18 @@ impl DirectXDevices {
     pub(crate) fn new() -> Result<Self> {
         let debug_layer_available = check_debug_layer_available();
         let dxgi_factory =
-            get_dxgi_factory(debug_layer_available).context("创建 DXGI 工厂")?;
+            get_dxgi_factory(debug_layer_available).context("Creating DXGI factory")?;
         let (adapter, device, device_context, feature_level) =
-            get_adapter(&dxgi_factory, debug_layer_available).context("获取 DXGI 适配器")?;
+            get_adapter(&dxgi_factory, debug_layer_available).context("Getting DXGI adapter")?;
         match feature_level {
             D3D_FEATURE_LEVEL_11_1 => {
-                log::info!("已创建支持 Direct3D 11.1 功能级别的设备。")
+                log::info!("Created device with Direct3D 11.1 feature level.")
             }
             D3D_FEATURE_LEVEL_11_0 => {
-                log::info!("已创建支持 Direct3D 11.0 功能级别的设备。")
+                log::info!("Created device with Direct3D 11.0 feature level.")
             }
             D3D_FEATURE_LEVEL_10_1 => {
-                log::info!("已创建支持 Direct3D 10.1 功能级别的设备。")
+                log::info!("Created device with Direct3D 10.1 feature level.")
             }
             _ => unreachable!(),
         }
@@ -95,7 +95,7 @@ fn get_dxgi_factory(debug_layer_available: bool) -> Result<IDXGIFactory6> {
     } else {
         #[cfg(debug_assertions)]
         log::warn!(
-            "获取 DXGI 调试接口失败。DirectX 调试功能将被禁用。"
+            "Failed to get DXGI debug interface. DirectX debugging features will be disabled."
         );
         DXGI_CREATE_FACTORY_FLAGS::default()
     };
@@ -118,7 +118,7 @@ fn get_adapter(
             let gpu_name = String::from_utf16_lossy(&desc.Description)
                 .trim_matches(char::from(0))
                 .to_string();
-            log::info!("正在使用 GPU: {}", gpu_name);
+            log::info!("Using GPU: {}", gpu_name);
         }
         // Check to see whether the adapter supports Direct3D 11 and create
         // the device if it does.
@@ -179,7 +179,7 @@ fn get_device(
                 &mut data as *mut _ as _,
                 std::mem::size_of::<D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS>() as u32,
             )
-            .context("检查 GPU 设备功能支持")?;
+            .context("Checking GPU device feature support")?;
     }
     if data
         .ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x
@@ -188,7 +188,7 @@ fn get_device(
         Ok(device)
     } else {
         Err(anyhow::anyhow!(
-            "GPU/驱动不支持所需的 StructuredBuffer 功能"
+            "Required feature StructuredBuffer is not supported by GPU/driver"
         ))
     }
 }

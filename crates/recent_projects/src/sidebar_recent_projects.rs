@@ -135,7 +135,7 @@ impl PickerDelegate for SidebarRecentProjectsDelegate {
     type ListItem = AnyElement;
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
-        "搜索最近的项目…".into()
+        "Search recent projects…".into()
     }
 
     fn render_editor(
@@ -279,7 +279,7 @@ impl PickerDelegate for SidebarRecentProjectsDelegate {
                             .await
                     })
                     .detach_and_prompt_err(
-                        "打开项目失败",
+                        "Failed to open project",
                         window,
                         cx,
                         |_, _, _| None,
@@ -294,9 +294,9 @@ impl PickerDelegate for SidebarRecentProjectsDelegate {
 
     fn no_matches_text(&self, _window: &mut Window, _cx: &mut App) -> Option<SharedString> {
         let text = if self.workspaces.is_empty() {
-            "最近打开的项目将显示在这里"
+            "Recently opened projects will show up here"
         } else {
-            "无匹配项"
+            "No matches"
         };
         Some(text.into())
     }
@@ -377,7 +377,7 @@ impl PickerDelegate for SidebarRecentProjectsDelegate {
                 )
                 .tooltip(move |_, cx| {
                     Tooltip::with_meta(
-                        "在此窗口中打开项目",
+                        "Open Project in This Window",
                         None,
                         tooltip_path.clone(),
                         cx,
@@ -408,7 +408,7 @@ impl PickerDelegate for SidebarRecentProjectsDelegate {
                                 .w_full()
                                 .gap_1()
                                 .justify_between()
-                                .child(Label::new("添加本地文件夹"))
+                                .child(Label::new("Add Local Folders"))
                                 .child(KeyBinding::for_action_in(&open_action, &focus_handle, cx)),
                         )
                         .on_click(cx.listener(move |_, _, window, cx| {
@@ -423,7 +423,7 @@ impl PickerDelegate for SidebarRecentProjectsDelegate {
                                 .w_full()
                                 .gap_1()
                                 .justify_between()
-                                .child(Label::new("添加远程文件夹"))
+                                .child(Label::new("Add Remote Folder"))
                                 .child(KeyBinding::for_action(
                                     &OpenRemote {
                                         from_existing_connection: false,

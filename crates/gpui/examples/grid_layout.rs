@@ -35,25 +35,25 @@ impl Render for HolyGrailExample {
                 block(gpui::white())
                     .row_span(1)
                     .col_span_full()
-                    .child("页眉"),
+                    .child("Header"),
             )
             .child(
                 block(gpui::red())
                     .col_span(1)
                     .h_56()
-                    .child("目录"),
+                    .child("Table of contents"),
             )
             .child(
                 block(gpui::green())
                     .col_span(3)
                     .row_span(3)
-                    .child("内容"),
+                    .child("Content"),
             )
             .child(
                 block(gpui::blue())
                     .col_span(1)
                     .row_span(3)
-                    .child("广告 :(")
+                    .child("AD :(")
                     .text_color(gpui::white()),
             )
             .child(
@@ -61,7 +61,7 @@ impl Render for HolyGrailExample {
                     .row_span(1)
                     .col_span_full()
                     .text_color(gpui::white())
-                    .child("页脚"),
+                    .child("Footer"),
             )
     }
 }

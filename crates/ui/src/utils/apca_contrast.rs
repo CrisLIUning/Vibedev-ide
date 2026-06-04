@@ -343,7 +343,7 @@ mod tests {
         let contrast = apca_contrast(black, white);
         assert!(
             contrast > 100.0,
-            "黑底白字应具有高正对比度, 实际为 {}",
+            "Black on white should have high positive contrast, got {}",
             contrast
         );
 
@@ -351,7 +351,7 @@ mod tests {
         let contrast_reversed = apca_contrast(white, black);
         assert!(
             contrast_reversed < -100.0,
-            "白底黑字应具有高负对比度, 实际为 {}",
+            "White on black should have high negative contrast, got {}",
             contrast_reversed
         );
 
@@ -360,14 +360,14 @@ mod tests {
         let contrast_same = apca_contrast(gray, gray);
         assert!(
             contrast_same.abs() < 1.0,
-            "相同颜色应具有接近零的对比度, 实际为 {}",
+            "Same color should have near-zero contrast, got {}",
             contrast_same
         );
 
         // APCA is NOT commutative - polarity matters
         assert!(
             (contrast + contrast_reversed).abs() > 1.0,
-            "APCA 不应满足交换律"
+            "APCA should not be commutative"
         );
     }
 
@@ -380,7 +380,7 @@ mod tests {
         let y_black = srgb_to_y(black, &constants);
         assert!(
             y_black.abs() < 0.001,
-            "黑色的 Y 值应接近 0, 实际为 {}",
+            "Black should have Y near 0, got {}",
             y_black
         );
 
@@ -388,7 +388,7 @@ mod tests {
         let y_white = srgb_to_y(white, &constants);
         assert!(
             (y_white - 1.0).abs() < 0.001,
-            "白色的 Y 值应接近 1, 实际为 {}",
+            "White should have Y near 1, got {}",
             y_white
         );
     }
@@ -409,7 +409,7 @@ mod tests {
         let initial_contrast = apca_contrast(light_gray, white_bg).abs();
         assert!(
             initial_contrast < 15.0,
-            "初始对比度应较低, 实际为 {}",
+            "Initial contrast should be low, got {}",
             initial_contrast
         );
 
@@ -426,7 +426,7 @@ mod tests {
         let initial_contrast = apca_contrast(dark_gray, black_bg).abs();
         assert!(
             initial_contrast < 15.0,
-            "初始对比度应较低, 实际为 {}",
+            "Initial contrast should be low, got {}",
             initial_contrast
         );
 
@@ -454,7 +454,7 @@ mod tests {
         let contrast = apca_contrast(fg, bg);
         assert!(
             contrast.abs() < 1.0,
-            "相同颜色应具有接近零的 APCA 对比度, 实际为 {}",
+            "Same color should have near-zero APCA contrast, got {}",
             contrast
         );
 
@@ -464,7 +464,7 @@ mod tests {
         let new_contrast = apca_contrast(adjusted, bg).abs();
         assert!(
             new_contrast >= 15.0,
-            "调整后的对比度 {} 应 >= 15.0",
+            "Adjusted contrast {} should be >= 15.0",
             new_contrast
         );
 
@@ -472,7 +472,7 @@ mod tests {
         let new_contrast = apca_contrast(adjusted, bg).abs();
         assert!(
             new_contrast >= 15.0,
-            "调整后的 APCA 对比度 {} 应 >= 15.0",
+            "Adjusted APCA contrast {} should be >= 15.0",
             new_contrast
         );
     }

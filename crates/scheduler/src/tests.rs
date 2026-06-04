@@ -328,7 +328,7 @@ fn test_many_with_arbitrary_seed() {
         assert_eq!(
             seeds_seen,
             (seed..seed + iterations as u64).collect::<Vec<_>>(),
-            "预期从种子 {seed} 开始有 {iterations} 次迭代"
+            "Expected {iterations} iterations starting at seed {seed}"
         );
     }
 }

@@ -13,7 +13,7 @@ pub fn test(args: TokenStream, item: TokenStream) -> TokenStream {
     let item_span = item.span();
     let Ok(func) = parse2::<ItemFn>(item) else {
         return quote_spanned! { item_span =>
-            compile_error!("#[gpui::property_test] 必须放置在函数上");
+            compile_error!("#[gpui::property_test] must be placed on a function");
         };
     };
 
@@ -127,7 +127,7 @@ impl Parse for Args {
             match pair.path.get_ident().map(Ident::to_string).as_deref() {
                 Some("config") => config = Some(pair.value),
                 Some("proptest_path") => errors.extend(quote_spanned! {pair.span() =>
-                    compile_error!("`gpui::property_test` 覆盖了 `proptest_path` 参数")
+                    compile_error!("`gpui::property_test` overrides the `proptest_path` parameter")
                 }),
                 _ => remaining_args.push(pair),
             }
@@ -205,7 +205,7 @@ fn remove_std_rng(parsed: &mut ParsedArgs, args: &mut Vec<FnArg>) {
         }
 
         parsed.errors.extend(quote_spanned! { arg.span() =>
-            compile_error!("属性测试中不允许使用 `StdRng`。请考虑实现 `Arbitrary`,或实现自定义 `Strategy`。 https://altsysrq.github.io/proptest-book/proptest/tutorial/strategy-basics.html");
+            compile_error!("`StdRng` is not allowed in a property test. Consider implementing `Arbitrary`, or implementing a custom `Strategy`. https://altsysrq.github.io/proptest-book/proptest/tutorial/strategy-basics.html");
         });
 
         false
