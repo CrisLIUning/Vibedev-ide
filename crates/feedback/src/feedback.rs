@@ -7,11 +7,13 @@ use workspace::Workspace;
 use zed_actions::feedback::{EmailZed, FileBugReport, RequestFeature};
 
 actions!(
-    zed,
+    vibedev,
     [
         /// Opens the VibeDev repository on GitHub.
+        #[action(deprecated_aliases = ["zed::OpenZedRepo"])]
         OpenZedRepo,
         /// Copies installed extensions to the clipboard for bug reports.
+        #[action(deprecated_aliases = ["zed::CopyInstalledExtensionsIntoClipboard"])]
         CopyInstalledExtensionsIntoClipboard
     ]
 );

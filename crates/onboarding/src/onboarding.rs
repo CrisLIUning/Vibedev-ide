@@ -38,7 +38,7 @@ mod theme_preview;
 
 /// Imports settings from Visual Studio Code.
 #[derive(Copy, Clone, Debug, Default, PartialEq, Deserialize, JsonSchema, Action)]
-#[action(namespace = zed)]
+#[action(namespace = vibedev, deprecated_aliases = ["zed::ImportVsCodeSettings"])]
 #[serde(deny_unknown_fields)]
 pub struct ImportVsCodeSettings {
     #[serde(default)]
@@ -47,7 +47,7 @@ pub struct ImportVsCodeSettings {
 
 /// Imports settings from Cursor editor.
 #[derive(Copy, Clone, Debug, Default, PartialEq, Deserialize, JsonSchema, Action)]
-#[action(namespace = zed)]
+#[action(namespace = vibedev, deprecated_aliases = ["zed::ImportCursorSettings"])]
 #[serde(deny_unknown_fields)]
 pub struct ImportCursorSettings {
     #[serde(default)]

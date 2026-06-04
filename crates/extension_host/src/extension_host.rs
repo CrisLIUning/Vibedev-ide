@@ -206,9 +206,10 @@ pub struct ExtensionIndexLanguageEntry {
 }
 
 actions!(
-    zed,
+    vibedev,
     [
         /// Reloads all installed extensions.
+        #[action(deprecated_aliases = ["zed::ReloadExtensions"])]
         ReloadExtensions
     ]
 );

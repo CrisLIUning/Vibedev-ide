@@ -111,16 +111,24 @@ impl CommandPalette {
                 }
 
                 Some(Command {
-                    // VIBEDEV: display-only — show "vibedev:" instead of "zed:" in
-                    // the palette. The action's real name/id is untouched, so
-                    // keymaps that reference `zed::…` keep working.
+                    // VIBEDEV: the app action namespace is now `vibedev::`
+                    // (see crates/zed_actions). Any straggler still named
+                    // `zed::…` (gpui's NoAction/Unbind, or actions defined
+                    // outside zed_actions) is shown as `vibedev::…` too — the
+                    // real id is untouched so `zed::…` keymaps keep working.
+                    // Finally brand-case the namespace → "VibeDev: …".
                     name: {
                         let raw = action.name();
                         let display = raw
                             .strip_prefix("zed::")
                             .map(|rest| format!("vibedev::{rest}"))
                             .unwrap_or_else(|| raw.to_string());
-                        humanize_action_name(&display)
+                        let humanized = humanize_action_name(&display);
+                        if let Some(rest) = humanized.strip_prefix("vibedev:") {
+                            format!("VibeDev:{rest}")
+                        } else {
+                            humanized
+                        }
                     },
                     action,
                 })

@@ -342,10 +342,13 @@ pub fn release_notes_url(cx: &mut App) -> Option<String> {
             let path = format!("/releases/{release_channel}/{current_version}");
             auto_updater.client.http_client().build_url(&path)
         }
+        // VIBEDEV: release notes point at our fork's commit history, not zed-industries/zed.
         ReleaseChannel::Nightly => {
-            "https://github.com/zed-industries/zed/commits/nightly/".to_string()
+            "https://github.com/CrisLIUning/Vibedev-ide/commits/main/".to_string()
         }
-        ReleaseChannel::Dev => "https://github.com/zed-industries/zed/commits/main/".to_string(),
+        ReleaseChannel::Dev => {
+            "https://github.com/CrisLIUning/Vibedev-ide/commits/main/".to_string()
+        }
     };
     Some(url)
 }

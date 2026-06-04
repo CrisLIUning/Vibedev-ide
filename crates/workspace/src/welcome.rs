@@ -30,9 +30,10 @@ pub struct OpenRecentProject {
 }
 
 actions!(
-    zed,
+    vibedev,
     [
-        /// Show the Zed welcome screen
+        /// Show the VibeDev welcome screen
+        #[action(deprecated_aliases = ["zed::ShowWelcome"])]
         ShowWelcome
     ]
 );

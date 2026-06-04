@@ -7,7 +7,9 @@ use std::{env, str::FromStr, sync::LazyLock};
 use gpui::{App, Global};
 use semver::Version;
 
-const ZED_DOCS_URL: &str = "https://zed.dev/docs";
+// VIBEDEV: in-app docs point at our mirror (a flat, single-version mdbook),
+// not zed.dev. The per-channel path + `.html` handling lives in `docs_url`.
+const ZED_DOCS_URL: &str = "https://aitoken.bigopen.cn/docs";
 
 /// stable | dev | nightly | preview
 pub static RELEASE_CHANNEL_NAME: LazyLock<String> = LazyLock::new(|| {
@@ -246,17 +248,14 @@ impl ReleaseChannel {
     /// Returns the Zed docs URL for this [`ReleaseChannel`] for the given
     /// `slug`.
     pub fn docs_url(&self, slug: &str) -> String {
-        let channel_path_segment = match self {
-            Self::Dev | Self::Nightly => Some("nightly"),
-            Self::Preview => Some("preview"),
-            Self::Stable => None,
-        };
-
-        match channel_path_segment {
-            Some(channel) if slug.is_empty() => format!("{ZED_DOCS_URL}/{channel}"),
-            Some(channel) => format!("{ZED_DOCS_URL}/{channel}/{slug}"),
-            None if slug.is_empty() => ZED_DOCS_URL.to_string(),
-            None => format!("{ZED_DOCS_URL}/{slug}"),
+        // VIBEDEV: our mirror is a single-version flat mdbook served at
+        // `<slug>.html`, so unlike zed.dev there is no per-channel
+        // (/nightly, /preview) path segment and pages need the `.html`
+        // suffix. An empty slug is the docs index.
+        if slug.is_empty() {
+            format!("{ZED_DOCS_URL}/")
+        } else {
+            format!("{ZED_DOCS_URL}/{slug}.html")
         }
     }
 }
@@ -285,21 +284,22 @@ mod tests {
 
     #[test]
     fn test_docs_url_for_release_channel() {
+        // VIBEDEV: every channel resolves to the same flat mirror page
+        // (`<slug>.html`, no per-channel segment).
+        for channel in [
+            ReleaseChannel::Dev,
+            ReleaseChannel::Nightly,
+            ReleaseChannel::Preview,
+            ReleaseChannel::Stable,
+        ] {
+            assert_eq!(
+                channel.docs_url("settings"),
+                "https://aitoken.bigopen.cn/docs/settings.html"
+            );
+        }
         assert_eq!(
-            ReleaseChannel::Dev.docs_url("settings"),
-            "https://zed.dev/docs/nightly/settings"
-        );
-        assert_eq!(
-            ReleaseChannel::Nightly.docs_url("settings"),
-            "https://zed.dev/docs/nightly/settings"
-        );
-        assert_eq!(
-            ReleaseChannel::Preview.docs_url("settings"),
-            "https://zed.dev/docs/preview/settings"
-        );
-        assert_eq!(
-            ReleaseChannel::Stable.docs_url("settings"),
-            "https://zed.dev/docs/settings"
+            ReleaseChannel::Stable.docs_url(""),
+            "https://aitoken.bigopen.cn/docs/"
         );
     }
 }

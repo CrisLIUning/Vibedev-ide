@@ -1,18 +1,21 @@
+# VIBEDEV: snap `name`/`parts`/`source` (build identity + download) left as the
+# upstream recipe — rework them only if/when VibeDev actually publishes a Snap.
+# Below: the software-center-facing metadata, rebranded off zed.dev.
 name: zed
-title: Zed
+title: VibeDev
 base: core24
 version: "$RELEASE_VERSION"
-summary: The editor for what's next
+summary: A modern AI-assisted code editor
 description: |
-  Zed is a modern open-source code editor, built from the ground up in Rust with
-  a GPU-accelerated renderer. We help you build software faster than ever before.
+  VibeDev is a modern code editor built on a GPU-accelerated Rust core, with a
+  built-in AI agent and self-hosted real-time collaboration.
 grade: stable
 confinement: classic
 compression: lzo
-website: https://zed.dev/
-source-code: https://github.com/zed-industries/zed
-issues: https://github.com/zed-industries/zed/issues
-contact: https://zed.dev/community-links#support-and-feedback
+website: https://aitoken.bigopen.cn
+source-code: https://github.com/CrisLIUning/Vibedev-ide
+issues: https://github.com/CrisLIUning/Vibedev-ide/issues
+contact: https://github.com/CrisLIUning/Vibedev-ide/issues
 
 parts:
   zed:

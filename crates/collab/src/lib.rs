@@ -139,6 +139,12 @@ pub struct Config {
     pub zed_environment: Arc<str>,
     pub zed_cloud_internal_api_key: String,
     pub zed_client_checksum_seed: Option<String>,
+    /// VIBEDEV: explicit override for the cloud auth base, pointed at our sub2
+    /// gateway's `/client/users/me` bridge. When set (env `ZED_CLOUD_URL`), it is
+    /// used verbatim by `zed_cloud_url()` instead of the zed.dev default — this is
+    /// how the self-hosted collab validates VibeDev/sub2 sessions.
+    #[serde(default)]
+    pub zed_cloud_url: Option<String>,
 }
 
 impl Config {
@@ -157,6 +163,10 @@ impl Config {
 
     /// Returns the base Zed Cloud URL.
     pub fn zed_cloud_url(&self) -> &str {
+        // VIBEDEV: prefer the explicit override (our sub2 auth bridge) when set.
+        if let Some(url) = self.zed_cloud_url.as_deref() {
+            return url;
+        }
         match self.zed_environment.as_ref() {
             "development" => "http://localhost:8787",
             _ => "https://cloud.zed.dev",
@@ -182,6 +192,7 @@ impl Config {
             blob_store_secret_key: None,
             blob_store_bucket: None,
             zed_client_checksum_seed: None,
+            zed_cloud_url: None,
             kinesis_region: None,
             kinesis_access_key: None,
             kinesis_secret_key: None,

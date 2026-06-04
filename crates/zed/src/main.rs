@@ -157,7 +157,7 @@ fn fail_to_open_window_async(e: anyhow::Error, cx: &mut AsyncApp) {
 
 fn fail_to_open_window(e: anyhow::Error, _cx: &mut App) {
     eprintln!(
-        "VibeDev failed to open a window: {e:?}. See https://zed.dev/docs/linux for upstream troubleshooting steps (VibeDev shares the editor windowing layer)."
+        "VibeDev failed to open a window: {e:?}. See https://aitoken.bigopen.cn/docs/linux.html for upstream troubleshooting steps (VibeDev shares the editor windowing layer)."
     );
     #[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
     {
@@ -180,7 +180,7 @@ fn fail_to_open_window(e: anyhow::Error, _cx: &mut App) {
                     Notification::new("VibeDev failed to launch")
                         .body(Some(
                             format!(
-                                "{e:?}. See https://zed.dev/docs/linux for troubleshooting steps."
+                                "{e:?}. See https://aitoken.bigopen.cn/docs/linux.html for troubleshooting steps."
                             )
                             .as_str(),
                         ))

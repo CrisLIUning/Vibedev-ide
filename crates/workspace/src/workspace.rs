@@ -9232,11 +9232,13 @@ pub struct OpenChannelNotesById {
 }
 
 actions!(
-    zed,
+    vibedev,
     [
-        /// Opens the Zed log file.
+        /// Opens the VibeDev log file.
+        #[action(deprecated_aliases = ["zed::OpenLog"])]
         OpenLog,
-        /// Reveals the Zed log file in the system file manager.
+        /// Reveals the VibeDev log file in the system file manager.
+        #[action(deprecated_aliases = ["zed::RevealLogInFileManager"])]
         RevealLogInFileManager
     ]
 );

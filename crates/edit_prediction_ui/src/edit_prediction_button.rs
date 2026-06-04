@@ -54,7 +54,7 @@ actions!(
 
 const COPILOT_SETTINGS_PATH: &str = "/settings/copilot";
 const COPILOT_SETTINGS_URL: &str = concat!("https://github.com", "/settings/copilot");
-const PRIVACY_DOCS: &str = "https://zed.dev/docs/ai/privacy-and-security";
+const PRIVACY_DOCS: &str = "https://aitoken.bigopen.cn/docs/ai/privacy-and-security.html";
 
 struct CopilotErrorToast;
 
@@ -1223,7 +1223,7 @@ impl EditPredictionButton {
                             },
                         )
                         .entry(
-                            "Check your payment status or contact us at billing-support@zed.dev to continue using this feature.",
+                            "Check your VibeDev account status to continue using this feature.",
                             None,
                             |_window, _cx| {
                                 { /* VIBEDEV: removed zed.dev/account jump — VibeDev account lives in the vibedev_account panel */ }

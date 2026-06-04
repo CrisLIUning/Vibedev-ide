@@ -715,7 +715,7 @@ impl Render for ConfigurationView {
                             .color(Color::Muted),
                     )
                     .on_click(move |_, _window, cx| {
-                        cx.open_url("https://zed.dev/docs/ai/llm-providers#openai-api-compatible")
+                        cx.open_url("https://aitoken.bigopen.cn/docs/ai/llm-providers.html#openai-api-compatible")
                     }),
             );
 

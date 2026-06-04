@@ -312,7 +312,8 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
                 MenuItem::action(
                     "Documentation",
                     super::OpenBrowser {
-                        url: "https://zed.dev/docs".into(),
+                        // VIBEDEV: our docs mirror, not zed.dev.
+                        url: "https://aitoken.bigopen.cn/docs/".into(),
                     },
                 ),
                 // VIBEDEV: relabel repo link; drop "Zed Twitter" + "Join the Team"
