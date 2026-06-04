@@ -178,8 +178,14 @@ impl PromptCompletionProviderDelegate for MessageEditorCompletionDelegate {
         });
     }
 
-    fn confirm_command(&self, cx: &mut App) {
-        let _ = self.message_editor.update(cx, |this, cx| this.send(cx));
+    fn confirm_command(&self, _cx: &mut App) {
+        // VIBEDEV: selecting a slash-command completion only INSERTS it. The
+        // completion's `new_text` is `/<cmd> ` (trailing space), so the cursor
+        // lands ready for arguments. It must NOT send: this previously called
+        // `send()`, which fired the message the instant a no-argument command
+        // was selected (or Enter'd while the menu was open), so the user could
+        // never type anything after the command. Sending now happens only on an
+        // explicit Enter once the completion menu is closed.
     }
 }
 
