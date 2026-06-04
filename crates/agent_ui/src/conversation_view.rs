@@ -23,7 +23,7 @@ use editor::scroll::Autoscroll;
 use editor::{
     Editor, EditorEvent, EditorMode, MultiBuffer, PathKey, SelectionEffects, SizingBehavior,
 };
-use feature_flags::{AgentSharingFeatureFlag, FeatureFlagAppExt as _};
+use feature_flags::{AgentSharingFeatureFlag, FeatureFlagAppExt as _, HandoffFeatureFlag};
 use file_icons::FileIcons;
 use fs::Fs;
 use futures::FutureExt as _;
@@ -41,7 +41,6 @@ use markdown::{
 };
 use parking_lot::{Mutex, RwLock};
 use project::{AgentId, AgentServerStore, Project, ProjectEntryId, ProjectPath};
-use prompt_store::{PromptId, PromptStore};
 
 use crate::message_editor::SessionCapabilities;
 use crate::{AgentThreadSource, DEFAULT_THREAD_TITLE, resolve_agent_image};
@@ -52,7 +51,7 @@ use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Instant;
-use std::{collections::BTreeMap, rc::Rc, time::Duration};
+use std::{rc::Rc, time::Duration};
 use terminal_view::terminal_panel::TerminalPanel;
 use text::Anchor;
 use theme_settings::{AgentBufferFontSize, AgentUiFontSize};
@@ -69,13 +68,11 @@ use util::{
     size::format_file_size,
     time::duration_alt_display,
 };
-use workspace::PathList;
 use workspace::{
-    CollaboratorId, MultiWorkspace, NewTerminal, Toast, Workspace, notifications::NotificationId,
+    CollaboratorId, MultiWorkspace, NewTerminal, PathList, Toast, Workspace,
     path_link::sanitize_path_text,
 };
 use zed_actions::agent::{Chat, ToggleModelSelector};
-use zed_actions::assistant::OpenRulesLibrary;
 
 use super::config_options::ConfigOptionsView;
 use super::entry_view_state::EntryViewState;
@@ -391,7 +388,7 @@ impl Conversation {
     ) -> Option<()> {
         let (authorize_session_id, tool_call_id, options) =
             self.pending_tool_call(session_id, cx)?;
-        let option = options.first_option_of_kind(kind)?;
+        let option = permission_option_for_action(options, kind)?;
         self.authorize_tool_call(
             authorize_session_id,
             tool_call_id,
@@ -454,6 +451,22 @@ impl Conversation {
 pub(crate) struct RootThreadUpdated;
 
 impl EventEmitter<RootThreadUpdated> for ConversationView {}
+
+fn permission_option_for_action(
+    options: &PermissionOptions,
+    kind: acp::PermissionOptionKind,
+) -> Option<&acp::PermissionOption> {
+    if kind == acp::PermissionOptionKind::AllowAlways
+        && let PermissionOptions::Flat(options) = options
+        && let Some(option) = options.iter().find(|option| {
+            option.option_id.0.as_ref() == acp_thread::SandboxPermission::AllowAlways.as_id()
+        })
+    {
+        return Some(option);
+    }
+
+    options.first_option_of_kind(kind)
+}
 
 fn resolve_outcome_from_selection(
     options: &PermissionOptions,
@@ -531,7 +544,6 @@ pub struct ConversationView {
     workspace: WeakEntity<Workspace>,
     project: Entity<Project>,
     thread_store: Option<Entity<ThreadStore>>,
-    prompt_store: Option<Entity<PromptStore>>,
     pub(crate) thread_id: ThreadId,
     pub(crate) root_session_id: Option<acp::SessionId>,
     server_state: ServerState,
@@ -552,6 +564,8 @@ pub struct ConversationView {
     /// must NOT reload the agent. Seeded at construction; see the constructor and
     /// [`Self::handle_language_model_registry_event`].
     byok_signature: Option<String>,
+    loading_status: Option<SharedString>,
+
     /// When settings change, use this to see if the theme has changed (which
     /// causes mermaid diagrams to re-render).
     last_theme_id: Option<String>,
@@ -751,7 +765,6 @@ impl ConversationView {
         workspace: WeakEntity<Workspace>,
         project: Entity<Project>,
         thread_store: Option<Entity<ThreadStore>>,
-        prompt_store: Option<Entity<PromptStore>>,
         source: AgentThreadSource,
         window: &mut Window,
         cx: &mut Context<Self>,
@@ -834,7 +847,6 @@ impl ConversationView {
             workspace,
             project: project.clone(),
             thread_store,
-            prompt_store,
             thread_id,
             root_session_id: resume_session_id.clone(),
             server_state: Self::initial_state(
@@ -855,6 +867,8 @@ impl ConversationView {
             auth_task: None,
             byok_refresh_pending: false,
             byok_signature: None,
+            loading_status: None,
+
             last_theme_id: Some(cx.theme().id.clone()),
             draft_prompt_persist_task: None,
             code_span_resolver,
@@ -1015,6 +1029,8 @@ impl ConversationView {
                 (session_id, work_dirs, title)
             });
 
+        self.loading_status = None;
+
         let state = Self::initial_state(
             self.agent.clone(),
             self.connection_store.clone(),
@@ -1077,6 +1093,10 @@ impl ConversationView {
                             cx.notify();
                         });
                     }
+                }
+                AgentConnectionEntryEvent::LoadingStatusChanged(status) => {
+                    this.loading_status = status.clone();
+                    cx.notify();
                 }
             });
 
@@ -1259,7 +1279,6 @@ impl ConversationView {
                 self.workspace.clone(),
                 self.project.downgrade(),
                 self.thread_store.clone(),
-                self.prompt_store.clone(),
                 session_capabilities.clone(),
                 self.agent.agent_id(),
             )
@@ -1309,16 +1328,12 @@ impl ConversationView {
             model_selector = None;
             mode_selector = None;
         } else {
-            // Fall back to legacy mode/model selectors
+            // Fall back to dedicated mode/model selectors
             config_options_view = None;
             model_selector = connection.model_selector(&session_id).map(|selector| {
-                let agent_server = self.agent.clone();
-                let fs = self.project.read(cx).fs().clone();
                 cx.new(|cx| {
                     ModelSelectorPopover::new(
                         selector,
-                        agent_server,
-                        fs,
                         PopoverMenuHandle::default(),
                         self.focus_handle(cx),
                         window,
@@ -1428,7 +1443,6 @@ impl ConversationView {
                 self.project.downgrade(),
                 self.code_span_resolver.clone(),
                 self.thread_store.clone(),
-                self.prompt_store.clone(),
                 initial_content,
                 subscriptions,
                 window,
@@ -1572,7 +1586,10 @@ impl ConversationView {
                 .active_view()
                 .and_then(|v| v.read(cx).thread.read(cx).title())
                 .unwrap_or_else(|| DEFAULT_THREAD_TITLE.into()),
-            ServerState::Loading { .. } => "Loading…".into(),
+            ServerState::Loading { .. } => self
+                .loading_status
+                .clone()
+                .unwrap_or_else(|| "Loading…".into()),
             ServerState::LoadError { error, .. } => match error {
                 LoadError::Unsupported { .. } => {
                     format!("Upgrade {}", self.agent.agent_id()).into()
@@ -2647,7 +2664,6 @@ impl ConversationView {
                     workspace.clone(),
                     project.clone(),
                     None,
-                    None,
                     session_capabilities.clone(),
                     agent_name.clone(),
                     "",
@@ -3266,21 +3282,27 @@ impl Render for ConversationView {
             .size_full()
             .bg(cx.theme().colors().panel_background)
             .child(match &self.server_state {
-                ServerState::Loading { .. } => v_flex()
-                    .flex_1()
-                    .size_full()
-                    .items_center()
-                    .justify_center()
-                    .child(
-                        Label::new("Loading…").color(Color::Muted).with_animation(
-                            "loading-agent-label",
-                            Animation::new(Duration::from_secs(2))
-                                .repeat()
-                                .with_easing(pulsating_between(0.3, 0.7)),
-                            |label, delta| label.alpha(delta),
-                        ),
-                    )
-                    .into_any(),
+                ServerState::Loading { .. } => {
+                    let label_text = self
+                        .loading_status
+                        .clone()
+                        .unwrap_or_else(|| "Loading…".into());
+                    v_flex()
+                        .flex_1()
+                        .size_full()
+                        .items_center()
+                        .justify_center()
+                        .child(
+                            Label::new(label_text).color(Color::Muted).with_animation(
+                                "loading-agent-label",
+                                Animation::new(Duration::from_secs(2))
+                                    .repeat()
+                                    .with_easing(pulsating_between(0.3, 0.7)),
+                                |label, delta| label.alpha(delta),
+                            ),
+                        )
+                        .into_any()
+                }
                 ServerState::LoadError { error: e, .. } => v_flex()
                     .flex_1()
                     .size_full()
@@ -3876,7 +3898,6 @@ pub(crate) mod tests {
                     workspace.downgrade(),
                     project,
                     Some(thread_store),
-                    None,
                     AgentThreadSource::AgentPanel,
                     window,
                     cx,
@@ -4013,7 +4034,6 @@ pub(crate) mod tests {
                     workspace.downgrade(),
                     project,
                     Some(thread_store),
-                    None,
                     AgentThreadSource::AgentPanel,
                     window,
                     cx,
@@ -4095,7 +4115,6 @@ pub(crate) mod tests {
                     workspace.downgrade(),
                     project,
                     Some(thread_store),
-                    None,
                     AgentThreadSource::AgentPanel,
                     window,
                     cx,
@@ -4234,7 +4253,6 @@ pub(crate) mod tests {
                     workspace.downgrade(),
                     project.clone(),
                     Some(thread_store),
-                    None,
                     AgentThreadSource::AgentPanel,
                     window,
                     cx,
@@ -4519,7 +4537,7 @@ pub(crate) mod tests {
         let cx = &mut VisualTestContext::from_window(multi_workspace_handle.into(), cx);
 
         let panel = workspace.update_in(cx, |workspace, window, cx| {
-            let panel = cx.new(|cx| crate::AgentPanel::new(workspace, None, window, cx));
+            let panel = cx.new(|cx| crate::AgentPanel::new(workspace, window, cx));
             workspace.add_panel(panel.clone(), window, cx);
             workspace.focus_panel::<crate::AgentPanel>(window, cx);
             panel
@@ -4560,7 +4578,6 @@ pub(crate) mod tests {
                     workspace.downgrade(),
                     project.clone(),
                     Some(thread_store),
-                    None,
                     AgentThreadSource::AgentPanel,
                     window,
                     cx,
@@ -4659,7 +4676,6 @@ pub(crate) mod tests {
                     workspace.downgrade(),
                     project.clone(),
                     Some(thread_store),
-                    None,
                     AgentThreadSource::AgentPanel,
                     window,
                     cx,
@@ -4735,7 +4751,6 @@ pub(crate) mod tests {
                     workspace.downgrade(),
                     project.clone(),
                     Some(thread_store),
-                    None,
                     AgentThreadSource::AgentPanel,
                     window,
                     cx,
@@ -4803,7 +4818,6 @@ pub(crate) mod tests {
                     workspace.downgrade(),
                     project.clone(),
                     Some(thread_store),
-                    None,
                     AgentThreadSource::AgentPanel,
                     window,
                     cx,
@@ -4879,7 +4893,7 @@ pub(crate) mod tests {
         let cx = &mut VisualTestContext::from_window(multi_workspace_handle.into(), cx);
 
         let panel = workspace1.update_in(cx, |workspace, window, cx| {
-            let panel = cx.new(|cx| crate::AgentPanel::new(workspace, None, window, cx));
+            let panel = cx.new(|cx| crate::AgentPanel::new(workspace, window, cx));
             workspace.add_panel(panel.clone(), window, cx);
 
             // Open the dock and activate the agent panel so it's visible
@@ -4925,7 +4939,6 @@ pub(crate) mod tests {
                     workspace1.downgrade(),
                     project1.clone(),
                     Some(thread_store),
-                    None,
                     AgentThreadSource::AgentPanel,
                     window,
                     cx,
@@ -5147,7 +5160,6 @@ pub(crate) mod tests {
                     workspace.downgrade(),
                     project,
                     Some(thread_store),
-                    None,
                     AgentThreadSource::AgentPanel,
                     window,
                     cx,
@@ -5806,7 +5818,6 @@ pub(crate) mod tests {
                     workspace.downgrade(),
                     project.clone(),
                     Some(thread_store.clone()),
-                    None,
                     AgentThreadSource::AgentPanel,
                     window,
                     cx,
@@ -7691,6 +7702,42 @@ pub(crate) mod tests {
         ])
     }
 
+    fn sandbox_permission_options() -> PermissionOptions {
+        PermissionOptions::Flat(vec![
+            acp::PermissionOption::new(
+                acp::PermissionOptionId::new("allow"),
+                "Allow once",
+                acp::PermissionOptionKind::AllowOnce,
+            ),
+            acp::PermissionOption::new(
+                acp::PermissionOptionId::new("allow_thread"),
+                "Allow for this thread",
+                acp::PermissionOptionKind::AllowAlways,
+            ),
+            acp::PermissionOption::new(
+                acp::PermissionOptionId::new("allow_always"),
+                "Allow always",
+                acp::PermissionOptionKind::AllowAlways,
+            ),
+            acp::PermissionOption::new(
+                acp::PermissionOptionId::new("deny"),
+                "Deny",
+                acp::PermissionOptionKind::RejectOnce,
+            ),
+        ])
+    }
+
+    #[test]
+    fn permission_option_for_action_prefers_explicit_sandbox_allow_always() {
+        let options = sandbox_permission_options();
+
+        let option =
+            super::permission_option_for_action(&options, acp::PermissionOptionKind::AllowAlways)
+                .unwrap();
+
+        assert_eq!(option.option_id.0.as_ref(), "allow_always");
+    }
+
     #[test]
     fn resolve_outcome_from_selection_flat_allow_picks_allow_once() {
         let options = flat_allow_deny_options();
@@ -8268,9 +8315,17 @@ pub(crate) mod tests {
     async fn test_permission_row_hidden_when_inline_bounds_unavailable(cx: &mut TestAppContext) {
         init_test(cx);
 
-        let (_view, thread_view, _entry_ix, cx) =
+        let (_view, thread_view, entry_ix, cx) =
             setup_pending_permission_thread("perm-no-bounds", cx).await;
 
+        // Pin the scroll top to the entry so it isn't treated as above the
+        // viewport, forcing the unmeasured-bounds path we want to exercise.
+        thread_view.read_with(cx, |view, _cx| {
+            view.list_state.scroll_to(ListOffset {
+                item_ix: entry_ix,
+                offset_in_item: px(0.0),
+            });
+        });
         thread_view.update_in(cx, |view, window, cx| {
             assert!(
                 view.render_main_agent_awaiting_permission(window, cx)
@@ -8331,8 +8386,8 @@ pub(crate) mod tests {
         let (_view, thread_view, entry_ix, cx) =
             setup_pending_permission_thread("perm-scroll", cx).await;
 
-        // Start off-screen below the viewport — row visible because the item
-        // has bounds that do not intersect the viewport.
+        // Start off-screen below the viewport. The row is visible because the
+        // item has bounds that do not intersect the viewport.
         draw_thread_list_at(
             &thread_view,
             ListOffset {
@@ -8367,6 +8422,69 @@ pub(crate) mod tests {
             cx,
         );
 
+        thread_view.update_in(cx, |view, window, cx| {
+            assert!(
+                view.render_main_agent_awaiting_permission(window, cx)
+                    .is_none(),
+                "Floating row should disappear after scrolling brings the inline prompt into view"
+            );
+        });
+    }
+
+    #[gpui::test]
+    async fn test_permission_row_shown_when_inline_prompt_is_above_viewport(
+        cx: &mut TestAppContext,
+    ) {
+        init_test(cx);
+
+        let (_view, thread_view, entry_ix, cx) =
+            setup_pending_permission_thread("perm-above", cx).await;
+
+        let thread = thread_view.read_with(cx, |view, _cx| view.thread.clone());
+        thread.update(cx, |thread, cx| {
+            let result = thread.handle_session_update(
+                acp::SessionUpdate::AgentMessageChunk(acp::ContentChunk::new(
+                    "More content".into(),
+                )),
+                cx,
+            );
+            assert!(
+                result.is_ok(),
+                "following assistant message should be accepted"
+            );
+        });
+
+        draw_thread_list_at(
+            &thread_view,
+            ListOffset {
+                item_ix: entry_ix + 1,
+                offset_in_item: px(0.0),
+            },
+            cx,
+        );
+        thread_view.read_with(cx, |view, _cx| {
+            assert!(
+                entry_ix < view.list_state.logical_scroll_top().item_ix,
+                "The tool call entry should be above the logical scroll top"
+            );
+        });
+        thread_view.update_in(cx, |view, window, cx| {
+            assert!(
+                view.render_main_agent_awaiting_permission(window, cx)
+                    .is_some(),
+                "Floating row should be visible when the inline prompt is above the viewport"
+            );
+        });
+
+        // Scrolling up to the entry brings it back into view.
+        draw_thread_list_at(
+            &thread_view,
+            ListOffset {
+                item_ix: entry_ix,
+                offset_in_item: px(0.0),
+            },
+            cx,
+        );
         thread_view.update_in(cx, |view, window, cx| {
             assert!(
                 view.render_main_agent_awaiting_permission(window, cx)
@@ -8711,7 +8829,6 @@ pub(crate) mod tests {
                     workspace.downgrade(),
                     project,
                     Some(thread_store),
-                    None,
                     AgentThreadSource::AgentPanel,
                     window,
                     cx,

@@ -15,10 +15,13 @@ use futures::channel::mpsc;
 use futures::future::Shared;
 use futures::io::BufReader;
 use futures::{AsyncBufReadExt as _, Future, FutureExt as _, StreamExt as _};
-use project::agent_server_store::{AgentServerCommand, AgentServerStore};
+use project::agent_server_store::{
+    AgentServerCommand, AgentServerStore, AllAgentServersSettings, CustomAgentServerSettings,
+};
 use project::{AgentId, Project};
 use remote::remote_client::Interactive;
 use serde::Deserialize;
+use settings::SettingsStore;
 use std::path::PathBuf;
 use std::process::{ExitStatus, Stdio};
 use std::rc::Rc;
@@ -32,7 +35,7 @@ use util::path_list::PathList;
 use util::process::Child;
 
 use anyhow::{Context as _, Result};
-use gpui::{App, AppContext as _, AsyncApp, Entity, SharedString, Task, WeakEntity};
+use gpui::{App, AppContext as _, AsyncApp, Entity, SharedString, Subscription, Task, WeakEntity};
 
 use acp_thread::{AcpThread, AuthRequired, LoadError, TerminalProviderEvent};
 use terminal::TerminalBuilder;
@@ -427,16 +430,82 @@ pub struct AcpConnection {
     auth_methods: Vec<acp::AuthMethod>,
     agent_server_store: WeakEntity<AgentServerStore>,
     agent_capabilities: acp::AgentCapabilities,
-    default_mode: Option<acp::SessionModeId>,
-    default_model: Option<acp::ModelId>,
-    default_config_options: HashMap<String, String>,
+    defaults: AcpConnectionDefaults,
     child: Option<Child>,
     session_list: Option<Rc<AcpSessionList>>,
     debug_log: AcpDebugLog,
+    _settings_subscription: Subscription,
     _io_task: Task<()>,
     _dispatch_task: Task<()>,
     _wait_task: Task<Result<()>>,
     _stderr_task: Task<Result<()>>,
+}
+
+#[derive(Clone, Default)]
+struct AcpConnectionDefaults {
+    mode: Rc<RefCell<Option<acp::SessionModeId>>>,
+    config_options: Rc<RefCell<HashMap<String, String>>>,
+}
+
+impl AcpConnectionDefaults {
+    fn new(mode: Option<acp::SessionModeId>, config_options: HashMap<String, String>) -> Self {
+        Self {
+            mode: Rc::new(RefCell::new(mode)),
+            config_options: Rc::new(RefCell::new(config_options)),
+        }
+    }
+
+    fn mode(&self) -> Option<acp::SessionModeId> {
+        self.mode.borrow().clone()
+    }
+
+    fn config_option(&self, config_id: &str) -> Option<String> {
+        self.config_options.borrow().get(config_id).cloned()
+    }
+
+    fn set(&self, mode: Option<acp::SessionModeId>, config_options: HashMap<String, String>) {
+        *self.mode.borrow_mut() = mode;
+        *self.config_options.borrow_mut() = config_options;
+    }
+
+    fn refresh_from_settings(&self, agent_id: &AgentId, cx: &App) {
+        let Some(settings_store) = cx.try_global::<SettingsStore>() else {
+            self.set(None, HashMap::default());
+            return;
+        };
+        let settings = settings_store.get::<AllAgentServersSettings>(None);
+        let Some(agent_settings) = settings.get(agent_id.as_ref()) else {
+            self.set(None, HashMap::default());
+            return;
+        };
+
+        let default_config_options = match agent_settings {
+            CustomAgentServerSettings::Custom {
+                default_config_options,
+                ..
+            }
+            | CustomAgentServerSettings::Registry {
+                default_config_options,
+                ..
+            } => default_config_options.clone(),
+        };
+        self.set(
+            agent_settings.default_mode().map(acp::SessionModeId::new),
+            default_config_options,
+        );
+    }
+
+    fn observe_settings(&self, agent_id: AgentId, cx: &mut App) -> Subscription {
+        if cx.try_global::<SettingsStore>().is_none() {
+            return Subscription::new(|| {});
+        }
+
+        self.refresh_from_settings(&agent_id, cx);
+        let defaults = self.clone();
+        cx.observe_global::<SettingsStore>(move |cx| {
+            defaults.refresh_from_settings(&agent_id, cx);
+        })
+    }
 }
 
 struct PendingAcpSession {
@@ -446,7 +515,6 @@ struct PendingAcpSession {
 
 struct SessionConfigResponse {
     modes: Option<acp::SessionModeState>,
-    models: Option<acp::SessionModelState>,
     config_options: Option<Vec<acp::SessionConfigOption>>,
 }
 
@@ -471,7 +539,6 @@ impl ConfigOptions {
 pub struct AcpSession {
     thread: WeakEntity<AcpThread>,
     suppress_abort_err: bool,
-    models: Option<Rc<RefCell<acp::SessionModelState>>>,
     session_modes: Option<Rc<RefCell<acp::SessionModeState>>>,
     config_options: Option<ConfigOptions>,
     ref_count: usize,
@@ -593,7 +660,6 @@ pub async fn connect(
     command: AgentServerCommand,
     agent_server_store: WeakEntity<AgentServerStore>,
     default_mode: Option<acp::SessionModeId>,
-    default_model: Option<acp::ModelId>,
     default_config_options: HashMap<String, String>,
     cx: &mut AsyncApp,
 ) -> Result<Rc<dyn AgentConnection>> {
@@ -603,7 +669,6 @@ pub async fn connect(
         command.clone(),
         agent_server_store,
         default_mode,
-        default_model,
         default_config_options,
         cx,
     )
@@ -720,7 +785,6 @@ impl AcpConnection {
         command: AgentServerCommand,
         agent_server_store: WeakEntity<AgentServerStore>,
         default_mode: Option<acp::SessionModeId>,
-        default_model: Option<acp::ModelId>,
         default_config_options: HashMap<String, String>,
         cx: &mut AsyncApp,
     ) -> Result<Self> {
@@ -1006,6 +1070,13 @@ impl AcpConnection {
         } else {
             response.auth_methods
         };
+        let defaults = AcpConnectionDefaults::new(default_mode, default_config_options);
+        let settings_subscription = cx.update({
+            let agent_id = agent_id.clone();
+            let defaults = defaults.clone();
+            move |cx| defaults.observe_settings(agent_id, cx)
+        });
+
         Ok(Self {
             id: agent_id,
             auth_methods,
@@ -1016,11 +1087,10 @@ impl AcpConnection {
             sessions,
             pending_sessions: Rc::new(RefCell::new(HashMap::default())),
             agent_capabilities: response.agent_capabilities,
-            default_mode,
-            default_model,
-            default_config_options,
+            defaults,
             session_list,
             debug_log,
+            _settings_subscription: settings_subscription,
             _io_task: io_task,
             _dispatch_task: dispatch_task,
             _wait_task: wait_task,
@@ -1041,10 +1111,14 @@ impl AcpConnection {
         agent_server_store: WeakEntity<AgentServerStore>,
         io_task: Task<()>,
         dispatch_task: Task<()>,
-        _cx: &mut App,
+        cx: &mut App,
     ) -> Self {
+        let agent_id = AgentId::new("test");
+        let defaults = AcpConnectionDefaults::default();
+        let settings_subscription = defaults.observe_settings(agent_id.clone(), cx);
+
         Self {
-            id: AgentId::new("test"),
+            id: agent_id,
             telemetry_id: "test".into(),
             agent_version: None,
             connection,
@@ -1053,12 +1127,11 @@ impl AcpConnection {
             auth_methods: vec![],
             agent_server_store,
             agent_capabilities,
-            default_mode: None,
-            default_model: None,
-            default_config_options: HashMap::default(),
+            defaults,
             child: None,
             session_list: None,
             debug_log: AcpDebugLog::default(),
+            _settings_subscription: settings_subscription,
             _io_task: io_task,
             _dispatch_task: dispatch_task,
             _wait_task: Task::ready(Ok(())),
@@ -1140,14 +1213,13 @@ impl AcpConnection {
                     // Register the session before awaiting the RPC so that any
                     // `session/update` notifications that arrive during the call
                     // (e.g. history replay during `session/load`) can find the thread.
-                    // Modes/models/config are filled in once the response arrives.
+                    // Modes/config are filled in once the response arrives.
                     this.sessions.borrow_mut().insert(
                         session_id.clone(),
                         AcpSession {
                             thread: thread.downgrade(),
                             suppress_abort_err: false,
                             session_modes: None,
-                            models: None,
                             config_options: None,
                             ref_count: 1,
                         },
@@ -1165,8 +1237,8 @@ impl AcpConnection {
                             }
                         };
 
-                    let (modes, models, config_options) =
-                        config_state(response.modes, response.models, response.config_options);
+                    let (modes, config_options) =
+                        config_state(response.modes, response.config_options);
 
                     if let Some(config_opts) = config_options.as_ref() {
                         this.apply_default_config_options(&session_id, config_opts, cx);
@@ -1191,7 +1263,6 @@ impl AcpConnection {
                             )));
                         };
                         session.session_modes = modes;
-                        session.models = models;
                         session.config_options = config_options.map(ConfigOptions::new);
                         session.ref_count = ref_count;
                     }
@@ -1377,7 +1448,6 @@ impl AcpConnection {
         cx: &App,
     ) -> (
         Option<acp::SessionModeId>,
-        Option<acp::ModelId>,
         HashMap<String, String>,
     ) {
         cx.global::<settings::SettingsStore>()
@@ -1386,18 +1456,15 @@ impl AcpConnection {
             .map(|s| match s {
                 project::agent_server_store::CustomAgentServerSettings::Custom {
                     default_mode,
-                    default_model,
                     default_config_options,
                     ..
                 }
                 | project::agent_server_store::CustomAgentServerSettings::Registry {
                     default_mode,
-                    default_model,
                     default_config_options,
                     ..
                 } => (
                     default_mode.clone().map(acp::SessionModeId::new),
-                    default_model.clone().map(acp::ModelId::new),
                     default_config_options.clone(),
                 ),
             })
@@ -1421,6 +1488,7 @@ impl AcpConnection {
                 .iter()
                 .filter_map(|config_option| {
                     let default_value = default_config_options.get(&*config_option.id.0)?;
+
 
                     let is_valid = match &config_option.kind {
                         acp::SessionConfigKind::Select(select) => match &select.options {
@@ -1446,11 +1514,7 @@ impl AcpConnection {
                             }
                             _ => None,
                         };
-                        Some((
-                            config_option.id.clone(),
-                            default_value.clone(),
-                            initial_value,
-                        ))
+                        Some((config_option.id.clone(), default_value, initial_value))
                     } else {
                         log::warn!(
                             "`{}` is not a valid value for config option `{}` in {}",
@@ -1690,14 +1754,13 @@ impl AgentConnection for AcpConnection {
             .await
             .map_err(map_acp_error)?;
 
-            let (modes, models, config_options) =
-                config_state(response.modes, response.models, response.config_options);
+            let (modes, config_options) = config_state(response.modes, response.config_options);
 
             // VIBEDEV: read the user's CURRENT defaults fresh from settings (see
-            // `current_defaults`) — the connection cached them at connect(); reading
+            // `current_defaults`) -- the connection cached them at connect(); reading
             // fresh makes a default pinned mid-session apply to the next new session
             // without restarting the agent.
-            let (default_mode, default_model, default_config_options) =
+            let (default_mode, default_config_options) =
                 cx.update(|cx| Self::current_defaults(&self.id, cx));
 
             if let Some(default_mode) = default_mode.clone() {
@@ -1749,54 +1812,6 @@ impl AgentConnection for AcpConnection {
                 }
             }
 
-            if let Some(default_model) = default_model.clone() {
-                if let Some(models) = models.as_ref() {
-                    let mut models_ref = models.borrow_mut();
-                    let has_model = models_ref
-                        .available_models
-                        .iter()
-                        .any(|model| model.model_id == default_model);
-
-                    if has_model {
-                        let initial_model_id = models_ref.current_model_id.clone();
-
-                        cx.spawn({
-                            let default_model = default_model.clone();
-                            let session_id = response.session_id.clone();
-                            let models = models.clone();
-                            let conn = self.connection.clone();
-                            async move |_| {
-                                let result = into_foreground_future(
-                                    conn.send_request(acp::SetSessionModelRequest::new(
-                                        session_id,
-                                        default_model,
-                                    )),
-                                )
-                                .await
-                                .log_err();
-
-                                if result.is_none() {
-                                    models.borrow_mut().current_model_id = initial_model_id;
-                                }
-                            }
-                        })
-                        .detach();
-
-                        models_ref.current_model_id = default_model;
-                    } else {
-                        let available_models = models_ref
-                            .available_models
-                            .iter()
-                            .map(|model| format!("- `{}`: {}", model.model_id, model.name))
-                            .collect::<Vec<_>>()
-                            .join("\n");
-
-                        log::warn!(
-                            "`{default_model}` is not a valid {name} model. Available options:\n{available_models}",
-                        );
-                    }
-                }
-            }
 
             if let Some(config_opts) = config_options.as_ref() {
                 self.apply_default_config_options(&response.session_id, config_opts, cx);
@@ -1815,7 +1830,8 @@ impl AgentConnection for AcpConnection {
                 &response.session_id,
                 models.as_ref(),
                 config_options.as_ref(),
-                default_model.clone(),
+                // model selector removed upstream (ACP 0.13); no explicit model default
+                None,
                 &default_config_options,
                 cx,
             );
@@ -1844,7 +1860,6 @@ impl AgentConnection for AcpConnection {
                     thread: thread.downgrade(),
                     suppress_abort_err: false,
                     session_modes: modes,
-                    models,
                     config_options: config_options.map(ConfigOptions::new),
                     ref_count: 1,
                 },
@@ -1901,7 +1916,6 @@ impl AgentConnection for AcpConnection {
                     .map_err(map_acp_error)?;
                     Ok(SessionConfigResponse {
                         modes: response.modes,
-                        models: response.models,
                         config_options: response.config_options,
                     })
                 })
@@ -1944,7 +1958,6 @@ impl AgentConnection for AcpConnection {
                     .map_err(map_acp_error)?;
                     Ok(SessionConfigResponse {
                         modes: response.modes,
-                        models: response.models,
                         config_options: response.config_options,
                     })
                 })
@@ -2182,27 +2195,6 @@ impl AgentConnection for AcpConnection {
         }
     }
 
-    fn model_selector(
-        &self,
-        session_id: &acp::SessionId,
-    ) -> Option<Rc<dyn acp_thread::AgentModelSelector>> {
-        let sessions = self.sessions.clone();
-        let sessions_ref = sessions.borrow();
-        let Some(session) = sessions_ref.get(session_id) else {
-            return None;
-        };
-
-        if let Some(models) = session.models.as_ref() {
-            Some(Rc::new(AcpModelSelector::new(
-                session_id.clone(),
-                self.connection.clone(),
-                models.clone(),
-            )) as _)
-        } else {
-            None
-        }
-    }
-
     fn session_config_options(
         &self,
         session_id: &acp::SessionId,
@@ -2250,8 +2242,8 @@ pub mod test_support {
     use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
     use acp_thread::{
-        AgentModelSelector, AgentSessionConfigOptions, AgentSessionModes, AgentSessionRetry,
-        AgentSessionSetTitle, AgentSessionTruncate, AgentTelemetry, UserMessageId,
+        AgentSessionConfigOptions, AgentSessionModes, AgentSessionRetry, AgentSessionSetTitle,
+        AgentSessionTruncate, AgentTelemetry, UserMessageId,
     };
 
     use super::*;
@@ -2501,13 +2493,6 @@ pub mod test_support {
             self.inner.set_title(session_id, cx)
         }
 
-        fn model_selector(
-            &self,
-            session_id: &acp::SessionId,
-        ) -> Option<Rc<dyn AgentModelSelector>> {
-            self.inner.model_selector(session_id)
-        }
-
         fn telemetry(&self) -> Option<Rc<dyn AgentTelemetry>> {
             self.inner.telemetry()
         }
@@ -2731,6 +2716,7 @@ mod tests {
 
     use super::*;
     use gpui::UpdateGlobal as _;
+    use settings::Settings as _;
 
     #[test]
     fn terminal_auth_task_builds_spawn_from_prebuilt_command() {
@@ -3201,6 +3187,61 @@ mod tests {
     }
 
     #[gpui::test]
+    async fn settings_changes_refresh_active_connection_defaults(cx: &mut gpui::TestAppContext) {
+        cx.update(|cx| {
+            let store = settings::SettingsStore::test(cx);
+            cx.set_global(store);
+        });
+
+        let fs = fs::FakeFs::new(cx.executor());
+        fs.insert_tree("/", serde_json::json!({ "a": {} })).await;
+        let project = project::Project::test(fs, [std::path::Path::new("/a")], cx).await;
+        let harness = test_support::connect_fake_acp_connection(project, cx).await;
+
+        cx.update(|cx| {
+            AllAgentServersSettings::override_global(
+                AllAgentServersSettings(HashMap::from_iter([(
+                    "test".to_string(),
+                    settings::CustomAgentServerSettings::Custom {
+                        path: PathBuf::from("test-agent"),
+                        args: Vec::new(),
+                        env: HashMap::default(),
+                        default_mode: Some("manual".to_string()),
+                        default_config_options: HashMap::from_iter([(
+                            "mode".to_string(),
+                            "manual".to_string(),
+                        )]),
+                        favorite_config_option_values: HashMap::default(),
+                    }
+                    .into(),
+                )])),
+                cx,
+            );
+        });
+        cx.run_until_parked();
+
+        assert_eq!(
+            harness.connection.defaults.mode(),
+            Some(acp::SessionModeId::new("manual"))
+        );
+        assert_eq!(
+            harness.connection.defaults.config_option("mode").as_deref(),
+            Some("manual")
+        );
+
+        cx.update(|cx| {
+            AllAgentServersSettings::override_global(
+                AllAgentServersSettings(HashMap::default()),
+                cx,
+            );
+        });
+        cx.run_until_parked();
+
+        assert_eq!(harness.connection.defaults.mode(), None);
+        assert_eq!(harness.connection.defaults.config_option("mode"), None);
+    }
+
+    #[gpui::test]
     async fn session_list_delete_sends_session_delete_when_supported(
         cx: &mut gpui::TestAppContext,
     ) {
@@ -3315,7 +3356,6 @@ mod tests {
             project,
             command,
             agent_server_store,
-            None,
             None,
             HashMap::default(),
             &mut async_cx,
@@ -3694,6 +3734,7 @@ mod tests {
                     acp_thread::AgentThreadEntry::AssistantMessage(_) => "assistant",
                     acp_thread::AgentThreadEntry::ToolCall(_) => "tool_call",
                     acp_thread::AgentThreadEntry::CompletedPlan(_) => "plan",
+                    acp_thread::AgentThreadEntry::ContextCompaction(_) => "compaction",
                 })
                 .collect::<Vec<_>>()
         });
@@ -3960,20 +4001,17 @@ fn mcp_servers_for_project(project: &Entity<Project>, cx: &App) -> Vec<acp::McpS
 
 fn config_state(
     modes: Option<acp::SessionModeState>,
-    models: Option<acp::SessionModelState>,
     config_options: Option<Vec<acp::SessionConfigOption>>,
 ) -> (
     Option<Rc<RefCell<acp::SessionModeState>>>,
-    Option<Rc<RefCell<acp::SessionModelState>>>,
     Option<Rc<RefCell<Vec<acp::SessionConfigOption>>>>,
 ) {
     if let Some(opts) = config_options {
-        return (None, None, Some(Rc::new(RefCell::new(opts))));
+        return (None, Some(Rc::new(RefCell::new(opts))));
     }
 
     let modes = modes.map(|modes| Rc::new(RefCell::new(modes)));
-    let models = models.map(|models| Rc::new(RefCell::new(models)));
-    (modes, models, None)
+    (modes, None)
 }
 
 struct AcpSessionModes {
@@ -4018,138 +4056,6 @@ impl acp_thread::AgentSessionModes for AcpSessionModes {
     }
 }
 
-struct AcpModelSelector {
-    session_id: acp::SessionId,
-    connection: ConnectionTo<Agent>,
-    state: Rc<RefCell<acp::SessionModelState>>,
-}
-
-impl AcpModelSelector {
-    fn new(
-        session_id: acp::SessionId,
-        connection: ConnectionTo<Agent>,
-        state: Rc<RefCell<acp::SessionModelState>>,
-    ) -> Self {
-        Self {
-            session_id,
-            connection,
-            state,
-        }
-    }
-}
-
-impl acp_thread::AgentModelSelector for AcpModelSelector {
-    fn list_models(&self, cx: &mut App) -> Task<Result<acp_thread::AgentModelList>> {
-        let available_models = self.state.borrow().available_models.clone();
-        cx.spawn(async move |cx| {
-            // CRITICAL: load BYOK provider keys from the keychain first.
-            // is_authenticated() is false until authenticate() runs (lazy key
-            // load), so grouping before this sees ZERO BYOK providers and every
-            // model falls into the gateway group — the bug where the user's
-            // configured DeepSeek never appeared. list_models returns a Task, so
-            // we can do this async even though the grouping itself is sync.
-            vibedev_account::byok::authenticate_byok_providers(cx).await;
-
-            // model_id → 厂商展示名（仅已认证的 BYOK provider）。
-            // `AsyncApp::update` returns the closure value directly in this fork.
-            let groups_of = cx.update(|cx| vibedev_account::byok::collect_byok_groups(cx));
-            let infos = available_models
-                .into_iter()
-                .map(acp_thread::AgentModelInfo::from)
-                .collect();
-            Ok(group_models_by_provider(infos, &groups_of))
-        })
-    }
-
-    fn select_model(&self, model_id: acp::ModelId, cx: &mut App) -> Task<Result<()>> {
-        let connection = self.connection.clone();
-        let session_id = self.session_id.clone();
-        let old_model_id;
-        {
-            let mut state = self.state.borrow_mut();
-            old_model_id = state.current_model_id.clone();
-            state.current_model_id = model_id.clone();
-        };
-        let state = self.state.clone();
-        let persisted_model_id = model_id.clone();
-        cx.foreground_executor().spawn(async move {
-            let result = into_foreground_future(
-                connection.send_request(acp::SetSessionModelRequest::new(session_id, model_id)),
-            )
-            .await;
-
-            if result.is_err() {
-                state.borrow_mut().current_model_id = old_model_id;
-            }
-
-            result?;
-
-            // VIBEDEV: write the user's pick through to
-            // `~/.vibedev/last-session-prefs.json` so the next new session
-            // re-applies it. claude-code-best resets `model` to the agent
-            // default on every newSession (`src/services/acp/agent.ts:710`),
-            // so the IDE has to carry this preference itself.
-            vibedev_account::session_prefs::update(|prefs| {
-                prefs.model = Some(persisted_model_id.0.to_string());
-            });
-
-            Ok(())
-        })
-    }
-
-    fn selected_model(&self, _cx: &mut App) -> Task<Result<acp_thread::AgentModelInfo>> {
-        let state = self.state.borrow();
-        Task::ready(
-            state
-                .available_models
-                .iter()
-                .find(|m| m.model_id == state.current_model_id)
-                .cloned()
-                .map(acp_thread::AgentModelInfo::from)
-                .ok_or_else(|| anyhow::anyhow!("Model not found")),
-        )
-    }
-}
-
-/// Group the session's models for the picker. Each model whose id is in
-/// `groups_of` (model_id → BYOK-provider label, from
-/// `vibedev_account::byok::collect_byok_groups`) goes under that provider's
-/// label; the rest go under "VibeDev 网关".
-///
-/// Returns `Flat` ONLY when `groups_of` is empty (no BYOK provider configured →
-/// every model is a gateway model, so a lone header would be noise). As soon as
-/// any BYOK provider is configured, returns `Grouped` so the user can tell their
-/// own provider's models from the gateway's. This is the fix for "I see my
-/// DeepSeek models but they aren't grouped": the old `grouped.len() <= 1` check
-/// flattened whenever the gateway was the only *populated* group.
-fn group_models_by_provider(
-    models: Vec<acp_thread::AgentModelInfo>,
-    groups_of: &std::collections::HashMap<String, String>,
-) -> acp_thread::AgentModelList {
-    use acp_thread::{AgentModelGroupName, AgentModelList};
-    let gateway = SharedString::from("VibeDev 网关");
-    // `collections::IndexMap` (FxBuildHasher) matches the hasher type that
-    // `AgentModelList::Grouped` expects — plain `indexmap::IndexMap` defaults to
-    // RandomState and won't unify.
-    let mut grouped: collections::IndexMap<AgentModelGroupName, Vec<acp_thread::AgentModelInfo>> =
-        collections::IndexMap::default();
-    for info in models {
-        let label = groups_of
-            .get(info.id.0.as_ref())
-            .cloned()
-            .map(SharedString::from)
-            .unwrap_or_else(|| gateway.clone());
-        grouped
-            .entry(AgentModelGroupName(label))
-            .or_default()
-            .push(info);
-    }
-    if groups_of.is_empty() {
-        AgentModelList::Flat(grouped.into_values().flatten().collect())
-    } else {
-        AgentModelList::Grouped(grouped)
-    }
-}
 
 struct AcpSessionConfigOptions {
     session_id: acp::SessionId,
@@ -4427,7 +4333,7 @@ fn handle_session_notification(
                                 0,
                                 cx.background_executor(),
                                 thread.project().read(cx).path_style(cx),
-                            )?;
+                            );
                             let lower = cx.new(|cx| builder.subscribe(cx));
                             thread.on_terminal_provider_event(
                                 TerminalProviderEvent::Created {
@@ -4439,7 +4345,6 @@ fn handle_session_notification(
                                 },
                                 cx,
                             );
-                            anyhow::Ok(())
                         })
                         .log_err();
                 }

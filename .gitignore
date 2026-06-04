@@ -64,3 +64,5 @@ crates/docs_preprocessor/actions.json
 *.nupkg
 # VibeDev: local build / test logs
 *.log
+# NixOS integration test state
+.nixos-test-history

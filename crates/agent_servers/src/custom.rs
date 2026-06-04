@@ -146,90 +146,6 @@ impl AgentServer for CustomAgentServer {
         });
     }
 
-    fn default_model(&self, cx: &App) -> Option<acp::ModelId> {
-        let settings = cx.read_global(|settings: &SettingsStore, _| {
-            settings
-                .get::<AllAgentServersSettings>(None)
-                .get(self.agent_id().as_ref())
-                .cloned()
-        });
-
-        settings
-            .as_ref()
-            .and_then(|s| s.default_model().map(acp::ModelId::new))
-    }
-
-    fn set_default_model(&self, model_id: Option<acp::ModelId>, fs: Arc<dyn Fs>, cx: &mut App) {
-        let agent_id = self.agent_id();
-        update_settings_file(fs, cx, move |settings, _cx| {
-            let settings = settings
-                .agent_servers
-                .get_or_insert_default()
-                .entry(agent_id.0.to_string())
-                .or_insert_with(|| default_settings_for_agent(&agent_id, _cx));
-
-            match settings {
-                settings::CustomAgentServerSettings::Custom { default_model, .. }
-                | settings::CustomAgentServerSettings::Registry { default_model, .. } => {
-                    *default_model = model_id.map(|m| m.to_string());
-                }
-            }
-        });
-    }
-
-    fn favorite_model_ids(&self, cx: &mut App) -> HashSet<acp::ModelId> {
-        let settings = cx.read_global(|settings: &SettingsStore, _| {
-            settings
-                .get::<AllAgentServersSettings>(None)
-                .get(self.agent_id().as_ref())
-                .cloned()
-        });
-
-        settings
-            .as_ref()
-            .map(|s| {
-                s.favorite_models()
-                    .iter()
-                    .map(|id| acp::ModelId::new(id.clone()))
-                    .collect()
-            })
-            .unwrap_or_default()
-    }
-
-    fn toggle_favorite_model(
-        &self,
-        model_id: acp::ModelId,
-        should_be_favorite: bool,
-        fs: Arc<dyn Fs>,
-        cx: &App,
-    ) {
-        let agent_id = self.agent_id();
-        update_settings_file(fs, cx, move |settings, _cx| {
-            let settings = settings
-                .agent_servers
-                .get_or_insert_default()
-                .entry(agent_id.0.to_string())
-                .or_insert_with(|| default_settings_for_agent(&agent_id, _cx));
-
-            let favorite_models = match settings {
-                settings::CustomAgentServerSettings::Custom {
-                    favorite_models, ..
-                }
-                | settings::CustomAgentServerSettings::Registry {
-                    favorite_models, ..
-                } => favorite_models,
-            };
-
-            let model_id_str = model_id.to_string();
-            if should_be_favorite {
-                if !favorite_models.contains(&model_id_str) {
-                    favorite_models.push(model_id_str);
-                }
-            } else {
-                favorite_models.retain(|id| id != &model_id_str);
-            }
-        });
-    }
 
     fn default_config_option(&self, config_id: &str, cx: &App) -> Option<String> {
         let settings = cx.read_global(|settings: &SettingsStore, _| {
@@ -288,7 +204,6 @@ impl AgentServer for CustomAgentServer {
     ) -> Task<Result<Rc<dyn AgentConnection>>> {
         let agent_id = self.agent_id();
         let default_mode = self.default_mode(cx);
-        let default_model = self.default_model(cx);
         let is_registry_agent = is_registry_agent(agent_id.clone(), cx);
         let default_config_options = cx.read_global(|settings: &SettingsStore, _| {
             settings
@@ -357,6 +272,9 @@ impl AgentServer for CustomAgentServer {
                     })?;
                     if let Some(new_version_available_tx) = delegate.new_version_available {
                         agent.set_new_version_available_tx(new_version_available_tx);
+                    }
+                    if let Some(loading_status_tx) = delegate.loading_status {
+                        agent.set_loading_status_tx(loading_status_tx);
                     }
                     anyhow::Ok(agent.get_command(vec![], extra_env, &mut cx.to_async()))
                 })??
@@ -462,7 +380,6 @@ impl AgentServer for CustomAgentServer {
                 command,
                 store.clone(),
                 default_mode,
-                default_model,
                 default_config_options,
                 cx,
             )
@@ -517,12 +434,12 @@ fn default_settings_for_agent(
     cx: &App,
 ) -> settings::CustomAgentServerSettings {
     // VIBEDEV: when first creating the user-settings entry for an agent whose
-    // CURRENT (baked/effective) definition is `Custom` — i.e. the baked VibeDev
-    // agent from default.json — produce a `Custom` entry that PRESERVES that
+    // CURRENT (baked/effective) definition is `Custom` -- i.e. the baked VibeDev
+    // agent from default.json -- produce a `Custom` entry that PRESERVES that
     // command. The settings merge replaces the whole enum wholesale, so the old
     // code (always `Registry`) silently dropped the baked command, turning the
     // agent into a command-less registry entry that fails to register (the
-    // "VibeDev not registered" / model-"未知" trap, with defaults never applying).
+    // "VibeDev not registered" trap, with defaults never applying).
     // Genuinely registry-based agents still default to `Registry`.
     let resolved = cx.read_global(|store: &SettingsStore, _| {
         store
@@ -533,31 +450,25 @@ fn default_settings_for_agent(
     if let Some(project::agent_server_store::CustomAgentServerSettings::Custom {
         command,
         default_mode,
-        default_model,
-        favorite_models,
         default_config_options,
         favorite_config_option_values,
     }) = resolved
     {
-        // Preserve the baked command AND any baked defaults/favorites. Dropping the
-        // latter (the old `None`/empty here) would silently erase a default_model or
-        // favorites that a baked `Custom` agent could ship with in default.json.
+        // Preserve the baked command + baked defaults. Dropping these (the old
+        // `None`/empty here) would silently erase defaults a baked `Custom` agent
+        // could ship with in default.json.
         settings::CustomAgentServerSettings::Custom {
             path: command.path,
             args: command.args,
             env: command.env.unwrap_or_default().into_iter().collect(),
             default_mode,
-            default_model,
-            favorite_models,
             default_config_options: default_config_options.into_iter().collect(),
             favorite_config_option_values: favorite_config_option_values.into_iter().collect(),
         }
     } else {
         settings::CustomAgentServerSettings::Registry {
-            default_model: None,
-            default_mode: None,
             env: Default::default(),
-            favorite_models: Vec::new(),
+            default_mode: None,
             default_config_options: Default::default(),
             favorite_config_option_values: Default::default(),
         }
@@ -653,8 +564,6 @@ mod tests {
                 settings::CustomAgentServerSettings::Registry {
                     env: HashMap::default(),
                     default_mode: None,
-                    default_model: None,
-                    favorite_models: Vec::new(),
                     default_config_options: HashMap::default(),
                     favorite_config_option_values: HashMap::default(),
                 },

@@ -224,7 +224,7 @@ impl Platform for WebPlatform {
         let (sender, receiver) = oneshot::channel();
         sender
             .send(Err(anyhow::anyhow!(
-                "Web 端不支持 prompt_for_new_path"
+                "prompt_for_new_path is not supported on the web"
             )))
             .ok();
         receiver
