@@ -65,15 +65,17 @@ function Get-VSArch {
 }
 
 Push-Location
-# VIBEDEV: CI runners have the Community edition; local dev machines often have
-# BuildTools. Use whichever Launch-VsDevShell.ps1 exists instead of hard-coding
-# Community (which made the bundle fail on a BuildTools-only box).
+# VIBEDEV: find Launch-VsDevShell.ps1 across VS editions instead of hard-coding one
+# — GitHub-hosted windows runners ship Enterprise, our own CI shipped Community,
+# local dev boxes often have BuildTools.
 $vsDevShell = @(
+    "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\Launch-VsDevShell.ps1",
+    "C:\Program Files\Microsoft Visual Studio\2022\Professional\Common7\Tools\Launch-VsDevShell.ps1",
     "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1",
     "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\Launch-VsDevShell.ps1",
     "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\Launch-VsDevShell.ps1"
 ) | Where-Object { Test-Path $_ } | Select-Object -First 1
-if (-not $vsDevShell) { throw "Launch-VsDevShell.ps1 not found (looked for Community + BuildTools)" }
+if (-not $vsDevShell) { throw "Launch-VsDevShell.ps1 not found (Enterprise/Professional/Community/BuildTools)" }
 & $vsDevShell -Arch (Get-VSArch -Arch $Architecture) -HostArch (Get-VSArch -Arch $OSArchitecture)
 Pop-Location
 
@@ -100,12 +102,17 @@ function CheckEnvironmentVariables {
         return
     }
 
-    $requiredVars = @(
-        'ZED_WORKSPACE', 'RELEASE_VERSION', 'ZED_RELEASE_CHANNEL',
-        'AZURE_TENANT_ID', 'AZURE_CLIENT_ID', 'AZURE_CLIENT_SECRET',
-        'ACCOUNT_NAME', 'CERT_PROFILE_NAME', 'ENDPOINT',
-        'FILE_DIGEST', 'TIMESTAMP_DIGEST', 'TIMESTAMP_SERVER'
-    )
+    # VIBEDEV: signing creds are optional. Require the Azure Trusted Signing vars
+    # only when signing is configured (AZURE_TENANT_ID present); an unsigned build
+    # just needs workspace + version + channel (all set by ParseZedWorkspace).
+    $requiredVars = @('ZED_WORKSPACE', 'RELEASE_VERSION', 'ZED_RELEASE_CHANNEL')
+    if (-not [string]::IsNullOrWhiteSpace($env:AZURE_TENANT_ID)) {
+        $requiredVars += @(
+            'AZURE_TENANT_ID', 'AZURE_CLIENT_ID', 'AZURE_CLIENT_SECRET',
+            'ACCOUNT_NAME', 'CERT_PROFILE_NAME', 'ENDPOINT',
+            'FILE_DIGEST', 'TIMESTAMP_DIGEST', 'TIMESTAMP_SERVER'
+        )
+    }
 
     foreach ($var in $requiredVars) {
         if (-not (Test-Path "env:$var")) {
