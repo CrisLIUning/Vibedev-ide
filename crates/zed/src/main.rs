@@ -202,6 +202,28 @@ static STARTUP_TIME: OnceLock<Instant> = OnceLock::new();
 fn main() {
     STARTUP_TIME.get_or_init(|| Instant::now());
 
+    // VIBEDEV (dev tool): `--dump-actions` prints every command-palette label
+    // exactly as command_palette.rs renders it, for regenerating
+    // vibedev-i18n/runtime-zh.json. Must run in the BINARY so every crate's
+    // actions are linked — an integration test prunes the zed-lib actions.
+    if std::env::args().any(|a| a == "--dump-actions") {
+        for action in gpui::generate_list_of_all_registered_actions() {
+            let raw = action.name;
+            let display = raw
+                .strip_prefix("zed::")
+                .map(|rest| format!("vibedev::{rest}"))
+                .unwrap_or_else(|| raw.to_string());
+            let humanized = command_palette::humanize_action_name(&display);
+            let key = if let Some(rest) = humanized.strip_prefix("vibedev:") {
+                format!("VibeDev:{rest}")
+            } else {
+                humanized
+            };
+            println!("{key}");
+        }
+        return;
+    }
+
     #[cfg(unix)]
     util::prevent_root_execution();
 
