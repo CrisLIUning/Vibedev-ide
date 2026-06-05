@@ -1,0 +1,16 @@
+[package]
+name = "vibedev_i18n"
+version = "0.1.0"
+edition.workspace = true
+publish = false
+license = "GPL-3.0-or-later"
+description = "VibeDev runtime translation table for computed/agent-origin UI strings (command palette, ACP mode names) that build-time zedl10n cannot reach."
+
+[lints]
+workspace = true
+
+[lib]
+path = "src/vibedev_i18n.rs"
+
+[dependencies]
+serde_json.workspace = true

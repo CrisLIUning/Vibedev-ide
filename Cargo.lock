@@ -539,6 +539,7 @@ dependencies = [
  "util",
  "uuid",
  "vibedev_account",
+ "vibedev_i18n",
  "vim",
  "watch",
  "workspace",
@@ -3545,6 +3546,7 @@ dependencies = [
  "time",
  "ui",
  "util",
+ "vibedev_i18n",
  "workspace",
  "zed_actions",
 ]
@@ -19900,6 +19902,13 @@ dependencies = [
  "urlencoding",
  "util",
  "zed_credentials_provider",
+]
+
+[[package]]
+name = "vibedev_i18n"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
 ]
 
 [[package]]

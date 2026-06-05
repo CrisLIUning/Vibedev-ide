@@ -41,6 +41,13 @@ zedl10n replace --input "$i18n\vibedev-overrides.json" --source-root $root --do-
 Write-Host "[build-zh] applying base zh-CN translations ..."
 zedl10n replace --input "$i18n\zh-CN.json"             --source-root $root --do-not-translate "$i18n\do_not_translate.json"
 
+# VIBEDEV: populate the runtime translation table (command-palette labels + ACP
+# mode names) that zedl10n cannot reach -- they are computed at runtime, not
+# source literals. Committed empty ({}); copied here so the Chinese build embeds
+# it, and the "git restore ." below reverts it to {} for the English source tree.
+Write-Host "[build-zh] populating vibedev_i18n runtime table ..."
+Copy-Item "$i18n\runtime-zh.json" "$zed\crates\vibedev_i18n\src\runtime-translations.json" -Force
+
 if ($ApplyOnly) {
     Write-Host "[build-zh] applied (source is now Chinese). Build manually, then restore with:"
     Write-Host ("           git -C " + '"' + $zed + '"' + " restore .")

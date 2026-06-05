@@ -124,11 +124,19 @@ impl CommandPalette {
                             .map(|rest| format!("vibedev::{rest}"))
                             .unwrap_or_else(|| raw.to_string());
                         let humanized = humanize_action_name(&display);
-                        if let Some(rest) = humanized.strip_prefix("vibedev:") {
+                        let english = if let Some(rest) = humanized.strip_prefix("vibedev:")
+                        {
                             format!("VibeDev:{rest}")
                         } else {
                             humanized
-                        }
+                        };
+                        // VIBEDEV: palette labels are computed from action type
+                        // names, so build-time zedl10n (literal replacement) can
+                        // never reach them — translate at runtime here. English
+                        // builds ship an empty table → tr() misses → English kept.
+                        vibedev_i18n::tr(&english)
+                            .map(str::to_string)
+                            .unwrap_or(english)
                     },
                     action,
                 })

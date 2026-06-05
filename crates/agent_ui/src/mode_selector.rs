@@ -13,6 +13,17 @@ use ui::{
 
 use crate::{CycleModeSelector, ToggleProfileSelector, ui::documentation_aside_side};
 
+/// VIBEDEV: ACP mode names and descriptions arrive from the agent over the wire
+/// (not Rust string literals), so build-time zedl10n never sees them. Translate
+/// at render via the runtime table; English builds ship an empty table, so this
+/// returns the original SharedString unchanged.
+fn tr_mode(s: &str) -> SharedString {
+    match vibedev_i18n::tr(s) {
+        Some(zh) => SharedString::from(zh),
+        None => SharedString::from(s.to_owned()),
+    }
+}
+
 pub struct ModeSelector {
     connection: Rc<dyn AgentSessionModes>,
     agent_server: Rc<dyn AgentServer>,
@@ -98,14 +109,14 @@ impl ModeSelector {
 
             for mode in all_modes {
                 let is_selected = &mode.id == &current_mode;
-                let entry = ContextMenuEntry::new(mode.name.clone())
+                let entry = ContextMenuEntry::new(tr_mode(&mode.name))
                     .toggleable(IconPosition::End, is_selected);
 
                 let entry = if let Some(description) = &mode.description {
                     entry.documentation_aside(side, {
                         let description = description.clone();
 
-                        move |_| Label::new(description.clone()).into_any_element()
+                        move |_| Label::new(tr_mode(&description)).into_any_element()
                     })
                 } else {
                     entry
@@ -137,7 +148,7 @@ impl Render for ModeSelector {
             .all_modes()
             .iter()
             .find(|mode| mode.id == current_mode_id)
-            .map(|mode| mode.name.clone())
+            .map(|mode| tr_mode(&mode.name))
             .unwrap_or_else(|| "Unknown".into());
 
         let this = cx.weak_entity();
