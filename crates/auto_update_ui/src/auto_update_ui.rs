@@ -12,8 +12,6 @@ use markdown_preview::markdown_preview_view::{MarkdownPreviewMode, MarkdownPrevi
 use prompt_store::rules_to_skills_migration;
 use release_channel::{AppVersion, ReleaseChannel};
 use semver::Version;
-use serde::Deserialize;
-use smol::io::AsyncReadExt;
 use ui::{AnnouncementToast, ListBulletItem, SkillsIllustration, prelude::*};
 use util::{ResultExt as _, maybe};
 use workspace::{
@@ -52,11 +50,16 @@ pub fn init(cx: &mut App) {
     .detach();
 }
 
-#[derive(Deserialize)]
 struct ReleaseNotesBody {
     title: String,
     release_notes: String,
 }
+
+/// VIBEDEV: the in-app release notes are bundled with the build. Upstream fetches
+/// them from zed.dev/api/release_notes, which has nothing for our versions (the
+/// panel was empty). Edit this file every release, alongside the version bump in
+/// crates/zed/Cargo.toml.
+const RELEASE_NOTES: &str = include_str!("../release_notes.md");
 
 fn notify_release_notes_failed_to_show(
     workspace: &mut Workspace,
@@ -99,13 +102,6 @@ fn view_release_notes_locally(
 
     let version = AppVersion::global(cx).to_string();
 
-    let client = client::Client::global(cx).http_client();
-    let url = client.build_url(&format!(
-        "/api/release_notes/v2/{}/{}",
-        release_channel.dev_name(),
-        version
-    ));
-
     let markdown = workspace
         .app_state()
         .languages
@@ -113,21 +109,15 @@ fn view_release_notes_locally(
 
     cx.spawn_in(window, async move |workspace, cx| {
         let markdown = markdown.await.log_err();
-        let response = client.get(&url, Default::default(), true).await;
-        let Some(mut response) = response.log_err() else {
-            workspace
-                .update_in(cx, notify_release_notes_failed_to_show)
-                .log_err();
-            return;
+        // VIBEDEV: release notes ship bundled in the app rather than fetched from
+        // zed.dev/api/release_notes (which has nothing for our versions, so the
+        // panel showed empty). Always render this build's own notes, offline.
+        let body = ReleaseNotesBody {
+            title: format!("VibeDev v{version}"),
+            release_notes: RELEASE_NOTES.to_string(),
         };
 
-        let mut body = Vec::new();
-        response.body_mut().read_to_end(&mut body).await.ok();
-
-        let body: serde_json::Result<ReleaseNotesBody> = serde_json::from_slice(body.as_slice());
-
         let res: Option<()> = maybe!(async {
-            let body = body.ok()?;
             let project = workspace
                 .read_with(cx, |workspace, _| workspace.project().clone())
                 .ok()?;

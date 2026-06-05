@@ -27,6 +27,12 @@
     "Upgrade to Zed Pro": "升级到 VibeDev Pro",
     "Your Zed Pro Trial has expired": "您的 VibeDev Pro 试用已过期"
   },
+  "zed/crates/agent_ui/src/ui/model_selector_components.rs": {
+    "Latest": "最新",
+    "Cycle Favorite Models": "循环切换收藏模型",
+    "Set as Default": "设为默认",
+    "Remove as Default": "取消默认"
+  },
   "zed/crates/ai_onboarding/src/ai_onboarding.rs": {
     "Welcome to Zed AI": "欢迎使用 VibeDev AI",
     "Sign in to try Zed Pro for 14 days, no credit card required.": "登录以免费试用 VibeDev Pro 14 天,无需信用卡。",

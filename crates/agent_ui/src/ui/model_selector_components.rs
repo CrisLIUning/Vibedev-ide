@@ -185,9 +185,9 @@ impl RenderOnce for ModelSelectorListItem {
                 // favorite star (upstream language-model selector still uses it).
                 if let Some(handle_set_default) = self.on_set_default {
                     let (color, tooltip) = if is_default {
-                        (Color::Accent, "取消默认")
+                        (Color::Accent, "Remove as Default")
                     } else {
-                        (Color::Default, "设为默认")
+                        (Color::Default, "Set as Default")
                     };
                     this.child(
                         IconButton::new(("set-default-model", self.index), IconName::Pin)

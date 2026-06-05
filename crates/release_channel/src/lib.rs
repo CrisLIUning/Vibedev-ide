@@ -200,10 +200,10 @@ impl ReleaseChannel {
     pub fn display_name(&self) -> &'static str {
         match self {
             // VIBEDEV: branded product name (upstream returned "Zed*").
-            ReleaseChannel::Dev => "Zed Dev",
-            ReleaseChannel::Nightly => "Zed Nightly",
-            ReleaseChannel::Preview => "Zed Preview",
-            ReleaseChannel::Stable => "Zed",
+            ReleaseChannel::Dev => "VibeDev Dev",
+            ReleaseChannel::Nightly => "VibeDev Nightly",
+            ReleaseChannel::Preview => "VibeDev Preview",
+            ReleaseChannel::Stable => "VibeDev",
         }
     }
 
