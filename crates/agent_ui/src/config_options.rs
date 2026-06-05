@@ -29,6 +29,19 @@ use crate::{
 
 const PICKER_THRESHOLD: usize = 5;
 
+/// VIBEDEV: config-option value names and descriptions (agent permission modes
+/// like "Accept Edits", etc.) arrive from the agent over the wire, so build-time
+/// zedl10n never sees them. Translate at render via the runtime table. English
+/// builds ship an empty table → `tr` misses → the original English is returned
+/// unchanged, and wire values with no table entry (model ids, etc.) likewise pass
+/// through untouched.
+fn tr_opt(s: &str) -> SharedString {
+    match vibedev_i18n::tr(s) {
+        Some(zh) => SharedString::from(zh),
+        None => SharedString::from(s.to_owned()),
+    }
+}
+
 pub struct ConfigOptionsView {
     config_options: Rc<dyn AgentSessionConfigOptions>,
     selectors: Vec<Entity<ConfigOptionSelector>>,
@@ -366,7 +379,7 @@ impl ConfigOptionSelector {
 
         Button::new(
             ElementId::Name(format!("config-option-{}", option.id.0).into()),
-            self.current_value_name(),
+            tr_opt(&self.current_value_name()),
         )
         .label_size(LabelSize::Small)
         .color(Color::Muted)
@@ -392,10 +405,10 @@ impl Render for ConfigOptionSelector {
         let option_description: Option<SharedString> = option.description.map(Into::into);
 
         let tooltip = Tooltip::element(move |_window, cx| {
-            let mut content = v_flex().gap_1().child(Label::new(option_name.clone()));
+            let mut content = v_flex().gap_1().child(Label::new(tr_opt(&option_name)));
             if let Some(desc) = option_description.as_ref() {
                 content = content.child(
-                    Label::new(desc.clone())
+                    Label::new(tr_opt(desc))
                         .size(LabelSize::Small)
                         .color(Color::Muted),
                 );
@@ -708,7 +721,7 @@ impl PickerDelegate for ConfigOptionPickerDelegate {
                                 .inset(true)
                                 .spacing(ListItemSpacing::Sparse)
                                 .toggle_state(selected)
-                                .child(h_flex().w_full().child(Label::new(option_name).truncate()))
+                                .child(h_flex().w_full().child(Label::new(tr_opt(&option_name)).truncate()))
                                 .end_slot(div().pr_2().when(is_selected, |this| {
                                     this.child(Icon::new(IconName::Check).color(Color::Accent))
                                 }))
@@ -765,7 +778,7 @@ impl PickerDelegate for ConfigOptionPickerDelegate {
 
             ui::DocumentationAside::new(
                 side,
-                Rc::new(move |_| Label::new(description.clone()).into_any_element()),
+                Rc::new(move |_| Label::new(tr_opt(&description)).into_any_element()),
             )
         })
     }
