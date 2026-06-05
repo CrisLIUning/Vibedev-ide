@@ -369,8 +369,44 @@ fn release_file_handles(app_dir: &Path) -> Result<()> {
     Ok(())
 }
 
+/// VIBEDEV: force-kill the bundled ACP agent before swapping files.
+///
+/// `vibedev-agent.exe` is a headless Bun process that does NOT honor the
+/// Restart Manager graceful shutdown that `release_file_handles` requests, so
+/// on auto-update it stays alive. The JOBS below rename `agent\` ->
+/// `old\agent\` (Windows allows renaming a running exe), but the still-running
+/// process then holds `old\agent\vibedev-agent.exe`, so deleting `old\` — both
+/// the `rmdir_nofail("old")` job and the `mkdir("old")` rollback — fails with
+/// "Access denied (os error 5)" and leaves the app inconsistent. Hard-killing
+/// it first releases the lock; `/T` also kills child (bun/node) processes.
+/// Best-effort: a failure here just falls back to the per-job retry loop.
+fn kill_bundled_agent() {
+    #[allow(
+        clippy::disallowed_methods,
+        reason = "helper binary, not the main app"
+    )]
+    let result = std::process::Command::new("taskkill")
+        .args(["/F", "/T", "/IM", "vibedev-agent.exe"])
+        .output();
+    match result {
+        Ok(out) => log::info!(
+            "kill_bundled_agent: taskkill vibedev-agent.exe exited with {:?}",
+            out.status.code()
+        ),
+        Err(e) => log::warn!("kill_bundled_agent: failed to spawn taskkill: {}", e),
+    }
+    // Give Windows a moment to tear the process down and release the file
+    // handle before we start moving and removing directories.
+    std::thread::sleep(Duration::from_millis(500));
+}
+
 pub(crate) fn perform_update(app_dir: &Path, hwnd: Option<isize>, launch: bool) -> Result<()> {
     let hwnd = hwnd.map(|ptr| HWND(ptr as _));
+
+    // VIBEDEV: hard-kill the headless agent FIRST — the Restart Manager request
+    // below won't stop it, and a live agent locks old\agent\ so the cleanup and
+    // rollback can't delete old\ (the "os error 5" auto-update failure users hit).
+    kill_bundled_agent();
 
     // Try to release file handles before starting the update
     if let Err(e) = release_file_handles(app_dir) {
@@ -381,7 +417,10 @@ pub(crate) fn perform_update(app_dir: &Path, hwnd: Option<isize>, launch: bool) 
     'outer: for (i, job) in JOBS.iter().enumerate() {
         let start = Instant::now();
         loop {
-            if start.elapsed().as_secs() > 2 {
+            // VIBEDEV: widened 2s -> 10s. With the agent killed up front the moves
+            // are fast, but a transient lock (AV scan, Explorer thumbnailer, slow
+            // handle release) shouldn't trip a full rollback.
+            if start.elapsed().as_secs() > 10 {
                 log::error!("Timed out, rolling back");
                 break 'outer;
             }
