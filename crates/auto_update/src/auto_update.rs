@@ -1021,7 +1021,15 @@ impl AutoUpdater {
             .await
             .context("Failed to create installer dir")?;
         let target_path = Self::target_path(&installer_dir).await?;
-        download_release(&target_path, fetched_release_data, client)
+        // VIBEDEV (hang fix): the ~100MB download and the installer run are heavy and
+        // were observed freezing the foreground/UI thread for ~14s (telemetry Hang
+        // Reports attributed to this update task's spawn site). Run the download on the
+        // background executor so the main thread stays responsive during auto-update.
+        cx.background_executor()
+            .spawn({
+                let target_path = target_path.clone();
+                async move { download_release(&target_path, fetched_release_data, client).await }
+            })
             .await
             .with_context(|| format!("Failed to download update to {}", target_path.display()))?;
 
@@ -1146,7 +1154,15 @@ impl AutoUpdater {
         match OS {
             "macos" => install_release_macos(&installer_dir, target_path, cx).await,
             "linux" => install_release_linux(&installer_dir, target_path, cx).await,
-            "windows" => install_release_windows(target_path).await,
+            "windows" => {
+                // VIBEDEV (hang fix): running the installer (`VibeDevSetup /verysilent`)
+                // is a ~14s fixed-cost operation; keep it off the foreground executor so
+                // the UI thread does not freeze while the update installs.
+                let target_path = target_path.to_owned();
+                cx.background_executor()
+                    .spawn(async move { install_release_windows(&target_path).await })
+                    .await
+            }
             unsupported_os => anyhow::bail!("not supported: {unsupported_os}"),
         }
     }
@@ -1564,7 +1580,15 @@ mod tests {
                 let release_available = release_available.load(atomic::Ordering::Relaxed);
                 let dmg_rx = dmg_rx.clone();
                 async move {
-                if req.uri().path() == "/releases/stable/latest/asset" {
+                if req.uri().path() == "/vibedev/releases/stable/latest/asset" {
+                    // VIBEDEV agent-OTA: the bundled-agent update check shares this
+                    // path (distinguished by ?asset=vibedev-agent). Return 404 so the
+                    // agent-OTA stage is skipped (non-fatal) and the APP update flow
+                    // under test proceeds deterministically instead of consuming the
+                    // single /new-download + dmg_rx meant for the app installer.
+                    if req.uri().query().is_some_and(|q| q.contains("vibedev-agent")) {
+                        return Ok(Response::builder().status(404).body("".into()).unwrap());
+                    }
                     if release_available {
                         return Ok(Response::builder().status(200).body(
                             r#"{"version":"0.100.1","url":"https://test.example/new-download"}"#.into()
@@ -1600,13 +1624,21 @@ mod tests {
         cx.background_executor.advance_clock(POLL_INTERVAL);
         cx.background_executor.run_until_parked();
 
-        loop {
+        // VIBEDEV: with allow_parking() the agent-OTA fs/HTTP checks run on real
+        // threads, so the update task can be sampled parked mid-`Checking`. Wait for
+        // the `Downloading` status specifically instead of breaking on the first
+        // transient non-Idle state.
+        for _ in 0..600 {
             cx.background_executor.timer(Duration::from_millis(0)).await;
             cx.run_until_parked();
             let status = auto_updater.read_with(cx, |updater, _| updater.status());
-            if !matches!(status, AutoUpdateStatus::Idle) {
+            if matches!(status, AutoUpdateStatus::Downloading { .. }) {
                 break;
             }
+            // allow_parking(): give the real background threads (agent-OTA fs check,
+            // InstallerDir creation, download) wall-clock time to progress, since
+            // run_until_parked returns while they are still in flight.
+            std::thread::sleep(Duration::from_millis(2));
         }
         let status = auto_updater.read_with(cx, |updater, _| updater.status());
         assert_eq!(
@@ -1630,13 +1662,17 @@ mod tests {
             })));
         });
 
-        loop {
+        for _ in 0..600 {
             cx.background_executor.timer(Duration::from_millis(0)).await;
             cx.run_until_parked();
             let status = auto_updater.read_with(cx, |updater, _| updater.status());
-            if !matches!(status, AutoUpdateStatus::Downloading { .. }) {
+            if matches!(
+                status,
+                AutoUpdateStatus::Updated { .. } | AutoUpdateStatus::Errored { .. }
+            ) {
                 break;
             }
+            std::thread::sleep(Duration::from_millis(2));
         }
         let status = auto_updater.read_with(cx, |updater, _| updater.status());
         assert_eq!(
@@ -1645,6 +1681,7 @@ mod tests {
                 version: VersionCheckType::Semantic(semver::Version::new(0, 100, 1))
             }
         );
+
         let will_restart = cx.expect_restart();
         cx.update(|cx| cx.restart());
         let path = will_restart.await.unwrap().unwrap();
