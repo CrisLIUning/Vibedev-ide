@@ -1382,7 +1382,11 @@ async fn install_release_macos(
         .file_name()
         .with_context(|| format!("invalid running app path {running_app_path:?}"))?;
 
-    let mount_path = temp_dir.path().join("Zed");
+    // VIBEDEV: `-mountroot` below mounts the dmg volume at <temp>/<volume-name>. Our dmg's
+    // volume name is "VibeDev" (script/bundle-mac: `hdiutil create -volname VibeDev`), NOT
+    // upstream's "Zed". This name MUST track that -volname, or the mounted app path is wrong
+    // and auto-update install fails (rsync: "No such file or directory"). Re-apply on sync.
+    let mount_path = temp_dir.path().join("VibeDev");
     let mut mounted_app_path: OsString = mount_path.join(running_app_filename).into();
 
     mounted_app_path.push("/");
