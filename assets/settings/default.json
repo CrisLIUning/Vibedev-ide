@@ -2584,9 +2584,11 @@
   },
   // The server to connect to. If the environment variable
   // ZED_SERVER_URL is set, it will override this setting.
-  // VIBEDEV: pre-pointed at our self-hosted collab. Inert until the sub2 ->
-  // collab credential bridge (collab P1) wires sign-in to a collab connect.
-  "server_url": "https://collab.aitoken.bigopen.cn",
+  // VIBEDEV: kept at zed.dev — the public extension registry + zed API
+  // (api.zed.dev) are derived from this base, so repointing it breaks them.
+  // The self-hosted collab repoint is deferred to collab P1, where the
+  // extension/API host will be decoupled from server_url first.
+  "server_url": "https://zed.dev",
   // Settings overrides to use when using VibeDev Preview.
   // Mostly useful for developers who are managing multiple instances of VibeDev.
   "preview": {

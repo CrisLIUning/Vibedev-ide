@@ -1282,8 +1282,8 @@ fn register_actions(
             }
         });
 
-    #[cfg(not(target_os = "windows"))]
-    workspace.register_action(install_cli);
+    // VIBEDEV: install-CLI action not registered — it symlinked
+    // /usr/local/bin/zed (wrong binary name) and is hidden from menu + palette.
 
     if workspace.project().read(cx).is_via_remote_server() {
         workspace.register_action({
@@ -1599,15 +1599,7 @@ fn open_about_window(cx: &mut App) {
     .log_err();
 }
 
-#[cfg(not(target_os = "windows"))]
-fn install_cli(
-    _: &mut Workspace,
-    _: &install_cli::InstallCliBinary,
-    window: &mut Window,
-    cx: &mut Context<Workspace>,
-) {
-    install_cli::install_cli_binary(window, cx)
-}
+// VIBEDEV: install_cli handler removed — see note at its former register_action.
 
 static WAITING_QUIT_CONFIRMATION: AtomicBool = AtomicBool::new(false);
 fn quit(_: &Quit, cx: &mut App) {
