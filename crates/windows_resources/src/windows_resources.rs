@@ -48,9 +48,9 @@ pub fn compile(manifest: bool) -> Result<(), Box<dyn std::error::Error>> {
         // jump list / exe properties). Icon filenames unchanged — VibeDev .ico
         // assets are generated in the Phase 5 packaging step.
         "stable" => ("app-icon.ico", "VibeDev"),
-        "preview" => ("app-icon-preview.ico", "Zed Preview"),
-        "nightly" => ("app-icon-nightly.ico", "Zed Nightly"),
-        _ => ("app-icon-dev.ico", "Zed Dev"),
+        "preview" => ("app-icon-preview.ico", "VibeDev Preview"),
+        "nightly" => ("app-icon-nightly.ico", "VibeDev Nightly"),
+        _ => ("app-icon-dev.ico", "VibeDev Dev"),
     };
     let icon = std::path::PathBuf::from(ICON_DIR).join(icon_filename);
     // VIBEDEV: re-embed when the icon file itself changes (not just this source),
