@@ -488,9 +488,18 @@ pub fn devcontainer_dir() -> &'static PathBuf {
     DEVCONTAINER_DIR.get_or_init(|| data_dir().join("devcontainer"))
 }
 
-/// Returns the relative path to a `.zed` folder within a project.
+/// Preferred project-local config folder name; VibeDev writes new config here.
 pub fn local_settings_folder_name() -> &'static str {
-    ".zed"
+    ".vibedev"
+}
+
+/// All recognized project-local config folder names, in preference order.
+/// `.vibedev` is VibeDev-native (where new config is written); `.zed` is accepted
+/// read-only for back-compat with existing projects and interop with Zed-using
+/// teammates who committed `.zed/` to source control. Readers/matchers must
+/// accept every entry; writers use [`local_settings_folder_name`].
+pub fn local_settings_folder_names() -> &'static [&'static str] {
+    &[".vibedev", ".zed"]
 }
 
 /// Returns the relative path to a `.vscode` folder within a project.
@@ -498,18 +507,43 @@ pub fn local_vscode_folder_name() -> &'static str {
     ".vscode"
 }
 
-/// Returns the relative path to a `settings.json` file within a project.
+/// Preferred project-local `settings.json` path (`.vibedev/settings.json`).
+/// Used by writers; readers/matchers should use [`local_settings_file_relative_paths`].
 pub fn local_settings_file_relative_path() -> &'static RelPath {
     static CACHED: LazyLock<&'static RelPath> =
-        LazyLock::new(|| RelPath::unix(".zed/settings.json").unwrap());
+        LazyLock::new(|| RelPath::unix(".vibedev/settings.json").unwrap());
     *CACHED
 }
 
-/// Returns the relative path to a `tasks.json` file within a project.
+/// All recognized project-local `settings.json` paths, preference order:
+/// `.vibedev/` (native) then legacy `.zed/`, so existing `.zed/settings.json`
+/// keeps loading.
+pub fn local_settings_file_relative_paths() -> &'static [&'static RelPath] {
+    static CACHED: LazyLock<[&'static RelPath; 2]> = LazyLock::new(|| {
+        [
+            RelPath::unix(".vibedev/settings.json").unwrap(),
+            RelPath::unix(".zed/settings.json").unwrap(),
+        ]
+    });
+    CACHED.as_slice()
+}
+
+/// Preferred project-local `tasks.json` path (`.vibedev/tasks.json`).
 pub fn local_tasks_file_relative_path() -> &'static RelPath {
     static CACHED: LazyLock<&'static RelPath> =
-        LazyLock::new(|| RelPath::unix(".zed/tasks.json").unwrap());
+        LazyLock::new(|| RelPath::unix(".vibedev/tasks.json").unwrap());
     *CACHED
+}
+
+/// All recognized project-local `tasks.json` paths (`.vibedev/` then legacy `.zed/`).
+pub fn local_tasks_file_relative_paths() -> &'static [&'static RelPath] {
+    static CACHED: LazyLock<[&'static RelPath; 2]> = LazyLock::new(|| {
+        [
+            RelPath::unix(".vibedev/tasks.json").unwrap(),
+            RelPath::unix(".zed/tasks.json").unwrap(),
+        ]
+    });
+    CACHED.as_slice()
 }
 
 /// Returns the relative path to a `.vscode/tasks.json` file within a project.
@@ -527,12 +561,22 @@ pub fn task_file_name() -> &'static str {
     "tasks.json"
 }
 
-/// Returns the relative path to a `debug.json` file within a project.
-/// .zed/debug.json
+/// Preferred project-local `debug.json` path (`.vibedev/debug.json`).
 pub fn local_debug_file_relative_path() -> &'static RelPath {
     static CACHED: LazyLock<&'static RelPath> =
-        LazyLock::new(|| RelPath::unix(".zed/debug.json").unwrap());
+        LazyLock::new(|| RelPath::unix(".vibedev/debug.json").unwrap());
     *CACHED
+}
+
+/// All recognized project-local `debug.json` paths (`.vibedev/` then legacy `.zed/`).
+pub fn local_debug_file_relative_paths() -> &'static [&'static RelPath] {
+    static CACHED: LazyLock<[&'static RelPath; 2]> = LazyLock::new(|| {
+        [
+            RelPath::unix(".vibedev/debug.json").unwrap(),
+            RelPath::unix(".zed/debug.json").unwrap(),
+        ]
+    });
+    CACHED.as_slice()
 }
 
 /// Returns the relative path to a `.vscode/launch.json` file within a project.

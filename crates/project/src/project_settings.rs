@@ -8,9 +8,10 @@ use git::repository::DEFAULT_WORKTREE_DIRECTORY;
 use gpui::{AsyncApp, BorrowAppContext, Context, Entity, EventEmitter, Subscription, Task};
 use lsp::{DEFAULT_LSP_REQUEST_TIMEOUT_SECS, LanguageServerName};
 use paths::{
-    EDITORCONFIG_NAME, local_debug_file_relative_path, local_settings_file_relative_path,
-    local_tasks_file_relative_path, local_vscode_launch_file_relative_path,
-    local_vscode_tasks_file_relative_path, task_file_name,
+    EDITORCONFIG_NAME, local_debug_file_relative_path, local_debug_file_relative_paths,
+    local_settings_file_relative_path, local_settings_file_relative_paths,
+    local_tasks_file_relative_path, local_tasks_file_relative_paths,
+    local_vscode_launch_file_relative_path, local_vscode_tasks_file_relative_path, task_file_name,
 };
 use rpc::{
     AnyProtoClient, TypedEnvelope,
@@ -1130,14 +1131,20 @@ impl SettingsObserver {
 
         let mut settings_contents = Vec::new();
         for (path, _, change) in changes.iter() {
-            let (settings_dir, kind) = if path.ends_with(local_settings_file_relative_path()) {
+            let (settings_dir, kind) = if local_settings_file_relative_paths()
+                .iter()
+                .any(|p| path.ends_with(p))
+            {
                 let settings_dir = path
                     .ancestors()
                     .nth(local_settings_file_relative_path().components().count())
                     .unwrap()
                     .into();
                 (settings_dir, LocalSettingsKind::Settings)
-            } else if path.ends_with(local_tasks_file_relative_path()) {
+            } else if local_tasks_file_relative_paths()
+                .iter()
+                .any(|p| path.ends_with(p))
+            {
                 let settings_dir = path
                     .ancestors()
                     .nth(
@@ -1161,7 +1168,10 @@ impl SettingsObserver {
                     .unwrap()
                     .into();
                 (settings_dir, LocalSettingsKind::Tasks)
-            } else if path.ends_with(local_debug_file_relative_path()) {
+            } else if local_debug_file_relative_paths()
+                .iter()
+                .any(|p| path.ends_with(p))
+            {
                 let settings_dir = path
                     .ancestors()
                     .nth(

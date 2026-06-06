@@ -458,8 +458,10 @@ pub fn all_schema_file_associations(
             "url": format!("{SCHEMA_URI_PREFIX}settings"),
         },
         {
-            "fileMatch": [
-            paths::local_settings_file_relative_path()],
+            // Both .vibedev/ (native) and legacy .zed/ project settings get schema
+            // autocomplete/validation (local_settings_file_relative_paths is the
+            // dual-read candidate list).
+            "fileMatch": paths::local_settings_file_relative_paths(),
             "url": format!("{SCHEMA_URI_PREFIX}project_settings"),
         },
         {
