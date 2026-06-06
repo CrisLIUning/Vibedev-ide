@@ -1919,7 +1919,7 @@ impl ProtoClient for Client {
 }
 
 /// prefix for the zed:// url scheme
-pub const ZED_URL_SCHEME: &str = "zed";
+pub const ZED_URL_SCHEME: &str = "vibedev";
 
 /// A parsed Zed link that can be handled internally by the application.
 #[derive(Debug, Clone, PartialEq, Eq)]
