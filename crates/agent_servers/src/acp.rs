@@ -4301,10 +4301,24 @@ fn handle_session_notification(
         }
     }
 
-    // Forward the update to the acp_thread as usual.
+    // Extract structured subagent fan-out progress from the notification meta
+    // (the agent rides it on `_meta` since ACP's SessionUpdate is a sealed enum)
+    // and forward it to the thread so it becomes a SubagentProgress entry.
+    let subagent_progress_meta = notification
+        .meta
+        .as_ref()
+        .and_then(|m| m.get(acp_thread::SUBAGENT_PROGRESS_META_KEY))
+        .cloned()
+        .map(|progress| serde_json::json!({ "vibedev_subagent_progress": progress }));
+
+    // Forward the update to the acp_thread as usual (now meta-aware).
     if let Err(err) = thread
         .update(cx, |thread, cx| {
-            thread.handle_session_update(notification.update.clone(), cx)
+            thread.handle_session_update_with_meta(
+                notification.update.clone(),
+                subagent_progress_meta,
+                cx,
+            )
         })
         .flatten_acp()
     {
