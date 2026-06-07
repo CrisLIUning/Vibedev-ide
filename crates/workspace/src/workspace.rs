@@ -1392,6 +1392,10 @@ pub struct Workspace {
     pane_history_timestamp: Arc<AtomicUsize>,
     bounds: Bounds<Pixels>,
     pub centered_layout: bool,
+    /// When true, this workspace window is the VibeDev "AgentApp" surface (a
+    /// dedicated agent workbench) rather than the code editor. Set at window
+    /// creation; used to skip editor-only panel init and drive agent-mode layout.
+    pub agent_mode: bool,
     bounds_save_task_queued: Option<Task<()>>,
     on_prompt_for_new_path: Option<PromptForNewPath>,
     on_prompt_for_open_path: Option<PromptForOpenPath>,
@@ -1838,6 +1842,7 @@ impl Workspace {
             // This data will be incorrect, but it will be overwritten by the time it needs to be used.
             bounds: Default::default(),
             centered_layout: false,
+            agent_mode: false,
             bounds_save_task_queued: None,
             on_prompt_for_new_path: None,
             on_prompt_for_open_path: None,
@@ -7745,6 +7750,10 @@ impl Workspace {
             .update(cx, |toast_layer, cx| toast_layer.toggle_toast(cx, entity))
     }
 
+    pub fn is_agent_mode(&self) -> bool {
+        self.agent_mode
+    }
+
     pub fn toggle_centered_layout(
         &mut self,
         _: &ToggleCenteredLayout,
@@ -11142,6 +11151,20 @@ mod tests {
         item1.read_with(cx, |item, _| assert_eq!(item.tab_detail.get(), Some(1)));
         item2.read_with(cx, |item, _| assert_eq!(item.tab_detail.get(), Some(3)));
         item3.read_with(cx, |item, _| assert_eq!(item.tab_detail.get(), Some(3)));
+    }
+
+    #[gpui::test]
+    async fn agent_mode_defaults_false_and_is_settable(cx: &mut TestAppContext) {
+        init_test(cx);
+
+        let fs = FakeFs::new(cx.executor());
+        let project = Project::test(fs, [], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+
+        workspace.read_with(cx, |workspace, _| assert!(!workspace.is_agent_mode()));
+        workspace.update_in(cx, |workspace, _window, _cx| workspace.agent_mode = true);
+        workspace.read_with(cx, |workspace, _| assert!(workspace.is_agent_mode()));
     }
 
     #[gpui::test]
