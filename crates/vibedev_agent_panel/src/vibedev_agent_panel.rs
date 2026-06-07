@@ -252,24 +252,43 @@ impl EventEmitter<PanelEvent> for VibedevAgentPanel {}
 
 impl Render for VibedevAgentPanel {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        self.workspace
-            .update(cx, |workspace, cx| {
-                div().size_full().child(self.center.render(
-                    workspace.zoomed_item(),
-                    &workspace::PaneRenderContext {
-                        follower_states: &HashMap::default(),
-                        active_call: workspace.active_call(),
-                        active_pane: &self.active_pane,
-                        app_state: workspace.app_state(),
-                        project: workspace.project(),
-                        workspace: &workspace.weak_handle(),
-                    },
-                    window,
-                    cx,
-                ))
-            })
-            .ok()
-            .unwrap_or_else(|| div().size_full())
+        let Some(workspace) = self.workspace.upgrade() else {
+            return div().size_full();
+        };
+        // Read the values the `PaneGroup` render needs out of `Workspace` without
+        // holding an update lease, then render outside the lease. The hosted
+        // conversation/pane views synchronously read/update `Workspace` during
+        // their own render; when zoom promotes this panel to a full-screen overlay
+        // and forces a re-render, those accesses would collide with a lease taken
+        // here and trigger `double_lease_panic::<Workspace>`.
+        let (zoomed, app_state, project, weak_workspace) = workspace.read_with(cx, |workspace, _| {
+            (
+                // `AnyWeakView` is not `Clone`, so round-trip through `upgrade`/`downgrade`
+                // to obtain an owned handle that can escape the `read_with` closure. A
+                // released view cannot be the active zoomed overlay, so dropping it here
+                // (yielding `None`) preserves the rendered result.
+                workspace
+                    .zoomed_item()
+                    .and_then(|zoomed| zoomed.upgrade())
+                    .map(|zoomed| zoomed.downgrade()),
+                workspace.app_state().clone(),
+                workspace.project().clone(),
+                workspace.weak_handle(),
+            )
+        });
+        div().size_full().child(self.center.render(
+            zoomed.as_ref(),
+            &workspace::PaneRenderContext {
+                follower_states: &HashMap::default(),
+                active_call: None,
+                active_pane: &self.active_pane,
+                app_state: &app_state,
+                project: &project,
+                workspace: &weak_workspace,
+            },
+            window,
+            cx,
+        ))
     }
 }
 
