@@ -166,6 +166,50 @@ pub fn subagent_session_info_from_meta(meta: &Option<acp::Meta>) -> Option<Subag
         .and_then(|v| serde_json::from_value(v.clone()).ok())
 }
 
+/// Key in `SessionNotification._meta` carrying structured subagent fan-out
+/// progress. ACP's `SessionUpdate` is a sealed external enum, so progress
+/// rides on the notification meta rather than as a first-class update variant.
+pub const SUBAGENT_PROGRESS_META_KEY: &str = "vibedev_subagent_progress";
+
+/// Structured progress for one fanned-out subagent, surfaced as a top-level
+/// thread entry so the UI can render a live fan-out tree. Emitted by the agent
+/// side over `SessionNotification._meta`.
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct SubagentProgress {
+    pub subagent_id: String,
+    pub agent_type: String,
+    #[serde(default)]
+    pub title: String,
+    pub status: SubagentStatus,
+    #[serde(default)]
+    pub tokens_used: Option<u64>,
+    #[serde(default)]
+    pub parent_id: Option<String>,
+    #[serde(default)]
+    pub step: Option<SubagentStep>,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum SubagentStatus {
+    Queued,
+    Running,
+    Done,
+    Failed,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct SubagentStep {
+    pub label: String,
+    #[serde(default)]
+    pub sub: Option<String>,
+    pub status: String,
+    #[serde(default)]
+    pub stream: Option<String>,
+}
+
 #[derive(Debug)]
 pub struct UserMessage {
     pub id: Option<UserMessageId>,
@@ -254,6 +298,7 @@ pub enum AgentThreadEntry {
     ToolCall(ToolCall),
     CompletedPlan(Vec<PlanEntry>),
     ContextCompaction(ContextCompaction),
+    SubagentProgress(SubagentProgress),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -284,6 +329,7 @@ impl AgentThreadEntry {
             Self::ToolCall(_) => false,
             Self::CompletedPlan(_) => false,
             Self::ContextCompaction(_) => false,
+            Self::SubagentProgress(_) => false,
         }
     }
 
@@ -301,6 +347,12 @@ impl AgentThreadEntry {
                 md
             }
             Self::ContextCompaction(_) => "--- Context Compacted ---\n\n".to_string(),
+            Self::SubagentProgress(progress) => {
+                format!(
+                    "**Subagent {} — {}**\n",
+                    progress.agent_type, progress.title
+                )
+            }
         }
     }
 
@@ -1577,7 +1629,8 @@ impl AcpThread {
                 AgentThreadEntry::ToolCall(_)
                 | AgentThreadEntry::AssistantMessage(_)
                 | AgentThreadEntry::CompletedPlan(_)
-                | AgentThreadEntry::ContextCompaction(_) => {}
+                | AgentThreadEntry::ContextCompaction(_)
+                | AgentThreadEntry::SubagentProgress(_) => {}
             }
         }
         false
@@ -1606,7 +1659,8 @@ impl AcpThread {
                 AgentThreadEntry::ToolCall(_)
                 | AgentThreadEntry::AssistantMessage(_)
                 | AgentThreadEntry::CompletedPlan(_)
-                | AgentThreadEntry::ContextCompaction(_) => {}
+                | AgentThreadEntry::ContextCompaction(_)
+                | AgentThreadEntry::SubagentProgress(_) => {}
             }
         }
 
@@ -1626,7 +1680,8 @@ impl AcpThread {
                 AgentThreadEntry::ToolCall(_)
                 | AgentThreadEntry::AssistantMessage(_)
                 | AgentThreadEntry::CompletedPlan(_)
-                | AgentThreadEntry::ContextCompaction(_) => {}
+                | AgentThreadEntry::ContextCompaction(_)
+                | AgentThreadEntry::SubagentProgress(_) => {}
             }
         }
 
@@ -1639,7 +1694,8 @@ impl AcpThread {
                 AgentThreadEntry::UserMessage(..) => return false,
                 AgentThreadEntry::AssistantMessage(..)
                 | AgentThreadEntry::CompletedPlan(..)
-                | AgentThreadEntry::ContextCompaction(_) => continue,
+                | AgentThreadEntry::ContextCompaction(_)
+                | AgentThreadEntry::SubagentProgress(_) => continue,
                 AgentThreadEntry::ToolCall(..) => return true,
             }
         }
@@ -1652,6 +1708,29 @@ impl AcpThread {
         update: acp::SessionUpdate,
         cx: &mut Context<Self>,
     ) -> Result<(), acp::Error> {
+        self.handle_session_update_with_meta(update, None, cx)
+    }
+
+    pub fn handle_session_update_with_meta(
+        &mut self,
+        update: acp::SessionUpdate,
+        notification_meta: Option<serde_json::Value>,
+        cx: &mut Context<Self>,
+    ) -> Result<(), acp::Error> {
+        // When the notification carries structured subagent progress, replace
+        // the (redundant, back-compat) text chunk with a structured entry and
+        // short-circuit. The agent side also streams the progress as text for
+        // clients that don't understand the meta; we intentionally drop that
+        // text here in favor of the entry.
+        if let Some(progress_value) = notification_meta
+            .as_ref()
+            .and_then(|m| m.get(SUBAGENT_PROGRESS_META_KEY))
+            && let Ok(progress) = serde_json::from_value::<SubagentProgress>(progress_value.clone())
+        {
+            self.push_subagent_progress(progress, cx);
+            return Ok(());
+        }
+
         match update {
             acp::SessionUpdate::UserMessageChunk(acp::ContentChunk { content, .. }) => {
                 // We optimistically add the full user prompt before calling `prompt`.
@@ -1991,6 +2070,23 @@ impl AcpThread {
         Self::flush_streaming_text(&mut self.streaming_text_buffer, cx);
         self.entries.push(entry);
         cx.emit(AcpThreadEvent::NewEntry);
+    }
+
+    fn push_subagent_progress(&mut self, progress: SubagentProgress, cx: &mut Context<Self>) {
+        if let Some(index) = self.entries.iter().rposition(|entry| {
+            matches!(
+                entry,
+                AgentThreadEntry::SubagentProgress(existing)
+                    if existing.subagent_id == progress.subagent_id
+            )
+        }) {
+            self.entries[index] = AgentThreadEntry::SubagentProgress(progress);
+            cx.emit(AcpThreadEvent::EntryUpdated(index));
+        } else {
+            self.entries.push(AgentThreadEntry::SubagentProgress(progress));
+            cx.emit(AcpThreadEvent::NewEntry);
+        }
+        cx.notify();
     }
 
     pub fn push_context_compaction(
@@ -6125,5 +6221,47 @@ mod tests {
             ThreadStatus::Idle,
             "running_turn must be cleared even when tx was dropped without send"
         );
+    }
+
+    #[gpui::test]
+    async fn subagent_progress_meta_pushes_entry(cx: &mut TestAppContext) {
+        init_test(cx);
+        let fs = FakeFs::new(cx.executor());
+        let project = Project::test(fs, [], cx).await;
+        let connection = Rc::new(FakeAgentConnection::new());
+        let thread = cx
+            .update(|cx| {
+                connection.new_session(
+                    project,
+                    PathList::new(&[std::path::Path::new(path!("/test"))]),
+                    cx,
+                )
+            })
+            .await
+            .unwrap();
+
+        let meta = serde_json::json!({
+            "vibedev_subagent_progress": {
+                "subagentId": "sa-1",
+                "agentType": "Explore",
+                "title": "UI 审计",
+                "status": "running",
+                "tokensUsed": 52000
+            }
+        });
+        thread.update(cx, |t, cx| {
+            t.handle_session_update_with_meta(
+                acp::SessionUpdate::AgentMessageChunk(acp::ContentChunk::new("ignored".into())),
+                Some(meta),
+                cx,
+            )
+            .unwrap();
+        });
+        thread.read_with(cx, |t, _| {
+            assert!(t.entries().iter().any(|e| matches!(
+                e,
+                AgentThreadEntry::SubagentProgress(p) if p.subagent_id == "sa-1"
+            )));
+        });
     }
 }
