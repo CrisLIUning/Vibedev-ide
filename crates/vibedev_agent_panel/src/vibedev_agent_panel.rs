@@ -336,12 +336,16 @@ impl Panel for VibedevAgentPanel {
     fn set_active(&mut self, active: bool, window: &mut Window, cx: &mut Context<Self>) {
         self.active = active;
         // Lazily host the conversation the first time the panel is activated.
-        // `open_vibedev_conversation` is idempotent and no-ops without agent
-        // infrastructure (the `ThreadStore::try_global` guard), so activating
-        // the panel in a test environment without an initialized `ThreadStore`
-        // is safe.
+        // Deferred on purpose: `set_active` runs while the `Workspace` entity is
+        // still leased (we're inside `toggle_panel_focus`'s update), so reading
+        // the workspace synchronously inside `open_vibedev_conversation` would
+        // double-lease it and panic. Running on the next effect cycle releases
+        // that lease first. The open is idempotent and no-ops without agent
+        // infrastructure (the `ThreadStore::try_global` guard).
         if active {
-            self.open_vibedev_conversation(window, cx);
+            cx.defer_in(window, |this, window, cx| {
+                this.open_vibedev_conversation(window, cx);
+            });
         }
     }
 }
