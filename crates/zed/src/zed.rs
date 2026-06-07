@@ -10,6 +10,7 @@ mod open_url_modal;
 mod quick_action_bar;
 pub mod remote_debug;
 pub mod telemetry_log;
+pub mod vibedev_agent_window;
 #[cfg(all(target_os = "macos", feature = "visual-tests"))]
 pub mod visual_tests;
 #[cfg(target_os = "windows")]
@@ -745,6 +746,14 @@ fn show_software_emulation_warning_if_needed(
 }
 
 fn initialize_panels(window: &mut Window, cx: &mut Context<Workspace>) -> Task<anyhow::Result<()>> {
+    // The VibeDev AgentApp window is a conversation surface, not an editor: it
+    // installs its own center conversation + agent panel container in
+    // `vibedev_agent_window::configure_agent_mode`, so skip the default editor
+    // panels (project tree, terminal, git, debugger, collab, etc.) entirely.
+    if cx.entity().read(cx).is_agent_mode() {
+        return Task::ready(Ok(()));
+    }
+
     cx.spawn_in(window, async move |workspace_handle, cx| {
         let project_panel = ProjectPanel::load(workspace_handle.clone(), cx.clone());
         let outline_panel = OutlinePanel::load(workspace_handle.clone(), cx.clone());

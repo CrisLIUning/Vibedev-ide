@@ -116,10 +116,7 @@ impl VibedevAgentPanel {
             cx,
         );
 
-        let item = cx.new(|cx| VibedevConversationItem {
-            inner: conversation,
-            focus_handle: cx.focus_handle(),
-        });
+        let item = cx.new(|cx| VibedevConversationItem::new(conversation, cx));
         self.active_pane.update(cx, |pane, cx| {
             pane.add_item(Box::new(item), true, true, None, window, cx);
         });
@@ -373,9 +370,21 @@ impl Panel for VibedevAgentPanel {
 /// only implements `Focusable`/`Render`/`EventEmitter`, not `Item`) be hosted as
 /// a tab inside the super panel's `Pane`. Mirrors the minimal wrapper pattern
 /// used by `terminal_panel::FailedToSpawnTerminal`.
-struct VibedevConversationItem {
+pub struct VibedevConversationItem {
     inner: Entity<ConversationView>,
     focus_handle: FocusHandle,
+}
+
+impl VibedevConversationItem {
+    /// Wraps a `ConversationView` as a workspace `Item` so it can be hosted as a
+    /// pane tab in any workspace (the super panel's `PaneGroup`, or the center of
+    /// the dedicated AgentApp window).
+    pub fn new(inner: Entity<ConversationView>, cx: &mut Context<Self>) -> Self {
+        Self {
+            inner,
+            focus_handle: cx.focus_handle(),
+        }
+    }
 }
 
 impl Focusable for VibedevConversationItem {
