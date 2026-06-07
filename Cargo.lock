@@ -19908,11 +19908,14 @@ dependencies = [
 name = "vibedev_agent_panel"
 version = "0.1.0"
 dependencies = [
+ "agent",
+ "agent_ui",
  "anyhow",
  "collections",
  "fs",
  "gpui",
  "project",
+ "remote_connection",
  "settings",
  "theme",
  "theme_settings",

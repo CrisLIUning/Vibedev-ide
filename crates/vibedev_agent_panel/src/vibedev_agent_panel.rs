@@ -1,9 +1,12 @@
+use agent_ui::{
+    Agent, AgentConnectionStore, AgentThreadSource, ConversationView, create_conversation_view,
+};
 use collections::HashMap;
 use gpui::{
-    App, Context, Entity, EventEmitter, FocusHandle, Focusable, IntoElement, ParentElement, Pixels,
-    Render, Styled, WeakEntity, Window, actions,
+    App, AppContext as _, Context, Entity, EventEmitter, FocusHandle, Focusable, IntoElement,
+    ParentElement, Pixels, Render, SharedString, Styled, WeakEntity, Window, actions,
 };
-use project::Project;
+use project::{AgentId, Project};
 use ui::prelude::*;
 use workspace::{
     Pane, PaneGroup, SplitMode, Workspace,
@@ -34,6 +37,11 @@ pub struct VibedevAgentPanel {
     pub(crate) active_pane: Entity<Pane>,
     pub(crate) center: PaneGroup,
     workspace: WeakEntity<Workspace>,
+    /// Owned per-panel connection store for the hosted VibeDev conversation.
+    /// Unlike `AgentPanel`, this panel stands up its own store (it is not a
+    /// global) so it can host a conversation independently of the main agent
+    /// panel; see `open_vibedev_conversation`.
+    connection_store: Entity<AgentConnectionStore>,
     focus_handle: FocusHandle,
     active: bool,
 }
@@ -55,15 +63,66 @@ pub fn init(cx: &mut App) {
 impl VibedevAgentPanel {
     pub fn new(workspace: &Workspace, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let project = workspace.project().clone();
-        let pane = new_vibedev_pane(workspace.weak_handle(), project, window, cx);
+        let pane = new_vibedev_pane(workspace.weak_handle(), project.clone(), window, cx);
         let center = PaneGroup::new(pane.clone());
+        let connection_store = cx.new(|cx| AgentConnectionStore::new(project, cx));
         Self {
             center,
             active_pane: pane,
             workspace: workspace.weak_handle(),
+            connection_store,
             focus_handle: cx.focus_handle(),
             active: false,
         }
+    }
+
+    /// Hosts a VibeDev agent conversation in the panel's active pane.
+    ///
+    /// Idempotent: if the pane already holds an item it is a no-op. Safe to call
+    /// without agent infrastructure present (e.g. in registration tests that
+    /// never call `ThreadStore::init_global`): the `try_global` guard makes it a
+    /// graceful no-op rather than panicking.
+    pub fn open_vibedev_conversation(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.active_pane.read(cx).items_len() > 0 {
+            return;
+        }
+        let Some(thread_store) = agent::ThreadStore::try_global(cx) else {
+            return;
+        };
+        let Some(workspace) = self.workspace.upgrade() else {
+            return;
+        };
+        let project = workspace.read(cx).project().clone();
+        let fs = workspace.read(cx).app_state().fs.clone();
+        let connection_store = self.connection_store.clone();
+
+        let conversation = create_conversation_view(
+            self.workspace.clone(),
+            project,
+            connection_store,
+            fs,
+            thread_store,
+            Agent::Custom {
+                id: AgentId::new("VibeDev"),
+            },
+            None,
+            None,
+            None,
+            None,
+            Some(SharedString::from("VibeDev")),
+            None,
+            AgentThreadSource::Sidebar,
+            window,
+            cx,
+        );
+
+        let item = cx.new(|cx| VibedevConversationItem {
+            inner: conversation,
+            focus_handle: cx.focus_handle(),
+        });
+        self.active_pane.update(cx, |pane, cx| {
+            pane.add_item(Box::new(item), true, true, None, window, cx);
+        });
     }
 
     /// Async loader matching `VibedevAccountPanel::load` / `TerminalPanel::load`,
@@ -274,8 +333,50 @@ impl Panel for VibedevAgentPanel {
         cx.notify();
     }
 
-    fn set_active(&mut self, active: bool, _window: &mut Window, _cx: &mut Context<Self>) {
+    fn set_active(&mut self, active: bool, window: &mut Window, cx: &mut Context<Self>) {
         self.active = active;
+        // Lazily host the conversation the first time the panel is activated.
+        // `open_vibedev_conversation` is idempotent and no-ops without agent
+        // infrastructure (the `ThreadStore::try_global` guard), so activating
+        // the panel in a test environment without an initialized `ThreadStore`
+        // is safe.
+        if active {
+            self.open_vibedev_conversation(window, cx);
+        }
+    }
+}
+
+/// Lightweight `workspace::Item` wrapper that lets a [`ConversationView`] (which
+/// only implements `Focusable`/`Render`/`EventEmitter`, not `Item`) be hosted as
+/// a tab inside the super panel's `Pane`. Mirrors the minimal wrapper pattern
+/// used by `terminal_panel::FailedToSpawnTerminal`.
+struct VibedevConversationItem {
+    inner: Entity<ConversationView>,
+    focus_handle: FocusHandle,
+}
+
+impl Focusable for VibedevConversationItem {
+    fn focus_handle(&self, _cx: &App) -> FocusHandle {
+        self.focus_handle.clone()
+    }
+}
+
+impl Render for VibedevConversationItem {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+        div()
+            .track_focus(&self.focus_handle)
+            .size_full()
+            .child(self.inner.clone())
+    }
+}
+
+impl EventEmitter<()> for VibedevConversationItem {}
+
+impl workspace::Item for VibedevConversationItem {
+    type Event = ();
+
+    fn tab_content_text(&self, _detail: usize, _cx: &App) -> SharedString {
+        "VibeDev".into()
     }
 }
 

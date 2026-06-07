@@ -13,8 +13,11 @@ path = "src/vibedev_agent_panel.rs"
 doctest = false
 
 [dependencies]
+agent.workspace = true
+agent_ui.workspace = true
 anyhow.workspace = true
 collections.workspace = true
+fs.workspace = true
 gpui.workspace = true
 project.workspace = true
 ui.workspace = true
@@ -25,6 +28,11 @@ zed_actions.workspace = true
 fs = { workspace = true, features = ["test-support"] }
 gpui = { workspace = true, features = ["test-support"] }
 project = { workspace = true, features = ["test-support"] }
+# Keeps `remote_connection/test-support` unified with the `remote/test-support`
+# pulled in transitively via the `agent`/`agent_ui` deps; without it the
+# `RemoteConnectionOptions::Mock` match arm is cfg'd out while the variant is
+# present, breaking the test build (same workaround as agent_ui/git_ui/etc.).
+remote_connection = { workspace = true, features = ["test-support"] }
 settings = { workspace = true, features = ["test-support"] }
 theme = { workspace = true, features = ["test-support"] }
 theme_settings.workspace = true
