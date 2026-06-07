@@ -60,6 +60,7 @@ use crate::{
     Agent, AgentInitialContent, AgentThreadSource, ExternalSourcePrompt, NewExternalAgentThread,
     NewNativeAgentThreadFromSummary,
 };
+use crate::conversation_factory::create_conversation_view;
 use agent_settings::AgentSettings;
 use ai_onboarding::AgentPanelOnboarding;
 use anyhow::{Context as _, Result, anyhow};
@@ -4602,34 +4603,23 @@ impl AgentPanel {
         })
         .detach();
 
-        let server = server_override
-            .unwrap_or_else(|| agent.server(self.fs.clone(), self.thread_store.clone()));
-        let thread_store = server
-            .clone()
-            .downcast::<agent::NativeAgentServer>()
-            .is_some()
-            .then(|| self.thread_store.clone());
-
-        let connection_store = self.connection_store.clone();
-
-        let conversation_view = cx.new(|cx| {
-            crate::ConversationView::new(
-                server,
-                connection_store,
-                agent,
-                resume_session_id,
-                Some(thread_id),
-                work_dirs,
-                title,
-                initial_content,
-                workspace.clone(),
-                project,
-                thread_store,
-                source,
-                window,
-                cx,
-            )
-        });
+        let conversation_view = create_conversation_view(
+            workspace.clone(),
+            project,
+            self.connection_store.clone(),
+            self.fs.clone(),
+            self.thread_store.clone(),
+            agent,
+            server_override,
+            Some(thread_id),
+            resume_session_id,
+            work_dirs,
+            title,
+            initial_content,
+            source,
+            window,
+            cx,
+        );
 
         cx.observe_in(
             &conversation_view,
