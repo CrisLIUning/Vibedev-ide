@@ -389,7 +389,9 @@ pub mod vibedev {
             /// Toggles focus on the VibeDev account panel.
             ToggleAccountFocus,
             /// Toggles focus on the VibeDev agent surface panel.
-            ToggleAgentSurfaceFocus
+            ToggleAgentSurfaceFocus,
+            /// Toggles focus on the VibeDev usage dashboard panel.
+            ToggleUsageDashboard
         ]
     );
 }

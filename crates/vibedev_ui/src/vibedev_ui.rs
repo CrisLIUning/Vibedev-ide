@@ -2,9 +2,11 @@ mod account_panel;
 mod agent_update_notice;
 mod cost_status_item;
 mod global_skills;
+mod usage_dashboard;
 
 pub use account_panel::VibedevAccountPanel;
 pub use cost_status_item::VibedevCostStatusItem;
+pub use usage_dashboard::VibedevUsageDashboard;
 
 use std::any::TypeId;
 
@@ -34,6 +36,12 @@ pub fn init(cx: &mut App) {
         workspace.register_action(
             |workspace, _: &zed_actions::vibedev::ToggleAccountFocus, window, cx| {
                 workspace.toggle_panel_focus::<VibedevAccountPanel>(window, cx);
+            },
+        );
+
+        workspace.register_action(
+            |workspace, _: &zed_actions::vibedev::ToggleUsageDashboard, window, cx| {
+                workspace.toggle_panel_focus::<VibedevUsageDashboard>(window, cx);
             },
         );
 
