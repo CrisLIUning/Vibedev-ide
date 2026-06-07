@@ -19905,6 +19905,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "vibedev_agent_panel"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "collections",
+ "fs",
+ "gpui",
+ "project",
+ "settings",
+ "theme",
+ "theme_settings",
+ "ui",
+ "workspace",
+ "zed_actions",
+]
+
+[[package]]
 name = "vibedev_i18n"
 version = "0.1.0"
 dependencies = [
@@ -23023,6 +23040,7 @@ dependencies = [
  "util",
  "uuid",
  "vibedev_account",
+ "vibedev_agent_panel",
  "vibedev_ui",
  "vim",
  "vim_mode_setting",

@@ -217,6 +217,7 @@ urlencoding.workspace = true
 util.workspace = true
 uuid.workspace = true
 vibedev_account.workspace = true
+vibedev_agent_panel.workspace = true
 vibedev_ui.workspace = true
 vim.workspace = true
 vim_mode_setting.workspace = true
