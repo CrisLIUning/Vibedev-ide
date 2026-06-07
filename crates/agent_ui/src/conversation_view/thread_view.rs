@@ -7,7 +7,10 @@ use crate::{
 use agent_client_protocol::schema as acp;
 use std::cell::RefCell;
 
-use acp_thread::{ContentBlock, PlanEntry, SandboxAuthorizationDetails};
+use acp_thread::{
+    ContentBlock, PlanEntry, SandboxAuthorizationDetails, SubagentProgress, SubagentStatus,
+};
+use crate::subagent_fanout::SubagentFanoutModel;
 use agent::{SkillLoadingError, SkillLoadingErrorsUpdated};
 use agent_settings::UserAgentsMd;
 use cloud_api_types::{SubmitAgentThreadFeedbackBody, SubmitAgentThreadFeedbackCommentsBody};
@@ -3491,6 +3494,188 @@ impl ThreadView {
             .into_any()
     }
 
+    /// Render the live subagent fan-out tree.
+    ///
+    /// `SubagentProgress` entries arrive as a contiguous run on the thread.
+    /// Only the first entry of a run renders; it collects the whole run and
+    /// draws the aggregated tree via [`SubagentFanoutModel`]. Subsequent
+    /// entries in the same run render nothing to avoid duplicate cards.
+    fn render_subagent_fanout(
+        &self,
+        entry_ix: usize,
+        _window: &Window,
+        cx: &Context<Self>,
+    ) -> AnyElement {
+        let entries = self.thread.read(cx).entries();
+
+        // If the previous entry is also subagent progress, this entry is in the
+        // middle of a run; the run's first entry renders the whole tree.
+        if entry_ix > 0
+            && matches!(
+                entries.get(entry_ix - 1),
+                Some(AgentThreadEntry::SubagentProgress(_))
+            )
+        {
+            return Empty.into_any_element();
+        }
+
+        // Collect the contiguous run of progress entries starting here.
+        let collected: Vec<SubagentProgress> = entries
+            .get(entry_ix..)
+            .unwrap_or(&[])
+            .iter()
+            .map_while(|entry| match entry {
+                AgentThreadEntry::SubagentProgress(progress) => Some(progress.clone()),
+                _ => None,
+            })
+            .collect();
+
+        if collected.is_empty() {
+            return Empty.into_any_element();
+        }
+
+        let model = SubagentFanoutModel::from_entries(&collected);
+        let running = model.running_count();
+        let total = model.total_count();
+        let border_color = self.tool_card_border_color(cx);
+        let header_bg = self.tool_card_header_bg(cx);
+        let row_border = cx.theme().colors().border;
+        let node_count = model.nodes.len();
+
+        v_flex()
+            .px_5()
+            .py_1p5()
+            .w_full()
+            .child(
+                v_flex()
+                    .w_full()
+                    .rounded_md()
+                    .border_1()
+                    .border_color(border_color)
+                    .child(
+                        h_flex()
+                            .px_2()
+                            .py_1()
+                            .gap_1()
+                            .bg(header_bg)
+                            .border_b_1()
+                            .border_color(border_color)
+                            .child(
+                                Icon::new(IconName::Person)
+                                    .size(IconSize::Small)
+                                    .color(Color::Muted),
+                            )
+                            .child(
+                                Label::new("Subagents")
+                                    .size(LabelSize::Small)
+                                    .color(Color::Muted),
+                            )
+                            .child(
+                                Label::new(format!("— {running}/{total} running"))
+                                    .size(LabelSize::Small)
+                                    .color(Color::Muted),
+                            ),
+                    )
+                    .child(v_flex().children(model.nodes.iter().enumerate().map(
+                        |(index, node)| {
+                            let (status_icon, status_color, animate) = match node.status {
+                                SubagentStatus::Running => {
+                                    (IconName::ArrowCircle, Color::Accent, true)
+                                }
+                                SubagentStatus::Done => (IconName::Check, Color::Success, false),
+                                SubagentStatus::Failed => (IconName::XCircle, Color::Error, false),
+                                SubagentStatus::Queued => (IconName::Circle, Color::Muted, false),
+                            };
+
+                            let tokens_label = node.tokens_used.map(|tokens| {
+                                Label::new(format!("{tokens} tok"))
+                                    .size(LabelSize::Small)
+                                    .color(Color::Muted)
+                            });
+
+                            // Live stream + step label for running nodes, shown
+                            // inline as the execution detail.
+                            let live_detail = node.has_live_stream().then(|| {
+                                let step = node.step.as_ref();
+                                let label = step.map(|step| step.label.clone());
+                                let stream =
+                                    step.and_then(|step| step.stream.clone());
+                                v_flex()
+                                    .gap_0p5()
+                                    .when_some(label, |this, label| {
+                                        this.child(
+                                            Label::new(label)
+                                                .size(LabelSize::Small)
+                                                .color(Color::Muted),
+                                        )
+                                    })
+                                    .when_some(stream, |this, stream| {
+                                        this.child(
+                                            Label::new(stream)
+                                                .size(LabelSize::Small)
+                                                .color(Color::Muted)
+                                                .truncate(),
+                                        )
+                                    })
+                            });
+
+                            v_flex()
+                                .py_1()
+                                .px_2()
+                                .gap_1()
+                                .when(index < node_count - 1, |this| {
+                                    this.border_b_1().border_color(row_border)
+                                })
+                                // Indent child subagents one level under a parent.
+                                .when(node.is_child(), |this| this.pl_4())
+                                .child(
+                                    h_flex()
+                                        .gap_1p5()
+                                        .when(node.is_child(), |this| {
+                                            this.child(
+                                                div()
+                                                    .w_px()
+                                                    .h_full()
+                                                    .bg(row_border.opacity(0.6)),
+                                            )
+                                        })
+                                        .child(
+                                            Icon::new(status_icon)
+                                                .size(IconSize::Small)
+                                                .color(status_color)
+                                                .map(|icon| {
+                                                    if animate {
+                                                        icon.with_rotate_animation(2)
+                                                            .into_any_element()
+                                                    } else {
+                                                        icon.into_any_element()
+                                                    }
+                                                }),
+                                        )
+                                        .child(
+                                            Label::new(node.agent_type.clone())
+                                                .size(LabelSize::Small)
+                                                .color(Color::Muted),
+                                        )
+                                        .child(
+                                            Label::new(node.title.clone())
+                                                .size(LabelSize::Small)
+                                                .truncate(),
+                                        )
+                                        .when_some(tokens_label, |this, label| {
+                                            this.child(div().flex_1())
+                                                .child(label)
+                                        }),
+                                )
+                                .when_some(live_detail, |this, detail| {
+                                    this.child(div().pl_4().child(detail))
+                                })
+                        },
+                    ))),
+            )
+            .into_any()
+    }
+
     fn render_context_compaction(
         &self,
         entry_ix: usize,
@@ -5559,6 +5744,9 @@ impl ThreadView {
             AgentThreadEntry::ContextCompaction(compaction) => {
                 self.render_context_compaction(entry_ix, total_entries, compaction, window, cx)
             }
+            AgentThreadEntry::SubagentProgress(_) => {
+                self.render_subagent_fanout(entry_ix, window, cx)
+            }
         };
 
         let is_subagent_output = self.is_subagent()
@@ -6629,7 +6817,8 @@ impl ThreadView {
                 AgentThreadEntry::ToolCall(_)
                 | AgentThreadEntry::AssistantMessage(_)
                 | AgentThreadEntry::CompletedPlan(_)
-                | AgentThreadEntry::ContextCompaction(_) => {}
+                | AgentThreadEntry::ContextCompaction(_)
+                | AgentThreadEntry::SubagentProgress(_) => {}
             }
         }
 

@@ -237,6 +237,14 @@ impl EntryViewState {
                     self.set_entry(index, Entry::ContextCompaction);
                 }
             }
+            AgentThreadEntry::SubagentProgress(_) => {
+                // Subagent fan-out is pure rendering: no editor/terminal/diff
+                // view state to keep, but we still occupy the index slot so the
+                // entry/view indices stay aligned.
+                if !matches!(self.entries.get(index), Some(Entry::SubagentFanout)) {
+                    self.set_entry(index, Entry::SubagentFanout);
+                }
+            }
         };
     }
 
@@ -258,7 +266,8 @@ impl EntryViewState {
                 Entry::UserMessage { .. }
                 | Entry::AssistantMessage { .. }
                 | Entry::CompletedPlan
-                | Entry::ContextCompaction => {}
+                | Entry::ContextCompaction
+                | Entry::SubagentFanout => {}
                 Entry::ToolCall(ToolCallEntry { content, .. }) => {
                     for view in content.values() {
                         if let Ok(diff_editor) = view.clone().downcast::<Editor>() {
@@ -328,6 +337,7 @@ pub enum Entry {
     ToolCall(ToolCallEntry),
     CompletedPlan,
     ContextCompaction,
+    SubagentFanout,
 }
 
 impl Entry {
@@ -336,7 +346,7 @@ impl Entry {
             Self::UserMessage(editor) => Some(editor.read(cx).focus_handle(cx)),
             Self::AssistantMessage(message) => Some(message.focus_handle.clone()),
             Self::ToolCall(tool_call) => Some(tool_call.focus_handle.clone()),
-            Self::CompletedPlan | Self::ContextCompaction => None,
+            Self::CompletedPlan | Self::ContextCompaction | Self::SubagentFanout => None,
         }
     }
 
@@ -346,7 +356,8 @@ impl Entry {
             Self::AssistantMessage(_)
             | Self::ToolCall(_)
             | Self::CompletedPlan
-            | Self::ContextCompaction => None,
+            | Self::ContextCompaction
+            | Self::SubagentFanout => None,
         }
     }
 
@@ -376,7 +387,8 @@ impl Entry {
             Self::UserMessage(_)
             | Self::ToolCall(_)
             | Self::CompletedPlan
-            | Self::ContextCompaction => None,
+            | Self::ContextCompaction
+            | Self::SubagentFanout => None,
         }
     }
 
@@ -394,7 +406,8 @@ impl Entry {
             Self::UserMessage(_)
             | Self::AssistantMessage(_)
             | Self::CompletedPlan
-            | Self::ContextCompaction => false,
+            | Self::ContextCompaction
+            | Self::SubagentFanout => false,
         }
     }
 }
@@ -411,7 +424,9 @@ impl Focusable for Entry {
             Self::UserMessage(editor) => editor.read(cx).focus_handle(cx),
             Self::AssistantMessage(message) => message.focus_handle.clone(),
             Self::ToolCall(tool_call) => tool_call.focus_handle.clone(),
-            Self::CompletedPlan | Self::ContextCompaction => cx.focus_handle(),
+            Self::CompletedPlan | Self::ContextCompaction | Self::SubagentFanout => {
+                cx.focus_handle()
+            }
         }
     }
 }
