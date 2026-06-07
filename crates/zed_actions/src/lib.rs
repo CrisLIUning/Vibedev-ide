@@ -391,7 +391,9 @@ pub mod vibedev {
             /// Toggles focus on the VibeDev agent surface panel.
             ToggleAgentSurfaceFocus,
             /// Toggles focus on the VibeDev usage dashboard panel.
-            ToggleUsageDashboard
+            ToggleUsageDashboard,
+            /// Opens the VibeDev AgentApp in a dedicated, separate window.
+            OpenAgentAppWindow
         ]
     );
 }
