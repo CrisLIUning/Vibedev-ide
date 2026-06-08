@@ -2,10 +2,10 @@ use agent_client_protocol::schema as acp;
 use agent_ui::thread_metadata_store::ThreadMetadataStore;
 use agent_ui::{Agent, AgentConnectionStore, AgentThreadSource, create_conversation_view};
 use gpui::{
-    App, AppContext as _, Context, EventEmitter, FocusHandle, Focusable, IntoElement,
+    App, AppContext as _, Context, Entity, EventEmitter, FocusHandle, Focusable, IntoElement,
     ParentElement, Render, SharedString, Styled, Subscription, WeakEntity, Window, px,
 };
-use project::{AgentId, Worktree, WorktreeId};
+use project::{AgentId, Project, Worktree, WorktreeId};
 use ui::prelude::*;
 use ui::{IconButton, Tooltip};
 use workspace::{PathList, Workspace};
@@ -39,7 +39,17 @@ pub struct VibedevSessionSidebar {
 }
 
 impl VibedevSessionSidebar {
-    pub fn new(workspace: WeakEntity<Workspace>, cx: &mut Context<Self>) -> Self {
+    /// `project` is passed in by the caller rather than read from `workspace`
+    /// here on purpose: the constructor runs inside `configure_agent_mode`, which
+    /// holds a `&mut Workspace` lease, so reading the workspace entity through its
+    /// handle in this scope would double-lease and panic at window startup. The
+    /// caller already has `&mut Workspace`, so `workspace.project().clone()` (a
+    /// field access, not an entity lease) hands us the project conflict-free.
+    pub fn new(
+        workspace: WeakEntity<Workspace>,
+        project: Entity<Project>,
+        cx: &mut Context<Self>,
+    ) -> Self {
         let mut subscriptions = Vec::new();
 
         // Re-render when any agent's threads load/change so the history list
@@ -50,15 +60,12 @@ impl VibedevSessionSidebar {
 
         // Re-render the folder zone and re-scope the history list when folders
         // are added to / removed from the window's project.
-        if let Some(workspace) = workspace.upgrade() {
-            let project = workspace.read(cx).project().clone();
-            subscriptions.push(cx.subscribe(&project, |_, _, event, cx| match event {
-                project::Event::WorktreeAdded(_)
-                | project::Event::WorktreeRemoved(_)
-                | project::Event::WorktreeOrderChanged => cx.notify(),
-                _ => {}
-            }));
-        }
+        subscriptions.push(cx.subscribe(&project, |_, _, event, cx| match event {
+            project::Event::WorktreeAdded(_)
+            | project::Event::WorktreeRemoved(_)
+            | project::Event::WorktreeOrderChanged => cx.notify(),
+            _ => {}
+        }));
 
         Self {
             workspace,

@@ -53,7 +53,9 @@ fn configure_agent_mode(
     // can depend on `agent_ui`) and injected into `workspace`, mirroring the
     // `titlebar_item` pattern. The left dock is also closed below so it stays out
     // of the way even though `render_agent_layout` no longer renders it.
-    let sidebar = cx.new(|cx| VibedevSessionSidebar::new(workspace.weak_handle(), cx));
+    let sidebar_project = workspace.project().clone();
+    let sidebar =
+        cx.new(|cx| VibedevSessionSidebar::new(workspace.weak_handle(), sidebar_project, cx));
     workspace.set_agent_left_sidebar(Some(sidebar.into()), cx);
 
     // Hide the project tree: the AgentApp window is a conversation surface, not a
