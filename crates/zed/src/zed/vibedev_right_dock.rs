@@ -226,13 +226,25 @@ impl VibedevRightDock {
     /// second lease on either is taken.
     fn handle_center_pane_event(
         &mut self,
-        _pane: Entity<Pane>,
+        pane: Entity<Pane>,
         event: &pane::Event,
         cx: &mut Context<Self>,
     ) {
         if !matches!(event, pane::Event::AddItem { .. }) {
             return;
         }
+        // TEMP diagnostic for the "clicking a file tracks in the tree but the
+        // File panel stays empty" report. If this line never prints when a file
+        // is opened, the file landed in some pane other than the dock's
+        // `center_pane` (routing); if it prints with active_item_present=true
+        // but the panel shows nothing, it is a paint/layout issue. Revert once
+        // the root cause is confirmed.
+        log::info!(
+            "VIBEDEV-DIAG[file-open]: AddItem on pane id={:?} (dock center_pane id={:?}), active_item_present={}",
+            pane.entity_id(),
+            self.center_pane.entity_id(),
+            pane.read(cx).active_item().is_some(),
+        );
         if !self.enabled.contains(&DockModule::File) {
             // Insert in canonical order so the stack stays stable (File sits
             // right after Files), matching `enable_module`'s ordering.
