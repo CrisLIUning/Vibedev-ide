@@ -774,6 +774,28 @@ impl VibedevRightDock {
                     .child(
                         h_flex()
                             .gap_0p5()
+                            // The Terminal module owns its `TerminalPanel` directly (not via a
+                            // dock), so the panel's built-in "New Terminal" affordance is dead in
+                            // agent mode (the global action resolves the panel through a dock
+                            // lookup that finds nothing) and `set_active` can't re-spawn once the
+                            // last terminal is closed. A header "+" that spawns on the owned entity
+                            // is the only working way to add/recover a terminal.
+                            .when(module == DockModule::Terminal, |this| {
+                                this.child(
+                                    IconButton::new(
+                                        ("vibedev-dpanel-new-terminal", module_index),
+                                        IconName::Plus,
+                                    )
+                                    .icon_size(IconSize::XSmall)
+                                    .on_click(cx.listener(|this, _event, window, cx| {
+                                        if let Some(panel) = this.terminal_panel.clone() {
+                                            panel.update(cx, |panel, cx| {
+                                                panel.spawn_new_terminal(window, cx);
+                                            });
+                                        }
+                                    })),
+                                )
+                            })
                             .child(
                                 IconButton::new((collapse_id, module_index), collapse_icon)
                                     .icon_size(IconSize::XSmall)

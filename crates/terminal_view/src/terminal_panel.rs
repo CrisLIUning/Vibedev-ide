@@ -853,6 +853,20 @@ impl TerminalPanel {
         self.add_terminal_shell_internal(false, cwd, reveal_strategy, window, cx)
     }
 
+    /// Spawns a fresh terminal shell and reveals it. Public entry point for
+    /// hosts that own this panel directly (e.g. the VibeDev AgentApp right
+    /// dock) rather than through a dock. Those hosts cannot use the global
+    /// `NewTerminal` action — its handler resolves the panel via a dock lookup
+    /// (`Workspace::panel`) and finds nothing when the panel was never
+    /// registered in a dock — and cannot re-drive `set_active(true)` either,
+    /// since that is edge-triggered and a no-op once `self.active` is already
+    /// true. This spawns directly on the owned entity, so a host can still add a
+    /// terminal after the user has closed the last one.
+    pub fn spawn_new_terminal(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.add_terminal_shell(None, RevealStrategy::Always, window, cx)
+            .detach_and_log_err(cx);
+    }
+
     fn add_local_terminal_shell(
         &mut self,
         reveal_strategy: RevealStrategy,
