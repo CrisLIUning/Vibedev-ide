@@ -8,7 +8,7 @@
 //!
 //! The three modules are:
 //!   * `Files`    — the native file tree (`ProjectPanel`).
-//!   * `Preview`  — the workspace's *center* `Pane`. In agent mode
+//!   * `File`  — the workspace's *center* `Pane`. In agent mode
 //!     `render_agent_layout` draws the injected center conversation rather than
 //!     `self.center`, so this Pane is never painted by the workspace itself, yet
 //!     it is still the common open target for the project panel
@@ -49,17 +49,17 @@ use workspace::{Pane, Workspace};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum DockModule {
     Files,
-    Preview,
+    File,
     Terminal,
 }
 
 impl DockModule {
-    const ALL: [DockModule; 3] = [DockModule::Files, DockModule::Preview, DockModule::Terminal];
+    const ALL: [DockModule; 3] = [DockModule::Files, DockModule::File, DockModule::Terminal];
 
     fn title(self) -> &'static str {
         match self {
             DockModule::Files => "Files",
-            DockModule::Preview => "Preview",
+            DockModule::File => "File",
             DockModule::Terminal => "Terminal",
         }
     }
@@ -67,7 +67,7 @@ impl DockModule {
     fn element_id(self) -> &'static str {
         match self {
             DockModule::Files => "vibedev-dpanel-files",
-            DockModule::Preview => "vibedev-dpanel-preview",
+            DockModule::File => "vibedev-dpanel-preview",
             DockModule::Terminal => "vibedev-dpanel-terminal",
         }
     }
@@ -86,7 +86,7 @@ impl DockModule {
 /// Stacked host for the AgentApp right panel. Owns its panels directly rather
 /// than relying on the workspace dock (which is disabled in agent mode). The
 /// `center_pane` is the workspace's own center `Pane`, handed to us so the
-/// "Preview" module can render it; we never mutate it, only render its handle.
+/// "File" module can render it; we never mutate it, only render its handle.
 pub struct VibedevRightDock {
     workspace: WeakEntity<Workspace>,
     center_pane: Entity<Pane>,
@@ -115,7 +115,7 @@ impl VibedevRightDock {
             center_pane,
             project_panel: None,
             terminal_panel: None,
-            enabled: vec![DockModule::Files, DockModule::Preview],
+            enabled: vec![DockModule::Files, DockModule::File],
             collapsed: HashSet::new(),
             terminal_load_started: false,
             focus_handle: cx.focus_handle(),
@@ -192,7 +192,7 @@ impl VibedevRightDock {
         match module {
             DockModule::Files => self.load_project_panel(window, cx),
             DockModule::Terminal => self.load_terminal_panel(window, cx),
-            DockModule::Preview => {}
+            DockModule::File => {}
         }
         cx.notify();
     }
@@ -285,7 +285,7 @@ impl VibedevRightDock {
                 .clone()
                 .map(IntoElement::into_any_element)
                 .unwrap_or_else(loading_placeholder),
-            DockModule::Preview => self.center_pane.clone().into_any_element(),
+            DockModule::File => self.center_pane.clone().into_any_element(),
             DockModule::Terminal => self
                 .terminal_panel
                 .clone()

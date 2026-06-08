@@ -7962,15 +7962,6 @@ impl Workspace {
         let theme = cx.theme().clone();
         let colors = theme.colors();
 
-        let pane_render_context = PaneRenderContext {
-            follower_states: &self.follower_states,
-            active_call: self.active_call(),
-            active_pane: &self.active_pane,
-            app_state: &self.app_state,
-            project: &self.project,
-            workspace: &self.weak_self,
-        };
-
         // Left slot: prefer an externally-injected session sidebar (VibeDev
         // AgentApp), falling back to the standard left dock when none is set.
         // `render_dock` returns `Option<Div>` (None while the dock is zoomed); the
@@ -7995,9 +7986,12 @@ impl Workspace {
         let center = if let Some(center_view) = self.agent_center_view.clone() {
             center_view.into_any_element()
         } else {
-            self.center
-                .render(self.zoomed.as_ref(), &pane_render_context, window, cx)
-                .into_any_element()
+            // In agent mode the center editor pane group is NEVER rendered here:
+            // the VibeDev AgentApp hosts that same center `Pane` inside the right
+            // dock's File panel, and rendering one `Entity<Pane>` in two places
+            // would conflict in GPUI's dispatch tree (opened files would land in
+            // the hidden copy). Until the AgentPanel injects, show a blank surface.
+            div().size_full().bg(colors.background).into_any_element()
         };
         // Right slot: an externally-injected panel host (VibeDev AgentApp) that
         // will later carry the file tree / terminal / diff. Materialize it into a
