@@ -7893,18 +7893,16 @@ impl Workspace {
         // sidebar (when present) is a single view. Normalize both to a `Vec` of
         // `AnyElement` so the same `.children(left)` call below preserves the
         // original flex-row layout for the dock path.
-        let left: Vec<AnyElement> = if self.agent_center_view.is_some() {
-            // The native project-group sidebar renders at the MultiWorkspace level,
-            // so the agent-mode body has no left region of its own.
-            Vec::new()
-        } else if let Some(sidebar) = self.agent_left_sidebar.clone() {
-            vec![sidebar.into_any_element()]
-        } else {
-            self.render_dock(DockPosition::Left, &self.left_dock, window, cx)
-                .map(|dock| dock.into_any_element())
-                .into_iter()
-                .collect()
-        };
+        // The agent-mode body has no left region of its own: the native
+        // project-group sidebar renders at the MultiWorkspace level. (A leftover
+        // injected `agent_left_sidebar` from the earlier bespoke path is still
+        // honored for compatibility, but the AgentApp no longer sets it.)
+        let left: Vec<AnyElement> = self
+            .agent_left_sidebar
+            .clone()
+            .map(|sidebar| sidebar.into_any_element())
+            .into_iter()
+            .collect();
         // Eagerly materialize the center into an `AnyElement` so its render result
         // stops capturing the `window`/`cx` mutable borrows (Rust 2024 capture
         // rules), allowing the right dock and overlays to be rendered afterward.
@@ -7917,11 +7915,9 @@ impl Workspace {
                 .render(self.zoomed.as_ref(), &pane_render_context, window, cx)
                 .into_any_element()
         };
-        let right_dock = if self.agent_center_view.is_some() {
-            None
-        } else {
-            self.render_dock(DockPosition::Right, &self.right_dock, window, cx)
-        };
+        // No docks in agent mode: the file tree / project panel default to the
+        // right dock, but the AgentApp body is conversation-only.
+        let right_dock: Option<Div> = None;
 
         let zoomed_overlay = self.zoomed.as_ref().and_then(|view| {
             let zoomed_view = view.upgrade()?;

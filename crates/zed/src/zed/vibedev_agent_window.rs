@@ -57,12 +57,48 @@ fn configure_agent_mode(
     window: &mut Window,
     cx: &mut Context<Workspace>,
 ) {
-    // Render the body as the agent workbench (branded header + injected center,
-    // no editor/status bar). `render_agent_layout` keys off this flag.
-    workspace.agent_mode = true;
+    // The initial workspace becomes an agent surface immediately.
+    apply_agent_surface(workspace, window, cx);
 
-    // Center: ensure the native AgentPanel exists for this workspace, then inject
-    // it as the agent-mode center conversation surface once it has loaded.
+    // Mark the window as an AgentApp and open the native project-group sidebar.
+    // The `MultiWorkspace` wrapper does not exist yet (this runs inside
+    // `Workspace::new`), and we must NOT hold a `&mut Workspace` lease while
+    // touching it (`open_sidebar` -> `retain_active_workspace` reads the active
+    // workspace and would double-lease), so defer and reach the wrapper through
+    // the window root. The `agent_app` flag lets `zed`'s `ActiveWorkspaceChanged`
+    // handler convert every workspace later activated in this window (e.g. via
+    // "Open Project") into an agent surface too, so navigation never drops back
+    // into the editor.
+    let window_handle = window.window_handle();
+    cx.defer(move |cx| {
+        window_handle
+            .update(cx, |_, window, cx| {
+                if let Some(multi_workspace) = window.root::<MultiWorkspace>().flatten() {
+                    multi_workspace.update(cx, |multi_workspace, cx| {
+                        multi_workspace.set_agent_app(true);
+                        multi_workspace.open_sidebar(cx);
+                    });
+                }
+            })
+            .ok();
+    });
+}
+
+/// Renders `workspace` as an agent surface: flips it into `agent_mode` (so
+/// `Workspace::render` uses the branded conversation layout instead of the
+/// editor) and injects the native `AgentPanel` as the center conversation once
+/// it has loaded. Shared by the initial AgentApp workspace and every workspace
+/// later activated in the window, so navigating projects never drops back into
+/// the editor IDE.
+pub(crate) fn apply_agent_surface(
+    workspace: &mut Workspace,
+    window: &mut Window,
+    cx: &mut Context<Workspace>,
+) {
+    workspace.agent_mode = true;
+    // Re-render into the agent layout now (drops the editor/docks immediately)
+    // rather than waiting for the async panel injection below.
+    cx.notify();
     let ensure_panel = super::ensure_agent_panel_for_workspace(workspace, None, window, cx);
     cx.spawn_in(window, async move |workspace, cx| {
         ensure_panel.await?;
@@ -73,22 +109,4 @@ fn configure_agent_mode(
         })
     })
     .detach_and_log_err(cx);
-
-    // Left: open the native project-group sidebar. The `MultiWorkspace` wrapper
-    // does not exist yet (this runs inside `Workspace::new`), and we must NOT
-    // hold a `&mut Workspace` lease while opening it (`open_sidebar` ->
-    // `retain_active_workspace` reads the active workspace and would
-    // double-lease), so defer and reach the wrapper through the window root.
-    let window_handle = window.window_handle();
-    cx.defer(move |cx| {
-        window_handle
-            .update(cx, |_, window, cx| {
-                if let Some(multi_workspace) = window.root::<MultiWorkspace>().flatten() {
-                    multi_workspace.update(cx, |multi_workspace, cx| {
-                        multi_workspace.open_sidebar(cx);
-                    });
-                }
-            })
-            .ok();
-    });
 }

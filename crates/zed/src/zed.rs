@@ -479,6 +479,7 @@ pub fn initialize_workspace(app_state: Arc<AppState>, cx: &mut App) {
                     return;
                 };
 
+                let is_agent_app = this.is_agent_app();
                 let active_workspace = this.workspace().clone();
                 let source_workspace = source_workspace.clone();
                 active_workspace.update(cx, |workspace, cx| {
@@ -494,8 +495,16 @@ pub fn initialize_workspace(app_state: Arc<AppState>, cx: &mut App) {
                         }
                     }
 
-                    ensure_agent_panel_for_workspace(workspace, source_workspace, window, cx)
-                        .detach_and_log_err(cx);
+                    if is_agent_app {
+                        // VibeDev AgentApp: render every activated workspace as an
+                        // agent surface so navigating projects (e.g. "Open
+                        // Project") stays in the conversation UI rather than
+                        // dropping into the editor.
+                        vibedev_agent_window::apply_agent_surface(workspace, window, cx);
+                    } else {
+                        ensure_agent_panel_for_workspace(workspace, source_workspace, window, cx)
+                            .detach_and_log_err(cx);
+                    }
                 });
             },
         )

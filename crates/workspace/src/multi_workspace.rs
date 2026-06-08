@@ -290,6 +290,11 @@ pub struct MultiWorkspace {
     active_workspace: Entity<Workspace>,
     sidebar: Option<Box<dyn SidebarHandle>>,
     sidebar_open: bool,
+    /// True when this window is the VibeDev AgentApp (opened via
+    /// `open_agent_app_window`). The `zed` crate consults this to render every
+    /// workspace activated in the window as an agent surface (agent_mode +
+    /// injected AgentPanel center) rather than an editor.
+    agent_app: bool,
     sidebar_overlay: Option<AnyView>,
     pending_removal_tasks: Vec<Task<()>>,
     _serialize_task: Option<Task<()>>,
@@ -311,6 +316,17 @@ impl MultiWorkspace {
             open: self.sidebar_open() && self.multi_workspace_enabled(cx),
             side: self.sidebar_side(cx),
         }
+    }
+
+    /// Whether this window is the VibeDev AgentApp; see `agent_app`.
+    pub fn is_agent_app(&self) -> bool {
+        self.agent_app
+    }
+
+    /// Marks this window as the VibeDev AgentApp so every workspace activated in
+    /// it is rendered as an agent surface (see `agent_app`).
+    pub fn set_agent_app(&mut self, agent_app: bool) {
+        self.agent_app = agent_app;
     }
 
     pub fn new(workspace: Entity<Workspace>, window: &mut Window, cx: &mut Context<Self>) -> Self {
@@ -347,6 +363,7 @@ impl MultiWorkspace {
             active_workspace: workspace,
             sidebar: None,
             sidebar_open: false,
+            agent_app: false,
             sidebar_overlay: None,
             pending_removal_tasks: Vec::new(),
             _serialize_task: None,
