@@ -781,7 +781,6 @@ fn main() {
         project_symbols::init(cx);
         project_panel::init(cx);
         vibedev_ui::init(cx);
-        vibedev_agent_panel::init(cx);
         zed::vibedev_agent_window::init(cx);
         outline_panel::init(cx);
         tasks_ui::init(cx);

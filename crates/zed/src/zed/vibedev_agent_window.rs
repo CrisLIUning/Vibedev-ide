@@ -1,11 +1,12 @@
 //! Opens the VibeDev "AgentApp" in a dedicated separate window: a real Zed
 //! workspace configured into agent mode (no editor chrome), hosting a VibeDev
-//! conversation in the center and the agent panel container on the right.
+//! conversation in the center. (Phase 1: center conversation only; the left
+//! thread sidebar and right panel container are follow-up phases.)
 
 use std::sync::Arc;
 
 use gpui::{App, AppContext as _, Context, TaskExt as _, Window};
-use vibedev_agent_panel::{VibedevAgentPanel, VibedevConversationItem};
+use vibedev_agent_panel::VibedevConversationItem;
 use workspace::{AppState, OpenOptions, Workspace};
 
 /// Registers the `OpenAgentAppWindow` action handler on every workspace.
@@ -81,11 +82,4 @@ fn configure_agent_mode(
         let item = cx.new(|cx| VibedevConversationItem::new(conversation, cx));
         workspace.add_item_to_center(Box::new(item), window, cx);
     }
-
-    // Right dock: the reused PaneGroup multi-panel container, opened by default.
-    let agent_panel = cx.new(|cx| VibedevAgentPanel::new(workspace, window, cx));
-    workspace.add_panel(agent_panel, window, cx);
-    workspace.right_dock().update(cx, |dock, cx| {
-        dock.set_open(true, window, cx);
-    });
 }

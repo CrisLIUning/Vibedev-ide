@@ -768,8 +768,6 @@ fn initialize_panels(window: &mut Window, cx: &mut Context<Workspace>) -> Task<a
             vibedev_ui::VibedevAccountPanel::load(workspace_handle.clone(), cx.clone());
         let vibedev_usage_dashboard =
             vibedev_ui::VibedevUsageDashboard::load(workspace_handle.clone(), cx.clone());
-        let vibedev_agent_panel =
-            vibedev_agent_panel::VibedevAgentPanel::load(workspace_handle.clone(), cx.clone());
 
         async fn add_panel_when_ready(
             panel_task: impl Future<Output = anyhow::Result<Entity<impl workspace::Panel>>> + 'static,
@@ -795,7 +793,6 @@ fn initialize_panels(window: &mut Window, cx: &mut Context<Workspace>) -> Task<a
             add_panel_when_ready(debug_panel, workspace_handle.clone(), cx.clone()),
             add_panel_when_ready(vibedev_account_panel, workspace_handle.clone(), cx.clone()),
             add_panel_when_ready(vibedev_usage_dashboard, workspace_handle.clone(), cx.clone()),
-            add_panel_when_ready(vibedev_agent_panel, workspace_handle.clone(), cx.clone()),
             initialize_agent_panel(workspace_handle, cx.clone()).map(|r| r.log_err()),
         );
 
