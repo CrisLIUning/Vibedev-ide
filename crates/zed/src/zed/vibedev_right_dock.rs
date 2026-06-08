@@ -41,7 +41,9 @@ use std::collections::HashSet;
 use std::sync::Arc;
 use std::sync::atomic::AtomicUsize;
 
-use gpui::{Action, Entity, FocusHandle, Focusable, Subscription, WeakEntity, prelude::*};
+use agent_ui::subagent_fanout::SubagentFanoutModel;
+use agent_ui::{AgentPanel, AgentPanelEvent};
+use gpui::{Action, App, Entity, FocusHandle, Focusable, Subscription, WeakEntity, prelude::*};
 use project_panel::ProjectPanel;
 use terminal_view::terminal_panel::TerminalPanel;
 use ui::{ContextMenu, IconButton, IconName, IconPosition, PopoverMenu, prelude::*};
@@ -53,14 +55,16 @@ enum DockModule {
     Files,
     File,
     Changes,
+    Execution,
     Terminal,
 }
 
 impl DockModule {
-    const ALL: [DockModule; 4] = [
+    const ALL: [DockModule; 5] = [
         DockModule::Files,
         DockModule::File,
         DockModule::Changes,
+        DockModule::Execution,
         DockModule::Terminal,
     ];
 
@@ -69,6 +73,7 @@ impl DockModule {
             DockModule::Files => "Files",
             DockModule::File => "File",
             DockModule::Changes => "Changes",
+            DockModule::Execution => "Execution",
             DockModule::Terminal => "Terminal",
         }
     }
@@ -78,6 +83,7 @@ impl DockModule {
             DockModule::Files => "vibedev-dpanel-files",
             DockModule::File => "vibedev-dpanel-preview",
             DockModule::Changes => "vibedev-dpanel-changes",
+            DockModule::Execution => "vibedev-dpanel-execution",
             DockModule::Terminal => "vibedev-dpanel-terminal",
         }
     }
@@ -116,6 +122,19 @@ pub struct VibedevRightDock {
     /// Set once a `TerminalPanel::load` has been kicked off, so re-enabling the
     /// Terminal module does not spawn a second load.
     terminal_load_started: bool,
+    /// Subscription to the `AgentPanel`'s `ActiveViewChanged` events, lazily
+    /// installed from `render` once the panel has been async-injected into the
+    /// workspace (it is not present when this dock is first constructed). Kept
+    /// alive for the dock's lifetime; refreshes `active_thread` on each change.
+    agent_panel_subscription: Option<Subscription>,
+    /// The currently active root conversation thread (per the `AgentPanel`).
+    /// A strong handle so it can be `observe`d; replaced wholesale whenever the
+    /// active view changes.
+    active_thread: Option<Entity<acp_thread::AcpThread>>,
+    /// `cx.observe` on `active_thread`: any thread mutation (plan/subagent
+    /// updates `cx.notify()`) re-renders the Execution panel and auto-surfaces
+    /// the module the first time subagent progress appears.
+    active_thread_subscription: Option<Subscription>,
     focus_handle: FocusHandle,
     /// Event subscriptions kept alive for the dock's lifetime (dropped with it).
     /// Currently holds the center-pane subscription that auto-surfaces the
@@ -173,6 +192,9 @@ impl VibedevRightDock {
             enabled: vec![DockModule::Files, DockModule::File],
             collapsed: HashSet::new(),
             terminal_load_started: false,
+            agent_panel_subscription: None,
+            active_thread: None,
+            active_thread_subscription: None,
             focus_handle: cx.focus_handle(),
             _subscriptions,
         };
@@ -256,6 +278,65 @@ impl VibedevRightDock {
         cx.notify();
     }
 
+    /// Resolves the `AgentPanel`'s currently active root thread and, if it
+    /// changed, re-`observe`s it. Always re-checks whether the Execution module
+    /// should surface (the freshly-selected thread may already have subagents).
+    ///
+    /// Lease safety: only reads through `panel` and the resolved thread; the
+    /// sole mutations are this dock's own fields plus `cx.notify()`. No second
+    /// lease on the panel, thread, or workspace is taken.
+    fn refresh_active_thread(&mut self, panel: &Entity<AgentPanel>, cx: &mut Context<Self>) {
+        let thread = panel.read(cx).active_agent_thread(cx);
+        let changed = self.active_thread.as_ref().map(|t| t.entity_id())
+            != thread.as_ref().map(|t| t.entity_id());
+        if changed {
+            self.active_thread = thread.clone();
+            self.active_thread_subscription = thread.as_ref().map(|t| {
+                cx.observe(t, |this, thread, cx| {
+                    this.on_thread_updated(&thread, cx);
+                })
+            });
+        }
+        // Initial resolution and every switch both try to auto-surface.
+        if let Some(thread) = thread.as_ref() {
+            self.maybe_surface_execution(thread, cx);
+        }
+        cx.notify();
+    }
+
+    /// `cx.observe` callback for the active thread: re-renders the Execution
+    /// panel and auto-surfaces the module the first time subagent progress
+    /// appears. Lease safety: reads `thread`, mutates only this dock's fields.
+    fn on_thread_updated(
+        &mut self,
+        thread: &Entity<acp_thread::AcpThread>,
+        cx: &mut Context<Self>,
+    ) {
+        self.maybe_surface_execution(thread, cx);
+        cx.notify();
+    }
+
+    /// Surfaces (enables + expands, in canonical order) the Execution module the
+    /// first time the active thread carries any `SubagentProgress` entry. Reads
+    /// only; the caller is responsible for `cx.notify()` so this never doubles a
+    /// notify. Takes `&App` so it composes with both the observe callback's
+    /// `Context<Self>` (which derefs to `App`) and the render path.
+    fn maybe_surface_execution(&mut self, thread: &Entity<acp_thread::AcpThread>, cx: &App) {
+        let has_subagents = thread.read(cx).entries().iter().any(|entry| {
+            matches!(entry, acp_thread::AgentThreadEntry::SubagentProgress(_))
+        });
+        if has_subagents && !self.enabled.contains(&DockModule::Execution) {
+            self.enabled.push(DockModule::Execution);
+            self.enabled.sort_by_key(|m| {
+                DockModule::ALL
+                    .iter()
+                    .position(|x| x == m)
+                    .unwrap_or(usize::MAX)
+            });
+            self.collapsed.remove(&DockModule::Execution);
+        }
+    }
+
     /// Lazily loads the file tree. `ProjectPanel::load` consumes an
     /// `AsyncWindowContext` (which `spawn_in` provides as the inner `cx`) and
     /// returns a `Task`; we `await` that task *inside* the spawned closure and
@@ -321,7 +402,7 @@ impl VibedevRightDock {
         match module {
             DockModule::Files => self.load_project_panel(window, cx),
             DockModule::Terminal => self.load_terminal_panel(window, cx),
-            DockModule::File | DockModule::Changes => {}
+            DockModule::File | DockModule::Changes | DockModule::Execution => {}
         }
         cx.notify();
     }
@@ -391,6 +472,126 @@ impl VibedevRightDock {
             })
     }
 
+    /// Renders the "Execution" module body: the subagent fan-out tree for the
+    /// currently active conversation thread. Reads `self.active_thread`, folds
+    /// its `SubagentProgress` entries into a `SubagentFanoutModel`, and renders
+    /// one card per node (status icon + agent type + title + token count, with
+    /// child subagents indented).
+    ///
+    /// v1 simplification: live step streaming (`SubagentStep.stream`) and the
+    /// full subagent reply are intentionally NOT rendered here — only static
+    /// status/title/token/count. Streaming + full output are deferred to T8.
+    ///
+    /// Lease safety: read-only. Reads through `self.active_thread` (a handle on
+    /// the active thread) and the theme; takes no entity lease. Takes `&App`
+    /// (not `&mut Context<Self>`) so it can be called while `render_dpanel`
+    /// still holds an immutable theme borrow of `cx`.
+    fn render_execution_panel(&self, cx: &App) -> AnyElement {
+        let colors = cx.theme().colors();
+
+        // No active conversation selected yet.
+        let Some(thread) = self.active_thread.as_ref() else {
+            return execution_empty_state("无活跃会话");
+        };
+
+        // Collect every `SubagentProgress` entry on the thread (not just a
+        // contiguous run — the dock shows the whole active session's fan-out).
+        let progresses: Vec<acp_thread::SubagentProgress> = thread
+            .read(cx)
+            .entries()
+            .iter()
+            .filter_map(|entry| match entry {
+                acp_thread::AgentThreadEntry::SubagentProgress(progress) => {
+                    Some(progress.clone())
+                }
+                _ => None,
+            })
+            .collect();
+
+        let model = SubagentFanoutModel::from_entries(&progresses);
+        if model.nodes.is_empty() {
+            return execution_empty_state("暂无子任务执行");
+        }
+
+        let running = model.running_count();
+        let total = model.total_count();
+        let node_count = model.nodes.len();
+        let row_border = colors.border;
+
+        v_flex()
+            .id("vibedev-execution-tree")
+            .size_full()
+            .overflow_y_scroll()
+            .child(
+                h_flex()
+                    .flex_none()
+                    .px_2()
+                    .py_1()
+                    .gap_1()
+                    .child(
+                        Icon::new(IconName::Person)
+                            .size(IconSize::Small)
+                            .color(Color::Muted),
+                    )
+                    .child(
+                        Label::new(format!("{running}/{total} 运行中"))
+                            .size(LabelSize::Small)
+                            .color(Color::Muted),
+                    ),
+            )
+            .children(model.nodes.iter().enumerate().map(|(index, node)| {
+                // Icon + color per status, copied from
+                // `thread_view.rs::render_subagent_fanout` (3581-3588). v1 omits
+                // the `with_rotate_animation` spinner on Running used there.
+                let (status_icon, status_color) = match node.status {
+                    acp_thread::SubagentStatus::Running => (IconName::ArrowCircle, Color::Accent),
+                    acp_thread::SubagentStatus::Done => (IconName::Check, Color::Success),
+                    acp_thread::SubagentStatus::Failed => (IconName::XCircle, Color::Error),
+                    acp_thread::SubagentStatus::Queued => (IconName::Circle, Color::Muted),
+                };
+
+                let tokens_label = node.tokens_used.map(|tokens| {
+                    Label::new(format!("{tokens} tok"))
+                        .size(LabelSize::Small)
+                        .color(Color::Muted)
+                });
+
+                v_flex()
+                    .py_1()
+                    .px_2()
+                    .gap_1()
+                    .when(index < node_count - 1, |this| {
+                        this.border_b_1().border_color(row_border)
+                    })
+                    // Indent child subagents one level under their parent.
+                    .when(node.is_child(), |this| this.pl_4())
+                    .child(
+                        h_flex()
+                            .gap_1p5()
+                            .child(
+                                Icon::new(status_icon)
+                                    .size(IconSize::Small)
+                                    .color(status_color),
+                            )
+                            .child(
+                                Label::new(node.agent_type.clone())
+                                    .size(LabelSize::Small)
+                                    .color(Color::Muted),
+                            )
+                            .child(
+                                Label::new(node.title.clone())
+                                    .size(LabelSize::Small)
+                                    .truncate(),
+                            )
+                            .when_some(tokens_label, |this, label| {
+                                this.child(div().flex_1()).child(label)
+                            }),
+                    )
+                    .into_any_element()
+            }))
+            .into_any_element()
+    }
+
     /// Renders one stacked module: a header (title + collapse + close) plus,
     /// unless collapsed, its body. Each `.dpanel` is `flex_1()` + `min_h_0()` so
     /// it shares the column and can actually shrink; the body is
@@ -416,6 +617,7 @@ impl VibedevRightDock {
                 .unwrap_or_else(loading_placeholder),
             DockModule::File => self.center_pane.clone().into_any_element(),
             DockModule::Changes => self.changes_pane.clone().into_any_element(),
+            DockModule::Execution => self.render_execution_panel(cx),
             DockModule::Terminal => self
                 .terminal_panel
                 .clone()
@@ -496,6 +698,18 @@ fn loading_placeholder() -> AnyElement {
         .into_any_element()
 }
 
+/// Centered empty-state for the Execution module (no active session, or an
+/// active session with no subagents yet). Mirrors `loading_placeholder`'s style.
+fn execution_empty_state(message: &'static str) -> AnyElement {
+    div()
+        .size_full()
+        .flex()
+        .items_center()
+        .justify_center()
+        .child(Label::new(message).color(Color::Muted))
+        .into_any_element()
+}
+
 impl Focusable for VibedevRightDock {
     fn focus_handle(&self, _cx: &gpui::App) -> FocusHandle {
         self.focus_handle.clone()
@@ -511,6 +725,29 @@ impl Render for VibedevRightDock {
         // center pane is safe to render because agent mode does not also paint
         // `self.center`, and `Pane::render` only reads.
         //
+        // Lazily install the `AgentPanel` subscription. The dock is built
+        // synchronously in `apply_agent_surface`, but the `AgentPanel` is
+        // injected asynchronously, so it may not exist on the first frame; we
+        // keep retrying from `render` until it does. `render` holds `&mut self`
+        // and a `Context<Self>`, so registering subscriptions here is sound. The
+        // callback only *registers* — it takes no lease — and we clone the panel
+        // out before calling the `&mut self` method to avoid a borrow conflict.
+        if self.agent_panel_subscription.is_none()
+            && let Some(panel) = self
+                .workspace
+                .upgrade()
+                .and_then(|workspace| workspace.read(cx).panel::<AgentPanel>(cx))
+        {
+            self.agent_panel_subscription =
+                Some(cx.subscribe(&panel, |this, panel, event, cx| {
+                    if matches!(event, AgentPanelEvent::ActiveViewChanged) {
+                        this.refresh_active_thread(&panel, cx);
+                    }
+                }));
+            let panel = panel.clone();
+            self.refresh_active_thread(&panel, cx);
+        }
+
         // Build the panel elements first (each `render_dpanel` borrows `cx`),
         // then read theme colors, so the two `cx` borrows don't overlap.
         let modules: Vec<DockModule> = self.enabled.clone();
