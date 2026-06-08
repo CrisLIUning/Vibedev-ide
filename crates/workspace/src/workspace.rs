@@ -35,7 +35,7 @@ pub use multi_workspace::{
     MultiWorkspace, MultiWorkspaceEvent, NewThread, NextProject, NextThread, PreviousProject,
     PreviousThread, ProjectGroup, ProjectGroupKey, SerializedProjectGroupState, Sidebar,
     SidebarEvent, SidebarHandle, SidebarRenderState, SidebarSide, ToggleWorkspaceSidebar,
-    sidebar_side_context_menu,
+    agent_app_window, sidebar_side_context_menu,
 };
 pub use path_list::{PathList, SerializedPathList};
 pub use remote::{
@@ -7844,6 +7844,23 @@ impl Workspace {
             .border_b_1()
             .border_color(border)
             .bg(title_bar_bg)
+            // Sidebar toggle lives in the titlebar (not inside the sidebar) so the
+            // native project/threads sidebar can always be reopened after it is
+            // closed. Dispatch directly against the current window's
+            // MultiWorkspace rather than a global action, which would target the
+            // first editor window instead of this AgentApp window.
+            .child(
+                IconButton::new("agent-sidebar-toggle", IconName::ThreadsSidebarLeftClosed)
+                    .icon_size(IconSize::Small)
+                    .tooltip(ui::Tooltip::text("Toggle Threads Sidebar"))
+                    .on_click(cx.listener(|_workspace, _event, window, cx| {
+                        if let Some(multi_workspace) = window.root::<MultiWorkspace>().flatten() {
+                            multi_workspace.update(cx, |multi_workspace, cx| {
+                                multi_workspace.toggle_sidebar(window, cx);
+                            });
+                        }
+                    })),
+            )
             // Clicking the brand acts as "home": re-activate the conversation,
             // which is the first item in the center pane, so opening a file/diff
             // (which covers it) can always be navigated back from.

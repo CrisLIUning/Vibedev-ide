@@ -2090,6 +2090,14 @@ impl MultiWorkspace {
     }
 }
 
+/// Returns the current window's MultiWorkspace ONLY if it is a VibeDev AgentApp.
+/// Trigger sites use this to run capabilities against the current agent window
+/// instead of dispatching a global action (which targets the first editor window).
+pub fn agent_app_window(window: &Window, cx: &App) -> Option<Entity<MultiWorkspace>> {
+    let mw = window.root::<MultiWorkspace>().flatten()?;
+    mw.read(cx).is_agent_app().then_some(mw)
+}
+
 impl Render for MultiWorkspace {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let multi_workspace_enabled = self.multi_workspace_enabled(cx);

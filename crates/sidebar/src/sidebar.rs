@@ -3387,26 +3387,8 @@ impl Sidebar {
             }
             ListEntry::Thread(thread) => {
                 let metadata = thread.metadata.clone();
-                match &thread.workspace {
-                    ThreadEntryWorkspace::Open(workspace) => {
-                        let workspace = workspace.clone();
-                        self.activate_thread(metadata, &workspace, false, window, cx);
-                    }
-                    ThreadEntryWorkspace::Closed {
-                        folder_paths,
-                        project_group_key,
-                    } => {
-                        let folder_paths = folder_paths.clone();
-                        let project_group_key = project_group_key.clone();
-                        self.open_workspace_and_activate_thread(
-                            metadata,
-                            folder_paths,
-                            &project_group_key,
-                            window,
-                            cx,
-                        );
-                    }
-                }
+                let thread_workspace = thread.workspace.clone();
+                self.activate_thread_entry(metadata, &thread_workspace, window, cx);
             }
             ListEntry::Terminal(terminal) => {
                 let metadata = terminal.metadata.clone();
@@ -3761,6 +3743,55 @@ impl Sidebar {
         }
     }
 
+    /// Activates a thread from a row/keyboard `ThreadEntryWorkspace`.
+    ///
+    /// In the AgentApp window a thread row may reference an `Open` workspace that
+    /// is actually open in a *different* (editor) window. Activating it as `Open`
+    /// would hop the user to that editor window. So when this window is the
+    /// AgentApp and the referenced workspace is not retained here, we treat it as
+    /// `Closed` and open it inside the current MultiWorkspace instead.
+    fn activate_thread_entry(
+        &mut self,
+        metadata: ThreadMetadata,
+        thread_workspace: &ThreadEntryWorkspace,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        match thread_workspace {
+            ThreadEntryWorkspace::Open(workspace) => {
+                let is_foreign_agent_app = self
+                    .multi_workspace
+                    .upgrade()
+                    .is_some_and(|mw| mw.read(cx).is_agent_app())
+                    && self
+                        .find_workspace_in_current_window(cx, |candidate, _| candidate == workspace)
+                        .is_none();
+                if is_foreign_agent_app {
+                    let folder_paths = metadata.folder_paths().clone();
+                    let key = ProjectGroupKey::from_worktree_paths(
+                        &metadata.worktree_paths,
+                        metadata.remote_connection.clone(),
+                    );
+                    self.open_workspace_and_activate_thread(metadata, folder_paths, &key, window, cx);
+                } else {
+                    self.activate_thread(metadata, workspace, false, window, cx);
+                }
+            }
+            ThreadEntryWorkspace::Closed {
+                folder_paths,
+                project_group_key,
+            } => {
+                self.open_workspace_and_activate_thread(
+                    metadata,
+                    folder_paths.clone(),
+                    project_group_key,
+                    window,
+                    cx,
+                );
+            }
+        }
+    }
+
     fn activate_thread(
         &mut self,
         metadata: ThreadMetadata,
@@ -3774,6 +3805,25 @@ impl Sidebar {
             .is_some()
         {
             self.activate_thread_locally(&metadata, &workspace, retain, window, cx);
+            return;
+        }
+
+        // In the VibeDev AgentApp window, never hop to another (editor) window:
+        // the requested workspace lives elsewhere, so open it inside the current
+        // MultiWorkspace and activate the thread there. `find_or_create_workspace`
+        // with `OpenMode::Activate` (via `open_workspace_and_activate_thread`)
+        // reuses an existing project group when one matches.
+        if self
+            .multi_workspace
+            .upgrade()
+            .is_some_and(|mw| mw.read(cx).is_agent_app())
+        {
+            let folder_paths = metadata.folder_paths().clone();
+            let key = ProjectGroupKey::from_worktree_paths(
+                &metadata.worktree_paths,
+                metadata.remote_connection.clone(),
+            );
+            self.open_workspace_and_activate_thread(metadata, folder_paths, &key, window, cx);
             return;
         }
 
@@ -6287,23 +6337,7 @@ impl Sidebar {
                 let thread_workspace = thread_workspace.clone();
                 cx.listener(move |this, _, window, cx| {
                     this.selection = None;
-                    match &thread_workspace {
-                        ThreadEntryWorkspace::Open(workspace) => {
-                            this.activate_thread(metadata.clone(), workspace, false, window, cx);
-                        }
-                        ThreadEntryWorkspace::Closed {
-                            folder_paths,
-                            project_group_key,
-                        } => {
-                            this.open_workspace_and_activate_thread(
-                                metadata.clone(),
-                                folder_paths.clone(),
-                                project_group_key,
-                                window,
-                                cx,
-                            );
-                        }
-                    }
+                    this.activate_thread_entry(metadata.clone(), &thread_workspace, window, cx);
                 })
             });
 

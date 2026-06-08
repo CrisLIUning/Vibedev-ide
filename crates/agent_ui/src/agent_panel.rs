@@ -5753,7 +5753,24 @@ impl AgentPanel {
                         menu = menu
                             .action("Settings", Box::new(OpenSettings))
                             .separator()
-                            .action("Toggle Threads Sidebar", Box::new(ToggleWorkspaceSidebar));
+                            // Toggle the sidebar against the current window's
+                            // MultiWorkspace directly. Dispatching the global
+                            // `ToggleWorkspaceSidebar` action is focus/gating
+                            // dependent and can miss this AgentApp window; the
+                            // action is still passed so the keybinding shows.
+                            .entry(
+                                "Toggle Threads Sidebar",
+                                Some(Box::new(ToggleWorkspaceSidebar)),
+                                |window, cx| {
+                                    if let Some(multi_workspace) =
+                                        window.root::<MultiWorkspace>().flatten()
+                                    {
+                                        multi_workspace.update(cx, |multi_workspace, cx| {
+                                            multi_workspace.toggle_sidebar(window, cx);
+                                        });
+                                    }
+                                },
+                            );
 
                         if has_auth_methods || supports_logout {
                             menu = menu.separator()
