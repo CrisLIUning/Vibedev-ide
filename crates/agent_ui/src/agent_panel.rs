@@ -6172,6 +6172,17 @@ impl AgentPanel {
             ToolbarMode::EmptyThread
         };
 
+        // In the AgentApp window the AgentPanel is injected as the center view
+        // without being added to a dock, so its `PanelEvent::ZoomIn/Out` has no
+        // subscriber and the maximize/full-screen toggle is a no-op. Hide the
+        // button there. `IconButton` is not `Clone`, so keep it as an `Option`
+        // (`None` in the AgentApp) and feed it via `.children(..)`; the two
+        // toolbar branches below are mutually exclusive, so each consumes the
+        // value at most once.
+        let is_agent_app = window
+            .root::<MultiWorkspace>()
+            .flatten()
+            .map_or(false, |mw| mw.read(cx).is_agent_app());
         let is_full_screen = self.is_zoomed(window, cx);
         let (icon_id, icon_name, tooltip_text) = if is_full_screen {
             (
@@ -6186,12 +6197,14 @@ impl AgentPanel {
                 "Enable Full Screen",
             )
         };
-        let full_screen_button = IconButton::new(icon_id, icon_name)
-            .icon_size(IconSize::Small)
-            .tooltip(move |_, cx| Tooltip::for_action(tooltip_text, &ToggleZoom, cx))
-            .on_click(cx.listener(move |this, _, window, cx| {
-                this.toggle_zoom(&ToggleZoom, window, cx);
-            }));
+        let full_screen_button = (!is_agent_app).then(|| {
+            IconButton::new(icon_id, icon_name)
+                .icon_size(IconSize::Small)
+                .tooltip(move |_, cx| Tooltip::for_action(tooltip_text, &ToggleZoom, cx))
+                .on_click(cx.listener(move |this, _, window, cx| {
+                    this.toggle_zoom(&ToggleZoom, window, cx);
+                }))
+        });
 
         let max_content_width = AgentSettings::get_global(cx).max_content_width;
 
@@ -6267,7 +6280,7 @@ impl AgentPanel {
                         .gap_1()
                         .pl_1()
                         .pr_1()
-                        .child(full_screen_button)
+                        .children(full_screen_button)
                         .child(self.render_panel_options_menu(window, cx)),
                 )
                 .into_any_element()
@@ -6316,7 +6329,7 @@ impl AgentPanel {
                         .pl_1()
                         .pr_1()
                         .when(can_create_entries, |this| this.child(new_thread_menu))
-                        .child(full_screen_button)
+                        .children(full_screen_button)
                         .child(self.render_panel_options_menu(window, cx)),
                 )
                 .into_any_element()
