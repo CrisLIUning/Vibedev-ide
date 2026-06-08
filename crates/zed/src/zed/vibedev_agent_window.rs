@@ -5,8 +5,7 @@
 
 use std::sync::Arc;
 
-use gpui::{App, AppContext as _, Context, TaskExt as _, Window};
-use vibedev_agent_panel::{VibedevConversationItem, VibedevSessionSidebar};
+use gpui::{App, Context, TaskExt as _, Window};
 use workspace::{AppState, OpenOptions, Workspace};
 
 /// Registers the `OpenAgentAppWindow` action handler on every workspace.
@@ -38,69 +37,35 @@ pub fn open_agent_app_window(app_state: Arc<AppState>, cx: &mut App) {
     .detach_and_log_err(cx);
 }
 
-/// Turns a fresh workspace window into the agent workbench (runs before render).
+/// Turns a fresh workspace window into the VibeDev AgentApp.
+///
+/// Phase 1 ("照抄" / reuse-native): instead of a bespoke agent layout, we reuse
+/// the native project-group thread sidebar that every `MultiWorkspace` window
+/// already registers (see `MultiWorkspace::new` / `Sidebar::new` in the workspace
+/// crate) together with its per-workspace `AgentPanel`. We only have to OPEN the
+/// sidebar so the window lands on the agent experience; clicking a thread or "new
+/// conversation" in the sidebar drives the native `AgentPanel`, which already
+/// defaults to the VibeDev (`Agent::Custom`) agent and reuses the same
+/// `ConversationView`. The earlier bespoke layer (`agent_mode` + the custom
+/// `render_agent_layout` / `VibedevSessionSidebar` / center conversation) is left
+/// intact but inert (never activated), to be reintroduced as branding ("改绘制")
+/// in a later phase.
+///
+/// The `MultiWorkspace` wrapper does not exist yet at this point — this runs as
+/// the `open_new` init callback, inside `Workspace::new`, before
+/// `MultiWorkspace::new` wraps the workspace and calls `set_multi_workspace`. So
+/// defer opening the sidebar until the wrapper (and its registered sidebar) exist.
 fn configure_agent_mode(
-    workspace: &mut Workspace,
+    _workspace: &mut Workspace,
     window: &mut Window,
     cx: &mut Context<Workspace>,
 ) {
-    workspace.agent_mode = true;
-    workspace.centered_layout = true;
-
-    // Left region: install the VibeDev session sidebar (brand + "new
-    // conversation" + thread list). `render_agent_layout` renders this in the
-    // left slot instead of the left dock once set. Built here (the `zed` crate
-    // can depend on `agent_ui`) and injected into `workspace`, mirroring the
-    // `titlebar_item` pattern. The left dock is also closed below so it stays out
-    // of the way even though `render_agent_layout` no longer renders it.
-    let sidebar_project = workspace.project().clone();
-    let sidebar =
-        cx.new(|cx| VibedevSessionSidebar::new(workspace.weak_handle(), sidebar_project, cx));
-    workspace.set_agent_left_sidebar(Some(sidebar.into()), cx);
-
-    // Hide the project tree: the AgentApp window is a conversation surface, not a
-    // file editor, so the left dock starts closed.
-    workspace.left_dock().update(cx, |dock, cx| {
-        dock.set_open(false, window, cx);
-    });
-
-    // Center: the reused VibeDev conversation. Because this is a real workspace
-    // (not a stub), `ConversationView` is fully reusable here and does not panic.
-    if let Some(thread_store) = agent::ThreadStore::try_global(cx) {
-        let project = workspace.project().clone();
-        let fs = workspace.app_state().fs.clone();
-        let connection_store =
-            cx.new(|cx| agent_ui::AgentConnectionStore::new(project.clone(), cx));
-        let conversation = agent_ui::create_conversation_view(
-            workspace.weak_handle(),
-            project,
-            connection_store,
-            fs,
-            thread_store,
-            agent_ui::Agent::Custom {
-                id: project::AgentId::new("VibeDev"),
-            },
-            None,
-            None,
-            None,
-            None,
-            Some("VibeDev".into()),
-            None,
-            agent_ui::AgentThreadSource::Sidebar,
-            window,
-            cx,
-        );
-        let item = cx.new(|cx| VibedevConversationItem::new(conversation, cx));
-        workspace.add_item_to_center(Box::new(item), window, cx);
-    }
-
-    // Strip editor chrome from the center pane: in the AgentApp window the
-    // conversation is the page itself, not a closeable editor tab. Hiding the tab
-    // strip removes the tab label, the new-tab "+", split, and zoom buttons in one
-    // gate (the pane renders the whole strip behind `should_display_tab_bar`).
-    let center_pane = workspace.active_pane().clone();
-    center_pane.update(cx, |pane, cx| {
-        pane.set_should_display_tab_bar(|_, _| false);
-        cx.notify();
+    cx.defer_in(window, |workspace, _window, cx| {
+        let Some(multi_workspace) = workspace.multi_workspace().cloned() else {
+            return;
+        };
+        multi_workspace
+            .update(cx, |multi_workspace, cx| multi_workspace.open_sidebar(cx))
+            .ok();
     });
 }
