@@ -82,4 +82,14 @@ fn configure_agent_mode(
         let item = cx.new(|cx| VibedevConversationItem::new(conversation, cx));
         workspace.add_item_to_center(Box::new(item), window, cx);
     }
+
+    // Strip editor chrome from the center pane: in the AgentApp window the
+    // conversation is the page itself, not a closeable editor tab. Hiding the tab
+    // strip removes the tab label, the new-tab "+", split, and zoom buttons in one
+    // gate (the pane renders the whole strip behind `should_display_tab_bar`).
+    let center_pane = workspace.active_pane().clone();
+    center_pane.update(cx, |pane, cx| {
+        pane.set_should_display_tab_bar(|_, _| false);
+        cx.notify();
+    });
 }
