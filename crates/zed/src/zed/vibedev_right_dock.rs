@@ -41,6 +41,7 @@ use std::collections::HashSet;
 use std::sync::Arc;
 use std::sync::atomic::AtomicUsize;
 
+use agent_client_protocol::schema as acp;
 use agent_ui::subagent_fanout::SubagentFanoutModel;
 use agent_ui::{AgentPanel, AgentPanelEvent};
 use gpui::{Action, App, Entity, FocusHandle, Focusable, Subscription, WeakEntity, prelude::*};
@@ -56,15 +57,17 @@ enum DockModule {
     File,
     Changes,
     Execution,
+    Plan,
     Terminal,
 }
 
 impl DockModule {
-    const ALL: [DockModule; 5] = [
+    const ALL: [DockModule; 6] = [
         DockModule::Files,
         DockModule::File,
         DockModule::Changes,
         DockModule::Execution,
+        DockModule::Plan,
         DockModule::Terminal,
     ];
 
@@ -74,6 +77,7 @@ impl DockModule {
             DockModule::File => "File",
             DockModule::Changes => "Changes",
             DockModule::Execution => "Execution",
+            DockModule::Plan => "Plan",
             DockModule::Terminal => "Terminal",
         }
     }
@@ -84,6 +88,7 @@ impl DockModule {
             DockModule::File => "vibedev-dpanel-preview",
             DockModule::Changes => "vibedev-dpanel-changes",
             DockModule::Execution => "vibedev-dpanel-execution",
+            DockModule::Plan => "vibedev-dpanel-plan",
             DockModule::Terminal => "vibedev-dpanel-terminal",
         }
     }
@@ -300,6 +305,7 @@ impl VibedevRightDock {
         // Initial resolution and every switch both try to auto-surface.
         if let Some(thread) = thread.as_ref() {
             self.maybe_surface_execution(thread, cx);
+            self.maybe_surface_plan(thread, cx);
         }
         cx.notify();
     }
@@ -313,6 +319,7 @@ impl VibedevRightDock {
         cx: &mut Context<Self>,
     ) {
         self.maybe_surface_execution(thread, cx);
+        self.maybe_surface_plan(thread, cx);
         cx.notify();
     }
 
@@ -334,6 +341,25 @@ impl VibedevRightDock {
                     .unwrap_or(usize::MAX)
             });
             self.collapsed.remove(&DockModule::Execution);
+        }
+    }
+
+    /// Surfaces (enables + expands, in canonical order) the Plan module the first
+    /// time the active thread carries a non-empty `update_plan` (ACP) plan. Same
+    /// read-only / caller-notifies contract as `maybe_surface_execution`: reads
+    /// only through `thread`, mutates only this dock's `enabled`/`collapsed`, and
+    /// leaves `cx.notify()` to the caller so a single update never double-notifies.
+    fn maybe_surface_plan(&mut self, thread: &Entity<acp_thread::AcpThread>, cx: &App) {
+        let has_plan = !thread.read(cx).plan().is_empty();
+        if has_plan && !self.enabled.contains(&DockModule::Plan) {
+            self.enabled.push(DockModule::Plan);
+            self.enabled.sort_by_key(|m| {
+                DockModule::ALL
+                    .iter()
+                    .position(|x| x == m)
+                    .unwrap_or(usize::MAX)
+            });
+            self.collapsed.remove(&DockModule::Plan);
         }
     }
 
@@ -402,7 +428,7 @@ impl VibedevRightDock {
         match module {
             DockModule::Files => self.load_project_panel(window, cx),
             DockModule::Terminal => self.load_terminal_panel(window, cx),
-            DockModule::File | DockModule::Changes | DockModule::Execution => {}
+            DockModule::File | DockModule::Changes | DockModule::Execution | DockModule::Plan => {}
         }
         cx.notify();
     }
@@ -592,6 +618,98 @@ impl VibedevRightDock {
             .into_any_element()
     }
 
+    /// Renders the "Plan" module body: the active conversation thread's plan
+    /// (ACP `update_plan`), one row per entry with a status icon and the entry's
+    /// label, plus a header showing completion progress.
+    ///
+    /// v1 simplification: the entry label is rendered as the Markdown *source*
+    /// text via `Label`, not a `MarkdownElement`. Rich plan-entry formatting
+    /// (bold/code) is deferred; plain text is sufficient for v1 and avoids the
+    /// agent_ui-private `plan_label_markdown_style` styling helper.
+    ///
+    /// Lease safety: read-only. Reads through `self.active_thread`, the thread's
+    /// `plan()`, each entry's `content` markdown source, and the theme; takes no
+    /// entity lease and no `update`. Takes `&App` so it composes with
+    /// `render_dpanel`'s immutable theme borrow, exactly like
+    /// `render_execution_panel`.
+    fn render_plan_panel(&self, cx: &App) -> AnyElement {
+        let colors = cx.theme().colors();
+
+        // No active conversation selected yet.
+        let Some(thread) = self.active_thread.as_ref() else {
+            return execution_empty_state("无活跃会话");
+        };
+
+        let plan = thread.read(cx).plan();
+        if plan.is_empty() {
+            return execution_empty_state("暂无计划");
+        }
+
+        let stats = plan.stats();
+        let total = plan.entries.len();
+        let entry_count = total;
+        let row_border = colors.border;
+
+        v_flex()
+            .id("vibedev-plan-list")
+            .size_full()
+            .overflow_y_scroll()
+            .child(
+                h_flex()
+                    .flex_none()
+                    .px_2()
+                    .py_1()
+                    .gap_1()
+                    .child(
+                        Icon::new(IconName::ListTodo)
+                            .size(IconSize::Small)
+                            .color(Color::Muted),
+                    )
+                    .child(
+                        Label::new(format!("{}/{} 完成", stats.completed, total))
+                            .size(LabelSize::Small)
+                            .color(Color::Muted),
+                    ),
+            )
+            .children(plan.entries.iter().enumerate().map(|(index, entry)| {
+                // Icon + color per status, copied from
+                // `thread_view.rs::render` plan rows (3387-3406). v1 omits the
+                // `with_rotate_animation` spinner on InProgress used there.
+                let (status_icon, status_color) = match entry.status {
+                    acp::PlanEntryStatus::InProgress => (IconName::TodoProgress, Color::Accent),
+                    acp::PlanEntryStatus::Completed => (IconName::TodoComplete, Color::Success),
+                    acp::PlanEntryStatus::Pending | _ => (IconName::TodoPending, Color::Muted),
+                };
+                let completed = matches!(entry.status, acp::PlanEntryStatus::Completed);
+                let label_text = entry.content.read(cx).source().to_string();
+
+                v_flex()
+                    .py_1()
+                    .px_2()
+                    .gap_1p5()
+                    .when(index < entry_count - 1, |this| {
+                        this.border_b_1().border_color(row_border)
+                    })
+                    .child(
+                        h_flex()
+                            .gap_1p5()
+                            .child(
+                                Icon::new(status_icon)
+                                    .size(IconSize::Small)
+                                    .color(status_color),
+                            )
+                            .child(
+                                Label::new(label_text)
+                                    .size(LabelSize::Small)
+                                    .truncate()
+                                    .when(completed, |this| this.color(Color::Muted)),
+                            ),
+                    )
+                    .into_any_element()
+            }))
+            .into_any_element()
+    }
+
     /// Renders one stacked module: a header (title + collapse + close) plus,
     /// unless collapsed, its body. Each `.dpanel` is `flex_1()` + `min_h_0()` so
     /// it shares the column and can actually shrink; the body is
@@ -618,6 +736,7 @@ impl VibedevRightDock {
             DockModule::File => self.center_pane.clone().into_any_element(),
             DockModule::Changes => self.changes_pane.clone().into_any_element(),
             DockModule::Execution => self.render_execution_panel(cx),
+            DockModule::Plan => self.render_plan_panel(cx),
             DockModule::Terminal => self
                 .terminal_panel
                 .clone()
