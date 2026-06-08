@@ -114,6 +114,10 @@ pub struct MultiWorkspaceState {
     pub project_groups: Vec<SerializedProjectGroup>,
     #[serde(default)]
     pub sidebar_state: Option<String>,
+    /// True when this window is the VibeDev AgentApp; restored on startup so the
+    /// window comes back as an agent surface rather than a plain editor window.
+    #[serde(default)]
+    pub agent_app: bool,
 }
 
 /// The serialized state of a single MultiWorkspace window from a previous session:

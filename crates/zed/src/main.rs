@@ -1555,9 +1555,13 @@ pub(crate) async fn restore_or_create_workspace(
         for multi_workspace in multi_workspaces {
             let result = match &multi_workspace.active_workspace.location {
                 SerializedWorkspaceLocation::Local => {
+                    // Capture the AgentApp marker before the value is moved into
+                    // restore_multiworkspace; if set, re-shell the restored window
+                    // as an agent surface below.
+                    let agent_app = multi_workspace.state.agent_app;
                     restore_multiworkspace(multi_workspace, app_state.clone(), cx)
                         .await
-                        .map(|_| ())
+                        .and_then(|window| reshell_agent_app(window, agent_app, cx))
                 }
                 SerializedWorkspaceLocation::Remote(connection_options) => {
                     let mut connection_options = connection_options.clone();
@@ -1592,6 +1596,7 @@ pub(crate) async fn restore_or_create_workspace(
                             cx,
                         )
                         .await;
+                        reshell_agent_app(window, state.agent_app, cx)?;
                         Ok::<(), anyhow::Error>(())
                     }
                     .await
@@ -1701,6 +1706,43 @@ pub(crate) async fn restore_or_create_workspace(
         .await?;
     }
 
+    Ok(())
+}
+
+/// Re-shells a freshly restored MultiWorkspace window back into the VibeDev
+/// AgentApp when it was persisted as one (`MultiWorkspaceState::agent_app`).
+/// Restoration always builds a plain editor shell; this flips the window into
+/// agent mode (branded conversation layout, AgentPanel center) and re-opens the
+/// project-group sidebar so the window comes back as the agent workbench it was.
+///
+/// Lease safety (this repo has double-leased the workspace 7 times): everything
+/// runs inside a single `window_handle.update` closure, so `multi_workspace` is
+/// the only `&mut` lease on the MultiWorkspace entity. `mw.workspace().clone()`
+/// is a *different* entity (the active `Workspace`), so updating it inside this
+/// closure does not double-lease the MultiWorkspace. `open_sidebar` ->
+/// `retain_active_workspace` *reads* the active workspace, so it must run while
+/// that workspace is NOT leased: it is called after the `workspace.update` lease
+/// is released but still inside the `mw.update` lease, which is safe.
+fn reshell_agent_app(
+    window_handle: gpui::WindowHandle<MultiWorkspace>,
+    agent_app: bool,
+    cx: &mut AsyncApp,
+) -> Result<()> {
+    if !agent_app {
+        return Ok(());
+    }
+    window_handle.update(cx, |multi_workspace, window, cx| {
+        multi_workspace.set_agent_app(true);
+        let workspace = multi_workspace.workspace().clone();
+        workspace.update(cx, |workspace, cx| {
+            // Idempotent guard inside `apply_agent_surface` returns early when
+            // `workspace.agent_mode` is already true. A just-restored workspace
+            // is a plain editor shell (`agent_mode == false`), so this proceeds
+            // and actually re-injects the agent center.
+            crate::zed::vibedev_agent_window::apply_agent_surface(workspace, window, cx);
+        });
+        multi_workspace.open_sidebar(cx);
+    })?;
     Ok(())
 }
 

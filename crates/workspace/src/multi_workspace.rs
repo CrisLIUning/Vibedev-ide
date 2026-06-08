@@ -1641,6 +1641,7 @@ impl MultiWorkspace {
                             .collect::<Vec<_>>(),
                         sidebar_open: this.sidebar_open,
                         sidebar_state: this.sidebar.as_ref().and_then(|s| s.serialized_state(cx)),
+                        agent_app: this.agent_app,
                     };
                     (this.window_id, state)
                 })

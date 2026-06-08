@@ -4575,6 +4575,7 @@ mod tests {
                 project_groups: vec![],
                 sidebar_open: true,
                 sidebar_state: None,
+                agent_app: false,
             },
         )
         .await;
@@ -4587,6 +4588,7 @@ mod tests {
                 project_groups: vec![],
                 sidebar_open: false,
                 sidebar_state: None,
+                agent_app: false,
             },
         )
         .await;

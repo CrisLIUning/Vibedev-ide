@@ -7042,7 +7042,11 @@ impl Workspace {
         if let Some(connection) = self.project.read(cx).remote_connection_options(cx) {
             WorkspaceLocation::Location(SerializedWorkspaceLocation::Remote(connection), paths)
         } else if self.project.read(cx).is_local() {
-            if !paths.is_empty() || self.has_any_items_open(cx) {
+            if !paths.is_empty() || self.has_any_items_open(cx) || self.agent_mode {
+                // An empty AgentApp window (no project, no editor items) must stay
+                // bound to the session so it is a restore candidate on startup;
+                // detaching here would clear its session_id and drop the agent
+                // window on relaunch. See `agent_mode` / the AgentApp restore path.
                 WorkspaceLocation::Location(SerializedWorkspaceLocation::Local, paths)
             } else {
                 WorkspaceLocation::DetachFromSession
