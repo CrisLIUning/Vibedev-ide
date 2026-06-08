@@ -7794,7 +7794,11 @@ impl Workspace {
     /// editor project titlebar with a minimal branded header and leaves room for
     /// the macOS traffic lights, which float over transparent titlebar content.
     fn render_agent_titlebar(&self, cx: &mut Context<Self>) -> impl IntoElement {
-        let colors = cx.theme().colors();
+        // Hoist the needed colors as owned `Hsla` (Copy) so the immutable theme
+        // borrow ends before `cx.listener` takes a mutable borrow below.
+        let border = cx.theme().colors().border;
+        let title_bar_bg = cx.theme().colors().title_bar_background;
+        let hover_bg = cx.theme().colors().element_hover;
         h_flex()
             .h(px(38.))
             .w_full()
@@ -7805,9 +7809,26 @@ impl Workspace {
             .gap_2()
             .flex_none()
             .border_b_1()
-            .border_color(colors.border)
-            .bg(colors.title_bar_background)
-            .child(Label::new("VibeDev").color(Color::Default))
+            .border_color(border)
+            .bg(title_bar_bg)
+            // Clicking the brand acts as "home": re-activate the conversation,
+            // which is the first item in the center pane, so opening a file/diff
+            // (which covers it) can always be navigated back from.
+            .child(
+                div()
+                    .id("vibedev-home")
+                    .cursor_pointer()
+                    .rounded_md()
+                    .px_2()
+                    .hover(|style| style.bg(hover_bg))
+                    .child(Label::new("VibeDev").color(Color::Default))
+                    .on_click(cx.listener(|workspace, _event, window, cx| {
+                        let center_pane = workspace.active_pane().clone();
+                        center_pane.update(cx, |pane, cx| {
+                            pane.activate_item(0, true, true, window, cx);
+                        });
+                    })),
+            )
     }
 
     /// Renders the AgentApp window layout instead of the standard editor layout.
