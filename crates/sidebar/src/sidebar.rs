@@ -7276,6 +7276,30 @@ impl Sidebar {
                 SidebarSide::Right => "right",
             };
             telemetry::event!("Sidebar Add Project Clicked", side = side);
+            // In the VibeDev AgentApp, open the project IN this window instead of
+            // routing the global `Open` action to the first editor window.
+            if let Some(mw) = window.root::<MultiWorkspace>().flatten()
+                && mw.read(cx).is_agent_app()
+            {
+                let workspace = mw.read(cx).workspace().clone();
+                workspace.update(cx, |workspace, cx| {
+                    let app_state = workspace.app_state().clone();
+                    workspace::prompt_for_open_path_and_open(
+                        workspace,
+                        app_state,
+                        gpui::PathPromptOptions {
+                            files: true,
+                            directories: true,
+                            multiple: true,
+                            prompt: None,
+                        },
+                        false,
+                        window,
+                        cx,
+                    );
+                });
+                return;
+            }
             window.dispatch_action(
                 Open {
                     create_new_window: false,

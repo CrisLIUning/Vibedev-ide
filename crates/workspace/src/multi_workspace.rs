@@ -2176,35 +2176,6 @@ impl Render for MultiWorkspace {
                 .font(ui_font)
                 .text_color(text_color)
                 .on_action(cx.listener(Self::close_window))
-                .when(self.agent_app, |this| {
-                    // VibeDev AgentApp: open projects in THIS window rather than
-                    // routing "Open Project" through the global `Open` handler,
-                    // which targets the first editor window and would leave the
-                    // AgentApp empty. Registered at the MultiWorkspace level so it
-                    // intercepts the button whether dispatched from the sidebar
-                    // (which lives at this level) or the center AgentPanel.
-                    this.on_action(cx.listener(
-                        |multi_workspace: &mut Self, _: &crate::Open, window, cx| {
-                            let workspace = multi_workspace.workspace().clone();
-                            workspace.update(cx, |workspace, cx| {
-                                let app_state = workspace.app_state().clone();
-                                crate::prompt_for_open_path_and_open(
-                                    workspace,
-                                    app_state,
-                                    gpui::PathPromptOptions {
-                                        files: true,
-                                        directories: true,
-                                        multiple: true,
-                                        prompt: None,
-                                    },
-                                    false,
-                                    window,
-                                    cx,
-                                );
-                            });
-                        },
-                    ))
-                })
                 .when(self.multi_workspace_enabled(cx), |this| {
                     this.on_action(cx.listener(
                         |this: &mut Self, _: &ToggleWorkspaceSidebar, window, cx| {

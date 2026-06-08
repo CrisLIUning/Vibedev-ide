@@ -5796,6 +5796,33 @@ impl AgentPanel {
         )
         .on_open_project(|_, window, cx| {
             telemetry::event!("Agent Panel Add Project Clicked");
+            // In the VibeDev AgentApp, open the project IN this window. The global
+            // `Open` action routes to the first editor window (leaving the
+            // AgentApp empty); `prompt_for_open_path_and_open` downcasts the
+            // current window to its MultiWorkspace and `open_project(Activate)`,
+            // which reuses the empty agent workspace in place.
+            if let Some(mw) = window.root::<MultiWorkspace>().flatten()
+                && mw.read(cx).is_agent_app()
+            {
+                let workspace = mw.read(cx).workspace().clone();
+                workspace.update(cx, |workspace, cx| {
+                    let app_state = workspace.app_state().clone();
+                    workspace::prompt_for_open_path_and_open(
+                        workspace,
+                        app_state,
+                        gpui::PathPromptOptions {
+                            files: true,
+                            directories: true,
+                            multiple: true,
+                            prompt: None,
+                        },
+                        false,
+                        window,
+                        cx,
+                    );
+                });
+                return;
+            }
             window.dispatch_action(workspace::Open::default().boxed_clone(), cx);
         })
         .on_clone_repo(|_, window, cx| {
