@@ -7790,6 +7790,111 @@ impl Workspace {
             )
     }
 
+    /// Custom top-of-window chrome for VibeDev AgentApp windows. Replaces the
+    /// editor project titlebar with a minimal branded header and leaves room for
+    /// the macOS traffic lights, which float over transparent titlebar content.
+    fn render_agent_titlebar(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors();
+        h_flex()
+            .h(px(38.))
+            .w_full()
+            // Reserve space on the left for the macOS traffic lights, which are
+            // positioned at (9, 9) over the transparent titlebar (see zed.rs).
+            .pl(px(80.))
+            .pr_2()
+            .gap_2()
+            .flex_none()
+            .border_b_1()
+            .border_color(colors.border)
+            .bg(colors.title_bar_background)
+            .child(Label::new("VibeDev").color(Color::Default))
+    }
+
+    /// Renders the AgentApp window layout instead of the standard editor layout.
+    /// This drops editor chrome (status bar, project titlebar) in favor of a
+    /// branded header while reusing the existing dock/center machinery, so later
+    /// steps can swap the left dock for a session sidebar and the right dock for
+    /// a multi-panel container.
+    fn render_agent_layout(
+        &mut self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> impl IntoElement {
+        let ui_font = theme_settings::setup_ui_font(window, cx);
+        let theme = cx.theme().clone();
+        let colors = theme.colors();
+
+        let pane_render_context = PaneRenderContext {
+            follower_states: &self.follower_states,
+            active_call: self.active_call(),
+            active_pane: &self.active_pane,
+            app_state: &self.app_state,
+            project: &self.project,
+            workspace: &self.weak_self,
+        };
+
+        let left_dock = self.render_dock(DockPosition::Left, &self.left_dock, window, cx);
+        // Eagerly materialize the center into an `AnyElement` so its render result
+        // stops capturing the `window`/`cx` mutable borrows (Rust 2024 capture
+        // rules), allowing the right dock and overlays to be rendered afterward.
+        let center = self
+            .center
+            .render(self.zoomed.as_ref(), &pane_render_context, window, cx)
+            .into_any_element();
+        let right_dock = self.render_dock(DockPosition::Right, &self.right_dock, window, cx);
+
+        let zoomed_overlay = self.zoomed.as_ref().and_then(|view| {
+            let zoomed_view = view.upgrade()?;
+            let div = div()
+                .occlude()
+                .absolute()
+                .overflow_hidden()
+                .border_color(colors.border)
+                .bg(colors.background)
+                .child(zoomed_view)
+                .inset_0()
+                .shadow_lg();
+
+            if !WorkspaceSettings::get_global(cx).zoomed_padding {
+                return Some(div);
+            }
+
+            Some(match self.zoomed_position {
+                Some(DockPosition::Left) => div.right_2().border_r_1(),
+                Some(DockPosition::Right) => div.left_2().border_l_1(),
+                Some(DockPosition::Bottom) => div.top_2().border_t_1(),
+                None => div.top_2().bottom_2().left_2().right_2().border_1(),
+            })
+        });
+        let notifications = self.render_notifications(window, cx);
+
+        v_flex()
+            .relative()
+            .size_full()
+            .font(ui_font)
+            .text_color(colors.text)
+            .overflow_hidden()
+            .bg(colors.background)
+            .child(self.render_agent_titlebar(cx))
+            .child(
+                div()
+                    .id("agent-workspace")
+                    .relative()
+                    .flex_1()
+                    .w_full()
+                    .flex()
+                    .flex_row()
+                    .overflow_hidden()
+                    .children(left_dock)
+                    .child(center)
+                    .children(right_dock)
+                    .children(zoomed_overlay)
+                    .children(notifications),
+            )
+            // No status bar in agent mode; preserve the toast layer.
+            .child(self.toast_layer.clone())
+    }
+
     fn render_dock(
         &self,
         position: DockPosition,
@@ -8440,6 +8545,10 @@ impl Render for Workspace {
             log::info!("Rendered first frame");
         }
 
+        if self.is_agent_mode() {
+            return self.render_agent_layout(window, cx).into_any_element();
+        }
+
         let centered_layout = self.centered_layout
             && self.center.panes().len() == 1
             && self.active_item(cx).is_some();
@@ -8873,6 +8982,7 @@ impl Render for Workspace {
                     })
                     .child(self.toast_layer.clone()),
             )
+            .into_any_element()
     }
 }
 
