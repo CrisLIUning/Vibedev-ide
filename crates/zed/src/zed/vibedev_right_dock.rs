@@ -39,11 +39,11 @@
 
 use std::collections::HashSet;
 
-use gpui::{Entity, FocusHandle, Focusable, WeakEntity};
+use gpui::{Entity, FocusHandle, Focusable, Subscription, WeakEntity};
 use project_panel::ProjectPanel;
 use terminal_view::terminal_panel::TerminalPanel;
 use ui::{ContextMenu, IconButton, IconName, IconPosition, PopoverMenu, prelude::*};
-use workspace::{Pane, Workspace};
+use workspace::{Pane, Workspace, pane};
 
 /// One stackable module in the right dock.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -101,6 +101,10 @@ pub struct VibedevRightDock {
     /// Terminal module does not spawn a second load.
     terminal_load_started: bool,
     focus_handle: FocusHandle,
+    /// Event subscriptions kept alive for the dock's lifetime (dropped with it).
+    /// Currently holds the center-pane subscription that auto-surfaces the
+    /// `File` module when a file is opened into the center pane.
+    _subscriptions: Vec<Subscription>,
 }
 
 impl VibedevRightDock {
@@ -110,6 +114,13 @@ impl VibedevRightDock {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
+        // Surface the `File` module whenever a file is opened into the center
+        // pane. The center pane is the common open target for the project panel,
+        // agent diffs, and agent tool file references (see the module docs), so
+        // observing its `AddItem` event lets *any* of those call sites bring the
+        // File panel out without the user having to enable it first.
+        let _subscriptions = vec![cx.subscribe(&center_pane, Self::handle_center_pane_event)];
+
         let mut this = Self {
             workspace,
             center_pane,
@@ -119,12 +130,51 @@ impl VibedevRightDock {
             collapsed: HashSet::new(),
             terminal_load_started: false,
             focus_handle: cx.focus_handle(),
+            _subscriptions,
         };
         // Files is enabled by default, so eagerly load the project panel. The
         // center pane needs no loading (it is already live); the terminal loads
         // lazily when its module is first enabled.
         this.load_project_panel(window, cx);
         this
+    }
+
+    /// Reacts to the center pane opening a file: ensures the `File` module is
+    /// enabled and expanded so the freshly-opened file is actually visible,
+    /// even if the user had previously closed or collapsed the module.
+    ///
+    /// Only `AddItem` (a file/diff *opened* into the pane) triggers this, not
+    /// every `ActivateItem` (tab switch / re-activation); otherwise merely
+    /// clicking around tabs would keep re-expanding a panel the user just
+    /// collapsed.
+    ///
+    /// Lease safety: this callback runs from the event dispatch (never from
+    /// `render`), and only mutates this dock's own `enabled`/`collapsed` fields
+    /// plus `cx.notify()`. It never updates the workspace or the center pane
+    /// (the `event` is read-only and the `Entity<Pane>` is ignored), so no
+    /// second lease on either is taken.
+    fn handle_center_pane_event(
+        &mut self,
+        _pane: Entity<Pane>,
+        event: &pane::Event,
+        cx: &mut Context<Self>,
+    ) {
+        if !matches!(event, pane::Event::AddItem { .. }) {
+            return;
+        }
+        if !self.enabled.contains(&DockModule::File) {
+            // Insert in canonical order so the stack stays stable (File sits
+            // right after Files), matching `enable_module`'s ordering.
+            self.enabled.push(DockModule::File);
+            self.enabled.sort_by_key(|m| {
+                DockModule::ALL
+                    .iter()
+                    .position(|x| x == m)
+                    .unwrap_or(usize::MAX)
+            });
+        }
+        self.collapsed.remove(&DockModule::File);
+        cx.notify();
     }
 
     /// Lazily loads the file tree. `ProjectPanel::load` consumes an
