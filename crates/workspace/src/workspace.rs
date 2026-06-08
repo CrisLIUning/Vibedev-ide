@@ -1389,6 +1389,11 @@ pub struct Workspace {
     /// pattern so the `workspace` crate need not depend on `agent_ui`. While
     /// `None` the right region is empty and the layout is center-only.
     agent_right_view: Option<AnyView>,
+    /// Retains the right panel host view even while it is hidden, so the
+    /// titlebar toggle can re-show it without rebuilding (and losing) the
+    /// panels. `agent_right_view` is the *rendered* slot (cleared when hidden);
+    /// this field is the *retained* host. See `toggle_agent_right_view`.
+    agent_right_view_host: Option<AnyView>,
     notifications: Notifications,
     suppressed_notifications: HashSet<NotificationId>,
     project: Entity<Project>,
@@ -1836,6 +1841,7 @@ impl Workspace {
             agent_left_sidebar: None,
             agent_center_view: None,
             agent_right_view: None,
+            agent_right_view_host: None,
             notifications: Notifications::default(),
             suppressed_notifications: HashSet::default(),
             left_dock,
@@ -2991,7 +2997,22 @@ impl Workspace {
     /// conversation. While `None` the right region is empty. See
     /// `agent_right_view`.
     pub fn set_agent_right_view(&mut self, view: Option<AnyView>, cx: &mut Context<Self>) {
+        // Retain the host so the titlebar toggle can re-show it after hiding.
+        self.agent_right_view_host = view.clone();
         self.agent_right_view = view;
+        cx.notify();
+    }
+
+    /// Toggles the visibility of the VibeDev AgentApp right panel host. The host
+    /// view itself is retained in `agent_right_view_host` while hidden, so
+    /// re-showing it preserves the loaded file tree / terminal rather than
+    /// rebuilding them. No-op when no host has been installed.
+    pub fn toggle_agent_right_view(&mut self, cx: &mut Context<Self>) {
+        if self.agent_right_view.is_some() {
+            self.agent_right_view = None;
+        } else {
+            self.agent_right_view = self.agent_right_view_host.clone();
+        }
         cx.notify();
     }
 
@@ -7884,6 +7905,25 @@ impl Workspace {
                         if let Some(multi_workspace) = window.root::<MultiWorkspace>().flatten() {
                             multi_workspace.update(cx, |multi_workspace, cx| {
                                 multi_workspace.toggle_sidebar(window, cx);
+                            });
+                        }
+                    }),
+            )
+            // Right panel host toggle (file tree / terminal). Same plain
+            // `on_click` discipline as the sidebar toggle: a `cx.listener`
+            // would lease this Workspace, and reaching the workspace through
+            // the MultiWorkspace to flip the right view would then double-lease.
+            // Going through `MultiWorkspace::workspace()` keeps this entity
+            // unleased while the toggle updates `agent_right_view`.
+            .child(
+                IconButton::new("agent-right-panel-toggle", IconName::ThreadsSidebarRightOpen)
+                    .icon_size(IconSize::Small)
+                    .tooltip(ui::Tooltip::text("Toggle Right Panel"))
+                    .on_click(|_event, window, cx| {
+                        if let Some(multi_workspace) = window.root::<MultiWorkspace>().flatten() {
+                            let workspace = multi_workspace.read(cx).workspace().clone();
+                            workspace.update(cx, |workspace, cx| {
+                                workspace.toggle_agent_right_view(cx);
                             });
                         }
                     }),

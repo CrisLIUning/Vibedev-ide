@@ -5,7 +5,7 @@
 
 use std::sync::Arc;
 
-use gpui::{App, Context, TaskExt as _, Window};
+use gpui::{App, AppContext as _, Context, TaskExt as _, Window};
 use workspace::{AppState, MultiWorkspace, OpenOptions, Workspace};
 
 /// Registers the `OpenAgentAppWindow` action handler on every workspace.
@@ -121,4 +121,19 @@ pub(crate) fn apply_agent_surface(
         })
     })
     .detach_and_log_err(cx);
+
+    // Install the right panel host (file tree + terminal tabs). We hold a
+    // `&mut Workspace` here, so building the host entity and setting the view
+    // happen synchronously against this same workspace — no lease is taken on
+    // the entity that is currently rendering. The host itself lazy-loads its
+    // panels (spawned inside the host's own `Context`), so nothing blocks here.
+    // The host is shown by default so the panels are visible immediately; the
+    // titlebar toggle (see `render_agent_titlebar`) can hide/show it.
+    let weak_workspace = workspace.weak_handle();
+    let right_dock = cx.new(|cx| super::vibedev_right_dock::VibedevRightDock::new(
+        weak_workspace,
+        window,
+        cx,
+    ));
+    workspace.set_agent_right_view(Some(right_dock.into()), cx);
 }

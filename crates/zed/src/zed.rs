@@ -11,6 +11,7 @@ mod quick_action_bar;
 pub mod remote_debug;
 pub mod telemetry_log;
 pub mod vibedev_agent_window;
+pub mod vibedev_right_dock;
 #[cfg(all(target_os = "macos", feature = "visual-tests"))]
 pub mod visual_tests;
 #[cfg(target_os = "windows")]
