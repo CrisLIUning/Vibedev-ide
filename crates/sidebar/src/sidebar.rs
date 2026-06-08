@@ -2781,6 +2781,15 @@ impl Sidebar {
                 let can_move_up = group_index.is_some_and(|i| i > 0);
                 let can_move_down = group_index.is_some_and(|i| i + 1 < total_groups);
 
+                // In the VibeDev AgentApp the "Remove" entry archives the
+                // project's conversations (so the project leaves the "all
+                // history" list and its threads move into the archive view)
+                // rather than just closing the in-memory group, which would
+                // otherwise reappear in the synthesized history.
+                let is_agent_app = multi_workspace
+                    .read_with(cx, |mw, _| mw.is_agent_app())
+                    .unwrap_or(false);
+
                 let active_workspace = multi_workspace
                     .read_with(cx, |multi_workspace, _cx| {
                         multi_workspace.workspace().clone()
@@ -3044,13 +3053,58 @@ impl Sidebar {
                         let project_group_key = project_group_key.clone();
                         let remove_multi_workspace = multi_workspace.clone();
                         menu.separator().entry("Remove", None, move |window, cx| {
-                            remove_multi_workspace
-                                .update(cx, |multi_workspace, cx| {
-                                    multi_workspace
-                                        .remove_project_group(&project_group_key, window, cx)
-                                        .detach_and_log_err(cx);
-                                })
-                                .ok();
+                            if is_agent_app {
+                                // Archive every non-archived thread belonging to
+                                // this project. Archiving (not just removing the
+                                // in-memory group) is what makes the project
+                                // leave the "all history" list, since
+                                // `historical_project_groups` skips archived
+                                // threads. The threads remain reachable in the
+                                // archive view (clock icon).
+                                let store = ThreadMetadataStore::global(cx);
+                                let thread_ids: Vec<ThreadId> = store
+                                    .read(cx)
+                                    .entries()
+                                    .filter(|metadata| !metadata.archived)
+                                    .filter(|metadata| {
+                                        ProjectGroupKey::from_worktree_paths(
+                                            &metadata.worktree_paths,
+                                            metadata.remote_connection.clone(),
+                                        )
+                                        .matches(&project_group_key)
+                                    })
+                                    .map(|metadata| metadata.thread_id)
+                                    .collect();
+
+                                // Single top-level store update: archive each
+                                // matching thread. The sidebar observes the
+                                // store and rebuilds automatically, so we must
+                                // not rebuild contents by hand here.
+                                store.update(cx, |store, cx| {
+                                    for thread_id in thread_ids {
+                                        store.archive(thread_id, None, cx);
+                                    }
+                                });
+
+                                // Back-to-back independent top-level update (not
+                                // nested in the store update above): close any
+                                // open workspace for this group.
+                                remove_multi_workspace
+                                    .update(cx, |multi_workspace, cx| {
+                                        multi_workspace
+                                            .remove_project_group(&project_group_key, window, cx)
+                                            .detach_and_log_err(cx);
+                                    })
+                                    .ok();
+                            } else {
+                                remove_multi_workspace
+                                    .update(cx, |multi_workspace, cx| {
+                                        multi_workspace
+                                            .remove_project_group(&project_group_key, window, cx)
+                                            .detach_and_log_err(cx);
+                                    })
+                                    .ok();
+                            }
                             weak_menu.update(cx, |_, cx| cx.emit(DismissEvent)).ok();
                         })
                     });
