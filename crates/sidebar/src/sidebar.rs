@@ -29,9 +29,8 @@ use feature_flags::{
 };
 use gpui::{
     Action as _, AnyElement, App, ClickEvent, Context, DismissEvent, Entity, EntityId, FocusHandle,
-    Focusable, KeyContext, ListState, Modifiers, Pixels, PromptLevel, Render, SharedString, Task,
-    TaskExt, WeakEntity, Window, WindowHandle, linear_color_stop, linear_gradient, list, prelude::*,
-    px,
+    Focusable, KeyContext, ListState, Modifiers, Pixels, Render, SharedString, Task, TaskExt,
+    WeakEntity, Window, WindowHandle, linear_color_stop, linear_gradient, list, prelude::*, px,
 };
 use itertools::Itertools;
 use language_model::LanguageModelRegistry;
@@ -928,12 +927,6 @@ impl Sidebar {
 
     fn serialize(&mut self, cx: &mut Context<Self>) {
         cx.emit(workspace::SidebarEvent::SerializeNeeded);
-    }
-
-    fn is_agent_app(&self, cx: &App) -> bool {
-        self.multi_workspace
-            .upgrade()
-            .is_some_and(|mw| mw.read(cx).is_agent_app())
     }
 
     fn is_group_collapsed(&self, key: &ProjectGroupKey, cx: &App) -> bool {
@@ -2787,9 +2780,6 @@ impl Sidebar {
                 let show_reorder_entries = total_groups >= 2;
                 let can_move_up = group_index.is_some_and(|i| i > 0);
                 let can_move_down = group_index.is_some_and(|i| i + 1 < total_groups);
-                let is_agent_app = multi_workspace
-                    .read_with(cx, |mw, _| mw.is_agent_app())
-                    .unwrap_or(false);
 
                 let active_workspace = multi_workspace
                     .read_with(cx, |multi_workspace, _cx| {
@@ -3051,45 +3041,17 @@ impl Sidebar {
                                 )
                         });
 
+                        let project_group_key = project_group_key.clone();
                         let remove_multi_workspace = multi_workspace.clone();
-                        let menu = menu.separator().entry("Remove", None, {
-                            let project_group_key = project_group_key.clone();
-                            let weak_menu = weak_menu.clone();
-                            move |window, cx| {
-                                remove_multi_workspace
-                                    .update(cx, |multi_workspace, cx| {
-                                        multi_workspace
-                                            .remove_project_group(&project_group_key, window, cx)
-                                            .detach_and_log_err(cx);
-                                    })
-                                    .ok();
-                                weak_menu.update(cx, |_, cx| cx.emit(DismissEvent)).ok();
-                            }
-                        });
-
-                        // Hard delete (project group + all its stored
-                        // conversations) is AgentApp-only; "Remove" above only
-                        // closes the in-memory group.
-                        menu.when(is_agent_app, |menu| {
-                            let project_group_key = project_group_key.clone();
-                            let this_for_menu = this_for_menu.clone();
-                            let weak_menu = weak_menu.clone();
-                            menu.entry(
-                                "Delete Project & Conversations",
-                                None,
-                                move |window, cx| {
-                                    this_for_menu
-                                        .update(cx, |sidebar, cx| {
-                                            sidebar.delete_project_and_conversations(
-                                                &project_group_key,
-                                                window,
-                                                cx,
-                                            );
-                                        })
-                                        .ok();
-                                    weak_menu.update(cx, |_, cx| cx.emit(DismissEvent)).ok();
-                                },
-                            )
+                        menu.separator().entry("Remove", None, move |window, cx| {
+                            remove_multi_workspace
+                                .update(cx, |multi_workspace, cx| {
+                                    multi_workspace
+                                        .remove_project_group(&project_group_key, window, cx)
+                                        .detach_and_log_err(cx);
+                                })
+                                .ok();
+                            weak_menu.update(cx, |_, cx| cx.emit(DismissEvent)).ok();
                         })
                     });
 
@@ -6494,7 +6456,6 @@ impl Sidebar {
         let is_zed_thread = thread.metadata.agent_id.as_ref() == ZED_AGENT_ID.as_ref();
         let can_open_as_markdown = thread.is_live || is_zed_thread;
         let folder_paths = thread.metadata.folder_paths().clone();
-        let is_agent_app = self.is_agent_app(cx);
 
         right_click_menu(context_menu_id)
             .trigger(move |_, _, _| thread_item)
@@ -6589,8 +6550,7 @@ impl Sidebar {
                             });
                         }
 
-                        let menu = menu.separator().entry("Archive Thread", None, {
-                            let sidebar = sidebar.clone();
+                        menu.separator().entry("Archive Thread", None, {
                             let session_id = session_id.clone();
                             move |window, cx| {
                                 sidebar
@@ -6599,108 +6559,11 @@ impl Sidebar {
                                     })
                                     .ok();
                             }
-                        });
-
-                        // Hard delete (vs. archive) is AgentApp-only; archiving
-                        // remains the default soft-delete.
-                        menu.when(is_agent_app, |menu| {
-                            menu.entry("Delete Conversation", None, {
-                                let sidebar = sidebar.clone();
-                                move |window, cx| {
-                                    sidebar
-                                        .update(cx, |sidebar, cx| {
-                                            sidebar.delete_thread(thread_id, window, cx);
-                                        })
-                                        .ok();
-                                }
-                            })
                         })
                     })
                 }
             })
             .into_any_element()
-    }
-
-    /// Permanently deletes a thread's history from the [`ThreadMetadataStore`]
-    /// after user confirmation. AgentApp-only; the sidebar observes the store,
-    /// so the delete's `cx.notify()` rebuilds the list automatically.
-    fn delete_thread(&mut self, thread_id: ThreadId, window: &mut Window, cx: &mut Context<Self>) {
-        let answer = window.prompt(
-            PromptLevel::Warning,
-            "Delete this conversation permanently?",
-            Some("This cannot be undone."),
-            &["Delete", "Cancel"],
-            cx,
-        );
-        cx.spawn(async move |_this, cx| {
-            if answer.await.ok() == Some(0) {
-                cx.update(|cx| {
-                    ThreadMetadataStore::global(cx)
-                        .update(cx, |store, cx| store.delete(thread_id, cx));
-                });
-            }
-        })
-        .detach();
-    }
-
-    /// Permanently deletes a project group's stored conversations (including
-    /// archived ones) and closes the in-memory group. AgentApp-only.
-    ///
-    /// The two mutations are issued as back-to-back top-level updates — the
-    /// store delete, then `remove_project_group` — never nested, to avoid a
-    /// double `MultiWorkspace`/store lease.
-    fn delete_project_and_conversations(
-        &mut self,
-        key: &ProjectGroupKey,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        let Some(multi_workspace) = self.multi_workspace.upgrade() else {
-            return;
-        };
-        let key = key.clone();
-        let answer = window.prompt(
-            PromptLevel::Warning,
-            "Delete this project and all its conversations permanently?",
-            Some("This deletes every conversation for this project, including archived ones. This cannot be undone."),
-            &["Delete", "Cancel"],
-            cx,
-        );
-        cx.spawn_in(window, async move |_this, cx| {
-            if answer.await.ok() != Some(0) {
-                return;
-            }
-            // First top-level update: collect matching thread ids (including
-            // archived) and delete them from the store.
-            cx.update(|_window, cx| {
-                let store = ThreadMetadataStore::global(cx);
-                let thread_ids: Vec<ThreadId> = store
-                    .read(cx)
-                    .entries()
-                    .filter(|metadata| {
-                        ProjectGroupKey::from_worktree_paths(
-                            &metadata.worktree_paths,
-                            metadata.remote_connection.clone(),
-                        )
-                        .matches(&key)
-                    })
-                    .map(|metadata| metadata.thread_id)
-                    .collect();
-                store.update(cx, |store, cx| store.delete_all(thread_ids, cx));
-            })
-            .ok();
-            // Second, separate top-level update: close the in-memory group.
-            // `remove_project_group` returns a Task that we detach (never await).
-            cx.update(|window, cx| {
-                multi_workspace.update(cx, |multi_workspace, cx| {
-                    multi_workspace
-                        .remove_project_group(&key, window, cx)
-                        .detach_and_log_err(cx);
-                });
-            })
-            .ok();
-        })
-        .detach();
     }
 
     fn render_terminal(
