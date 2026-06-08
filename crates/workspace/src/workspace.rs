@@ -7853,13 +7853,18 @@ impl Workspace {
                 IconButton::new("agent-sidebar-toggle", IconName::ThreadsSidebarLeftClosed)
                     .icon_size(IconSize::Small)
                     .tooltip(ui::Tooltip::text("Toggle Threads Sidebar"))
-                    .on_click(cx.listener(|_workspace, _event, window, cx| {
+                    // Plain `on_click`, NOT `cx.listener`: a listener leases this
+                    // Workspace, and `toggle_sidebar` -> `retain_active_workspace`
+                    // reads the active workspace (this same entity) -> double-lease
+                    // panic. A plain handler keeps the workspace unleased while the
+                    // MultiWorkspace toggles the sidebar.
+                    .on_click(|_event, window, cx| {
                         if let Some(multi_workspace) = window.root::<MultiWorkspace>().flatten() {
                             multi_workspace.update(cx, |multi_workspace, cx| {
                                 multi_workspace.toggle_sidebar(window, cx);
                             });
                         }
-                    })),
+                    }),
             )
             // Clicking the brand acts as "home": re-activate the conversation,
             // which is the first item in the center pane, so opening a file/diff
