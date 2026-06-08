@@ -6,7 +6,7 @@
 use std::sync::Arc;
 
 use gpui::{App, Context, TaskExt as _, Window};
-use workspace::{AppState, OpenOptions, Workspace};
+use workspace::{AppState, MultiWorkspace, OpenOptions, Workspace};
 
 /// Registers the `OpenAgentAppWindow` action handler on every workspace.
 pub fn init(cx: &mut App) {
@@ -60,12 +60,22 @@ fn configure_agent_mode(
     window: &mut Window,
     cx: &mut Context<Workspace>,
 ) {
-    cx.defer_in(window, |workspace, _window, cx| {
-        let Some(multi_workspace) = workspace.multi_workspace().cloned() else {
-            return;
-        };
-        multi_workspace
-            .update(cx, |multi_workspace, cx| multi_workspace.open_sidebar(cx))
+    // Reach the MultiWorkspace through the window root, NOT by leasing the
+    // Workspace (e.g. `defer_in` hands back `&mut Workspace`): `open_sidebar` ->
+    // `retain_active_workspace` reads the active Workspace, which would
+    // double-lease the very workspace the closure holds and panic. An App-level
+    // `defer` keeps the workspace unleased while the sidebar opens (mirrors the
+    // production sidebar setup in `zed::initialize_workspace`).
+    let window_handle = window.window_handle();
+    cx.defer(move |cx| {
+        window_handle
+            .update(cx, |_, window, cx| {
+                if let Some(multi_workspace) = window.root::<MultiWorkspace>().flatten() {
+                    multi_workspace.update(cx, |multi_workspace, cx| {
+                        multi_workspace.open_sidebar(cx);
+                    });
+                }
+            })
             .ok();
     });
 }
