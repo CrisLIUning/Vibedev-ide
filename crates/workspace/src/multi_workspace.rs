@@ -641,7 +641,7 @@ impl MultiWorkspace {
     }
 
     /// Ensures a project group exists for `key`, creating one if needed.
-    fn ensure_project_group_state(&mut self, key: ProjectGroupKey) {
+    pub fn ensure_project_group_state(&mut self, key: ProjectGroupKey) {
         if key.path_list().paths().is_empty() {
             return;
         }
