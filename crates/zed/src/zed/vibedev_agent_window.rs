@@ -105,30 +105,12 @@ pub(crate) fn apply_agent_surface(
     // Re-render into the agent layout now (drops the editor/docks immediately)
     // rather than waiting for the async panel injection below.
     cx.notify();
-
-    // Intercept "Open Project" so it opens in THIS window. The default
-    // `workspace::Open` handler is global (`cx.on_action`) and routes to the
-    // first Local workspace window — often the user's editor window — which would
-    // open the project as an editor elsewhere and leave the AgentApp empty. A
-    // workspace-scoped handler is dispatched before the global one and targets
-    // the current window via `prompt_for_open_path_and_open` -> `open_project`.
-    workspace.register_action(|workspace, _: &workspace::Open, window, cx| {
-        let app_state = workspace.app_state().clone();
-        workspace::prompt_for_open_path_and_open(
-            workspace,
-            app_state,
-            gpui::PathPromptOptions {
-                files: true,
-                directories: true,
-                multiple: true,
-                prompt: None,
-            },
-            false,
-            window,
-            cx,
-        );
-    });
-
+    // (Open Project is intercepted at the MultiWorkspace level — see
+    // `MultiWorkspace::render` — so it opens in this AgentApp window rather than
+    // routing through the global handler to the first editor window. A
+    // workspace-scoped handler does not work here because the sidebar that hosts
+    // the button lives at the MultiWorkspace level, outside the workspace's
+    // dispatch path.)
     let ensure_panel = super::ensure_agent_panel_for_workspace(workspace, None, window, cx);
     cx.spawn_in(window, async move |workspace, cx| {
         ensure_panel.await?;
