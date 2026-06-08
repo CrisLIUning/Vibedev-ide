@@ -622,7 +622,17 @@ pub fn initialize_workspace(app_state: Arc<AppState>, cx: &mut App) {
             status_bar.add_right_item(vibedev_cost, window, cx);
         });
 
-        let panels_task = initialize_panels(window, cx);
+        // The VibeDev AgentApp window installs its own center conversation +
+        // agent panel container (see `vibedev_agent_window::configure_agent_mode`),
+        // so skip the default editor panels. Checked here (not inside
+        // `initialize_panels`) because `observe_new` already holds the `Workspace`
+        // update lease, so reading the workspace entity inside `initialize_panels`
+        // would double-lease and panic.
+        let panels_task = if workspace.is_agent_mode() {
+            Task::ready(Ok(()))
+        } else {
+            initialize_panels(window, cx)
+        };
         workspace.set_panels_task(panels_task);
         register_actions(app_state.clone(), workspace, window, cx);
 
@@ -746,14 +756,6 @@ fn show_software_emulation_warning_if_needed(
 }
 
 fn initialize_panels(window: &mut Window, cx: &mut Context<Workspace>) -> Task<anyhow::Result<()>> {
-    // The VibeDev AgentApp window is a conversation surface, not an editor: it
-    // installs its own center conversation + agent panel container in
-    // `vibedev_agent_window::configure_agent_mode`, so skip the default editor
-    // panels (project tree, terminal, git, debugger, collab, etc.) entirely.
-    if cx.entity().read(cx).is_agent_mode() {
-        return Task::ready(Ok(()));
-    }
-
     cx.spawn_in(window, async move |workspace_handle, cx| {
         let project_panel = ProjectPanel::load(workspace_handle.clone(), cx.clone());
         let outline_panel = OutlinePanel::load(workspace_handle.clone(), cx.clone());
