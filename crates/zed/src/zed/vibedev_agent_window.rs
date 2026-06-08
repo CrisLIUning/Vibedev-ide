@@ -95,10 +95,40 @@ pub(crate) fn apply_agent_surface(
     window: &mut Window,
     cx: &mut Context<Workspace>,
 ) {
+    // Idempotent: the ActiveWorkspaceChanged handler may revisit an
+    // already-converted workspace; don't re-register the open override or
+    // re-ensure the panel.
+    if workspace.agent_mode {
+        return;
+    }
     workspace.agent_mode = true;
     // Re-render into the agent layout now (drops the editor/docks immediately)
     // rather than waiting for the async panel injection below.
     cx.notify();
+
+    // Intercept "Open Project" so it opens in THIS window. The default
+    // `workspace::Open` handler is global (`cx.on_action`) and routes to the
+    // first Local workspace window — often the user's editor window — which would
+    // open the project as an editor elsewhere and leave the AgentApp empty. A
+    // workspace-scoped handler is dispatched before the global one and targets
+    // the current window via `prompt_for_open_path_and_open` -> `open_project`.
+    workspace.register_action(|workspace, _: &workspace::Open, window, cx| {
+        let app_state = workspace.app_state().clone();
+        workspace::prompt_for_open_path_and_open(
+            workspace,
+            app_state,
+            gpui::PathPromptOptions {
+                files: true,
+                directories: true,
+                multiple: true,
+                prompt: None,
+            },
+            false,
+            window,
+            cx,
+        );
+    });
+
     let ensure_panel = super::ensure_agent_panel_for_workspace(workspace, None, window, cx);
     cx.spawn_in(window, async move |workspace, cx| {
         ensure_panel.await?;
