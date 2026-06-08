@@ -1382,6 +1382,13 @@ pub struct Workspace {
     /// `agent_left_sidebar` / `titlebar_item` injection pattern so the
     /// `workspace` crate need not depend on `agent_ui`.
     agent_center_view: Option<AnyView>,
+    /// Optional right panel host for the VibeDev AgentApp window. When set,
+    /// `render_agent_layout` renders this as a fixed-width, left-bordered region
+    /// to the right of the center conversation (the future home for the file
+    /// tree / terminal / diff panels). Mirrors `agent_center_view`'s injection
+    /// pattern so the `workspace` crate need not depend on `agent_ui`. While
+    /// `None` the right region is empty and the layout is center-only.
+    agent_right_view: Option<AnyView>,
     notifications: Notifications,
     suppressed_notifications: HashSet<NotificationId>,
     project: Entity<Project>,
@@ -1828,6 +1835,7 @@ impl Workspace {
             titlebar_item: None,
             agent_left_sidebar: None,
             agent_center_view: None,
+            agent_right_view: None,
             notifications: Notifications::default(),
             suppressed_notifications: HashSet::default(),
             left_dock,
@@ -2974,6 +2982,16 @@ impl Workspace {
     /// level). See `agent_center_view`.
     pub fn set_agent_center_view(&mut self, view: Option<AnyView>, cx: &mut Context<Self>) {
         self.agent_center_view = view;
+        cx.notify();
+    }
+
+    /// Installs (or clears) the right panel host view used by the VibeDev
+    /// AgentApp window. When set, `render_agent_layout` renders this in a
+    /// fixed-width, left-bordered region to the right of the center
+    /// conversation. While `None` the right region is empty. See
+    /// `agent_right_view`.
+    pub fn set_agent_right_view(&mut self, view: Option<AnyView>, cx: &mut Context<Self>) {
+        self.agent_right_view = view;
         cx.notify();
     }
 
@@ -7941,9 +7959,28 @@ impl Workspace {
                 .render(self.zoomed.as_ref(), &pane_render_context, window, cx)
                 .into_any_element()
         };
-        // No docks in agent mode: the file tree / project panel default to the
-        // right dock, but the AgentApp body is conversation-only.
-        let right_dock: Option<Div> = None;
+        // Right slot: an externally-injected panel host (VibeDev AgentApp) that
+        // will later carry the file tree / terminal / diff. Materialize it into a
+        // `Vec<AnyElement>` (mirroring `center`) so the clone releases the field
+        // borrow and `into_any_element` drops the `window`/`cx` mutable borrows
+        // (Rust 2024 capture rules). Wrap it in a fixed-width, left-bordered host
+        // container so the injected view need not own its own chrome. When `None`
+        // the region is empty and the body remains center-only (unchanged today).
+        let right: Vec<AnyElement> = self
+            .agent_right_view
+            .clone()
+            .map(|view| {
+                div()
+                    .w(px(360.))
+                    .h_full()
+                    .flex_none()
+                    .border_l_1()
+                    .border_color(colors.border)
+                    .child(view)
+                    .into_any_element()
+            })
+            .into_iter()
+            .collect();
 
         let zoomed_overlay = self.zoomed.as_ref().and_then(|view| {
             let zoomed_view = view.upgrade()?;
@@ -7989,7 +8026,7 @@ impl Workspace {
                     .overflow_hidden()
                     .children(left)
                     .child(center)
-                    .children(right_dock)
+                    .children(right)
                     .children(zoomed_overlay)
                     .children(notifications),
             )
