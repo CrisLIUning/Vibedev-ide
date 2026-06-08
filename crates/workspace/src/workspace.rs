@@ -1375,6 +1375,13 @@ pub struct Workspace {
     /// on `agent`/`agent_ui` (the sidebar is built in the `zed` crate and set via
     /// `set_agent_left_sidebar`).
     agent_left_sidebar: Option<AnyView>,
+    /// Optional center view for the VibeDev AgentApp window. When set,
+    /// `render_agent_layout` renders this (the native `AgentPanel` conversation)
+    /// as the center content instead of the editor pane group, making the window
+    /// a conversation surface rather than an editor. Mirrors the
+    /// `agent_left_sidebar` / `titlebar_item` injection pattern so the
+    /// `workspace` crate need not depend on `agent_ui`.
+    agent_center_view: Option<AnyView>,
     notifications: Notifications,
     suppressed_notifications: HashSet<NotificationId>,
     project: Entity<Project>,
@@ -1820,6 +1827,7 @@ impl Workspace {
             toast_layer,
             titlebar_item: None,
             agent_left_sidebar: None,
+            agent_center_view: None,
             notifications: Notifications::default(),
             suppressed_notifications: HashSet::default(),
             left_dock,
@@ -2956,6 +2964,16 @@ impl Workspace {
     /// instead of the left dock. See `agent_left_sidebar`.
     pub fn set_agent_left_sidebar(&mut self, view: Option<AnyView>, cx: &mut Context<Self>) {
         self.agent_left_sidebar = view;
+        cx.notify();
+    }
+
+    /// Installs (or clears) the center conversation view (the native `AgentPanel`)
+    /// used by the VibeDev AgentApp window. When set, `render_agent_layout`
+    /// renders this in place of the editor pane group, and drops the left/right
+    /// dock regions (the project-group sidebar lives at the `MultiWorkspace`
+    /// level). See `agent_center_view`.
+    pub fn set_agent_center_view(&mut self, view: Option<AnyView>, cx: &mut Context<Self>) {
+        self.agent_center_view = view;
         cx.notify();
     }
 
@@ -7875,7 +7893,11 @@ impl Workspace {
         // sidebar (when present) is a single view. Normalize both to a `Vec` of
         // `AnyElement` so the same `.children(left)` call below preserves the
         // original flex-row layout for the dock path.
-        let left: Vec<AnyElement> = if let Some(sidebar) = self.agent_left_sidebar.clone() {
+        let left: Vec<AnyElement> = if self.agent_center_view.is_some() {
+            // The native project-group sidebar renders at the MultiWorkspace level,
+            // so the agent-mode body has no left region of its own.
+            Vec::new()
+        } else if let Some(sidebar) = self.agent_left_sidebar.clone() {
             vec![sidebar.into_any_element()]
         } else {
             self.render_dock(DockPosition::Left, &self.left_dock, window, cx)
@@ -7886,11 +7908,20 @@ impl Workspace {
         // Eagerly materialize the center into an `AnyElement` so its render result
         // stops capturing the `window`/`cx` mutable borrows (Rust 2024 capture
         // rules), allowing the right dock and overlays to be rendered afterward.
-        let center = self
-            .center
-            .render(self.zoomed.as_ref(), &pane_render_context, window, cx)
-            .into_any_element();
-        let right_dock = self.render_dock(DockPosition::Right, &self.right_dock, window, cx);
+        // When an agent center view is injected (the native AgentPanel
+        // conversation), it replaces the editor pane group as the main content.
+        let center = if let Some(center_view) = self.agent_center_view.clone() {
+            center_view.into_any_element()
+        } else {
+            self.center
+                .render(self.zoomed.as_ref(), &pane_render_context, window, cx)
+                .into_any_element()
+        };
+        let right_dock = if self.agent_center_view.is_some() {
+            None
+        } else {
+            self.render_dock(DockPosition::Right, &self.right_dock, window, cx)
+        };
 
         let zoomed_overlay = self.zoomed.as_ref().and_then(|view| {
             let zoomed_view = view.upgrade()?;

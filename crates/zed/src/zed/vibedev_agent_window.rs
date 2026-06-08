@@ -37,35 +37,48 @@ pub fn open_agent_app_window(app_state: Arc<AppState>, cx: &mut App) {
     .detach_and_log_err(cx);
 }
 
-/// Turns a fresh workspace window into the VibeDev AgentApp.
+/// Turns a fresh workspace window into the VibeDev AgentApp: a conversation
+/// surface rather than an editor.
 ///
-/// Phase 1 ("照抄" / reuse-native): instead of a bespoke agent layout, we reuse
-/// the native project-group thread sidebar that every `MultiWorkspace` window
-/// already registers (see `MultiWorkspace::new` / `Sidebar::new` in the workspace
-/// crate) together with its per-workspace `AgentPanel`. We only have to OPEN the
-/// sidebar so the window lands on the agent experience; clicking a thread or "new
-/// conversation" in the sidebar drives the native `AgentPanel`, which already
-/// defaults to the VibeDev (`Agent::Custom`) agent and reuses the same
-/// `ConversationView`. The earlier bespoke layer (`agent_mode` + the custom
-/// `render_agent_layout` / `VibedevSessionSidebar` / center conversation) is left
-/// intact but inert (never activated), to be reintroduced as branding ("改绘制")
-/// in a later phase.
-///
-/// The `MultiWorkspace` wrapper does not exist yet at this point — this runs as
-/// the `open_new` init callback, inside `Workspace::new`, before
-/// `MultiWorkspace::new` wraps the workspace and calls `set_multi_workspace`. So
-/// defer opening the sidebar until the wrapper (and its registered sidebar) exist.
+/// "照抄 + 改绘制" (reuse native logic, redraw the shell): we reuse two native
+/// pieces and rearrange them into an agent workbench. (1) The native
+/// project-group thread sidebar that every `MultiWorkspace` window already
+/// registers (`Sidebar::new`, rendered by `MultiWorkspace::render` at the
+/// multi-workspace level) — we just OPEN it. (2) The native per-workspace
+/// `AgentPanel` conversation — we ensure it exists and inject it as the
+/// workspace's *center* content via `set_agent_center_view`. Setting
+/// `agent_mode` makes `Workspace::render` use `render_agent_layout`, which draws
+/// a branded header + that center view and drops the editor pane group, status
+/// bar, and side docks. The AgentPanel already defaults to the VibeDev
+/// (`Agent::Custom`) agent, so the conversation/backend are unchanged; only the
+/// window shell is redrawn.
 fn configure_agent_mode(
-    _workspace: &mut Workspace,
+    workspace: &mut Workspace,
     window: &mut Window,
     cx: &mut Context<Workspace>,
 ) {
-    // Reach the MultiWorkspace through the window root, NOT by leasing the
-    // Workspace (e.g. `defer_in` hands back `&mut Workspace`): `open_sidebar` ->
-    // `retain_active_workspace` reads the active Workspace, which would
-    // double-lease the very workspace the closure holds and panic. An App-level
-    // `defer` keeps the workspace unleased while the sidebar opens (mirrors the
-    // production sidebar setup in `zed::initialize_workspace`).
+    // Render the body as the agent workbench (branded header + injected center,
+    // no editor/status bar). `render_agent_layout` keys off this flag.
+    workspace.agent_mode = true;
+
+    // Center: ensure the native AgentPanel exists for this workspace, then inject
+    // it as the agent-mode center conversation surface once it has loaded.
+    let ensure_panel = super::ensure_agent_panel_for_workspace(workspace, None, window, cx);
+    cx.spawn_in(window, async move |workspace, cx| {
+        ensure_panel.await?;
+        workspace.update_in(cx, |workspace, _window, cx| {
+            if let Some(panel) = workspace.panel::<agent_ui::AgentPanel>(cx) {
+                workspace.set_agent_center_view(Some(panel.into()), cx);
+            }
+        })
+    })
+    .detach_and_log_err(cx);
+
+    // Left: open the native project-group sidebar. The `MultiWorkspace` wrapper
+    // does not exist yet (this runs inside `Workspace::new`), and we must NOT
+    // hold a `&mut Workspace` lease while opening it (`open_sidebar` ->
+    // `retain_active_workspace` reads the active workspace and would
+    // double-lease), so defer and reach the wrapper through the window root.
     let window_handle = window.window_handle();
     cx.defer(move |cx| {
         window_handle
