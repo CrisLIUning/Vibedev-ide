@@ -1394,6 +1394,12 @@ pub struct Workspace {
     /// panels. `agent_right_view` is the *rendered* slot (cleared when hidden);
     /// this field is the *retained* host. See `toggle_agent_right_view`.
     agent_right_view_host: Option<AnyView>,
+    /// The dock-owned `Pane` (in the AgentApp right dock's "Changes" module)
+    /// that agent diffs are redirected into, decoupling them from the center
+    /// "File" pane. `WeakEntity` so a destroyed dock/window cannot dangle; when
+    /// `None` or upgrade-fails, agent diffs fall back to the center pane. Set by
+    /// `vibedev_agent_window` once the dock is built. See `agent_changes_pane`.
+    agent_changes_pane: Option<WeakEntity<Pane>>,
     notifications: Notifications,
     suppressed_notifications: HashSet<NotificationId>,
     project: Entity<Project>,
@@ -1842,6 +1848,7 @@ impl Workspace {
             agent_center_view: None,
             agent_right_view: None,
             agent_right_view_host: None,
+            agent_changes_pane: None,
             notifications: Notifications::default(),
             suppressed_notifications: HashSet::default(),
             left_dock,
@@ -3014,6 +3021,24 @@ impl Workspace {
             self.agent_right_view = self.agent_right_view_host.clone();
         }
         cx.notify();
+    }
+
+    /// Registers the AgentApp right dock's "Changes" `Pane` as the redirect
+    /// target for agent diffs. Stored weakly; see `agent_changes_pane`.
+    pub fn set_agent_changes_pane(
+        &mut self,
+        pane: Option<WeakEntity<Pane>>,
+        cx: &mut Context<Self>,
+    ) {
+        self.agent_changes_pane = pane;
+        cx.notify();
+    }
+
+    /// The dock-owned `Pane` agent diffs should be routed into, if one is
+    /// registered and still alive. `None` outside the AgentApp (or after the
+    /// dock/window is gone), in which case diffs fall back to the center pane.
+    pub fn agent_changes_pane(&self) -> Option<Entity<Pane>> {
+        self.agent_changes_pane.as_ref().and_then(|p| p.upgrade())
     }
 
     pub fn set_prompt_for_new_path(&mut self, prompt: PromptForNewPath) {

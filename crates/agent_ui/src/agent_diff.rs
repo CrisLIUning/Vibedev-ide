@@ -65,18 +65,55 @@ impl AgentDiffPane {
         window: &mut Window,
         cx: &mut Context<Workspace>,
     ) -> Entity<Self> {
-        let existing_diff = workspace
-            .items_of_type::<AgentDiffPane>(cx)
-            .find(|diff| diff.read(cx).thread == thread);
-
-        if let Some(existing_diff) = existing_diff {
-            workspace.activate_item(&existing_diff, true, true, window, cx);
-            existing_diff
+        // In the VibeDev AgentApp, agent diffs are redirected into the right
+        // dock's own "Changes" pane (so the center "File" pane stays for opened
+        // file contents). That pane is NOT registered in `workspace.panes`, so
+        // `items_of_type`/`activate_item` (which scan the workspace's panes)
+        // can't see or activate items in it — we scan/activate the pane
+        // directly. Outside the AgentApp `agent_changes_pane()` is `None` and we
+        // keep the original center-pane behaviour.
+        if let Some(changes_pane) = workspace.agent_changes_pane() {
+            // Dedup against this thread's diff, mirroring the center-pane
+            // `existing_diff` path below. `downcast` is on `dyn ItemHandle`
+            // (no `cx`); auto-deref handles `&Box<dyn ItemHandle>`. A single
+            // pass yields both the index (to activate) and the entity (to
+            // return).
+            let existing = changes_pane.read(cx).items().enumerate().find_map(|(index, item)| {
+                item.downcast::<AgentDiffPane>()
+                    .filter(|diff| diff.read(cx).thread == thread)
+                    .map(|diff| (index, diff))
+            });
+            if let Some((index, existing_diff)) = existing {
+                // `changes_pane` is a different entity than `workspace`, so
+                // updating it here is not a nested lease on `workspace`.
+                changes_pane.update(cx, |pane, cx| {
+                    pane.activate_item(index, true, true, window, cx);
+                });
+                existing_diff
+            } else {
+                let agent_diff = cx.new(|cx| {
+                    AgentDiffPane::new(thread.clone(), workspace.weak_handle(), window, cx)
+                });
+                changes_pane.update(cx, |pane, cx| {
+                    pane.add_item(Box::new(agent_diff.clone()), true, true, None, window, cx);
+                });
+                agent_diff
+            }
         } else {
-            let agent_diff = cx
-                .new(|cx| AgentDiffPane::new(thread.clone(), workspace.weak_handle(), window, cx));
-            workspace.add_item_to_center(Box::new(agent_diff.clone()), window, cx);
-            agent_diff
+            let existing_diff = workspace
+                .items_of_type::<AgentDiffPane>(cx)
+                .find(|diff| diff.read(cx).thread == thread);
+
+            if let Some(existing_diff) = existing_diff {
+                workspace.activate_item(&existing_diff, true, true, window, cx);
+                existing_diff
+            } else {
+                let agent_diff = cx.new(|cx| {
+                    AgentDiffPane::new(thread.clone(), workspace.weak_handle(), window, cx)
+                });
+                workspace.add_item_to_center(Box::new(agent_diff.clone()), window, cx);
+                agent_diff
+            }
         }
     }
 

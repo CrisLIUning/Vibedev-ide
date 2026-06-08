@@ -38,28 +38,37 @@
 //! proves disruptive, switch to a `NoFocus` reveal in the terminal panel.
 
 use std::collections::HashSet;
+use std::sync::Arc;
+use std::sync::atomic::AtomicUsize;
 
-use gpui::{Entity, FocusHandle, Focusable, Subscription, WeakEntity};
+use gpui::{Action, Entity, FocusHandle, Focusable, Subscription, WeakEntity, prelude::*};
 use project_panel::ProjectPanel;
 use terminal_view::terminal_panel::TerminalPanel;
 use ui::{ContextMenu, IconButton, IconName, IconPosition, PopoverMenu, prelude::*};
-use workspace::{Pane, Workspace, pane};
+use workspace::{NewFile, Pane, Workspace, pane};
 
 /// One stackable module in the right dock.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum DockModule {
     Files,
     File,
+    Changes,
     Terminal,
 }
 
 impl DockModule {
-    const ALL: [DockModule; 3] = [DockModule::Files, DockModule::File, DockModule::Terminal];
+    const ALL: [DockModule; 4] = [
+        DockModule::Files,
+        DockModule::File,
+        DockModule::Changes,
+        DockModule::Terminal,
+    ];
 
     fn title(self) -> &'static str {
         match self {
             DockModule::Files => "Files",
             DockModule::File => "File",
+            DockModule::Changes => "Changes",
             DockModule::Terminal => "Terminal",
         }
     }
@@ -68,6 +77,7 @@ impl DockModule {
         match self {
             DockModule::Files => "vibedev-dpanel-files",
             DockModule::File => "vibedev-dpanel-preview",
+            DockModule::Changes => "vibedev-dpanel-changes",
             DockModule::Terminal => "vibedev-dpanel-terminal",
         }
     }
@@ -90,6 +100,12 @@ impl DockModule {
 pub struct VibedevRightDock {
     workspace: WeakEntity<Workspace>,
     center_pane: Entity<Pane>,
+    /// A `Pane` owned by this dock (NOT registered in `workspace.panes`) that
+    /// hosts the agent diff (`AgentDiffPane`). Keeping the diff out of the
+    /// center pane lets "File" (opened file contents) and "Changes" (the diff)
+    /// live in separate modules. Agent diffs are redirected here via
+    /// `Workspace::agent_changes_pane` (see `agent_diff::deploy_in_workspace`).
+    changes_pane: Entity<Pane>,
     project_panel: Option<Entity<ProjectPanel>>,
     terminal_panel: Option<Entity<TerminalPanel>>,
     /// Modules currently shown (in display order). Closing a module removes it
@@ -111,19 +127,47 @@ impl VibedevRightDock {
     pub fn new(
         workspace: WeakEntity<Workspace>,
         center_pane: Entity<Pane>,
+        project: Entity<project::Project>,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
+        // A standalone `Pane` to host the agent diff ("Changes"). It is NOT
+        // added to `workspace.panes` (so it never participates in the editor's
+        // pane navigation/focus chain); the dock simply renders its handle and
+        // agent diffs are routed into it (see `agent_changes_pane`). Built with
+        // the same arguments the workspace uses for its center pane
+        // (`workspace.rs` center-pane construction) so behaviour matches.
+        let changes_pane = cx.new(|cx| {
+            Pane::new(
+                workspace.clone(),
+                project,
+                Arc::new(AtomicUsize::new(0)),
+                None,
+                NewFile.boxed_clone(),
+                false,
+                window,
+                cx,
+            )
+        });
+
         // Surface the `File` module whenever a file is opened into the center
         // pane. The center pane is the common open target for the project panel,
         // agent diffs, and agent tool file references (see the module docs), so
         // observing its `AddItem` event lets *any* of those call sites bring the
         // File panel out without the user having to enable it first.
-        let _subscriptions = vec![cx.subscribe(&center_pane, Self::handle_center_pane_event)];
+        //
+        // Symmetrically, surface the `Changes` module whenever a diff is opened
+        // into our own `changes_pane` (agent diffs are redirected there). Both
+        // callbacks only mutate this dock's own `enabled`/`collapsed` fields.
+        let _subscriptions = vec![
+            cx.subscribe(&center_pane, Self::handle_center_pane_event),
+            cx.subscribe(&changes_pane, Self::handle_changes_pane_event),
+        ];
 
         let mut this = Self {
             workspace,
             center_pane,
+            changes_pane,
             project_panel: None,
             terminal_panel: None,
             enabled: vec![DockModule::Files, DockModule::File],
@@ -174,6 +218,41 @@ impl VibedevRightDock {
             });
         }
         self.collapsed.remove(&DockModule::File);
+        cx.notify();
+    }
+
+    /// The dock-owned `Pane` that hosts the agent diff. Handed to the workspace
+    /// (as a `WeakEntity`) so `agent_diff::deploy_in_workspace` can route diffs
+    /// here instead of into the center pane.
+    pub fn changes_pane(&self) -> Entity<Pane> {
+        self.changes_pane.clone()
+    }
+
+    /// Reacts to a diff being opened into the dock-owned `changes_pane`: ensures
+    /// the `Changes` module is enabled and expanded so the freshly-opened diff
+    /// is visible, even if the user had previously closed or collapsed it. Same
+    /// `AddItem`-only / canonical-order rationale and lease safety as
+    /// `handle_center_pane_event`: only this dock's `enabled`/`collapsed` fields
+    /// plus `cx.notify()` are touched.
+    fn handle_changes_pane_event(
+        &mut self,
+        _pane: Entity<Pane>,
+        event: &pane::Event,
+        cx: &mut Context<Self>,
+    ) {
+        if !matches!(event, pane::Event::AddItem { .. }) {
+            return;
+        }
+        if !self.enabled.contains(&DockModule::Changes) {
+            self.enabled.push(DockModule::Changes);
+            self.enabled.sort_by_key(|m| {
+                DockModule::ALL
+                    .iter()
+                    .position(|x| x == m)
+                    .unwrap_or(usize::MAX)
+            });
+        }
+        self.collapsed.remove(&DockModule::Changes);
         cx.notify();
     }
 
@@ -242,7 +321,7 @@ impl VibedevRightDock {
         match module {
             DockModule::Files => self.load_project_panel(window, cx),
             DockModule::Terminal => self.load_terminal_panel(window, cx),
-            DockModule::File => {}
+            DockModule::File | DockModule::Changes => {}
         }
         cx.notify();
     }
@@ -336,6 +415,7 @@ impl VibedevRightDock {
                 .map(IntoElement::into_any_element)
                 .unwrap_or_else(loading_placeholder),
             DockModule::File => self.center_pane.clone().into_any_element(),
+            DockModule::Changes => self.changes_pane.clone().into_any_element(),
             DockModule::Terminal => self
                 .terminal_panel
                 .clone()

@@ -141,11 +141,18 @@ pub(crate) fn apply_agent_surface(
     // taken.
     let weak_workspace = workspace.weak_handle();
     let center_pane = workspace.active_pane().clone();
+    let project = workspace.project().clone();
     let right_dock = cx.new(|cx| super::vibedev_right_dock::VibedevRightDock::new(
         weak_workspace,
         center_pane,
+        project,
         window,
         cx,
     ));
+    // Register the dock's "Changes" pane as the agent-diff redirect target, so
+    // agent diffs land in their own panel instead of the center "File" pane. We
+    // hold `&mut Workspace` here, so this synchronous call against the same
+    // workspace takes no extra lease; the pane is stored weakly.
+    workspace.set_agent_changes_pane(Some(right_dock.read(cx).changes_pane().downgrade()), cx);
     workspace.set_agent_right_view(Some(right_dock.into()), cx);
 }
