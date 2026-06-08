@@ -1,3 +1,7 @@
+mod session_sidebar;
+
+pub use session_sidebar::VibedevSessionSidebar;
+
 use agent_ui::{
     Agent, AgentConnectionStore, AgentThreadSource, ConversationView, create_conversation_view,
 };

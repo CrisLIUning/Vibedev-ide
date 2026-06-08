@@ -6,7 +6,7 @@
 use std::sync::Arc;
 
 use gpui::{App, AppContext as _, Context, TaskExt as _, Window};
-use vibedev_agent_panel::VibedevConversationItem;
+use vibedev_agent_panel::{VibedevConversationItem, VibedevSessionSidebar};
 use workspace::{AppState, OpenOptions, Workspace};
 
 /// Registers the `OpenAgentAppWindow` action handler on every workspace.
@@ -46,6 +46,15 @@ fn configure_agent_mode(
 ) {
     workspace.agent_mode = true;
     workspace.centered_layout = true;
+
+    // Left region: install the VibeDev session sidebar (brand + "new
+    // conversation" + thread list). `render_agent_layout` renders this in the
+    // left slot instead of the left dock once set. Built here (the `zed` crate
+    // can depend on `agent_ui`) and injected into `workspace`, mirroring the
+    // `titlebar_item` pattern. The left dock is also closed below so it stays out
+    // of the way even though `render_agent_layout` no longer renders it.
+    let sidebar = cx.new(|cx| VibedevSessionSidebar::new(workspace.weak_handle(), cx));
+    workspace.set_agent_left_sidebar(Some(sidebar.into()), cx);
 
     // Hide the project tree: the AgentApp window is a conversation surface, not a
     // file editor, so the left dock starts closed.

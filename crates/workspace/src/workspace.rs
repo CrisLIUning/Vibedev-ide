@@ -1369,6 +1369,12 @@ pub struct Workspace {
     pub(crate) modal_layer: Entity<ModalLayer>,
     toast_layer: Entity<ToastLayer>,
     titlebar_item: Option<AnyView>,
+    /// VibeDev AgentApp window only: an externally-injected view rendered in the
+    /// left slot of `render_agent_layout` in place of the left dock. Mirrors the
+    /// `titlebar_item` injection pattern so the `workspace` crate need not depend
+    /// on `agent`/`agent_ui` (the sidebar is built in the `zed` crate and set via
+    /// `set_agent_left_sidebar`).
+    agent_left_sidebar: Option<AnyView>,
     notifications: Notifications,
     suppressed_notifications: HashSet<NotificationId>,
     project: Entity<Project>,
@@ -1813,6 +1819,7 @@ impl Workspace {
             modal_layer,
             toast_layer,
             titlebar_item: None,
+            agent_left_sidebar: None,
             notifications: Notifications::default(),
             suppressed_notifications: HashSet::default(),
             left_dock,
@@ -2941,6 +2948,14 @@ impl Workspace {
 
     pub fn set_titlebar_item(&mut self, item: AnyView, _: &mut Window, cx: &mut Context<Self>) {
         self.titlebar_item = Some(item);
+        cx.notify();
+    }
+
+    /// Installs (or clears) the left session sidebar used by the VibeDev AgentApp
+    /// window. When set, `render_agent_layout` renders this view in the left slot
+    /// instead of the left dock. See `agent_left_sidebar`.
+    pub fn set_agent_left_sidebar(&mut self, view: Option<AnyView>, cx: &mut Context<Self>) {
+        self.agent_left_sidebar = view;
         cx.notify();
     }
 
@@ -7854,7 +7869,20 @@ impl Workspace {
             workspace: &self.weak_self,
         };
 
-        let left_dock = self.render_dock(DockPosition::Left, &self.left_dock, window, cx);
+        // Left slot: prefer an externally-injected session sidebar (VibeDev
+        // AgentApp), falling back to the standard left dock when none is set.
+        // `render_dock` returns `Option<Div>` (None while the dock is zoomed); the
+        // sidebar (when present) is a single view. Normalize both to a `Vec` of
+        // `AnyElement` so the same `.children(left)` call below preserves the
+        // original flex-row layout for the dock path.
+        let left: Vec<AnyElement> = if let Some(sidebar) = self.agent_left_sidebar.clone() {
+            vec![sidebar.into_any_element()]
+        } else {
+            self.render_dock(DockPosition::Left, &self.left_dock, window, cx)
+                .map(|dock| dock.into_any_element())
+                .into_iter()
+                .collect()
+        };
         // Eagerly materialize the center into an `AnyElement` so its render result
         // stops capturing the `window`/`cx` mutable borrows (Rust 2024 capture
         // rules), allowing the right dock and overlays to be rendered afterward.
@@ -7906,7 +7934,7 @@ impl Workspace {
                     .flex()
                     .flex_row()
                     .overflow_hidden()
-                    .children(left_dock)
+                    .children(left)
                     .child(center)
                     .children(right_dock)
                     .children(zoomed_overlay)

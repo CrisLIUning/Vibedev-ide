@@ -19909,6 +19909,7 @@ name = "vibedev_agent_panel"
 version = "0.1.0"
 dependencies = [
  "agent",
+ "agent-client-protocol",
  "agent_ui",
  "anyhow",
  "collections",
