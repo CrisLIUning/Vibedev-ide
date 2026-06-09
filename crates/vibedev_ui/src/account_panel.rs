@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::time::Duration;
 
 use anyhow::Result;
 use gpui::{
@@ -84,19 +85,57 @@ impl VibedevAccountPanel {
     /// cost estimate here.
     fn spawn_poll(http: Arc<dyn HttpClient>, cx: &mut Context<Self>) -> Task<()> {
         cx.spawn(async move |this, cx| {
+            // The sidecar handshake is not always up the instant the panel
+            // mounts: a cold launch is still spawning bun, and a stale endpoint
+            // left by a hard-killed previous IDE is being purged + replaced
+            // (see launcher::supervise / clear_stale_handshake). A SINGLE failed
+            // fetch must NOT flip the panel to "Backend not ready" — that flashed
+            // the alarming message on essentially every launch even though the
+            // backend was about to come up. So stay in `Connecting` (and, once
+            // signed in, keep showing the last snapshot) until several failures
+            // in a row, and retry quickly while not yet connected so the
+            // cold-start window resolves in a couple of seconds instead of the
+            // full 20s poll interval.
+            const FAILURES_BEFORE_UNAVAILABLE: u32 = 4;
+            const RETRY_WHILE_CONNECTING: Duration = Duration::from_millis(1500);
+            let mut consecutive_failures: u32 = 0;
             loop {
                 let snapshot = vibedev_account::fetch_account(http.clone()).await;
+                let connected = snapshot.is_ok();
+                if connected {
+                    consecutive_failures = 0;
+                } else {
+                    consecutive_failures = consecutive_failures.saturating_add(1);
+                }
+                let failures = consecutive_failures;
                 let updated = this.update(cx, |this, cx| {
-                    this.status = match snapshot {
-                        Ok(snapshot) => AccountStatus::Loaded(snapshot),
-                        Err(_) => AccountStatus::BackendUnavailable,
-                    };
+                    match snapshot {
+                        Ok(snapshot) => this.status = AccountStatus::Loaded(snapshot),
+                        Err(_) => {
+                            // Only surface "Backend not ready" after repeated
+                            // failures; until then keep the current status
+                            // (Connecting on cold start, or the last Loaded
+                            // snapshot on a transient blip) so a few misses don't
+                            // flash the alarming message.
+                            if failures >= FAILURES_BEFORE_UNAVAILABLE {
+                                this.status = AccountStatus::BackendUnavailable;
+                            }
+                        }
+                    }
                     cx.notify();
                 });
                 if updated.is_err() {
                     break;
                 }
-                cx.background_executor().timer(ACCOUNT_POLL_INTERVAL).await;
+                // Retry fast until we cross the failure threshold; once connected
+                // (or already showing unavailable, where frequent retries add no
+                // value) fall back to the normal poll cadence.
+                let delay = if connected || failures >= FAILURES_BEFORE_UNAVAILABLE {
+                    ACCOUNT_POLL_INTERVAL
+                } else {
+                    RETRY_WHILE_CONNECTING
+                };
+                cx.background_executor().timer(delay).await;
             }
         })
     }

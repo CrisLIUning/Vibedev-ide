@@ -155,9 +155,22 @@ pub struct VibedevRightDock {
     /// are harmless (membership is only ever queried by current cards).
     expanded_tool_calls: HashSet<String>,
     focus_handle: FocusHandle,
+    /// The center `Pane` the File auto-surface subscription is currently bound
+    /// to. `render` resolves the *live* file-open target
+    /// (`last_active_center_pane`), which can diverge from the `center_pane`
+    /// captured at construction; the subscription MUST track whatever render
+    /// shows (see `resolved_file_pane`), or a file opened into the live pane
+    /// emits `AddItem` on a pane we don't observe and the File module never
+    /// surfaces. `None` until the first render binds it.
+    observed_center_pane: Option<WeakEntity<Pane>>,
+    /// Subscription to `observed_center_pane`'s events (the File auto-surface).
+    /// Re-installed by `render` whenever the resolved target changes; assigning
+    /// a new one drops the old, deregistering the previous pane.
+    center_pane_subscription: Option<Subscription>,
     /// Event subscriptions kept alive for the dock's lifetime (dropped with it).
-    /// Currently holds the center-pane subscription that auto-surfaces the
-    /// `File` module when a file is opened into the center pane.
+    /// Holds the `changes_pane` subscription that auto-surfaces the `Changes`
+    /// module. (The center-pane "File" subscription is NOT here — it must track
+    /// the live render target, so it lives in `center_pane_subscription`.)
     _subscriptions: Vec<Subscription>,
 }
 
@@ -188,19 +201,21 @@ impl VibedevRightDock {
             )
         });
 
-        // Surface the `File` module whenever a file is opened into the center
-        // pane. The center pane is the common open target for the project panel,
-        // agent diffs, and agent tool file references (see the module docs), so
-        // observing its `AddItem` event lets *any* of those call sites bring the
-        // File panel out without the user having to enable it first.
+        // Surface the `Changes` module whenever a diff is opened into our own
+        // `changes_pane` (agent diffs are redirected there). This pane is
+        // dock-owned and never diverges, so a static subscription is correct;
+        // the callback only mutates this dock's own `enabled`/`collapsed` fields.
         //
-        // Symmetrically, surface the `Changes` module whenever a diff is opened
-        // into our own `changes_pane` (agent diffs are redirected there). Both
-        // callbacks only mutate this dock's own `enabled`/`collapsed` fields.
-        let _subscriptions = vec![
-            cx.subscribe(&center_pane, Self::handle_center_pane_event),
-            cx.subscribe(&changes_pane, Self::handle_changes_pane_event),
-        ];
+        // The symmetric `File`-module auto-surface (open a file -> show File) is
+        // deliberately NOT installed here. It must observe whichever center pane
+        // `render` actually shows — the *live* file-open target resolved by
+        // `resolved_file_pane` (`last_active_center_pane`) — which can differ
+        // from the `center_pane` captured now. Binding it to the captured pane
+        // is exactly the bug that left files opening into a pane the dock never
+        // observed (File never surfaced; the rendered pane flipped between the
+        // two). So it is (re)installed from `render` against the live target —
+        // see `center_pane_subscription`.
+        let _subscriptions = vec![cx.subscribe(&changes_pane, Self::handle_changes_pane_event)];
 
         let mut this = Self {
             workspace,
@@ -211,6 +226,8 @@ impl VibedevRightDock {
             enabled: vec![DockModule::Files, DockModule::File],
             collapsed: HashSet::new(),
             terminal_load_started: false,
+            observed_center_pane: None,
+            center_pane_subscription: None,
             agent_panel_subscription: None,
             active_thread: None,
             active_thread_subscription: None,
@@ -286,6 +303,21 @@ impl VibedevRightDock {
     /// here instead of into the center pane.
     pub fn changes_pane(&self) -> Entity<Pane> {
         self.changes_pane.clone()
+    }
+
+    /// The center `Pane` the File module renders AND that the auto-surface
+    /// subscription tracks — they MUST resolve to the same entity (a divergence
+    /// between the two is what stops `AddItem` from surfacing the File module
+    /// and flips the rendered pane between forms). Resolves the live file-open
+    /// target: `open_path_preview`, agent diffs, and tool file references all
+    /// open into `last_active_center_pane`. Falls back to the pane captured at
+    /// construction if the workspace is gone or has no center pane yet. Pure
+    /// read — takes no lease.
+    fn resolved_file_pane(&self, cx: &App) -> Entity<Pane> {
+        self.workspace
+            .upgrade()
+            .and_then(|workspace| workspace.read(cx).last_active_center_pane())
+            .unwrap_or_else(|| self.center_pane.clone())
     }
 
     /// Reacts to a diff being opened into the dock-owned `changes_pane`: ensures
@@ -1228,11 +1260,7 @@ impl VibedevRightDock {
             // workspace (`upgrade` + `read`); no lease. Falls back to the captured
             // pane if the workspace is gone or has no center pane yet.
             DockModule::File => {
-                let file_pane = self
-                    .workspace
-                    .upgrade()
-                    .and_then(|workspace| workspace.read(cx).last_active_center_pane())
-                    .unwrap_or_else(|| self.center_pane.clone());
+                let file_pane = self.resolved_file_pane(cx);
                 // When this pane is zoomed, the workspace's native
                 // `zoomed_overlay` (see `render_agent_layout`) already paints it
                 // full-screen. Rendering the *same* `Entity<Pane>` a second time
@@ -1470,6 +1498,30 @@ impl Render for VibedevRightDock {
                 }));
             let panel = panel.clone();
             self.refresh_active_thread(&panel, cx);
+        }
+
+        // Keep the File auto-surface subscription bound to whichever center pane
+        // `render` actually shows. The File module renders the *live* file-open
+        // target (`resolved_file_pane` -> `last_active_center_pane`), which can
+        // diverge from the `center_pane` captured at construction; if the
+        // subscription stayed on the captured pane, a file opened into the live
+        // pane would emit `AddItem`/`ActivateItem` on a pane we don't observe and
+        // the File module would never surface (and the rendered pane would flip
+        // between the two — the "two forms" symptom). So (re)subscribe to the
+        // resolved pane whenever it changes. `render` holds `&mut self` + a
+        // `Context<Self>`, so installing a subscription here is sound; assigning
+        // a new `Subscription` drops the old one, deregistering the prior pane.
+        // We only rebind on an actual id change, so a stable target causes no
+        // churn (and no render loop — subscribing never notifies).
+        let file_pane = self.resolved_file_pane(cx);
+        let rebind = match self.observed_center_pane.as_ref() {
+            Some(observed) => observed.entity_id() != file_pane.entity_id(),
+            None => true,
+        };
+        if rebind {
+            self.observed_center_pane = Some(file_pane.downgrade());
+            self.center_pane_subscription =
+                Some(cx.subscribe(&file_pane, Self::handle_center_pane_event));
         }
 
         // Build the panel elements first (each `render_dpanel` borrows `cx`),

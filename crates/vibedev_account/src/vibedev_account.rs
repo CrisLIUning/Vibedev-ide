@@ -280,6 +280,32 @@ pub fn read_endpoint() -> Result<Endpoint> {
     serde_json::from_str::<Endpoint>(&raw).context("parse endpoint.json")
 }
 
+/// VIBEDEV: delete the sidecar handshake files (`endpoint.json` + the
+/// single-instance `sidecar.lock` + the instance `refs` counter) from
+/// `~/.vibedev`. Called at launch when a recorded endpoint exists but its port
+/// is dead: a hard-killed previous IDE (kill -9 / crash / Task Manager) skips
+/// the sidecar's SIGTERM cleanup, so these survive pointing at a now-dead port
+/// (and `refs` leaks upward), and the account panel then reads them and reports
+/// "Backend not ready" until — never — the fresh sidecar happens to reuse the
+/// same rotated port. Purging them lets the fresh sidecar start from a clean
+/// slate. Best-effort: a missing file is the normal case and not an error.
+pub(crate) fn clear_stale_handshake() {
+    let Ok(home) = vibedev_home() else {
+        return;
+    };
+    for name in ["endpoint.json", "sidecar.lock", "refs"] {
+        let path = home.join(name);
+        if path.exists() {
+            if let Err(error) = std::fs::remove_file(&path) {
+                log::warn!(
+                    "vibedev: failed to clear stale handshake file {}: {error:#}",
+                    path.display()
+                );
+            }
+        }
+    }
+}
+
 /// Build a sidecar URL for the given path (always loopback).
 fn sidecar_url(endpoint: &Endpoint, path: &str) -> String {
     format!("http://127.0.0.1:{}{}", endpoint.port, path)

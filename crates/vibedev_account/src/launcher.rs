@@ -92,14 +92,21 @@ impl VibedevSidecar {
                 supervise(executor, http, child_pid, restart_rx, cx).await;
             })
         };
-        // Kill the sidecar's process tree on app quit (the normal window-close
-        // path). A crash / Task-Manager kill of the IDE won't run on_app_quit;
-        // covering that too would need a Windows Job Object — left as a follow-up.
+        // Tear the sidecar down on app quit (the normal window-close path),
+        // preferring a graceful SIGTERM so the bun sidecar runs its shutdown
+        // handler (deletes the handshake + decrements the instance ref-count)
+        // before dying — see `terminate_sidecar_gracefully`. A crash /
+        // Task-Manager kill of the IDE won't run on_app_quit; that stale state
+        // is instead self-healed at the next launch (see the startup purge in
+        // `supervise`). A clone of the executor is needed because the first one
+        // was moved into the supervisor task above.
+        let quit_executor = cx.background_executor().clone();
         cx.on_app_quit(move |_cx| {
             let pid = child_pid.load(Ordering::SeqCst);
+            let executor = quit_executor.clone();
             async move {
                 if pid != 0 {
-                    kill_process_tree(pid);
+                    terminate_sidecar_gracefully(pid, &executor).await;
                 }
                 // VIBEDEV (V2-PLAN-8 P3): also reap the `ssh -R` reverse-tunnel
                 // children ensure_tunnel spawned. Same Windows orphan class as the
@@ -537,6 +544,27 @@ async fn supervise(
         return;
     }
 
+    // VIBEDEV: self-heal a stale handshake left by a hard-killed previous IDE.
+    // kill -9 / a crash / Task Manager all skip the sidecar's SIGTERM cleanup
+    // (terminate_sidecar_gracefully below covers the normal quit, but not those),
+    // so ~/.vibedev/{endpoint.json,sidecar.lock,refs} survive pointing at a
+    // now-dead port. The account panel then reads that endpoint, can't connect,
+    // and shows "Backend not ready" — the fresh sidecar we are about to spawn
+    // gets a *new* rotated port, so the stale file is never self-corrected. If a
+    // recorded endpoint exists but nothing healthy is serving it, purge it now.
+    // A HEALTHY endpoint is left intact: that means a legitimately-running other
+    // IDE instance owns the port, and the sidecar's single-instance reuse must
+    // still find it.
+    if let Ok(stale) = read_endpoint()
+        && !health_ok(&http, stale.port).await
+    {
+        log::info!(
+            "vibedev: purging stale sidecar handshake (recorded port {} is not serving)",
+            stale.port
+        );
+        crate::clear_stale_handshake();
+    }
+
     // VIBEDEV: last loopback port we configured FIM against, so a crash-restart
     // that hands out the same port doesn't rewrite settings on every cycle.
     let mut configured_fim_port: Option<u16> = None;
@@ -674,9 +702,43 @@ async fn supervise(
     }
 }
 
-/// Kill a process and its entire child tree by PID. Used by the app-quit hook to
-/// tear the bun sidecar down on shutdown — Windows leaves children running when
-/// the parent exits. Best-effort: an already-dead/missing PID is a no-op.
+/// VIBEDEV: stop the sidecar on app quit, preferring a graceful SIGTERM so the
+/// bun sidecar runs its shutdown handler (deletes ~/.vibedev/endpoint.json and
+/// decrements the instance ref-count) BEFORE dying. SIGKILL (the previous
+/// behaviour) is untrappable and skips that cleanup, leaving a stale handshake
+/// that made the next launch show "Backend not ready" (see
+/// `clear_stale_handshake`). We give the sidecar a brief grace window — bounded
+/// well under gpui's 200ms `SHUTDOWN_TIMEOUT` so the quit isn't delayed — then
+/// force-kill so a slow/stuck sidecar can never orphan and keep holding the
+/// loopback port.
+#[cfg(not(target_os = "windows"))]
+async fn terminate_sidecar_gracefully(pid: u32, executor: &BackgroundExecutor) {
+    // SIGTERM (the default `kill` signal): triggers the sidecar's clean
+    // shutdown. Best-effort, matching the force-kill below.
+    let _ = std::process::Command::new("kill")
+        .arg(pid.to_string())
+        .output();
+    // Brief grace for the handshake cleanup (a file unlink — sub-millisecond),
+    // kept under SHUTDOWN_TIMEOUT so the app isn't held up on quit.
+    executor.timer(Duration::from_millis(120)).await;
+    // Force-kill fallback: a no-op if the sidecar already exited cleanly, but
+    // guarantees no orphaned bun keeps holding the loopback port.
+    kill_process_tree(pid);
+}
+
+/// VIBEDEV: Windows has no SIGTERM for the bun child and `taskkill /F` is the
+/// reliable teardown, so quit goes straight to the force kill; the sidecar's own
+/// best-effort atexit cleanup covers the handshake there. (Graceful Windows
+/// shutdown — `taskkill` without `/F`, or a Job Object — is a follow-up.)
+#[cfg(target_os = "windows")]
+async fn terminate_sidecar_gracefully(pid: u32, _executor: &BackgroundExecutor) {
+    kill_process_tree(pid);
+}
+
+/// Kill a process and its entire child tree by PID. The force-kill fallback for
+/// `terminate_sidecar_gracefully` (app quit) and the kill step of the agent-OTA
+/// restart path — Windows leaves children running when the parent exits.
+/// Best-effort: an already-dead/missing PID is a no-op.
 fn kill_process_tree(pid: u32) {
     #[cfg(target_os = "windows")]
     {
