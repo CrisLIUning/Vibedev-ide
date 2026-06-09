@@ -186,6 +186,13 @@ pub struct SubagentProgress {
     pub tokens_used: Option<u64>,
     #[serde(default)]
     pub parent_id: Option<String>,
+    /// Id of the parent assistant message whose tool_use(s) spawned this agent.
+    /// Subagents from the *same* assistant message (one parallel spawn batch)
+    /// share it, so the conversation view groups them into a single fan-out card
+    /// while a later message's spawns get their own card. `None` for older agents
+    /// that don't emit it → the view falls back to grouping the whole turn.
+    #[serde(default)]
+    pub batch_id: Option<String>,
     #[serde(default)]
     pub step: Option<SubagentStep>,
     /// Incremental structured tool-call trace items for *this* progress message.

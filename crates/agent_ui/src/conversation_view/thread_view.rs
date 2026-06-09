@@ -3499,13 +3499,24 @@ impl ThreadView {
     /// Subagents spawned in parallel surface their `SubagentProgress` entries
     /// interleaved with the main agent's own assistant/thinking/tool output, so
     /// a single parallel spawn does **not** land as a contiguous run. To keep
-    /// one card per spawn, we group by *user turn*: the boundary is the previous
-    /// [`AgentThreadEntry::UserMessage`] (or the start of the thread). Only the
-    /// first `SubagentProgress` of a turn renders; it collects every
-    /// `SubagentProgress` in that turn — skipping over any interleaved
-    /// assistant/tool entries, stopping at the next `UserMessage` — and draws
-    /// the aggregated tree via [`SubagentFanoutModel`]. Later progress entries
-    /// in the same turn render nothing to avoid duplicate cards.
+    /// one card per spawn batch, we group by *spawn batch within a user turn*:
+    ///
+    /// - The turn boundary is the previous [`AgentThreadEntry::UserMessage`] (or
+    ///   the start of the thread).
+    /// - Within that turn, the grouping key is the entry's `batch_id` — the id
+    ///   of the parent assistant message whose tool_use(s) spawned the agent.
+    ///   Agents spawned by the *same* assistant message share a `batch_id` and
+    ///   collapse into one card; agents the main agent spawned in a *later*
+    ///   assistant message (a second batch in the same turn) get their own card.
+    /// - Older agents that don't emit a `batch_id` send `None`; all `None`
+    ///   entries in a turn share the key, reproducing the previous turn-level
+    ///   grouping (one card for the whole turn).
+    ///
+    /// Only the *first* `SubagentProgress` of each batch renders; it collects
+    /// every same-batch `SubagentProgress` in the turn — skipping interleaved
+    /// assistant/tool entries, stopping at the next `UserMessage` — and draws the
+    /// aggregated tree via [`SubagentFanoutModel`]. Later same-batch entries
+    /// render nothing to avoid duplicate cards.
     fn render_subagent_fanout(
         &self,
         entry_ix: usize,
@@ -3513,6 +3524,13 @@ impl ThreadView {
         cx: &Context<Self>,
     ) -> AnyElement {
         let entries = self.thread.read(cx).entries();
+
+        // The grouping key for this entry: its spawn-batch id (the parent
+        // assistant message id). `None` for older agents → turn-level fallback.
+        let batch_id = match entries.get(entry_ix) {
+            Some(AgentThreadEntry::SubagentProgress(progress)) => progress.batch_id.clone(),
+            _ => return Empty.into_any_element(),
+        };
 
         // Walk back to the start of this user turn: the index just after the
         // previous `UserMessage`, or 0 if there is none before `entry_ix`.
@@ -3524,30 +3542,39 @@ impl ThreadView {
             .map(|ix| ix + 1)
             .unwrap_or(0);
 
-        // If an earlier `SubagentProgress` already exists in this turn, that one
-        // rendered the whole tree; this entry is a later arrival and renders
-        // nothing.
-        let already_rendered_this_turn = entries
+        // If an earlier `SubagentProgress` *of the same batch* already exists in
+        // this turn, that one rendered the card for this batch; this entry is a
+        // later arrival in the same batch and renders nothing. A different
+        // batch's earlier progress does not suppress us — it owns its own card.
+        let already_rendered_this_batch = entries
             .get(turn_start..entry_ix)
             .unwrap_or(&[])
             .iter()
-            .any(|entry| matches!(entry, AgentThreadEntry::SubagentProgress(_)));
-        if already_rendered_this_turn {
+            .any(|entry| {
+                matches!(
+                    entry,
+                    AgentThreadEntry::SubagentProgress(progress)
+                        if progress.batch_id == batch_id
+                )
+            });
+        if already_rendered_this_batch {
             return Empty.into_any_element();
         }
 
-        // Collect every progress entry in this turn, skipping interleaved
-        // assistant/thinking/tool entries and stopping at the next user turn.
-        // `from_entries` dedups by `subagent_id`, so the same subagent's
-        // cumulative updates collapse to one node while the parallel siblings
-        // become distinct rows.
+        // Collect every same-batch progress entry in this turn, skipping
+        // interleaved assistant/thinking/tool entries and entries from other
+        // batches, stopping at the next user turn. `from_entries` dedups by
+        // `subagent_id`, so each subagent's cumulative updates collapse to one
+        // node while the parallel siblings in this batch become distinct rows.
         let collected: Vec<SubagentProgress> = entries
             .get(turn_start..)
             .unwrap_or(&[])
             .iter()
             .take_while(|entry| !matches!(entry, AgentThreadEntry::UserMessage(_)))
             .filter_map(|entry| match entry {
-                AgentThreadEntry::SubagentProgress(progress) => Some(progress.clone()),
+                AgentThreadEntry::SubagentProgress(progress) if progress.batch_id == batch_id => {
+                    Some(progress.clone())
+                }
                 _ => None,
             })
             .collect();
