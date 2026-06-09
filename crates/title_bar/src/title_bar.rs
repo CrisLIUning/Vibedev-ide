@@ -58,6 +58,7 @@ use workspace::{
 };
 
 use zed_actions::OpenRemote;
+use zed_actions::vibedev::OpenAgentAppWindow;
 
 pub use onboarding_banner::restore_banner;
 
@@ -382,6 +383,19 @@ impl Render for TitleBar {
                             ),
                     )
                 })
+                // VIBEDEV: one-click entry point to open the AgentApp window from
+                // the IDE title bar. Dispatches the OpenAgentAppWindow action that
+                // is registered on every workspace (see vibedev_agent_window.rs).
+                .child(
+                    IconButton::new("vibedev-open-agent-app", IconName::ZedAgent)
+                        .icon_size(IconSize::Small)
+                        .tooltip(move |_, cx| {
+                            Tooltip::for_action("Open AgentApp", &OpenAgentAppWindow, cx)
+                        })
+                        .on_click(|_, window, cx| {
+                            window.dispatch_action(OpenAgentAppWindow.boxed_clone(), cx);
+                        }),
+                )
                 .when(TitleBarSettings::get_global(cx).show_user_menu, |this| {
                     this.child(self.render_user_menu_button(cx))
                 })
