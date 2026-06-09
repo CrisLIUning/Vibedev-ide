@@ -242,25 +242,23 @@ impl VibedevRightDock {
     /// second lease on either is taken.
     fn handle_center_pane_event(
         &mut self,
-        pane: Entity<Pane>,
+        _pane: Entity<Pane>,
         event: &pane::Event,
         cx: &mut Context<Self>,
     ) {
-        if !matches!(event, pane::Event::AddItem { .. }) {
+        // Surface the File module both when a *new* item is added and when an
+        // *already-open* item is re-activated. Clicking a file in the tree that
+        // is already open emits `ActivateItem` (not `AddItem`), so gating on
+        // `AddItem` alone meant "first click pops the panel, but reopening after
+        // closing it does nothing". Accepting `ActivateItem` too means a plain
+        // tab switch can re-surface a collapsed File panel, which is acceptable:
+        // activating a file is an explicit request to see it.
+        if !matches!(
+            event,
+            pane::Event::AddItem { .. } | pane::Event::ActivateItem { .. }
+        ) {
             return;
         }
-        // TEMP diagnostic for the "clicking a file tracks in the tree but the
-        // File panel stays empty" report. If this line never prints when a file
-        // is opened, the file landed in some pane other than the dock's
-        // `center_pane` (routing); if it prints with active_item_present=true
-        // but the panel shows nothing, it is a paint/layout issue. Revert once
-        // the root cause is confirmed.
-        log::info!(
-            "VIBEDEV-DIAG[file-open]: AddItem on pane id={:?} (dock center_pane id={:?}), active_item_present={}",
-            pane.entity_id(),
-            self.center_pane.entity_id(),
-            pane.read(cx).active_item().is_some(),
-        );
         if !self.enabled.contains(&DockModule::File) {
             // Insert in canonical order so the stack stays stable (File sits
             // right after Files), matching `enable_module`'s ordering.
@@ -582,16 +580,21 @@ impl VibedevRightDock {
         // list below. Reading the global here is a pure read.
         if let Some(selected) = SelectedSubagent::get(cx) {
             if let Some(node) = model.node(&selected) {
-                // Refresh the Markdown cache for the selected node's live stream.
-                // The stream text changes as the agent streams, but re-parsing it
-                // every frame is wasteful — so we keep the last `(text, entity)`
-                // and only rebuild the entity when the text changes. `node`
-                // borrows the local `model` (not `self`), so mutating
-                // `self.detail_markdown` and calling `cx.new(...)` here is sound;
-                // `cx.new` builds a *fresh* Markdown entity and takes no lease on
-                // this dock.
-                let stream = node.step.as_ref().and_then(|step| step.stream.clone());
-                let markdown = match stream {
+                // Refresh the Markdown cache for the selected node's *final
+                // reply* only — the tool-trace lines are rendered as plain
+                // `Label`s by `render_subagent_detail`, so they need no Markdown
+                // entity. We cache `(reply_source, entity)` and only rebuild when
+                // the reply text changes, since re-parsing every frame is
+                // wasteful. `node` borrows the local `model` (not `self`), so
+                // mutating `self.detail_markdown` and calling `cx.new(...)` here
+                // is sound; `cx.new` builds a *fresh* Markdown entity and takes no
+                // lease on this dock.
+                let reply_source = node
+                    .step
+                    .as_ref()
+                    .and_then(|step| step.stream.as_deref())
+                    .and_then(|stream| split_subagent_stream(stream).1);
+                let reply_markdown = match reply_source {
                     Some(text) => {
                         let needs_rebuild = self
                             .detail_markdown
@@ -608,13 +611,13 @@ impl VibedevRightDock {
                             .map(|(_, entity)| entity.clone())
                     }
                     None => {
-                        // Selected node has no stream yet; drop any stale cache so
-                        // a later stream for a *different* node rebuilds cleanly.
+                        // Selected node has no reply yet; drop any stale cache so
+                        // a later reply for a *different* node rebuilds cleanly.
                         self.detail_markdown = None;
                         None
                     }
                 };
-                return self.render_subagent_detail(node, markdown, window, cx);
+                return self.render_subagent_detail(node, reply_markdown, window, cx);
             }
         }
 
@@ -714,11 +717,16 @@ impl VibedevRightDock {
 
     /// Renders the drill-in detail for a single subagent inside the Execution
     /// module: a back row, the node's status/type/title/tokens, and its current
-    /// step (label + the full, un-truncated stream in a scroll region).
+    /// step rendered as a *compact, small-font tool trace* (one row per stream
+    /// line) followed by the final reply.
     ///
-    /// The current step's `stream` is rendered as Markdown (rich text / code /
-    /// lists) via the pre-parsed `markdown` entity the caller cached, rather than
-    /// as a plain `Label`. `markdown` is `None` when the node has no stream yet.
+    /// The step's `stream` (see the agent's `extractSubagentStreamText`) is split
+    /// by `split_subagent_stream` into trace lines and a reply. Trace lines are
+    /// rendered tightly as `XSmall` `Label`s — `→ …` tool calls get an accent
+    /// arrow, `← …` results are muted and indented, plain lines are muted — to
+    /// mirror a Claude Code transcript. The final reply (the passed `markdown`
+    /// entity the caller cached for the reply portion, rendered at a reduced font
+    /// size) keeps rich Markdown; `markdown` is `None` when there is no reply yet.
     ///
     /// Lease safety: read-only. Reads the passed-in `node` (a borrow into the
     /// caller's freshly-built `SubagentFanoutModel`), the cached `markdown`
@@ -748,7 +756,7 @@ impl VibedevRightDock {
 
         let tokens_label = node.tokens_used.map(|tokens| {
             Label::new(format!("{tokens} tok"))
-                .size(LabelSize::Small)
+                .size(LabelSize::XSmall)
                 .color(Color::Muted)
         });
 
@@ -767,19 +775,19 @@ impl VibedevRightDock {
                     .border_color(colors.border)
                     .child(
                         IconButton::new("vibedev-execution-detail-back", IconName::ArrowLeft)
-                            .icon_size(IconSize::Small)
+                            .icon_size(IconSize::XSmall)
                             .on_click(|_event, _window, cx: &mut App| {
                                 SelectedSubagent::set(None, cx);
                             }),
                     )
                     .child(
                         Label::new(node.agent_type.clone())
-                            .size(LabelSize::Small)
+                            .size(LabelSize::XSmall)
                             .color(Color::Muted),
                     )
                     .child(
                         Label::new(node.title.clone())
-                            .size(LabelSize::Small)
+                            .size(LabelSize::XSmall)
                             .truncate(),
                     ),
             )
@@ -792,50 +800,107 @@ impl VibedevRightDock {
                     .gap_1p5()
                     .child(
                         Icon::new(status_icon)
-                            .size(IconSize::Small)
+                            .size(IconSize::XSmall)
                             .color(status_color),
                     )
                     .child(
                         Label::new(status_label)
-                            .size(LabelSize::Small)
+                            .size(LabelSize::XSmall)
                             .color(Color::Muted),
                     )
                     .when_some(tokens_label, |this, label| {
                         this.child(div().flex_1()).child(label)
                     }),
             )
-            // Current step: the step label, then the full stream rendered as
-            // Markdown (NOT truncated) inside a scroll region so a long reply
-            // stays contained. The markdown is the caller's cached, pre-parsed
-            // entity for *this* node's stream; rendering it is read-only.
+            // Current step: the step label, then a compact, small-font tool
+            // trace (one tight row per stream line) and finally the reply block.
+            // The whole region scrolls so a long trace stays contained.
             .map(|this| match node.step.as_ref() {
-                Some(step) => this.child(
-                    v_flex()
-                        .id("vibedev-execution-detail-step")
-                        .flex_1()
-                        .min_h_0()
-                        .overflow_y_scroll()
-                        .px_2()
-                        .py_1()
-                        .gap_1()
-                        .child(
-                            Label::new(step.label.clone())
-                                .size(LabelSize::Small)
-                                .color(Color::Muted),
-                        )
-                        .when_some(markdown, |this, markdown| {
-                            this.child(MarkdownElement::new(
-                                markdown,
-                                MarkdownStyle::themed(MarkdownFont::Agent, window, cx),
-                            ))
-                        }),
-                ),
+                Some(step) => {
+                    // Only the trace lines are needed here; the reply markdown is
+                    // built and cached by the caller (`render_execution_panel`).
+                    let trace_lines = step
+                        .stream
+                        .as_deref()
+                        .map(|stream| split_subagent_stream(stream).0)
+                        .unwrap_or_default();
+                    // Reduced-font themed Markdown for the reply block, so rich
+                    // formatting stays but the text reads small like the trace.
+                    let mut reply_style = MarkdownStyle::themed(MarkdownFont::Agent, window, cx);
+                    reply_style.base_text_style.font_size = rems(0.75).into();
+                    this.child(
+                        v_flex()
+                            .id("vibedev-execution-detail-step")
+                            .flex_1()
+                            .min_h_0()
+                            .overflow_y_scroll()
+                            .px_2()
+                            .py_1()
+                            .gap_0p5()
+                            .text_xs()
+                            .child(
+                                Label::new(step.label.clone())
+                                    .size(LabelSize::XSmall)
+                                    .color(Color::Muted),
+                            )
+                            .children(trace_lines.into_iter().filter_map(|line| {
+                                if line.trim().is_empty() {
+                                    return None;
+                                }
+                                if let Some(rest) = line.strip_prefix("→ ") {
+                                    // Tool call: accent arrow + small label.
+                                    Some(
+                                        h_flex()
+                                            .gap_1()
+                                            .items_start()
+                                            .child(
+                                                Icon::new(IconName::ArrowRight)
+                                                    .size(IconSize::XSmall)
+                                                    .color(Color::Accent),
+                                            )
+                                            .child(
+                                                Label::new(rest.to_string())
+                                                    .size(LabelSize::XSmall),
+                                            )
+                                            .into_any_element(),
+                                    )
+                                } else if let Some(rest) = line.strip_prefix("← ") {
+                                    // Tool result: muted, indented under the call.
+                                    Some(
+                                        div()
+                                            .pl_3()
+                                            .child(
+                                                Label::new(rest.to_string())
+                                                    .size(LabelSize::XSmall)
+                                                    .color(Color::Muted),
+                                            )
+                                            .into_any_element(),
+                                    )
+                                } else {
+                                    // Plain narration line.
+                                    Some(
+                                        Label::new(line.to_string())
+                                            .size(LabelSize::XSmall)
+                                            .color(Color::Muted)
+                                            .into_any_element(),
+                                    )
+                                }
+                            }))
+                            .when_some(markdown, |this, markdown| {
+                                this.child(MarkdownElement::new(markdown, reply_style))
+                            }),
+                    )
+                }
                 None => this.child(
                     div()
                         .flex_none()
                         .px_2()
                         .py_1()
-                        .child(Label::new("暂无步骤详情").color(Color::Muted)),
+                        .child(
+                            Label::new("暂无步骤详情")
+                                .size(LabelSize::XSmall)
+                                .color(Color::Muted),
+                        ),
                 ),
             })
             .into_any_element()
@@ -962,12 +1027,33 @@ impl VibedevRightDock {
             // stale captured pane would show nothing. This is a pure read on the
             // workspace (`upgrade` + `read`); no lease. Falls back to the captured
             // pane if the workspace is gone or has no center pane yet.
-            DockModule::File => self
-                .workspace
-                .upgrade()
-                .and_then(|workspace| workspace.read(cx).last_active_center_pane())
-                .unwrap_or_else(|| self.center_pane.clone())
-                .into_any_element(),
+            DockModule::File => {
+                let file_pane = self
+                    .workspace
+                    .upgrade()
+                    .and_then(|workspace| workspace.read(cx).last_active_center_pane())
+                    .unwrap_or_else(|| self.center_pane.clone());
+                // When this pane is zoomed, the workspace's native
+                // `zoomed_overlay` (see `render_agent_layout`) already paints it
+                // full-screen. Rendering the *same* `Entity<Pane>` a second time
+                // here would be a double-render of one entity (a GPUI conflict),
+                // so the File body shows a placeholder instead until the user
+                // restores it. `is_zoomed()` is a plain field read — no lease.
+                if file_pane.read(cx).is_zoomed() {
+                    v_flex()
+                        .size_full()
+                        .items_center()
+                        .justify_center()
+                        .child(
+                            Label::new("已最大化(点标题栏 ⊟ 还原)")
+                                .size(LabelSize::Small)
+                                .color(Color::Muted),
+                        )
+                        .into_any_element()
+                } else {
+                    file_pane.into_any_element()
+                }
+            }
             DockModule::Changes => self.changes_pane.clone().into_any_element(),
             DockModule::Execution => self.render_execution_panel(window, cx),
             DockModule::Plan => self.render_plan_panel(window, cx),
@@ -1064,6 +1150,52 @@ impl VibedevRightDock {
 }
 
 /// Lightweight placeholder shown while a module's panel is still loading.
+/// Marker the agent's `extractSubagentStreamText` emits at the start of the
+/// final-reply section of a subagent stream. Everything from this marker
+/// onward is the rendered reply; everything before it is the compact tool
+/// trace.
+const SUBAGENT_REPLY_MARKER: &str = "✓ 回复:";
+
+/// Splits a subagent `step.stream` into `(trace_lines, reply_source)`:
+///   * `trace_lines` — the lines *before* the reply marker (tool calls `→ …`,
+///     results `← …`, and plain text), rendered as a compact per-line list.
+///   * `reply_source` — the markdown source of the final reply (the text after
+///     the reply marker on its line, plus every following line), or `None` if
+///     the stream has no reply marker yet. Cached and rendered as Markdown.
+fn split_subagent_stream(stream: &str) -> (Vec<&str>, Option<String>) {
+    if let Some((marker_line_index, marker_line)) = stream
+        .lines()
+        .enumerate()
+        .find(|(_, line)| line.trim_start().starts_with(SUBAGENT_REPLY_MARKER))
+    {
+        let trace: Vec<&str> = stream.lines().take(marker_line_index).collect();
+        // First reply line is the remainder of the marker line after the marker.
+        let first = marker_line
+            .trim_start()
+            .trim_start_matches(SUBAGENT_REPLY_MARKER)
+            .trim_start();
+        let rest: Vec<&str> = stream.lines().skip(marker_line_index + 1).collect();
+        let mut reply = String::new();
+        if !first.is_empty() {
+            reply.push_str(first);
+        }
+        if !rest.is_empty() {
+            if !reply.is_empty() {
+                reply.push('\n');
+            }
+            reply.push_str(&rest.join("\n"));
+        }
+        let reply = if reply.trim().is_empty() {
+            None
+        } else {
+            Some(reply)
+        };
+        (trace, reply)
+    } else {
+        (stream.lines().collect(), None)
+    }
+}
+
 fn loading_placeholder() -> AnyElement {
     div()
         .size_full()

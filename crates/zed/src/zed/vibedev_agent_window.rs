@@ -142,17 +142,18 @@ pub(crate) fn apply_agent_surface(
     let weak_workspace = workspace.weak_handle();
     let center_pane = workspace.active_pane().clone();
     // The right dock renders this center pane inside its fixed "File" module. A
-    // user-triggered split or zoom would create a *new* registered center pane
-    // (and drift `last_active_center_pane` onto it), after which file-opens land
-    // on a pane the dock never paints — showing nothing. Defuse both entry
-    // points on this pane: disable zoom, and clear the tab-bar buttons (which is
-    // where the Split/Zoom/New affordances live; `set_can_split` only governs
-    // drag-splitting, not these buttons). `center_pane` is an `Entity<Pane>`, so
+    // user-triggered *split* would create a *new* registered center pane (and
+    // drift `last_active_center_pane` onto it), after which file-opens land on a
+    // pane the dock never paints — showing nothing. So hide only the Split
+    // affordance via `set_show_split_button(false)`, keeping New / Zoom /
+    // navigation. Zoom is safe to keep: it does not create a new pane, and the
+    // dock's File body renders a placeholder while this pane is zoomed (the
+    // native `zoomed_overlay` paints it full-screen instead — avoiding a
+    // double-render of the same entity). `center_pane` is an `Entity<Pane>`, so
     // updating it takes a lease on the *pane*, not on this `Workspace` — no
     // double-lease against the `&mut Context<Workspace>` held here.
     center_pane.update(cx, |pane, cx| {
-        pane.set_can_toggle_zoom(false, cx);
-        pane.set_render_tab_bar_buttons(cx, |_pane, _window, _cx| (None, None));
+        pane.set_show_split_button(false, cx);
     });
     let project = workspace.project().clone();
     let right_dock = cx.new(|cx| super::vibedev_right_dock::VibedevRightDock::new(
