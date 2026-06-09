@@ -45,6 +45,7 @@ use agent_client_protocol::schema as acp;
 use agent_ui::subagent_fanout::SubagentFanoutModel;
 use agent_ui::{AgentPanel, AgentPanelEvent, SelectedSubagent};
 use gpui::{Action, App, Entity, FocusHandle, Focusable, Subscription, WeakEntity, prelude::*};
+use markdown::{Markdown, MarkdownElement, MarkdownFont, MarkdownStyle};
 use project_panel::ProjectPanel;
 use terminal_view::terminal_panel::TerminalPanel;
 use ui::{ContextMenu, IconButton, IconName, IconPosition, PopoverMenu, prelude::*};
@@ -140,6 +141,13 @@ pub struct VibedevRightDock {
     /// updates `cx.notify()`) re-renders the Execution panel and auto-surfaces
     /// the module the first time subagent progress appears.
     active_thread_subscription: Option<Subscription>,
+    /// Cached Markdown entity for the drilled-into subagent's current stream.
+    /// `SubagentStep.stream` is a plain `String` that changes as the agent
+    /// streams; parsing it every frame would re-parse the whole buffer, so we
+    /// keep the last `(stream_text, parsed_entity)` and only rebuild the entity
+    /// when the stream text changes. Built/refreshed from `render_execution_panel`
+    /// (which holds `&mut Context<Self>`); rendered read-only.
+    detail_markdown: Option<(String, Entity<Markdown>)>,
     focus_handle: FocusHandle,
     /// Event subscriptions kept alive for the dock's lifetime (dropped with it).
     /// Currently holds the center-pane subscription that auto-surfaces the
@@ -200,6 +208,7 @@ impl VibedevRightDock {
             agent_panel_subscription: None,
             active_thread: None,
             active_thread_subscription: None,
+            detail_markdown: None,
             focus_handle: cx.focus_handle(),
             _subscriptions,
         };
@@ -535,13 +544,14 @@ impl VibedevRightDock {
     /// full subagent reply are intentionally NOT rendered here — only static
     /// status/title/token/count. Streaming + full output are deferred to T8.
     ///
-    /// Lease safety: read-only. Reads through `self.active_thread` (a handle on
-    /// the active thread) and the theme; takes no entity lease. Takes `&App`
-    /// (not `&mut Context<Self>`) so it can be called while `render_dpanel`
-    /// still holds an immutable theme borrow of `cx`.
-    fn render_execution_panel(&self, cx: &App) -> AnyElement {
-        let colors = cx.theme().colors();
-
+    /// Lease safety: reads through `self.active_thread` (a handle on the active
+    /// thread) and the theme; takes no lease on either. Takes `&mut Context<Self>`
+    /// (rather than `&App`) only so the drill-in branch can refresh the
+    /// `detail_markdown` cache via `cx.new(...)` — that builds a *new* `Markdown`
+    /// entity, never updating `self`'s host entity, so there is no re-entrant
+    /// lease. `render_dpanel` builds this body before binding its theme `colors`,
+    /// so the `&mut` borrow here does not collide with that immutable borrow.
+    fn render_execution_panel(&mut self, window: &Window, cx: &mut Context<Self>) -> AnyElement {
         // No active conversation selected yet.
         let Some(thread) = self.active_thread.as_ref() else {
             return execution_empty_state("无活跃会话");
@@ -569,13 +579,46 @@ impl VibedevRightDock {
         // If a subagent is drilled-into and still present in the current model,
         // render its detail view instead of the list. A stale selection (the
         // session was switched, or the node is gone) silently falls back to the
-        // list below. Reading the global here is a pure read on `&App`.
+        // list below. Reading the global here is a pure read.
         if let Some(selected) = SelectedSubagent::get(cx) {
             if let Some(node) = model.node(&selected) {
-                return self.render_subagent_detail(node, cx);
+                // Refresh the Markdown cache for the selected node's live stream.
+                // The stream text changes as the agent streams, but re-parsing it
+                // every frame is wasteful — so we keep the last `(text, entity)`
+                // and only rebuild the entity when the text changes. `node`
+                // borrows the local `model` (not `self`), so mutating
+                // `self.detail_markdown` and calling `cx.new(...)` here is sound;
+                // `cx.new` builds a *fresh* Markdown entity and takes no lease on
+                // this dock.
+                let stream = node.step.as_ref().and_then(|step| step.stream.clone());
+                let markdown = match stream {
+                    Some(text) => {
+                        let needs_rebuild = self
+                            .detail_markdown
+                            .as_ref()
+                            .map(|(cached, _)| cached != &text)
+                            .unwrap_or(true);
+                        if needs_rebuild {
+                            let entity =
+                                cx.new(|cx| Markdown::new(text.clone().into(), None, None, cx));
+                            self.detail_markdown = Some((text, entity));
+                        }
+                        self.detail_markdown
+                            .as_ref()
+                            .map(|(_, entity)| entity.clone())
+                    }
+                    None => {
+                        // Selected node has no stream yet; drop any stale cache so
+                        // a later stream for a *different* node rebuilds cleanly.
+                        self.detail_markdown = None;
+                        None
+                    }
+                };
+                return self.render_subagent_detail(node, markdown, window, cx);
             }
         }
 
+        let colors = cx.theme().colors();
         let running = model.running_count();
         let total = model.total_count();
         let node_count = model.nodes.len();
@@ -673,15 +716,21 @@ impl VibedevRightDock {
     /// module: a back row, the node's status/type/title/tokens, and its current
     /// step (label + the full, un-truncated stream in a scroll region).
     ///
+    /// The current step's `stream` is rendered as Markdown (rich text / code /
+    /// lists) via the pre-parsed `markdown` entity the caller cached, rather than
+    /// as a plain `Label`. `markdown` is `None` when the node has no stream yet.
+    ///
     /// Lease safety: read-only. Reads the passed-in `node` (a borrow into the
-    /// caller's freshly-built `SubagentFanoutModel`) and the theme; takes no
-    /// entity lease and performs no `update`. Takes `&App` so it composes with
-    /// `render_execution_panel`'s immutable theme borrow. The back button's
-    /// `on_click` only writes the `agent_ui` global (`&mut App`) on the click
+    /// caller's freshly-built `SubagentFanoutModel`), the cached `markdown`
+    /// entity (rendered, not updated), and the theme; takes no lease and performs
+    /// no `update`. `MarkdownStyle::themed` needs only `&Window` + `&App`. The
+    /// back button's `on_click` only writes the `agent_ui` global on the click
     /// event path — never from this render.
     fn render_subagent_detail(
         &self,
         node: &agent_ui::subagent_fanout::SubagentNode,
+        markdown: Option<Entity<Markdown>>,
+        window: &Window,
         cx: &App,
     ) -> AnyElement {
         let colors = cx.theme().colors();
@@ -755,12 +804,17 @@ impl VibedevRightDock {
                         this.child(div().flex_1()).child(label)
                     }),
             )
-            // Current step: label plus the full stream (NOT truncated), inside a
-            // scroll region so a long reply stays contained.
+            // Current step: the step label, then the full stream rendered as
+            // Markdown (NOT truncated) inside a scroll region so a long reply
+            // stays contained. The markdown is the caller's cached, pre-parsed
+            // entity for *this* node's stream; rendering it is read-only.
             .map(|this| match node.step.as_ref() {
                 Some(step) => this.child(
                     v_flex()
-                        .flex_none()
+                        .id("vibedev-execution-detail-step")
+                        .flex_1()
+                        .min_h_0()
+                        .overflow_y_scroll()
                         .px_2()
                         .py_1()
                         .gap_1()
@@ -769,8 +823,11 @@ impl VibedevRightDock {
                                 .size(LabelSize::Small)
                                 .color(Color::Muted),
                         )
-                        .when_some(step.stream.clone(), |this, stream| {
-                            this.child(Label::new(stream).size(LabelSize::Small))
+                        .when_some(markdown, |this, markdown| {
+                            this.child(MarkdownElement::new(
+                                markdown,
+                                MarkdownStyle::themed(MarkdownFont::Agent, window, cx),
+                            ))
                         }),
                 ),
                 None => this.child(
@@ -788,17 +845,16 @@ impl VibedevRightDock {
     /// (ACP `update_plan`), one row per entry with a status icon and the entry's
     /// label, plus a header showing completion progress.
     ///
-    /// v1 simplification: the entry label is rendered as the Markdown *source*
-    /// text via `Label`, not a `MarkdownElement`. Rich plan-entry formatting
-    /// (bold/code) is deferred; plain text is sufficient for v1 and avoids the
-    /// agent_ui-private `plan_label_markdown_style` styling helper.
+    /// Each entry's `content` is already an `Entity<Markdown>` on the thread
+    /// (built by `Plan` from the ACP `update_plan` payload), so it is rendered as
+    /// a `MarkdownElement` (rich bold/code/links) rather than as the raw source
+    /// via `Label`. No entity is created here — the thread owns it.
     ///
     /// Lease safety: read-only. Reads through `self.active_thread`, the thread's
-    /// `plan()`, each entry's `content` markdown source, and the theme; takes no
-    /// entity lease and no `update`. Takes `&App` so it composes with
-    /// `render_dpanel`'s immutable theme borrow, exactly like
-    /// `render_execution_panel`.
-    fn render_plan_panel(&self, cx: &App) -> AnyElement {
+    /// `plan()`, and each entry's `content` markdown entity (cloned and rendered,
+    /// never updated), plus the theme; takes no lease and no `update`.
+    /// `MarkdownStyle::themed` needs only `&Window` + `&App`.
+    fn render_plan_panel(&self, window: &Window, cx: &App) -> AnyElement {
         let colors = cx.theme().colors();
 
         // No active conversation selected yet.
@@ -846,9 +902,6 @@ impl VibedevRightDock {
                     acp::PlanEntryStatus::Completed => (IconName::TodoComplete, Color::Success),
                     acp::PlanEntryStatus::Pending | _ => (IconName::TodoPending, Color::Muted),
                 };
-                let completed = matches!(entry.status, acp::PlanEntryStatus::Completed);
-                let label_text = entry.content.read(cx).source().to_string();
-
                 v_flex()
                     .py_1()
                     .px_2()
@@ -859,17 +912,18 @@ impl VibedevRightDock {
                     .child(
                         h_flex()
                             .gap_1p5()
+                            .items_start()
                             .child(
                                 Icon::new(status_icon)
                                     .size(IconSize::Small)
                                     .color(status_color),
                             )
-                            .child(
-                                Label::new(label_text)
-                                    .size(LabelSize::Small)
-                                    .truncate()
-                                    .when(completed, |this| this.color(Color::Muted)),
-                            ),
+                            // Render the entry's pre-parsed markdown (the thread
+                            // owns the `Entity<Markdown>`; we only clone + render).
+                            .child(div().flex_1().min_w_0().child(MarkdownElement::new(
+                                entry.content.clone(),
+                                MarkdownStyle::themed(MarkdownFont::Agent, window, cx),
+                            ))),
                     )
                     .into_any_element()
             }))
@@ -881,28 +935,42 @@ impl VibedevRightDock {
     /// it shares the column and can actually shrink; the body is
     /// `overflow_hidden()` so an oversized child cannot push siblings off-screen.
     fn render_dpanel(
-        &self,
+        &mut self,
         module: DockModule,
-        _window: &mut Window,
+        window: &mut Window,
         cx: &mut Context<Self>,
     ) -> impl IntoElement {
-        let colors = cx.theme().colors();
         let collapsed = self.collapsed.contains(&module);
 
         // Body: each owned panel / the center pane implements `Render`, so its
         // `Entity<_>` handle can be cloned in directly as a child. We unify the
         // (panel | placeholder) branches into `AnyElement`. These are pure
-        // handle clones — no `update`, no `await`, no workspace lease.
+        // handle clones — no `update`, no `await`, no workspace lease. Built
+        // *before* the theme `colors` borrow below so the Execution arm can take
+        // a `&mut Context<Self>` (it refreshes the markdown cache) without
+        // colliding with that immutable borrow of `cx`.
         let body: AnyElement = match module {
             DockModule::Files => self
                 .project_panel
                 .clone()
                 .map(IntoElement::into_any_element)
                 .unwrap_or_else(loading_placeholder),
-            DockModule::File => self.center_pane.clone().into_any_element(),
+            // Render whichever center pane is the *current* file-open target, not
+            // the one captured at construction time. A split moves
+            // `last_active_center_pane` onto the new pane, and file-opens follow
+            // it (`open_path_preview` -> `last_active_center_pane`); rendering the
+            // stale captured pane would show nothing. This is a pure read on the
+            // workspace (`upgrade` + `read`); no lease. Falls back to the captured
+            // pane if the workspace is gone or has no center pane yet.
+            DockModule::File => self
+                .workspace
+                .upgrade()
+                .and_then(|workspace| workspace.read(cx).last_active_center_pane())
+                .unwrap_or_else(|| self.center_pane.clone())
+                .into_any_element(),
             DockModule::Changes => self.changes_pane.clone().into_any_element(),
-            DockModule::Execution => self.render_execution_panel(cx),
-            DockModule::Plan => self.render_plan_panel(cx),
+            DockModule::Execution => self.render_execution_panel(window, cx),
+            DockModule::Plan => self.render_plan_panel(window, cx),
             DockModule::Terminal => self
                 .terminal_panel
                 .clone()
@@ -910,6 +978,7 @@ impl VibedevRightDock {
                 .unwrap_or_else(loading_placeholder),
         };
 
+        let colors = cx.theme().colors();
         let module_index = module.index();
         let (collapse_icon, collapse_id) = if collapsed {
             (IconName::ChevronDown, "vibedev-dpanel-expand")

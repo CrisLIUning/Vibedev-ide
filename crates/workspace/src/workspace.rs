@@ -5815,6 +5815,19 @@ impl Workspace {
         &self.active_pane
     }
 
+    /// The center pane that last held focus, upgraded from its weak handle.
+    ///
+    /// This is the pane that file-open call sites such as `open_path_preview`
+    /// target (see `last_active_center_pane` usage in `open_path`). The VibeDev
+    /// AgentApp right dock reads this so its "File" module renders whichever
+    /// center pane is currently the open target, even after a split moved it off
+    /// the pane captured at dock-construction time.
+    pub fn last_active_center_pane(&self) -> Option<Entity<Pane>> {
+        self.last_active_center_pane
+            .as_ref()
+            .and_then(|pane| pane.upgrade())
+    }
+
     pub fn focused_pane(&self, window: &Window, cx: &App) -> Entity<Pane> {
         for dock in self.all_docks() {
             if dock.focus_handle(cx).contains_focused(window, cx)
