@@ -3517,6 +3517,48 @@ impl ThreadView {
     /// assistant/tool entries, stopping at the next `UserMessage` — and draws the
     /// aggregated tree via [`SubagentFanoutModel`]. Later same-batch entries
     /// render nothing to avoid duplicate cards.
+    /// True when this `ToolCall` is a subagent spawn already represented by the
+    /// fan-out card in the same turn, so the raw "Agent" tool fold should be
+    /// suppressed and the Subagents card left as the single representation.
+    ///
+    /// Matched by title: the agent emits the spawn's ACP tool-call title and the
+    /// `SubagentProgress.title` both from the same agent `description`, and the
+    /// `tool_name` meta our agent sends (`claudeCode.toolName`) is under a key
+    /// Zed's `tool_name_from_meta` doesn't read, so `tool_call.tool_name` /
+    /// `is_subagent()` are unavailable here. Only suppresses when a matching
+    /// fan-out entry exists, so non-subagent tool calls are never hidden.
+    fn tool_call_subsumed_by_fanout(
+        &self,
+        entry_ix: usize,
+        tool_call: &ToolCall,
+        cx: &App,
+    ) -> bool {
+        let title = tool_call.label.read(cx).source().trim().to_owned();
+        if title.is_empty() {
+            return false;
+        }
+        let entries = self.thread.read(cx).entries();
+        let turn_start = entries
+            .get(..entry_ix)
+            .unwrap_or(&[])
+            .iter()
+            .rposition(|entry| matches!(entry, AgentThreadEntry::UserMessage(_)))
+            .map(|ix| ix + 1)
+            .unwrap_or(0);
+        entries
+            .get(turn_start..)
+            .unwrap_or(&[])
+            .iter()
+            .take_while(|entry| !matches!(entry, AgentThreadEntry::UserMessage(_)))
+            .any(|entry| {
+                matches!(
+                    entry,
+                    AgentThreadEntry::SubagentProgress(progress)
+                        if progress.title.trim() == title
+                )
+            })
+    }
+
     fn render_subagent_fanout(
         &self,
         entry_ix: usize,
@@ -5793,25 +5835,32 @@ impl ThreadView {
                 }
             }
             AgentThreadEntry::ToolCall(tool_call) => {
-                let tool_call = self.render_any_tool_call(
-                    self.thread.read(cx).session_id(),
-                    entry_ix,
-                    tool_call,
-                    &self.focus_handle(cx),
-                    ToolCallLayout::Standalone,
-                    window,
-                    cx,
-                );
-
-                if let Some(handle) = self
-                    .entry_view_state
-                    .read(cx)
-                    .entry(entry_ix)
-                    .and_then(|entry| entry.focus_handle(cx))
-                {
-                    tool_call.track_focus(&handle).into_any()
+                // Suppress the raw "Agent" spawn fold when the Subagents fan-out
+                // card already represents it (see tool_call_subsumed_by_fanout),
+                // so the card is the single representation instead of card + fold.
+                if self.tool_call_subsumed_by_fanout(entry_ix, tool_call, cx) {
+                    Empty.into_any()
                 } else {
-                    tool_call.into_any()
+                    let tool_call = self.render_any_tool_call(
+                        self.thread.read(cx).session_id(),
+                        entry_ix,
+                        tool_call,
+                        &self.focus_handle(cx),
+                        ToolCallLayout::Standalone,
+                        window,
+                        cx,
+                    );
+
+                    if let Some(handle) = self
+                        .entry_view_state
+                        .read(cx)
+                        .entry(entry_ix)
+                        .and_then(|entry| entry.focus_handle(cx))
+                    {
+                        tool_call.track_focus(&handle).into_any()
+                    } else {
+                        tool_call.into_any()
+                    }
                 }
             }
             AgentThreadEntry::CompletedPlan(entries) => {
