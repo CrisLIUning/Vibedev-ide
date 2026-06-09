@@ -116,16 +116,24 @@ impl SubagentFanoutModel {
     /// appended. Multiple progress entries for one subagent collapse to the
     /// latest, mirroring [`from_entries`].
     ///
-    /// The placeholder node's `subagent_id` is seeded with its title so the
-    /// per-row `ElementId` / selection key is stable until the real id lands.
+    /// The placeholder node's `subagent_id` is seeded with `"{title}#{index}"`
+    /// (its fold position), **not** the bare title: two folds sharing a
+    /// `description` would otherwise collide on `subagent_id`, fusing their
+    /// per-row `ElementId` (hover/active/click state bleeds between rows) and
+    /// their `SelectedSubagent` key (both rows highlight, drill-in is
+    /// ambiguous). The index keeps each Queued row's id/selection key unique;
+    /// progress still overlays by `title` (folds carry no real id), and once
+    /// real progress lands the row adopts the agent's true `subagent_id`. The
+    /// display `title` is the original — only the synthetic id carries `#index`.
     pub fn from_spawn_folds_and_progress(
         folds: &[(String, String)],
         progress: &[SubagentProgress],
     ) -> Self {
         let mut nodes: Vec<SubagentNode> = folds
             .iter()
-            .map(|(title, agent_type)| SubagentNode {
-                subagent_id: title.clone(),
+            .enumerate()
+            .map(|(index, (title, agent_type))| SubagentNode {
+                subagent_id: format!("{title}#{index}"),
                 agent_type: agent_type.clone(),
                 title: title.clone(),
                 status: SubagentStatus::Queued,
@@ -268,7 +276,11 @@ mod tests {
                 .iter()
                 .all(|node| node.status == SubagentStatus::Queued)
         );
+        // Display title is the original; the synthetic id carries `#index` so
+        // each Queued row's ElementId / selection key is unique.
         assert_eq!(model_a.nodes[0].title, "UI rebrand");
+        assert_eq!(model_a.nodes[0].subagent_id, "UI rebrand#0");
+        assert_eq!(model_a.nodes[1].subagent_id, "i18n sweep#1");
 
         // Frame B: real progress for the first fold (matched by title) overlays
         // its placeholder in place — still two rows, no extra card row, the
@@ -292,6 +304,52 @@ mod tests {
         // The unmatched fold stays a Queued placeholder.
         assert_eq!(model_b.nodes[1].status, SubagentStatus::Queued);
         assert_eq!(model_b.running_count(), 1);
+    }
+
+    #[test]
+    fn duplicate_description_folds_get_unique_placeholder_ids() {
+        // Two folds sharing one description: the Queued placeholders must still
+        // get distinct `subagent_id`s (so their per-row ElementId / selection
+        // key don't collide) while sharing the display title.
+        let folds = vec![
+            ("Audit module".to_string(), "Explore".to_string()),
+            ("Audit module".to_string(), "Explore".to_string()),
+        ];
+        let model_a = SubagentFanoutModel::from_spawn_folds_and_progress(&folds, &[]);
+        assert_eq!(model_a.nodes.len(), 2);
+        assert_eq!(model_a.nodes[0].title, "Audit module");
+        assert_eq!(model_a.nodes[1].title, "Audit module");
+        assert_ne!(
+            model_a.nodes[0].subagent_id, model_a.nodes[1].subagent_id,
+            "duplicate-description placeholders must not share a subagent_id"
+        );
+        assert_eq!(model_a.nodes[0].subagent_id, "Audit module#0");
+        assert_eq!(model_a.nodes[1].subagent_id, "Audit module#1");
+
+        // Progress for one such subagent still overlays a Queued placeholder by
+        // title (the agent emits the description identically on both streams).
+        // The first matching placeholder is claimed; the other stays Queued and
+        // retains its unique synthetic id.
+        let progress = vec![SubagentProgress {
+            subagent_id: "real-1".into(),
+            agent_type: "Explore".into(),
+            title: "Audit module".into(),
+            status: SubagentStatus::Running,
+            tokens_used: Some(100),
+            parent_id: None,
+            batch_id: Some("b".into()),
+            step: None,
+            tool_calls: Vec::new(),
+            reply: None,
+        }];
+        let model_b = SubagentFanoutModel::from_spawn_folds_and_progress(&folds, &progress);
+        assert_eq!(model_b.nodes.len(), 2, "no extra appended row");
+        assert_eq!(model_b.nodes[0].subagent_id, "real-1");
+        assert_eq!(model_b.nodes[0].status, SubagentStatus::Running);
+        // The unclaimed twin keeps its unique placeholder id and Queued status.
+        assert_eq!(model_b.nodes[1].subagent_id, "Audit module#1");
+        assert_eq!(model_b.nodes[1].status, SubagentStatus::Queued);
+        assert_ne!(model_b.nodes[0].subagent_id, model_b.nodes[1].subagent_id);
     }
 
     #[test]

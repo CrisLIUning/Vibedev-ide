@@ -3546,27 +3546,53 @@ impl ThreadView {
     /// fold, before progress exists. Title prefers the tool-call's rendered
     /// label (the agent's `description`, identical to the later
     /// `SubagentProgress.title`); agent type comes from `raw_input.subagent_type`.
+    ///
+    /// Streaming first-frame caveat: native Anthropic emits the spawn
+    /// `tool_call` from `content_block_start` while its input is still `{}`; the
+    /// real `description` arrives later via `input_json_delta` (the bridge skips
+    /// those) and rewrites the label on the `tool_call_update`. On that first
+    /// frame the bridge's `toolInfoFromToolUse` falls back to the literal
+    /// `"Task"` (bridge.ts:420), which would paint every row "Task" until the
+    /// update lands. When the label is the bare `"Task"` fallback *and*
+    /// `raw_input` carries no usable `description`, we seed a neutral placeholder
+    /// (the `subagent_type`, else "Subagent") instead of the misleading "Task";
+    /// the real `tool_call_update` then rewrites the row's label to the true
+    /// name. We never fall back to rendering a bare fold here — that would bring
+    /// the fold→card flicker back.
     fn spawn_fold_label(&self, tool_call: &ToolCall, cx: &App) -> (String, String) {
         let label = tool_call.label.read(cx).source().trim().to_owned();
         let input = match tool_call.raw_input.as_ref() {
             Some(serde_json::Value::Object(input)) => Some(input),
             _ => None,
         };
-        let title = if !label.is_empty() {
-            label
-        } else {
-            input
-                .and_then(|input| input.get("description"))
-                .and_then(|v| v.as_str())
-                .unwrap_or("")
-                .trim()
-                .to_owned()
-        };
+        let raw_description = input
+            .and_then(|input| input.get("description"))
+            .and_then(|v| v.as_str())
+            .map(str::trim)
+            .filter(|description| !description.is_empty());
         let agent_type = input
             .and_then(|input| input.get("subagent_type"))
             .and_then(|v| v.as_str())
             .unwrap_or("Agent")
             .to_owned();
+        let title = if !label.is_empty() && label != "Task" {
+            // Rendered label is the source of truth once it's real — but not
+            // when it's the streaming "Task" fallback masquerading as a title.
+            label
+        } else if let Some(description) = raw_description {
+            // No usable label, but raw_input still carries a real description.
+            description.to_owned()
+        } else {
+            // First-frame streaming placeholder: no real description yet and the
+            // label is empty or the bare "Task" fallback. Seed a neutral title
+            // (the agent_type, else "Subagent") rather than the misleading
+            // "Task"; the tool_call_update's real description rewrites it later.
+            if agent_type != "Agent" {
+                agent_type.clone()
+            } else {
+                "Subagent".to_owned()
+            }
+        };
         (title, agent_type)
     }
 
@@ -3639,27 +3665,30 @@ impl ThreadView {
             return Some(indices);
         }
 
-        // Fallback path: maximal contiguous run of (unmarked) spawn folds.
-        let is_unmarked_spawn = |ix: usize| match entries.get(ix) {
-            Some(AgentThreadEntry::ToolCall(tool_call)) => {
-                self.tool_call_is_subagent_spawn(tool_call)
-                    && tool_call
-                        .subagent_spawn
-                        .as_ref()
-                        .and_then(|spawn| spawn.batch_id.as_ref())
-                        .is_none()
-            }
-            _ => false,
-        };
-        let mut start = entry_ix;
-        while start > turn_start && is_unmarked_spawn(start - 1) {
-            start -= 1;
-        }
-        let mut end = entry_ix;
-        while end + 1 < turn_end && is_unmarked_spawn(end + 1) {
-            end += 1;
-        }
-        Some((start..=end).collect())
+        // Fallback path (replay / legacy / non-Anthropic that emit the marker
+        // flag-only, so `batch_id` is `None`): group **every** unmarked spawn
+        // fold in the whole turn, mirroring the marker path's full-turn scan. A
+        // contiguous-run scan would split one parallel batch into two cards the
+        // moment a single text / thinking / non-spawn tool entry interleaves
+        // between two of its spawn folds (which the agent routinely emits). With
+        // no `batch_id` to distinguish two separate batches in one turn, the
+        // whole turn is the only safe grouping key — the same assumption the
+        // legacy `SubagentProgress`-anchored path makes via its `None == None`
+        // batch grouping.
+        let indices = (turn_start..turn_end)
+            .filter(|&ix| match entries.get(ix) {
+                Some(AgentThreadEntry::ToolCall(tool_call)) => {
+                    self.tool_call_is_subagent_spawn(tool_call)
+                        && tool_call
+                            .subagent_spawn
+                            .as_ref()
+                            .and_then(|spawn| spawn.batch_id.as_ref())
+                            .is_none()
+                }
+                _ => false,
+            })
+            .collect();
+        Some(indices)
     }
 
     /// The fan-out model for the batch anchored at the spawn fold `fold_indices`:
@@ -3683,8 +3712,26 @@ impl ThreadView {
             })
             .collect();
 
+        // This batch's marker `batch_id`, read off the first fold (every fold in
+        // a marked batch shares it; see `spawn_fold_batch_indices`). When the
+        // batch is marked we gate collected progress on this id too: a single
+        // turn can hold two marker batches whose descriptions overlap, and
+        // title-only matching would let batch A's card vacuum up batch B's
+        // progress. When `None` (replay / legacy / no marker) there's no better
+        // key, so we keep title-only matching.
+        let batch_id = fold_indices
+            .first()
+            .and_then(|&ix| match entries.get(ix) {
+                Some(AgentThreadEntry::ToolCall(tool_call)) => tool_call
+                    .subagent_spawn
+                    .as_ref()
+                    .and_then(|spawn| spawn.batch_id.clone()),
+                _ => None,
+            });
+
         // The real progress for this batch: same-turn `SubagentProgress` whose
-        // title matches one of our fold titles. Spawn folds never carry a
+        // title matches one of our fold titles (and, when this batch is marked,
+        // whose `batch_id` matches ours). Spawn folds never carry a
         // `subagent_id` and progress never carries the spawn's `batch_id` until
         // the subagent starts, so identity across the two streams is the agent's
         // `description` string. We scope to the turn to avoid cross-turn bleed.
@@ -3704,7 +3751,13 @@ impl ThreadView {
             .iter()
             .filter_map(|entry| match entry {
                 AgentThreadEntry::SubagentProgress(progress)
-                    if fold_titles.iter().any(|t| t == progress.title.trim()) =>
+                    if fold_titles.iter().any(|t| t == progress.title.trim())
+                        && match batch_id.as_deref() {
+                            // Marked batch: progress must carry our batch_id.
+                            Some(batch_id) => progress.batch_id.as_deref() == Some(batch_id),
+                            // Unmarked batch: no batch_id to compare on.
+                            None => true,
+                        } =>
                 {
                     Some(progress.clone())
                 }
@@ -3717,20 +3770,31 @@ impl ThreadView {
 
     /// True when a spawn *fold* earlier in this `SubagentProgress`'s turn already
     /// owns a fold-anchored fan-out card whose placeholder row this progress
-    /// matches (by the agent's `description` title). When true, the
-    /// `SubagentProgress` arm must render nothing: the fold-anchored card has
-    /// already overlaid this progress's real status onto its row. When false
-    /// (no fold in the turn, e.g. a legacy agent that never emitted the marker
-    /// or the shape), the progress arm renders the card itself as a fallback.
+    /// matches. When true, the `SubagentProgress` arm must render nothing: the
+    /// fold-anchored card has already overlaid this progress's real status onto
+    /// its row. When false (no fold in the turn, e.g. a legacy agent that never
+    /// emitted the marker or the shape), the progress arm renders the card
+    /// itself as a fallback.
+    ///
+    /// Matching key, by progress shape:
+    /// - Non-empty title → match the agent's `description` against a fold's
+    ///   `spawn_fold_label` title (the streams share the description string;
+    ///   folds carry no `subagent_id` until the subagent starts).
+    /// - Empty / whitespace title → the description hasn't streamed in yet, so
+    ///   title-matching is impossible. Fall back to `batch_id`: if this
+    ///   progress's `batch_id` matches a same-turn spawn fold's marker
+    ///   `batch_id`, yield to that fold. Without this, an empty-title progress
+    ///   never yields and the `SubagentProgress` arm draws a *second* card on
+    ///   top of the fold-anchored one (the fold arm keys off the marker/shape,
+    ///   not the title, so it draws regardless).
     fn progress_covered_by_spawn_fold(&self, entry_ix: usize, cx: &App) -> bool {
         let entries = self.thread.read(cx).entries();
-        let title = match entries.get(entry_ix) {
-            Some(AgentThreadEntry::SubagentProgress(progress)) => progress.title.trim().to_owned(),
+        let (title, progress_batch_id) = match entries.get(entry_ix) {
+            Some(AgentThreadEntry::SubagentProgress(progress)) => {
+                (progress.title.trim().to_owned(), progress.batch_id.clone())
+            }
             _ => return false,
         };
-        if title.is_empty() {
-            return false;
-        }
         let turn_start = self.turn_start_for(entry_ix, cx);
         entries
             .get(turn_start..)
@@ -3741,8 +3805,21 @@ impl ThreadView {
                 AgentThreadEntry::ToolCall(tool_call)
                     if self.tool_call_is_subagent_spawn(tool_call) =>
                 {
-                    let (fold_title, _) = self.spawn_fold_label(tool_call, cx);
-                    fold_title.trim() == title
+                    if title.is_empty() {
+                        // No title to match on yet — fall back to batch_id, but
+                        // only when both sides actually carry one (a `None ==
+                        // None` match would wrongly fuse unrelated marker-less
+                        // folds and progress).
+                        let fold_batch_id = tool_call
+                            .subagent_spawn
+                            .as_ref()
+                            .and_then(|spawn| spawn.batch_id.as_deref());
+                        progress_batch_id.is_some()
+                            && fold_batch_id == progress_batch_id.as_deref()
+                    } else {
+                        let (fold_title, _) = self.spawn_fold_label(tool_call, cx);
+                        fold_title.trim() == title
+                    }
                 }
                 _ => false,
             })
