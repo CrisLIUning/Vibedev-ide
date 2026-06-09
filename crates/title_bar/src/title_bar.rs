@@ -387,7 +387,7 @@ impl Render for TitleBar {
                 // the IDE title bar. Dispatches the OpenAgentAppWindow action that
                 // is registered on every workspace (see vibedev_agent_window.rs).
                 .child(
-                    IconButton::new("vibedev-open-agent-app", IconName::ZedAgent)
+                    IconButton::new("vibedev-open-agent-app", IconName::Thread)
                         .icon_size(IconSize::Small)
                         .tooltip(move |_, cx| {
                             Tooltip::for_action("Open AgentApp", &OpenAgentAppWindow, cx)
