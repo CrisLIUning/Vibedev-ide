@@ -3620,14 +3620,41 @@ impl ThreadView {
                             });
 
                             v_flex()
+                                .id((
+                                    ElementId::from("subagent-card"),
+                                    SharedString::from(node.subagent_id.clone()),
+                                ))
                                 .py_1()
                                 .px_2()
                                 .gap_1()
+                                .cursor_pointer()
                                 .when(index < node_count - 1, |this| {
                                     this.border_b_1().border_color(row_border)
                                 })
                                 // Indent child subagents one level under a parent.
                                 .when(node.is_child(), |this| this.pl_4())
+                                // Highlight the card currently drilled-into in the
+                                // Execution detail panel. `cx` (a `&Context<Self>`)
+                                // derefs to `&App`, so reading the global here is a
+                                // pure read with no lease.
+                                .when(
+                                    crate::SelectedSubagent::get(cx).as_deref()
+                                        == Some(node.subagent_id.as_str()),
+                                    |this| {
+                                        this.border_1()
+                                            .border_color(cx.theme().colors().border_focused)
+                                    },
+                                )
+                                // Drilling into a subagent only writes the
+                                // `agent_ui` global; `on_click`'s closure receives
+                                // `&mut App`, which is all `SelectedSubagent::set`
+                                // needs. No entity is leased here.
+                                .on_click({
+                                    let id = node.subagent_id.clone();
+                                    move |_event, _window, cx: &mut App| {
+                                        crate::SelectedSubagent::set(Some(id.clone()), cx);
+                                    }
+                                })
                                 .child(
                                     h_flex()
                                         .gap_1p5()

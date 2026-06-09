@@ -43,7 +43,7 @@ use std::sync::atomic::AtomicUsize;
 
 use agent_client_protocol::schema as acp;
 use agent_ui::subagent_fanout::SubagentFanoutModel;
-use agent_ui::{AgentPanel, AgentPanelEvent};
+use agent_ui::{AgentPanel, AgentPanelEvent, SelectedSubagent};
 use gpui::{Action, App, Entity, FocusHandle, Focusable, Subscription, WeakEntity, prelude::*};
 use project_panel::ProjectPanel;
 use terminal_view::terminal_panel::TerminalPanel;
@@ -203,6 +203,13 @@ impl VibedevRightDock {
             focus_handle: cx.focus_handle(),
             _subscriptions,
         };
+        // Re-render whenever the drilled-into subagent selection changes (a
+        // fan-out card was clicked in the conversation, a dock list row was
+        // clicked, or the detail panel's back button cleared it). The callback
+        // ONLY notifies — it never writes the global or updates another entity,
+        // so it cannot re-enter the `set_global -> observe -> set_global` cycle.
+        this._subscriptions
+            .push(cx.observe_global::<SelectedSubagent>(|_this, cx| cx.notify()));
         // Files is enabled by default, so eagerly load the project panel. The
         // center pane needs no loading (it is already live); the terminal loads
         // lazily when its module is first enabled.
@@ -313,6 +320,14 @@ impl VibedevRightDock {
                     this.on_thread_updated(&thread, cx);
                 })
             });
+            // The active conversation changed, so any subagent drilled-into from
+            // the previous thread no longer exists in the new model: clear the
+            // selection so the Execution panel falls back to its list. This is
+            // the ONLY place the dock writes the global, and it runs on the
+            // `ActiveViewChanged` event path (never from `render` or the global
+            // observer). `cx` is a `&mut Context<Self>`, which derefs to the
+            // `&mut App` that `SelectedSubagent::set` needs.
+            SelectedSubagent::set(None, cx);
         }
         // Initial resolution and every switch both try to auto-surface.
         if let Some(thread) = thread.as_ref() {
@@ -551,6 +566,16 @@ impl VibedevRightDock {
             return execution_empty_state("暂无子任务执行");
         }
 
+        // If a subagent is drilled-into and still present in the current model,
+        // render its detail view instead of the list. A stale selection (the
+        // session was switched, or the node is gone) silently falls back to the
+        // list below. Reading the global here is a pure read on `&App`.
+        if let Some(selected) = SelectedSubagent::get(cx) {
+            if let Some(node) = model.node(&selected) {
+                return self.render_subagent_detail(node, cx);
+            }
+        }
+
         let running = model.running_count();
         let total = model.total_count();
         let node_count = model.nodes.len();
@@ -595,14 +620,28 @@ impl VibedevRightDock {
                 });
 
                 v_flex()
+                    .id((
+                        ElementId::from("vibedev-execution-row"),
+                        SharedString::from(node.subagent_id.clone()),
+                    ))
                     .py_1()
                     .px_2()
                     .gap_1()
+                    .cursor_pointer()
                     .when(index < node_count - 1, |this| {
                         this.border_b_1().border_color(row_border)
                     })
                     // Indent child subagents one level under their parent.
                     .when(node.is_child(), |this| this.pl_4())
+                    // Dock-side drill-in entry point: clicking a row writes the
+                    // same `agent_ui` global the conversation cards write. The
+                    // closure only needs `&mut App` to set the global; no lease.
+                    .on_click({
+                        let id = node.subagent_id.clone();
+                        move |_event, _window, cx: &mut App| {
+                            SelectedSubagent::set(Some(id.clone()), cx);
+                        }
+                    })
                     .child(
                         h_flex()
                             .gap_1p5()
@@ -627,6 +666,121 @@ impl VibedevRightDock {
                     )
                     .into_any_element()
             }))
+            .into_any_element()
+    }
+
+    /// Renders the drill-in detail for a single subagent inside the Execution
+    /// module: a back row, the node's status/type/title/tokens, and its current
+    /// step (label + the full, un-truncated stream in a scroll region).
+    ///
+    /// Lease safety: read-only. Reads the passed-in `node` (a borrow into the
+    /// caller's freshly-built `SubagentFanoutModel`) and the theme; takes no
+    /// entity lease and performs no `update`. Takes `&App` so it composes with
+    /// `render_execution_panel`'s immutable theme borrow. The back button's
+    /// `on_click` only writes the `agent_ui` global (`&mut App`) on the click
+    /// event path — never from this render.
+    fn render_subagent_detail(
+        &self,
+        node: &agent_ui::subagent_fanout::SubagentNode,
+        cx: &App,
+    ) -> AnyElement {
+        let colors = cx.theme().colors();
+
+        // Status icon + color + label, matching `render_execution_panel`'s
+        // list rows.
+        let (status_icon, status_color, status_label) = match node.status {
+            acp_thread::SubagentStatus::Running => {
+                (IconName::ArrowCircle, Color::Accent, "运行中")
+            }
+            acp_thread::SubagentStatus::Done => (IconName::Check, Color::Success, "已完成"),
+            acp_thread::SubagentStatus::Failed => (IconName::XCircle, Color::Error, "失败"),
+            acp_thread::SubagentStatus::Queued => (IconName::Circle, Color::Muted, "排队中"),
+        };
+
+        let tokens_label = node.tokens_used.map(|tokens| {
+            Label::new(format!("{tokens} tok"))
+                .size(LabelSize::Small)
+                .color(Color::Muted)
+        });
+
+        v_flex()
+            .id("vibedev-execution-detail")
+            .size_full()
+            .overflow_y_scroll()
+            // Back row: returns to the list by clearing the global selection.
+            .child(
+                h_flex()
+                    .flex_none()
+                    .px_2()
+                    .py_1()
+                    .gap_1p5()
+                    .border_b_1()
+                    .border_color(colors.border)
+                    .child(
+                        IconButton::new("vibedev-execution-detail-back", IconName::ArrowLeft)
+                            .icon_size(IconSize::Small)
+                            .on_click(|_event, _window, cx: &mut App| {
+                                SelectedSubagent::set(None, cx);
+                            }),
+                    )
+                    .child(
+                        Label::new(node.agent_type.clone())
+                            .size(LabelSize::Small)
+                            .color(Color::Muted),
+                    )
+                    .child(
+                        Label::new(node.title.clone())
+                            .size(LabelSize::Small)
+                            .truncate(),
+                    ),
+            )
+            // Status + token summary row.
+            .child(
+                h_flex()
+                    .flex_none()
+                    .px_2()
+                    .py_1()
+                    .gap_1p5()
+                    .child(
+                        Icon::new(status_icon)
+                            .size(IconSize::Small)
+                            .color(status_color),
+                    )
+                    .child(
+                        Label::new(status_label)
+                            .size(LabelSize::Small)
+                            .color(Color::Muted),
+                    )
+                    .when_some(tokens_label, |this, label| {
+                        this.child(div().flex_1()).child(label)
+                    }),
+            )
+            // Current step: label plus the full stream (NOT truncated), inside a
+            // scroll region so a long reply stays contained.
+            .map(|this| match node.step.as_ref() {
+                Some(step) => this.child(
+                    v_flex()
+                        .flex_none()
+                        .px_2()
+                        .py_1()
+                        .gap_1()
+                        .child(
+                            Label::new(step.label.clone())
+                                .size(LabelSize::Small)
+                                .color(Color::Muted),
+                        )
+                        .when_some(step.stream.clone(), |this, stream| {
+                            this.child(Label::new(stream).size(LabelSize::Small))
+                        }),
+                ),
+                None => this.child(
+                    div()
+                        .flex_none()
+                        .px_2()
+                        .py_1()
+                        .child(Label::new("暂无步骤详情").color(Color::Muted)),
+                ),
+            })
             .into_any_element()
     }
 

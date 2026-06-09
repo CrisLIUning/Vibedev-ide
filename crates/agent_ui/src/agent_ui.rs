@@ -26,6 +26,7 @@ mod model_selector;
 mod model_selector_popover;
 mod profile_selector;
 pub mod subagent_fanout;
+mod subagent_selection;
 mod terminal_codegen;
 mod terminal_inline_assistant;
 pub mod terminal_thread_metadata_store;
@@ -77,6 +78,7 @@ pub use crate::agent_panel::{
 };
 use crate::agent_registry_ui::AgentRegistryPage;
 pub use crate::inline_assistant::InlineAssistant;
+pub use crate::subagent_selection::SelectedSubagent;
 pub use crate::thread_metadata_store::ThreadId;
 pub use agent_diff::{AgentDiffPane, AgentDiffToolbar};
 pub use conversation_factory::create_conversation_view;
