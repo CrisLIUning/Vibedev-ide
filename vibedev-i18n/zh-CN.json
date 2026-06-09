@@ -17652,6 +17652,9 @@
         "Skills have replaced Rules": "技能已取代规则"
     },
     "zed/crates/title_bar/src/title_bar.rs": {
+        "Open AgentApp": "打开 Agent 应用",
+        "Open IDE": "打开 IDE",
+        "Toggle Right Panel": "切换右侧面板",
         "stories": "",
         "macos": "",
         "title-bar": "",
@@ -20242,6 +20245,15 @@
         "open_log_file": "",
         "Open Raw Log File": "打开原始日志文件",
         "file://{}": ""
+    },
+    "zed/crates/zed/src/zed/vibedev_right_dock.rs": {
+        "Files": "文件列表",
+        "File": "文件",
+        "Changes": "更改",
+        "Execution": "执行",
+        "Plan": "计划",
+        "Terminal": "终端",
+        "Panels": "面板"
     },
     "zed/crates/zed/src/zed.rs": {
         "Created project with .zed/settings.json containing UNIQUEVALUE": "创建了包含 UNIQUEVALUE 的 .zed/设置.json 的项目",
