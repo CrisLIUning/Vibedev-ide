@@ -188,6 +188,36 @@ pub struct SubagentProgress {
     pub parent_id: Option<String>,
     #[serde(default)]
     pub step: Option<SubagentStep>,
+    /// Incremental structured tool-call trace items for *this* progress message.
+    /// Zed accumulates these onto the matching entry (see
+    /// `push_subagent_progress`) so the Execution detail panel can render each
+    /// tool invocation as a compact, expandable card instead of a flat text
+    /// trace. Empty for agents that only emit the legacy `step.stream` text.
+    #[serde(default)]
+    pub tool_calls: Vec<SubagentToolCall>,
+    /// Final reply markdown, present only on the terminal (done/failed) progress
+    /// message. Overrides any previously stored reply.
+    #[serde(default)]
+    pub reply: Option<String>,
+}
+
+/// One structured trace item within a `SubagentProgress`: a tool invocation, a
+/// tool result, or a free-text narration line. Paired by `tool_use_id` in the
+/// UI so a `toolUse`/`toolResult` with the same id render as a single card.
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct SubagentToolCall {
+    pub kind: String,
+    #[serde(default)]
+    pub tool_use_id: Option<String>,
+    #[serde(default)]
+    pub tool_name: Option<String>,
+    #[serde(default)]
+    pub title: Option<String>,
+    #[serde(default)]
+    pub output: Option<String>,
+    #[serde(default)]
+    pub is_error: Option<bool>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
@@ -2086,11 +2116,14 @@ impl AcpThread {
             // just the last step. A terminal status flip (done/failed) arrives
             // with no `step`, so we preserve the trace accumulated so far and
             // only let the new status/title take effect.
-            let existing_stream = match &self.entries[index] {
-                AgentThreadEntry::SubagentProgress(existing) => {
-                    existing.step.as_ref().and_then(|step| step.stream.clone())
-                }
-                _ => None,
+            let (existing_stream, existing_tool_calls, existing_reply) = match &self.entries[index]
+            {
+                AgentThreadEntry::SubagentProgress(existing) => (
+                    existing.step.as_ref().and_then(|step| step.stream.clone()),
+                    existing.tool_calls.clone(),
+                    existing.reply.clone(),
+                ),
+                _ => (None, Vec::new(), None),
             };
             match &mut progress.step {
                 Some(step) => {
@@ -2125,6 +2158,29 @@ impl AcpThread {
                         });
                     }
                 }
+            }
+            // Accumulate structured tool-call items the same way as `step.stream`:
+            // each progress carries only the *new* items, so prepend the
+            // previously accumulated ones and cap the total at the most recent
+            // entries to bound memory for a long-running subagent.
+            let new_tool_calls = std::mem::take(&mut progress.tool_calls);
+            let mut tool_calls = existing_tool_calls;
+            tool_calls.extend(new_tool_calls);
+            const MAX_TOOL_CALLS: usize = 200;
+            if tool_calls.len() > MAX_TOOL_CALLS {
+                let drop = tool_calls.len() - MAX_TOOL_CALLS;
+                tool_calls.drain(0..drop);
+            }
+            progress.tool_calls = tool_calls;
+            // A non-empty reply (only sent on the terminal message) overrides any
+            // stored reply; otherwise keep what we had so a status-only flip does
+            // not wipe an already-delivered reply.
+            if progress
+                .reply
+                .as_ref()
+                .map_or(true, |reply| reply.is_empty())
+            {
+                progress.reply = existing_reply;
             }
             self.entries[index] = AgentThreadEntry::SubagentProgress(progress);
             cx.emit(AcpThreadEvent::EntryUpdated(index));

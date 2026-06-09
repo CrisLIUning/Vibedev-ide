@@ -7,7 +7,7 @@
 //! consumes this model; keeping the logic here makes it unit-testable without
 //! a `TestAppContext`.
 
-use acp_thread::{SubagentProgress, SubagentStatus, SubagentStep};
+use acp_thread::{SubagentProgress, SubagentStatus, SubagentStep, SubagentToolCall};
 
 /// One fanned-out subagent, aggregated from its latest `SubagentProgress`.
 #[derive(Clone, Debug, PartialEq)]
@@ -19,6 +19,12 @@ pub struct SubagentNode {
     pub tokens_used: Option<u64>,
     pub parent_id: Option<String>,
     pub step: Option<SubagentStep>,
+    /// Accumulated structured tool-call trace for this subagent (the thread
+    /// folds each progress's increment in via `push_subagent_progress`).
+    /// Rendered as expandable cards in the Execution detail panel.
+    pub tool_calls: Vec<SubagentToolCall>,
+    /// The subagent's final reply markdown, present once it completes.
+    pub reply: Option<String>,
 }
 
 impl SubagentNode {
@@ -31,6 +37,8 @@ impl SubagentNode {
             tokens_used: progress.tokens_used,
             parent_id: progress.parent_id.clone(),
             step: progress.step.clone(),
+            tool_calls: progress.tool_calls.clone(),
+            reply: progress.reply.clone(),
         }
     }
 
@@ -120,6 +128,8 @@ mod tests {
                 tokens_used: Some(52000),
                 parent_id: None,
                 step: None,
+                tool_calls: Vec::new(),
+                reply: None,
             },
             SubagentProgress {
                 subagent_id: "b".into(),
@@ -134,6 +144,8 @@ mod tests {
                     status: "running".into(),
                     stream: Some("发现 About Zed…".into()),
                 }),
+                tool_calls: Vec::new(),
+                reply: None,
             },
         ];
         let model = SubagentFanoutModel::from_entries(&progresses);
@@ -153,6 +165,8 @@ mod tests {
                 tokens_used: Some(1000),
                 parent_id: None,
                 step: None,
+                tool_calls: Vec::new(),
+                reply: None,
             },
             SubagentProgress {
                 subagent_id: "a".into(),
@@ -162,6 +176,8 @@ mod tests {
                 tokens_used: Some(2000),
                 parent_id: None,
                 step: None,
+                tool_calls: Vec::new(),
+                reply: None,
             },
         ];
         let model = SubagentFanoutModel::from_entries(&progresses);
@@ -186,6 +202,8 @@ mod tests {
                 status: "done".into(),
                 stream: Some("…".into()),
             }),
+            tool_calls: Vec::new(),
+            reply: None,
         }];
         let model = SubagentFanoutModel::from_entries(&progresses);
         let node = model.node("child").unwrap();

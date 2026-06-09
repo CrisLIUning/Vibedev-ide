@@ -148,6 +148,12 @@ pub struct VibedevRightDock {
     /// when the stream text changes. Built/refreshed from `render_execution_panel`
     /// (which holds `&mut Context<Self>`); rendered read-only.
     detail_markdown: Option<(String, Entity<Markdown>)>,
+    /// `toolUseId`s of structured tool-call cards the user has expanded in the
+    /// Execution detail panel. Toggled from each card's click handler (mutates
+    /// `self` + `cx.notify()` only); read by `render_subagent_detail` to decide
+    /// whether to show a card's output. Stale ids for cards no longer present
+    /// are harmless (membership is only ever queried by current cards).
+    expanded_tool_calls: HashSet<String>,
     focus_handle: FocusHandle,
     /// Event subscriptions kept alive for the dock's lifetime (dropped with it).
     /// Currently holds the center-pane subscription that auto-surfaces the
@@ -209,6 +215,7 @@ impl VibedevRightDock {
             active_thread: None,
             active_thread_subscription: None,
             detail_markdown: None,
+            expanded_tool_calls: HashSet::new(),
             focus_handle: cx.focus_handle(),
             _subscriptions,
         };
@@ -581,19 +588,24 @@ impl VibedevRightDock {
         if let Some(selected) = SelectedSubagent::get(cx) {
             if let Some(node) = model.node(&selected) {
                 // Refresh the Markdown cache for the selected node's *final
-                // reply* only — the tool-trace lines are rendered as plain
-                // `Label`s by `render_subagent_detail`, so they need no Markdown
-                // entity. We cache `(reply_source, entity)` and only rebuild when
-                // the reply text changes, since re-parsing every frame is
-                // wasteful. `node` borrows the local `model` (not `self`), so
-                // mutating `self.detail_markdown` and calling `cx.new(...)` here
-                // is sound; `cx.new` builds a *fresh* Markdown entity and takes no
-                // lease on this dock.
-                let reply_source = node
-                    .step
-                    .as_ref()
-                    .and_then(|step| step.stream.as_deref())
-                    .and_then(|stream| split_subagent_stream(stream).1);
+                // reply* only — the structured tool-call cards are rendered as
+                // plain elements by `render_subagent_detail`, so they need no
+                // Markdown entity. We cache `(reply_text, entity)` keyed on the
+                // reply source and only rebuild when it changes, since re-parsing
+                // every frame is wasteful. `node` borrows the local `model` (not
+                // `self`), so mutating `self.detail_markdown` and calling
+                // `cx.new(...)` here is sound; `cx.new` builds a *fresh* Markdown
+                // entity and takes no lease on this dock. The legacy
+                // `step.stream` reply marker is used as a fallback for agents that
+                // have not yet adopted the structured `reply` field.
+                let reply_source = node.reply.clone().filter(|reply| !reply.is_empty()).or_else(
+                    || {
+                        node.step
+                            .as_ref()
+                            .and_then(|step| step.stream.as_deref())
+                            .and_then(|stream| split_subagent_stream(stream).1)
+                    },
+                );
                 let reply_markdown = match reply_source {
                     Some(text) => {
                         let needs_rebuild = self
@@ -716,32 +728,42 @@ impl VibedevRightDock {
     }
 
     /// Renders the drill-in detail for a single subagent inside the Execution
-    /// module: a back row, the node's status/type/title/tokens, and its current
-    /// step rendered as a *compact, small-font tool trace* (one row per stream
-    /// line) followed by the final reply.
+    /// module: a back row, the node's status/type/title/tokens, the structured
+    /// tool-call trace rendered as *compact, expandable cards*, and finally the
+    /// subagent's final reply.
     ///
-    /// The step's `stream` (see the agent's `extractSubagentStreamText`) is split
-    /// by `split_subagent_stream` into trace lines and a reply. Trace lines are
-    /// rendered tightly as `XSmall` `Label`s — `→ …` tool calls get an accent
-    /// arrow, `← …` results are muted and indented, plain lines are muted — to
-    /// mirror a Claude Code transcript. The final reply (the passed `markdown`
-    /// entity the caller cached for the reply portion, rendered at a reduced font
-    /// size) keeps rich Markdown; `markdown` is `None` when there is no reply yet.
+    /// When the node carries structured `tool_calls` (the agent emits them per
+    /// progress; the thread accumulates them), each `toolUse` is paired with the
+    /// `toolResult` sharing its `toolUseId` into one card: a status icon (pending
+    /// = accent spinner, ok = green check, error = red ✗), the tool name, a muted
+    /// truncated title, and a chevron. Clicking a card toggles its `toolUseId` in
+    /// `self.expanded_tool_calls`, revealing the result output beneath. `text`
+    /// items render as a single muted line. Agents that have not adopted the
+    /// structured trace fall back to the legacy `step.stream` text rendering
+    /// (`→ …`/`← …`/plain lines).
     ///
-    /// Lease safety: read-only. Reads the passed-in `node` (a borrow into the
-    /// caller's freshly-built `SubagentFanoutModel`), the cached `markdown`
-    /// entity (rendered, not updated), and the theme; takes no lease and performs
-    /// no `update`. `MarkdownStyle::themed` needs only `&Window` + `&App`. The
-    /// back button's `on_click` only writes the `agent_ui` global on the click
-    /// event path — never from this render.
+    /// The final reply (the passed `markdown` entity the caller cached for the
+    /// reply portion, rendered at a reduced font size) keeps rich Markdown;
+    /// `markdown` is `None` when there is no reply yet.
+    ///
+    /// Lease safety: read-only with respect to `self`'s fields — it reads the
+    /// passed-in `node` (a borrow into the caller's freshly-built
+    /// `SubagentFanoutModel`), `self.expanded_tool_calls`, the cached `markdown`
+    /// entity (rendered, not updated), and the theme. It takes `&mut Context<Self>`
+    /// only to build `cx.listener` click handlers for the cards; each handler runs
+    /// on the event path (never during render) and mutates only
+    /// `self.expanded_tool_calls` plus `cx.notify()`. The back button's `on_click`
+    /// only writes the `agent_ui` global on its click event path.
     fn render_subagent_detail(
         &self,
         node: &agent_ui::subagent_fanout::SubagentNode,
         markdown: Option<Entity<Markdown>>,
         window: &Window,
-        cx: &App,
+        cx: &mut Context<Self>,
     ) -> AnyElement {
-        let colors = cx.theme().colors();
+        // Capture the one color we need by value so the immutable theme borrow is
+        // released before `render_tool_call_cards` takes `&mut cx` below.
+        let border_color = cx.theme().colors().border;
 
         // Status icon + color + label, matching `render_execution_panel`'s
         // list rows.
@@ -760,6 +782,69 @@ impl VibedevRightDock {
                 .color(Color::Muted)
         });
 
+        // Reduced-font themed Markdown for the reply block, so rich formatting
+        // stays but the text reads small like the trace.
+        let mut reply_style = MarkdownStyle::themed(MarkdownFont::Agent, window, cx);
+        reply_style.base_text_style.font_size = rems(0.75).into();
+
+        // Build the body rows up front so each tool-call card can attach a
+        // `cx.listener` toggle (which borrows `cx`). Cards are preferred; agents
+        // that only emit the legacy `step.stream` text fall back to a per-line
+        // trace.
+        let body_rows: Vec<AnyElement> = if !node.tool_calls.is_empty() {
+            self.render_tool_call_cards(node, cx)
+        } else {
+            node.step
+                .as_ref()
+                .and_then(|step| step.stream.as_deref())
+                .map(|stream| split_subagent_stream(stream).0)
+                .unwrap_or_default()
+                .into_iter()
+                .filter_map(|line| {
+                    if line.trim().is_empty() {
+                        return None;
+                    }
+                    if let Some(rest) = line.strip_prefix("→ ") {
+                        // Tool call: accent arrow + small label.
+                        Some(
+                            h_flex()
+                                .gap_1()
+                                .items_start()
+                                .child(
+                                    Icon::new(IconName::ArrowRight)
+                                        .size(IconSize::XSmall)
+                                        .color(Color::Accent),
+                                )
+                                .child(Label::new(rest.to_string()).size(LabelSize::XSmall))
+                                .into_any_element(),
+                        )
+                    } else if let Some(rest) = line.strip_prefix("← ") {
+                        // Tool result: muted, indented under the call.
+                        Some(
+                            div()
+                                .pl_3()
+                                .child(
+                                    Label::new(rest.to_string())
+                                        .size(LabelSize::XSmall)
+                                        .color(Color::Muted),
+                                )
+                                .into_any_element(),
+                        )
+                    } else {
+                        // Plain narration line.
+                        Some(
+                            Label::new(line.to_string())
+                                .size(LabelSize::XSmall)
+                                .color(Color::Muted)
+                                .into_any_element(),
+                        )
+                    }
+                })
+                .collect()
+        };
+
+        let step_label = node.step.as_ref().map(|step| step.label.clone());
+
         v_flex()
             .id("vibedev-execution-detail")
             .size_full()
@@ -772,7 +857,7 @@ impl VibedevRightDock {
                     .py_1()
                     .gap_1p5()
                     .border_b_1()
-                    .border_color(colors.border)
+                    .border_color(border_color)
                     .child(
                         IconButton::new("vibedev-execution-detail-back", IconName::ArrowLeft)
                             .icon_size(IconSize::XSmall)
@@ -812,96 +897,211 @@ impl VibedevRightDock {
                         this.child(div().flex_1()).child(label)
                     }),
             )
-            // Current step: the step label, then a compact, small-font tool
-            // trace (one tight row per stream line) and finally the reply block.
-            // The whole region scrolls so a long trace stays contained.
-            .map(|this| match node.step.as_ref() {
-                Some(step) => {
-                    // Only the trace lines are needed here; the reply markdown is
-                    // built and cached by the caller (`render_execution_panel`).
-                    let trace_lines = step
-                        .stream
-                        .as_deref()
-                        .map(|stream| split_subagent_stream(stream).0)
-                        .unwrap_or_default();
-                    // Reduced-font themed Markdown for the reply block, so rich
-                    // formatting stays but the text reads small like the trace.
-                    let mut reply_style = MarkdownStyle::themed(MarkdownFont::Agent, window, cx);
-                    reply_style.base_text_style.font_size = rems(0.75).into();
-                    this.child(
-                        v_flex()
-                            .id("vibedev-execution-detail-step")
-                            .flex_1()
-                            .min_h_0()
-                            .overflow_y_scroll()
-                            .px_2()
-                            .py_1()
-                            .gap_0p5()
-                            .text_xs()
-                            .child(
-                                Label::new(step.label.clone())
-                                    .size(LabelSize::XSmall)
-                                    .color(Color::Muted),
-                            )
-                            .children(trace_lines.into_iter().filter_map(|line| {
-                                if line.trim().is_empty() {
-                                    return None;
-                                }
-                                if let Some(rest) = line.strip_prefix("→ ") {
-                                    // Tool call: accent arrow + small label.
-                                    Some(
-                                        h_flex()
-                                            .gap_1()
-                                            .items_start()
-                                            .child(
-                                                Icon::new(IconName::ArrowRight)
-                                                    .size(IconSize::XSmall)
-                                                    .color(Color::Accent),
-                                            )
-                                            .child(
-                                                Label::new(rest.to_string())
-                                                    .size(LabelSize::XSmall),
-                                            )
-                                            .into_any_element(),
-                                    )
-                                } else if let Some(rest) = line.strip_prefix("← ") {
-                                    // Tool result: muted, indented under the call.
-                                    Some(
-                                        div()
-                                            .pl_3()
-                                            .child(
-                                                Label::new(rest.to_string())
-                                                    .size(LabelSize::XSmall)
-                                                    .color(Color::Muted),
-                                            )
-                                            .into_any_element(),
-                                    )
-                                } else {
-                                    // Plain narration line.
-                                    Some(
-                                        Label::new(line.to_string())
-                                            .size(LabelSize::XSmall)
-                                            .color(Color::Muted)
-                                            .into_any_element(),
-                                    )
-                                }
-                            }))
-                            .when_some(markdown, |this, markdown| {
-                                this.child(MarkdownElement::new(markdown, reply_style))
-                            }),
-                    )
-                }
-                None => this.child(
-                    div()
-                        .flex_none()
-                        .px_2()
-                        .py_1()
-                        .child(
+            // Current step: the step label, then the structured tool-call cards
+            // (or the legacy trace) and finally the reply block. The whole region
+            // scrolls so a long trace stays contained.
+            .map(|this| {
+                if body_rows.is_empty() && step_label.is_none() && markdown.is_none() {
+                    return this.child(
+                        div().flex_none().px_2().py_1().child(
                             Label::new("暂无步骤详情")
                                 .size(LabelSize::XSmall)
                                 .color(Color::Muted),
                         ),
-                ),
+                    );
+                }
+                this.child(
+                    v_flex()
+                        .id("vibedev-execution-detail-step")
+                        .flex_1()
+                        .min_h_0()
+                        .overflow_y_scroll()
+                        .px_2()
+                        .py_1()
+                        .gap_0p5()
+                        .text_xs()
+                        .when_some(step_label, |this, label| {
+                            this.child(
+                                Label::new(label)
+                                    .size(LabelSize::XSmall)
+                                    .color(Color::Muted),
+                            )
+                        })
+                        .children(body_rows)
+                        .when_some(markdown, |this, markdown| {
+                            this.child(MarkdownElement::new(markdown, reply_style))
+                        }),
+                )
+            })
+            .into_any_element()
+    }
+
+    /// Pairs a node's structured `tool_calls` into a flat list of card elements:
+    /// each `toolUse` joins the `toolResult` sharing its `toolUseId` into one
+    /// compact, expandable card; `text` items render as a single muted line;
+    /// `toolResult`s already paired are skipped. A `toolResult` with no matching
+    /// `toolUse` (shouldn't normally happen) still renders as a faint standalone
+    /// card so its output is never silently dropped.
+    ///
+    /// Lease safety: builds `cx.listener` toggles only; reads
+    /// `self.expanded_tool_calls`. The listeners fire on the click event path and
+    /// mutate only `self.expanded_tool_calls` + `cx.notify()`.
+    fn render_tool_call_cards(
+        &self,
+        node: &agent_ui::subagent_fanout::SubagentNode,
+        cx: &mut Context<Self>,
+    ) -> Vec<AnyElement> {
+        use acp_thread::SubagentToolCall;
+
+        // Index `toolResult`s by their `toolUseId` so each `toolUse` can find its
+        // result in one pass. Last result for a given id wins.
+        let mut results_by_id: std::collections::HashMap<&str, &SubagentToolCall> =
+            std::collections::HashMap::new();
+        for item in &node.tool_calls {
+            if item.kind == "toolResult"
+                && let Some(id) = item.tool_use_id.as_deref()
+            {
+                results_by_id.insert(id, item);
+            }
+        }
+
+        let mut rows: Vec<AnyElement> = Vec::new();
+        for (index, item) in node.tool_calls.iter().enumerate() {
+            match item.kind.as_str() {
+                "toolUse" => {
+                    let result = item
+                        .tool_use_id
+                        .as_deref()
+                        .and_then(|id| results_by_id.get(id).copied());
+                    rows.push(self.render_tool_call_card(item, result, index, cx));
+                }
+                "toolResult" => {
+                    // Already folded into its `toolUse` card above; render alone
+                    // only if no matching `toolUse` exists in this trace.
+                    let has_use = item.tool_use_id.as_deref().is_some_and(|id| {
+                        node.tool_calls.iter().any(|other| {
+                            other.kind == "toolUse" && other.tool_use_id.as_deref() == Some(id)
+                        })
+                    });
+                    if !has_use {
+                        rows.push(self.render_tool_call_card(item, Some(item), index, cx));
+                    }
+                }
+                _ => {
+                    // `text` (or any unknown kind): a single muted narration line.
+                    if let Some(title) = item.title.as_deref().filter(|t| !t.trim().is_empty()) {
+                        rows.push(
+                            Label::new(title.to_string())
+                                .size(LabelSize::XSmall)
+                                .color(Color::Muted)
+                                .into_any_element(),
+                        );
+                    }
+                }
+            }
+        }
+        rows
+    }
+
+    /// Renders one tool-call card: a clickable header (status icon + tool name +
+    /// muted title + chevron) that toggles `expanded`; when expanded, the paired
+    /// result's `output` is shown beneath (truncated to keep the panel bounded).
+    ///
+    /// `index` disambiguates the `ElementId` when a `toolUseId` is missing, so a
+    /// trace without ids still produces unique, clickable cards.
+    fn render_tool_call_card(
+        &self,
+        use_item: &acp_thread::SubagentToolCall,
+        result: Option<&acp_thread::SubagentToolCall>,
+        index: usize,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        // Card identity: prefer the toolUseId, else fall back to the trace index.
+        let card_key = use_item
+            .tool_use_id
+            .clone()
+            .unwrap_or_else(|| format!("idx-{index}"));
+        let element_id = ElementId::from((
+            ElementId::from("vibedev-toolcall"),
+            SharedString::from(card_key.clone()),
+        ));
+        let expanded = self.expanded_tool_calls.contains(&card_key);
+
+        // Status icon: a paired result decides ok/error; no result yet = running.
+        let (status_icon, status_color) = match result {
+            Some(result) if result.is_error.unwrap_or(false) => (IconName::XCircle, Color::Error),
+            Some(_) => (IconName::Check, Color::Success),
+            None => (IconName::ArrowCircle, Color::Accent),
+        };
+
+        let chevron = if expanded {
+            IconName::ChevronDown
+        } else {
+            IconName::ChevronRight
+        };
+
+        let tool_name = use_item.tool_name.clone().unwrap_or_default();
+        let title = use_item.title.clone();
+
+        // Expanded output: prefer the result's output (truncated), else the use
+        // item's own output if present.
+        let output = if expanded {
+            result
+                .and_then(|result| result.output.as_deref())
+                .or(use_item.output.as_deref())
+                .map(truncate_card_output)
+        } else {
+            None
+        };
+
+        v_flex()
+            .child(
+                h_flex()
+                    .id(element_id)
+                    .w_full()
+                    .gap_1()
+                    .items_center()
+                    .cursor_pointer()
+                    .on_click(cx.listener({
+                        let card_key = card_key.clone();
+                        move |this, _event, _window, cx| {
+                            if !this.expanded_tool_calls.remove(&card_key) {
+                                this.expanded_tool_calls.insert(card_key.clone());
+                            }
+                            cx.notify();
+                        }
+                    }))
+                    .child(
+                        Icon::new(status_icon)
+                            .size(IconSize::XSmall)
+                            .color(status_color),
+                    )
+                    .when(!tool_name.is_empty(), |this| {
+                        this.child(Label::new(tool_name).size(LabelSize::XSmall))
+                    })
+                    .when_some(title, |this, title| {
+                        this.child(
+                            Label::new(title)
+                                .size(LabelSize::XSmall)
+                                .color(Color::Muted)
+                                .truncate(),
+                        )
+                    })
+                    .child(div().flex_1())
+                    .child(
+                        Icon::new(chevron)
+                            .size(IconSize::XSmall)
+                            .color(Color::Muted),
+                    ),
+            )
+            .when_some(output, |this, output| {
+                this.child(
+                    div().pl_3().pb_0p5().child(
+                        Label::new(output)
+                            .size(LabelSize::XSmall)
+                            .color(Color::Muted),
+                    ),
+                )
             })
             .into_any_element()
     }
@@ -1194,6 +1394,22 @@ fn split_subagent_stream(stream: &str) -> (Vec<&str>, Option<String>) {
     } else {
         (stream.lines().collect(), None)
     }
+}
+
+/// Truncates a tool-call card's expanded output to a bounded length (on a UTF-8
+/// boundary) so a single huge result can't blow up the panel; an ellipsis marks
+/// truncation. The outer card region scrolls, so the bounded text stays
+/// contained.
+fn truncate_card_output(output: &str) -> String {
+    const MAX_OUTPUT: usize = 2000;
+    if output.len() <= MAX_OUTPUT {
+        return output.to_string();
+    }
+    let end = (0..=MAX_OUTPUT)
+        .rev()
+        .find(|i| output.is_char_boundary(*i))
+        .unwrap_or(0);
+    format!("{}…", &output[..end])
 }
 
 fn loading_placeholder() -> AnyElement {
