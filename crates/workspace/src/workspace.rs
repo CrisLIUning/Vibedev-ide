@@ -153,8 +153,9 @@ use util::{
 };
 use uuid::Uuid;
 pub use workspace_settings::{
-    AutosaveSetting, BottomDockLayout, EncodingDisplayOptions, FocusFollowsMouse,
-    RestoreOnStartupBehavior, StatusBarSettings, TabBarSettings, WorkspaceSettings,
+    AutosaveSetting, BottomDockLayout, DefaultStartupSurface, EncodingDisplayOptions,
+    FocusFollowsMouse, RestoreOnStartupBehavior, StatusBarSettings, TabBarSettings,
+    WorkspaceSettings,
 };
 use zed_actions::{Spawn, feedback::FileBugReport, theme::ToggleMode};
 
@@ -7913,6 +7914,13 @@ impl Workspace {
         let border = cx.theme().colors().border;
         let title_bar_bg = cx.theme().colors().title_bar_background;
         let hover_bg = cx.theme().colors().element_hover;
+        // The default startup surface: which window kind launches on a fresh
+        // start. The titlebar toggle (right side) flips it, and `main.rs` honors
+        // it at launch. Defaults to `Ide` when unset.
+        let default_is_agent_app = matches!(
+            WorkspaceSettings::get_global(cx).default_startup_surface,
+            settings::DefaultStartupSurface::AgentApp
+        );
         h_flex()
             .h(px(38.))
             .w_full()
@@ -7947,6 +7955,26 @@ impl Workspace {
                         }
                     }),
             )
+            // Clicking the brand acts as "home": re-activate the conversation,
+            // which is the first item in the center pane, so opening a file/diff
+            // (which covers it) can always be navigated back from.
+            .child(
+                div()
+                    .id("vibedev-home")
+                    .cursor_pointer()
+                    .rounded_md()
+                    .px_2()
+                    .hover(|style| style.bg(hover_bg))
+                    .child(Label::new("VibeDev").color(Color::Default))
+                    .on_click(cx.listener(|workspace, _event, window, cx| {
+                        let center_pane = workspace.active_pane().clone();
+                        center_pane.update(cx, |pane, cx| {
+                            pane.activate_item(0, true, true, window, cx);
+                        });
+                    })),
+            )
+            // Spacer pushes the window controls to the right edge.
+            .child(div().flex_1())
             // Right panel host toggle (file tree / terminal). Same plain
             // `on_click` discipline as the sidebar toggle: a `cx.listener`
             // would lease this Workspace, and reaching the workspace through
@@ -7966,21 +7994,45 @@ impl Workspace {
                         }
                     }),
             )
-            // Clicking the brand acts as "home": re-activate the conversation,
-            // which is the first item in the center pane, so opening a file/diff
-            // (which covers it) can always be navigated back from.
+            // "Open IDE": focus (or open) the editor IDE window. Dispatched as a
+            // global action so it resolves against the workspace's action
+            // registry (see `vibedev_agent_window::open_ide_window`); a plain
+            // `dispatch_action` here avoids leasing this Workspace.
             .child(
-                div()
-                    .id("vibedev-home")
-                    .cursor_pointer()
-                    .rounded_md()
-                    .px_2()
-                    .hover(|style| style.bg(hover_bg))
-                    .child(Label::new("VibeDev").color(Color::Default))
-                    .on_click(cx.listener(|workspace, _event, window, cx| {
-                        let center_pane = workspace.active_pane().clone();
-                        center_pane.update(cx, |pane, cx| {
-                            pane.activate_item(0, true, true, window, cx);
+                IconButton::new("agent-open-ide", IconName::Code)
+                    .icon_size(IconSize::Small)
+                    .tooltip(ui::Tooltip::text("Open IDE"))
+                    .on_click(|_event, window, cx| {
+                        window.dispatch_action(
+                            zed_actions::vibedev::OpenIdeWindow.boxed_clone(),
+                            cx,
+                        );
+                    }),
+            )
+            // Default startup surface toggle: flips which window kind launches on
+            // a fresh start between IDE and AgentApp. `toggle_state` reflects the
+            // current default (toggled = AgentApp). Writes go through the standard
+            // settings-file update path. A `cx.listener` is safe here: it leases
+            // this Workspace but the handler only reads settings and schedules a
+            // settings-file write, never reaching back through the MultiWorkspace.
+            .child(
+                IconButton::new("agent-default-surface-toggle", IconName::Sparkle)
+                    .icon_size(IconSize::Small)
+                    .toggle_state(default_is_agent_app)
+                    .tooltip(ui::Tooltip::text(if default_is_agent_app {
+                        "Default Startup: AgentApp (click for IDE)"
+                    } else {
+                        "Default Startup: IDE (click for AgentApp)"
+                    }))
+                    .on_click(cx.listener(move |workspace, _event, _window, cx| {
+                        let next = if default_is_agent_app {
+                            settings::DefaultStartupSurface::Ide
+                        } else {
+                            settings::DefaultStartupSurface::AgentApp
+                        };
+                        let fs = workspace.project().read(cx).fs().clone();
+                        update_settings_file(fs, cx, move |settings, _cx| {
+                            settings.workspace.default_startup_surface = Some(next);
                         });
                     })),
             )

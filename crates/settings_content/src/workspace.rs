@@ -49,6 +49,12 @@ pub struct WorkspaceSettingsContent {
     /// Values: empty_tab, last_workspace, last_session, launchpad
     /// Default: last_session
     pub restore_on_startup: Option<RestoreOnStartupBehavior>,
+    /// Which VibeDev surface launches on a fresh start: the editor IDE or the
+    /// AgentApp conversation. When set to `agent_app`, startup opens the AgentApp
+    /// directly and skips IDE session restoration.
+    /// Values: ide, agent_app
+    /// Default: ide
+    pub default_startup_surface: Option<DefaultStartupSurface>,
     /// The default behavior when opening paths from the CLI without
     /// an explicit `-e` or `-n` flag.
     ///
@@ -436,6 +442,29 @@ pub enum RestoreOnStartupBehavior {
     LastSession,
     /// Show the launchpad with recent projects (no tabs).
     Launchpad,
+}
+
+#[derive(
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    Default,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    MergeFrom,
+    Debug,
+    strum::VariantArray,
+    strum::VariantNames,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum DefaultStartupSurface {
+    /// Launch into the editor IDE (the standard Zed workspace).
+    #[default]
+    Ide,
+    /// Launch into the VibeDev AgentApp conversation surface.
+    AgentApp,
 }
 
 #[with_fallible_options]

@@ -5,10 +5,11 @@
 
 use std::sync::Arc;
 
+use editor::Editor;
 use gpui::{App, AppContext as _, Context, TaskExt as _, Window};
 use workspace::{AppState, MultiWorkspace, OpenOptions, Workspace};
 
-/// Registers the `OpenAgentAppWindow` action handler on every workspace.
+/// Registers the VibeDev window-switching action handlers on every workspace.
 pub fn init(cx: &mut App) {
     cx.observe_new(|workspace: &mut Workspace, _window, _cx| {
         workspace.register_action(
@@ -17,8 +18,61 @@ pub fn init(cx: &mut App) {
                 open_agent_app_window(app_state, cx);
             },
         );
+        workspace.register_action(
+            |workspace, _: &zed_actions::vibedev::OpenIdeWindow, _window, cx| {
+                let app_state = workspace.app_state().clone();
+                open_ide_window(app_state, cx);
+            },
+        );
     })
     .detach();
+}
+
+/// Focuses the existing VibeDev IDE window (a non-agent editor window), opening a
+/// fresh one only if none exists. This is the inverse of `open_agent_app_window`:
+/// from inside the AgentApp the user can jump (back) to the editor IDE without
+/// ever stacking up duplicate empty editor windows.
+///
+/// "IDE window" means a `MultiWorkspace` whose `is_agent_app()` is `false`. The
+/// default `workspace::open_new` path produces exactly that (only
+/// `configure_agent_mode` flips the flag to `true`), so a freshly opened window
+/// is guaranteed to be a non-agent IDE window.
+pub fn open_ide_window(app_state: Arc<AppState>, cx: &mut App) {
+    // Look for an already-open IDE (non-agent) window and just activate it.
+    let ide_window = cx
+        .windows()
+        .into_iter()
+        .filter_map(|window| window.downcast::<MultiWorkspace>())
+        .find(|window| {
+            window
+                .read_with(cx, |multi_workspace, _cx| !multi_workspace.is_agent_app())
+                .unwrap_or(false)
+        });
+
+    if let Some(ide_window) = ide_window {
+        ide_window
+            .update(cx, |_multi_workspace, window, _cx| {
+                window.activate_window();
+            })
+            .ok();
+        return;
+    }
+
+    // No IDE window exists: open a plain editor window. We intentionally do NOT
+    // pass an agent init closure, so the new `MultiWorkspace` keeps the default
+    // `is_agent_app() == false` and renders as the standard editor IDE.
+    workspace::open_new(
+        OpenOptions {
+            open_mode: workspace::OpenMode::NewWindow,
+            ..Default::default()
+        },
+        app_state,
+        cx,
+        |workspace, window, cx| {
+            Editor::new_file(workspace, &Default::default(), window, cx);
+        },
+    )
+    .detach_and_log_err(cx);
 }
 
 /// Opens a new OS window as the VibeDev AgentApp. The `init` closure runs against

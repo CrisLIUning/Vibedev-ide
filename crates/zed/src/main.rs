@@ -1549,6 +1549,23 @@ pub(crate) async fn restore_or_create_workspace(
     app_state: Arc<AppState>,
     cx: &mut AsyncApp,
 ) -> Result<()> {
+    // If the user's default startup surface is the AgentApp, open it directly and
+    // skip all IDE session restoration. The AgentApp loads its own left thread
+    // history sidebar and a center conversation page, so there is nothing to
+    // restore (no active thread to recover) and the IDE editor windows are left
+    // for the user to summon via "Open IDE".
+    let default_startup_surface =
+        cx.update(|cx| WorkspaceSettings::get_global(cx).default_startup_surface);
+    if matches!(
+        default_startup_surface,
+        workspace::DefaultStartupSurface::AgentApp
+    ) {
+        cx.update(|cx| {
+            crate::zed::vibedev_agent_window::open_agent_app_window(app_state.clone(), cx);
+        });
+        return Ok(());
+    }
+
     let kvp = cx.update(|cx| KeyValueStore::global(cx));
     if let Some(multi_workspaces) = restorable_workspaces(cx, &app_state).await {
         let mut error_count = 0;

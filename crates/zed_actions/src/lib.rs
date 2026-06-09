@@ -393,7 +393,9 @@ pub mod vibedev {
             /// Toggles focus on the VibeDev usage dashboard panel.
             ToggleUsageDashboard,
             /// Opens the VibeDev AgentApp in a dedicated, separate window.
-            OpenAgentAppWindow
+            OpenAgentAppWindow,
+            /// Opens (or focuses) the VibeDev IDE in a non-agent window.
+            OpenIdeWindow
         ]
     );
 }

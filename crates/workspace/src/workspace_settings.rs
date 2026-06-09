@@ -4,8 +4,8 @@ use crate::DockPosition;
 use collections::HashMap;
 use serde::Deserialize;
 pub use settings::{
-    ActionName, AutosaveSetting, BottomDockLayout, EncodingDisplayOptions, InactiveOpacity,
-    PaneSplitDirectionHorizontal, PaneSplitDirectionVertical, RegisterSetting,
+    ActionName, AutosaveSetting, BottomDockLayout, DefaultStartupSurface, EncodingDisplayOptions,
+    InactiveOpacity, PaneSplitDirectionHorizontal, PaneSplitDirectionVertical, RegisterSetting,
     RestoreOnStartupBehavior, Settings,
 };
 
@@ -20,6 +20,7 @@ pub struct WorkspaceSettings {
     pub show_call_status_icon: bool,
     pub autosave: AutosaveSetting,
     pub restore_on_startup: settings::RestoreOnStartupBehavior,
+    pub default_startup_surface: settings::DefaultStartupSurface,
     pub cli_default_open_behavior: settings::CliDefaultOpenBehavior,
     pub restore_on_file_reopen: bool,
     pub drop_target_size: f32,
@@ -100,6 +101,10 @@ impl Settings for WorkspaceSettings {
             show_call_status_icon: workspace.show_call_status_icon.unwrap(),
             autosave: workspace.autosave.unwrap(),
             restore_on_startup: workspace.restore_on_startup.unwrap(),
+            // No default.json entry exists for this VibeDev-specific setting, so
+            // fall back to the enum default (`Ide`) when unset rather than
+            // panicking on `unwrap`.
+            default_startup_surface: workspace.default_startup_surface.unwrap_or_default(),
             cli_default_open_behavior: workspace.cli_default_open_behavior.unwrap(),
             restore_on_file_reopen: workspace.restore_on_file_reopen.unwrap(),
             drop_target_size: workspace.drop_target_size.unwrap(),
