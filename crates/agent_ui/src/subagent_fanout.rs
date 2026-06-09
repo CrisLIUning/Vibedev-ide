@@ -100,6 +100,68 @@ impl SubagentFanoutModel {
         self.nodes.len()
     }
 
+    /// Build the model from the spawn *folds* (placeholders that exist the
+    /// instant the bridge emits the `tool_call`, before any progress) and then
+    /// overlay the real `progress` that arrives later in the turn.
+    ///
+    /// Each fold is `(title, agent_type)` taken from the spawn tool-call's
+    /// description / `subagent_type`. A `Queued` placeholder node is created per
+    /// fold so the very first frame shows a populated card instead of a bare
+    /// fold. Real progress is then matched onto a placeholder by `title`
+    /// (spawn folds never carry a `subagent_id` — the agent only assigns one
+    /// once the subagent actually starts — so identity is the description
+    /// string the agent emits identically on both sides). A matched placeholder
+    /// is replaced in place, keeping its row position. Progress with no matching
+    /// fold (shouldn't happen for a marked batch, but kept for safety) is
+    /// appended. Multiple progress entries for one subagent collapse to the
+    /// latest, mirroring [`from_entries`].
+    ///
+    /// The placeholder node's `subagent_id` is seeded with its title so the
+    /// per-row `ElementId` / selection key is stable until the real id lands.
+    pub fn from_spawn_folds_and_progress(
+        folds: &[(String, String)],
+        progress: &[SubagentProgress],
+    ) -> Self {
+        let mut nodes: Vec<SubagentNode> = folds
+            .iter()
+            .map(|(title, agent_type)| SubagentNode {
+                subagent_id: title.clone(),
+                agent_type: agent_type.clone(),
+                title: title.clone(),
+                status: SubagentStatus::Queued,
+                tokens_used: None,
+                parent_id: None,
+                step: None,
+                tool_calls: Vec::new(),
+                reply: None,
+            })
+            .collect();
+
+        for progress in progress {
+            let real = SubagentNode::from_progress(progress);
+            // Prefer matching a real node already overlaid (same `subagent_id`)
+            // so cumulative updates for one subagent collapse to the latest.
+            if let Some(existing) = nodes
+                .iter_mut()
+                .find(|node| node.status != SubagentStatus::Queued && node.subagent_id == real.subagent_id)
+            {
+                *existing = real;
+                continue;
+            }
+            // Otherwise claim a still-queued placeholder whose title matches.
+            if let Some(placeholder) = nodes.iter_mut().find(|node| {
+                node.status == SubagentStatus::Queued && node.title.trim() == real.title.trim()
+            }) {
+                *placeholder = real;
+                continue;
+            }
+            // No placeholder for this progress — append it (defensive).
+            nodes.push(real);
+        }
+
+        Self { nodes }
+    }
+
     /// Look up a node by its `subagent_id`.
     ///
     /// Exercised by the model tests and reserved for the T8 detail-panel
@@ -189,6 +251,47 @@ mod tests {
         assert_eq!(model.running_count(), 0);
         assert_eq!(model.node("a").unwrap().status, SubagentStatus::Done);
         assert_eq!(model.node("a").unwrap().tokens_used, Some(2000));
+    }
+
+    #[test]
+    fn spawn_folds_seed_queued_rows_then_progress_overlays_in_place() {
+        let folds = vec![
+            ("UI rebrand".to_string(), "Explore".to_string()),
+            ("i18n sweep".to_string(), "Explore".to_string()),
+        ];
+        // Frame A: no progress yet — two Queued placeholder rows.
+        let model_a = SubagentFanoutModel::from_spawn_folds_and_progress(&folds, &[]);
+        assert_eq!(model_a.nodes.len(), 2);
+        assert!(
+            model_a
+                .nodes
+                .iter()
+                .all(|node| node.status == SubagentStatus::Queued)
+        );
+        assert_eq!(model_a.nodes[0].title, "UI rebrand");
+
+        // Frame B: real progress for the first fold (matched by title) overlays
+        // its placeholder in place — still two rows, no extra card row, the
+        // matched row now carries the real subagent_id and Running status.
+        let progress = vec![SubagentProgress {
+            subagent_id: "sub-1".into(),
+            agent_type: "Explore".into(),
+            title: "UI rebrand".into(),
+            status: SubagentStatus::Running,
+            tokens_used: Some(1200),
+            parent_id: None,
+            batch_id: Some("batch-a".into()),
+            step: None,
+            tool_calls: Vec::new(),
+            reply: None,
+        }];
+        let model_b = SubagentFanoutModel::from_spawn_folds_and_progress(&folds, &progress);
+        assert_eq!(model_b.nodes.len(), 2);
+        assert_eq!(model_b.nodes[0].subagent_id, "sub-1");
+        assert_eq!(model_b.nodes[0].status, SubagentStatus::Running);
+        // The unmatched fold stays a Queued placeholder.
+        assert_eq!(model_b.nodes[1].status, SubagentStatus::Queued);
+        assert_eq!(model_b.running_count(), 1);
     }
 
     #[test]

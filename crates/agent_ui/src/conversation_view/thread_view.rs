@@ -3517,45 +3517,234 @@ impl ThreadView {
     /// assistant/tool entries, stopping at the next `UserMessage` — and draws the
     /// aggregated tree via [`SubagentFanoutModel`]. Later same-batch entries
     /// render nothing to avoid duplicate cards.
-    /// True when this `ToolCall` is a subagent spawn already represented by the
-    /// fan-out card in the same turn, so the raw "Agent" tool fold should be
-    /// suppressed and the Subagents card left as the single representation.
+    /// True when this `ToolCall` is the spawn of a parallel background subagent,
+    /// identifiable on the **very first frame** (before any `SubagentProgress`).
     ///
-    /// Matched by title: the agent emits the spawn's ACP tool-call title and the
-    /// `SubagentProgress.title` both from the same agent `description`, and the
-    /// `tool_name` meta our agent sends (`claudeCode.toolName`) is under a key
-    /// Zed's `tool_name_from_meta` doesn't read, so `tool_call.tool_name` /
-    /// `is_subagent()` are unavailable here. Only suppresses when a matching
-    /// fan-out entry exists, so non-subagent tool calls are never hidden.
-    fn tool_call_subsumed_by_fanout(
-        &self,
-        entry_ix: usize,
-        tool_call: &ToolCall,
-        cx: &App,
-    ) -> bool {
-        let title = tool_call.label.read(cx).source().trim().to_owned();
-        if title.is_empty() {
-            return false;
+    /// Two signals, in priority order (we deliberately never touch `tool_name` /
+    /// `is_subagent()` — those route other UI and are unreliable for our agent,
+    /// whose `tool_name` meta sits under a key Zed's `tool_name_from_meta`
+    /// doesn't read):
+    /// 1. The explicit `vibedev_subagent_spawn` marker meta.
+    /// 2. A `raw_input` shape fallback: an object carrying string `description`
+    ///    and `prompt`, plus one of `subagent_type` / `run_in_background` to
+    ///    tighten against unrelated tools that happen to have a description +
+    ///    prompt.
+    fn tool_call_is_subagent_spawn(&self, tool_call: &ToolCall) -> bool {
+        if tool_call.subagent_spawn.is_some() {
+            return true;
         }
+        let Some(serde_json::Value::Object(input)) = tool_call.raw_input.as_ref() else {
+            return false;
+        };
+        let has_string = |key: &str| input.get(key).and_then(|v| v.as_str()).is_some();
+        has_string("description")
+            && has_string("prompt")
+            && (has_string("subagent_type") || input.contains_key("run_in_background"))
+    }
+
+    /// The `(title, agent_type)` to seed a placeholder fan-out row from a spawn
+    /// fold, before progress exists. Title prefers the tool-call's rendered
+    /// label (the agent's `description`, identical to the later
+    /// `SubagentProgress.title`); agent type comes from `raw_input.subagent_type`.
+    fn spawn_fold_label(&self, tool_call: &ToolCall, cx: &App) -> (String, String) {
+        let label = tool_call.label.read(cx).source().trim().to_owned();
+        let input = match tool_call.raw_input.as_ref() {
+            Some(serde_json::Value::Object(input)) => Some(input),
+            _ => None,
+        };
+        let title = if !label.is_empty() {
+            label
+        } else {
+            input
+                .and_then(|input| input.get("description"))
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .trim()
+                .to_owned()
+        };
+        let agent_type = input
+            .and_then(|input| input.get("subagent_type"))
+            .and_then(|v| v.as_str())
+            .unwrap_or("Agent")
+            .to_owned();
+        (title, agent_type)
+    }
+
+    /// Index, just after the previous `UserMessage`, where `entry_ix`'s turn
+    /// begins (0 if there is no earlier user message).
+    fn turn_start_for(&self, entry_ix: usize, cx: &App) -> usize {
         let entries = self.thread.read(cx).entries();
-        let turn_start = entries
+        entries
             .get(..entry_ix)
             .unwrap_or(&[])
             .iter()
             .rposition(|entry| matches!(entry, AgentThreadEntry::UserMessage(_)))
             .map(|ix| ix + 1)
-            .unwrap_or(0);
+            .unwrap_or(0)
+    }
+
+    /// Collect the spawn-fold batch that `entry_ix` (a spawn `ToolCall`) belongs
+    /// to, returning the ordered entry indices of every fold in the batch within
+    /// the current turn.
+    ///
+    /// Batching rule, tightest first:
+    /// - If the fold carries a marker `batch_id`, the batch is every spawn fold
+    ///   in the turn sharing that exact `batch_id`.
+    /// - Otherwise the batch is the maximal **contiguous** run of spawn folds
+    ///   (folds with no marker `batch_id`) that includes `entry_ix`, broken by
+    ///   any non-spawn entry. (A turn-wide fallback isn't needed: a contiguous
+    ///   run already captures one parallel spawn emitted back-to-back; later
+    ///   spawns separated by other output form their own batch / card.)
+    ///
+    /// Returns `None` if `entry_ix` is not a spawn fold.
+    fn spawn_fold_batch_indices(&self, entry_ix: usize, cx: &App) -> Option<Vec<usize>> {
+        let entries = self.thread.read(cx).entries();
+        let this_call = match entries.get(entry_ix) {
+            Some(AgentThreadEntry::ToolCall(tool_call))
+                if self.tool_call_is_subagent_spawn(tool_call) =>
+            {
+                tool_call
+            }
+            _ => return None,
+        };
+        let turn_start = self.turn_start_for(entry_ix, cx);
+        let turn_end = entries
+            .get(entry_ix + 1..)
+            .unwrap_or(&[])
+            .iter()
+            .position(|entry| matches!(entry, AgentThreadEntry::UserMessage(_)))
+            .map(|offset| entry_ix + 1 + offset)
+            .unwrap_or(entries.len());
+
+        let this_batch_id = this_call
+            .subagent_spawn
+            .as_ref()
+            .and_then(|spawn| spawn.batch_id.clone());
+
+        if let Some(batch_id) = this_batch_id {
+            // Marker path: every spawn fold in the turn with the same batch id.
+            let indices = (turn_start..turn_end)
+                .filter(|&ix| match entries.get(ix) {
+                    Some(AgentThreadEntry::ToolCall(tool_call)) => {
+                        self.tool_call_is_subagent_spawn(tool_call)
+                            && tool_call
+                                .subagent_spawn
+                                .as_ref()
+                                .and_then(|spawn| spawn.batch_id.as_deref())
+                                == Some(batch_id.as_str())
+                    }
+                    _ => false,
+                })
+                .collect();
+            return Some(indices);
+        }
+
+        // Fallback path: maximal contiguous run of (unmarked) spawn folds.
+        let is_unmarked_spawn = |ix: usize| match entries.get(ix) {
+            Some(AgentThreadEntry::ToolCall(tool_call)) => {
+                self.tool_call_is_subagent_spawn(tool_call)
+                    && tool_call
+                        .subagent_spawn
+                        .as_ref()
+                        .and_then(|spawn| spawn.batch_id.as_ref())
+                        .is_none()
+            }
+            _ => false,
+        };
+        let mut start = entry_ix;
+        while start > turn_start && is_unmarked_spawn(start - 1) {
+            start -= 1;
+        }
+        let mut end = entry_ix;
+        while end + 1 < turn_end && is_unmarked_spawn(end + 1) {
+            end += 1;
+        }
+        Some((start..=end).collect())
+    }
+
+    /// The fan-out model for the batch anchored at the spawn fold `fold_indices`:
+    /// a `Queued` placeholder per fold, with the turn's matching real
+    /// `SubagentProgress` overlaid on top (matched by title until a real
+    /// `subagent_id` lands). Built fresh each frame from the live entry list.
+    fn spawn_batch_fanout_model(
+        &self,
+        fold_indices: &[usize],
+        entry_ix: usize,
+        cx: &App,
+    ) -> SubagentFanoutModel {
+        let entries = self.thread.read(cx).entries();
+        let folds: Vec<(String, String)> = fold_indices
+            .iter()
+            .filter_map(|&ix| match entries.get(ix) {
+                Some(AgentThreadEntry::ToolCall(tool_call)) => {
+                    Some(self.spawn_fold_label(tool_call, cx))
+                }
+                _ => None,
+            })
+            .collect();
+
+        // The real progress for this batch: same-turn `SubagentProgress` whose
+        // title matches one of our fold titles. Spawn folds never carry a
+        // `subagent_id` and progress never carries the spawn's `batch_id` until
+        // the subagent starts, so identity across the two streams is the agent's
+        // `description` string. We scope to the turn to avoid cross-turn bleed.
+        let turn_start = self.turn_start_for(entry_ix, cx);
+        let turn_end = entries
+            .get(entry_ix + 1..)
+            .unwrap_or(&[])
+            .iter()
+            .position(|entry| matches!(entry, AgentThreadEntry::UserMessage(_)))
+            .map(|offset| entry_ix + 1 + offset)
+            .unwrap_or(entries.len());
+        let fold_titles: Vec<String> =
+            folds.iter().map(|(title, _)| title.trim().to_owned()).collect();
+        let progress: Vec<SubagentProgress> = entries
+            .get(turn_start..turn_end)
+            .unwrap_or(&[])
+            .iter()
+            .filter_map(|entry| match entry {
+                AgentThreadEntry::SubagentProgress(progress)
+                    if fold_titles.iter().any(|t| t == progress.title.trim()) =>
+                {
+                    Some(progress.clone())
+                }
+                _ => None,
+            })
+            .collect();
+
+        SubagentFanoutModel::from_spawn_folds_and_progress(&folds, &progress)
+    }
+
+    /// True when a spawn *fold* earlier in this `SubagentProgress`'s turn already
+    /// owns a fold-anchored fan-out card whose placeholder row this progress
+    /// matches (by the agent's `description` title). When true, the
+    /// `SubagentProgress` arm must render nothing: the fold-anchored card has
+    /// already overlaid this progress's real status onto its row. When false
+    /// (no fold in the turn, e.g. a legacy agent that never emitted the marker
+    /// or the shape), the progress arm renders the card itself as a fallback.
+    fn progress_covered_by_spawn_fold(&self, entry_ix: usize, cx: &App) -> bool {
+        let entries = self.thread.read(cx).entries();
+        let title = match entries.get(entry_ix) {
+            Some(AgentThreadEntry::SubagentProgress(progress)) => progress.title.trim().to_owned(),
+            _ => return false,
+        };
+        if title.is_empty() {
+            return false;
+        }
+        let turn_start = self.turn_start_for(entry_ix, cx);
         entries
             .get(turn_start..)
             .unwrap_or(&[])
             .iter()
             .take_while(|entry| !matches!(entry, AgentThreadEntry::UserMessage(_)))
-            .any(|entry| {
-                matches!(
-                    entry,
-                    AgentThreadEntry::SubagentProgress(progress)
-                        if progress.title.trim() == title
-                )
+            .any(|entry| match entry {
+                AgentThreadEntry::ToolCall(tool_call)
+                    if self.tool_call_is_subagent_spawn(tool_call) =>
+                {
+                    let (fold_title, _) = self.spawn_fold_label(tool_call, cx);
+                    fold_title.trim() == title
+                }
+                _ => false,
             })
     }
 
@@ -3573,6 +3762,16 @@ impl ThreadView {
             Some(AgentThreadEntry::SubagentProgress(progress)) => progress.batch_id.clone(),
             _ => return Empty.into_any_element(),
         };
+
+        // If a spawn *fold* earlier in this turn already drew a card whose
+        // placeholder row matches this progress (the agent's `description`),
+        // that fold-anchored card overlays our real status in place — drawing a
+        // second card here would duplicate it. Yield to the fold. Only when no
+        // fold exists (legacy / no-fold path) do we fall through and render the
+        // card ourselves.
+        if self.progress_covered_by_spawn_fold(entry_ix, cx) {
+            return Empty.into_any_element();
+        }
 
         // Walk back to the start of this user turn: the index just after the
         // previous `UserMessage`, or 0 if there is none before `entry_ix`.
@@ -3626,6 +3825,20 @@ impl ThreadView {
         }
 
         let model = SubagentFanoutModel::from_entries(&collected);
+        self.render_subagent_fanout_card(model, cx)
+    }
+
+    /// Render the Subagents fan-out card from a prebuilt model. Shared by the
+    /// legacy `SubagentProgress`-anchored path ([`render_subagent_fanout`]) and
+    /// the spawn-fold-anchored path (the `ToolCall` arm), so the visual shell —
+    /// border, header KPI, per-subagent rows, `Color::Accent`, drill-in — is
+    /// defined exactly once. Only the data source (and where the card anchors in
+    /// the entry list) differs between callers.
+    fn render_subagent_fanout_card(
+        &self,
+        model: SubagentFanoutModel,
+        cx: &Context<Self>,
+    ) -> AnyElement {
         let running = model.running_count();
         let total = model.total_count();
         let border_color = self.tool_card_border_color(cx);
@@ -5835,11 +6048,25 @@ impl ThreadView {
                 }
             }
             AgentThreadEntry::ToolCall(tool_call) => {
-                // Suppress the raw "Agent" spawn fold when the Subagents fan-out
-                // card already represents it (see tool_call_subsumed_by_fanout),
-                // so the card is the single representation instead of card + fold.
-                if self.tool_call_subsumed_by_fanout(entry_ix, tool_call, cx) {
-                    Empty.into_any()
+                // A subagent spawn fold is *replaced* by the Subagents fan-out
+                // card on the first frame it appears — no bare fold ever renders,
+                // so there's no fold→card flicker. The card anchors at the batch's
+                // first fold and seeds a Queued placeholder row per fold; later
+                // `SubagentProgress` overlays the real status onto those rows in
+                // place. Every other fold in the batch renders nothing, and the
+                // `SubagentProgress` arm yields to this fold-anchored card.
+                let spawn_fold_indices = self
+                    .tool_call_is_subagent_spawn(tool_call)
+                    .then(|| self.spawn_fold_batch_indices(entry_ix, cx))
+                    .flatten();
+                if let Some(fold_indices) = spawn_fold_indices {
+                    if fold_indices.first() == Some(&entry_ix) {
+                        let model = self.spawn_batch_fanout_model(&fold_indices, entry_ix, cx);
+                        self.render_subagent_fanout_card(model, cx)
+                    } else {
+                        // Not the batch's first fold — the first fold drew the card.
+                        Empty.into_any()
+                    }
                 } else {
                     let tool_call = self.render_any_tool_call(
                         self.thread.read(cx).session_id(),

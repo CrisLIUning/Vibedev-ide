@@ -166,6 +166,33 @@ pub fn subagent_session_info_from_meta(meta: &Option<acp::Meta>) -> Option<Subag
         .and_then(|v| serde_json::from_value(v.clone()).ok())
 }
 
+/// Key in a `ToolCall._meta` marking it as the spawn of a parallel background
+/// subagent. The agent side stamps this on each `tool_call` it emits for a
+/// `run_in_background` subagent spawn *before* any progress exists, so the
+/// conversation view can replace the raw "Agent" fold with a fan-out card on
+/// the very first frame instead of waiting for `SubagentProgress` (which the
+/// agent buffers to the end of the main turn to avoid fragmenting the message).
+pub const SUBAGENT_SPAWN_META_KEY: &str = "vibedev_subagent_spawn";
+
+/// Marker payload carried on a spawn `tool_call`'s meta. `batch_id` groups the
+/// folds emitted by one parallel-spawn batch (one assistant message) so they
+/// collapse into a single fan-out card; siblings of the same batch share it.
+/// `None` for agents that emit the marker without a batch id → the view falls
+/// back to grouping by contiguous spawn run within the turn.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct SubagentSpawnInfo {
+    #[serde(default)]
+    pub batch_id: Option<String>,
+}
+
+/// Helper to extract the subagent-spawn marker from ACP tool-call meta.
+pub fn subagent_spawn_from_meta(meta: &Option<acp::Meta>) -> Option<SubagentSpawnInfo> {
+    meta.as_ref()
+        .and_then(|m| m.get(SUBAGENT_SPAWN_META_KEY))
+        .and_then(|v| serde_json::from_value(v.clone()).ok())
+}
+
 /// Key in `SessionNotification._meta` carrying structured subagent fan-out
 /// progress. ACP's `SessionUpdate` is a sealed external enum, so progress
 /// rides on the notification meta rather than as a first-class update variant.
@@ -448,6 +475,7 @@ pub struct ToolCall {
     pub raw_output: Option<serde_json::Value>,
     pub tool_name: Option<SharedString>,
     pub subagent_session_info: Option<SubagentSessionInfo>,
+    pub subagent_spawn: Option<SubagentSpawnInfo>,
     pub sandbox_authorization_details: Option<SandboxAuthorizationDetails>,
 }
 
@@ -490,6 +518,7 @@ impl ToolCall {
         let tool_name = tool_name_from_meta(&tool_call.meta);
 
         let subagent_session_info = subagent_session_info_from_meta(&tool_call.meta);
+        let subagent_spawn = subagent_spawn_from_meta(&tool_call.meta);
         let sandbox_authorization_details =
             sandbox_authorization_details_from_meta(&tool_call.meta);
 
@@ -512,6 +541,7 @@ impl ToolCall {
             raw_output: tool_call.raw_output,
             tool_name,
             subagent_session_info,
+            subagent_spawn,
             sandbox_authorization_details,
         };
         Ok(result)
@@ -547,6 +577,9 @@ impl ToolCall {
 
         if let Some(subagent_session_info) = subagent_session_info_from_meta(&meta) {
             self.subagent_session_info = Some(subagent_session_info);
+        }
+        if let Some(subagent_spawn) = subagent_spawn_from_meta(&meta) {
+            self.subagent_spawn = Some(subagent_spawn);
         }
         if let Some(sandbox_authorization_details) = sandbox_authorization_details_from_meta(&meta)
         {
@@ -2332,6 +2365,7 @@ impl AcpThread {
                     raw_output: None,
                     tool_name: None,
                     subagent_session_info: None,
+                    subagent_spawn: None,
                     sandbox_authorization_details: None,
                 };
                 self.push_entry(AgentThreadEntry::ToolCall(failed_tool_call), cx);
