@@ -559,7 +559,7 @@ impl VibedevRightDock {
     fn render_execution_panel(&mut self, window: &Window, cx: &mut Context<Self>) -> AnyElement {
         // No active conversation selected yet.
         let Some(thread) = self.active_thread.as_ref() else {
-            return execution_empty_state("无活跃会话");
+            return execution_empty_state("No active session");
         };
 
         // Collect every `SubagentProgress` entry on the thread (not just a
@@ -578,7 +578,7 @@ impl VibedevRightDock {
 
         let model = SubagentFanoutModel::from_entries(&progresses);
         if model.nodes.is_empty() {
-            return execution_empty_state("暂无子任务执行");
+            return execution_empty_state("No subagent activity");
         }
 
         // If a subagent is drilled-into and still present in the current model,
@@ -655,7 +655,7 @@ impl VibedevRightDock {
                             .color(Color::Muted),
                     )
                     .child(
-                        Label::new(format!("{running}/{total} 运行中"))
+                        Label::new(format!("{running}/{total} running"))
                             .size(LabelSize::Small)
                             .color(Color::Muted),
                     ),
@@ -769,11 +769,11 @@ impl VibedevRightDock {
         // list rows.
         let (status_icon, status_color, status_label) = match node.status {
             acp_thread::SubagentStatus::Running => {
-                (IconName::ArrowCircle, Color::Accent, "运行中")
+                (IconName::ArrowCircle, Color::Accent, "Running")
             }
-            acp_thread::SubagentStatus::Done => (IconName::Check, Color::Success, "已完成"),
-            acp_thread::SubagentStatus::Failed => (IconName::XCircle, Color::Error, "失败"),
-            acp_thread::SubagentStatus::Queued => (IconName::Circle, Color::Muted, "排队中"),
+            acp_thread::SubagentStatus::Done => (IconName::Check, Color::Success, "Completed"),
+            acp_thread::SubagentStatus::Failed => (IconName::XCircle, Color::Error, "Failed"),
+            acp_thread::SubagentStatus::Queued => (IconName::Circle, Color::Muted, "Queued"),
         };
 
         let tokens_label = node.tokens_used.map(|tokens| {
@@ -904,7 +904,7 @@ impl VibedevRightDock {
                 if body_rows.is_empty() && step_label.is_none() && markdown.is_none() {
                     return this.child(
                         div().flex_none().px_2().py_1().child(
-                            Label::new("暂无步骤详情")
+                            Label::new("No step details")
                                 .size(LabelSize::XSmall)
                                 .color(Color::Muted),
                         ),
@@ -1124,12 +1124,12 @@ impl VibedevRightDock {
 
         // No active conversation selected yet.
         let Some(thread) = self.active_thread.as_ref() else {
-            return execution_empty_state("无活跃会话");
+            return execution_empty_state("No active session");
         };
 
         let plan = thread.read(cx).plan();
         if plan.is_empty() {
-            return execution_empty_state("暂无计划");
+            return execution_empty_state("No plan");
         }
 
         let stats = plan.stats();
@@ -1153,7 +1153,7 @@ impl VibedevRightDock {
                             .color(Color::Muted),
                     )
                     .child(
-                        Label::new(format!("{}/{} 完成", stats.completed, total))
+                        Label::new(format!("{}/{} done", stats.completed, total))
                             .size(LabelSize::Small)
                             .color(Color::Muted),
                     ),
@@ -1245,7 +1245,7 @@ impl VibedevRightDock {
                         .items_center()
                         .justify_center()
                         .child(
-                            Label::new("已最大化(点标题栏 ⊟ 还原)")
+                            Label::new("Maximized (click ⊟ in the title bar to restore)")
                                 .size(LabelSize::Small)
                                 .color(Color::Muted),
                         )
@@ -1354,7 +1354,7 @@ impl VibedevRightDock {
 /// final-reply section of a subagent stream. Everything from this marker
 /// onward is the rendered reply; everything before it is the compact tool
 /// trace.
-const SUBAGENT_REPLY_MARKER: &str = "✓ 回复:";
+const SUBAGENT_REPLY_MARKER: &str = "✓ Reply:";
 
 /// Splits a subagent `step.stream` into `(trace_lines, reply_source)`:
 ///   * `trace_lines` — the lines *before* the reply marker (tool calls `→ …`,

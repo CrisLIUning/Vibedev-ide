@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+
+# Guards against CJK characters leaking into user-visible string literals in
+# Rust source. VibeDev keeps an "English build has zero Chinese" invariant: all
+# user-facing UI text must be English literals in the source, and translations
+# live in the localization JSON (e.g. zh-CN.json), never hardcoded in `.rs`.
+#
+# This guard is intentionally *scoped* to the set of files that have already
+# been de-hardcoded (see TARGETS below) rather than scanning the whole tree:
+# the repo still carries legitimate CJK in test fixtures, comments, and the
+# runtime i18n seed data, so a repo-wide gate would be red for unrelated
+# reasons. As more surfaces get de-hardcoded, add them to TARGETS.
+#
+# It flags only CJK that appears *inside a string literal* (a `"` earlier on the
+# line). Comment lines (`//`, `///`, `//!`) are allowed to keep Chinese, since
+# comments never reach the built binary.
+#
+# Exits non-zero and prints `file:line: <line>` for every offending line.
+
+set -euo pipefail
+
+# Files that are expected to contain zero CJK string literals.
+TARGETS=(
+  "crates/zed/src/zed/vibedev_right_dock.rs"
+)
+
+# CJK Unified Ideographs (the bulk of Chinese text). The character class also
+# covers the common fullwidth punctuation used alongside it.
+# - U+4E00..U+9FFF  CJK Unified Ideographs
+# - U+3000..U+303F  CJK Symbols and Punctuation (e.g. 。、《》)
+# - U+FF00..U+FFEF  Halfwidth and Fullwidth Forms (e.g. （）：)
+CJK_CLASS='[\x{4e00}-\x{9fff}\x{3000}-\x{303f}\x{ff00}-\x{ffef}]'
+
+# A line carries a CJK *string literal* if it has a double quote followed
+# (anywhere later on the line) by a CJK character. This is a heuristic, but it
+# correctly skips `//` comment lines, which carry no `"`-opened literal.
+LITERAL_PATTERN="\"[^\"]*${CJK_CLASS}"
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if ! command -v rg >/dev/null 2>&1; then
+  echo "error: ripgrep (rg) is required by check-no-cjk-strings but was not found on PATH" >&2
+  exit 2
+fi
+
+violations=0
+for target in "${TARGETS[@]}"; do
+  path="${repo_root}/${target}"
+  if [[ ! -f "${path}" ]]; then
+    echo "error: target not found: ${target}" >&2
+    exit 2
+  fi
+
+  # `rg` exits 1 when there are no matches; that is the success case here, so we
+  # capture output and inspect it rather than letting `set -e` abort.
+  if hits="$(rg --no-heading --line-number --color=never "${LITERAL_PATTERN}" "${path}")"; then
+    while IFS= read -r line; do
+      [[ -z "${line}" ]] && continue
+      # Re-prefix with the repo-relative path for stable, copy-pasteable output.
+      lineno="${line%%:*}"
+      text="${line#*:}"
+      echo "${target}:${lineno}:${text}"
+      violations=$((violations + 1))
+    done <<<"${hits}"
+  fi
+done
+
+if [[ "${violations}" -gt 0 ]]; then
+  echo "" >&2
+  echo "Found ${violations} CJK string literal(s) in Rust source." >&2
+  echo "User-visible text must be English; put translations in the localization JSON instead." >&2
+  exit 1
+fi
