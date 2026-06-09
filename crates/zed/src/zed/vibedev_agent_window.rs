@@ -6,7 +6,7 @@
 use std::sync::Arc;
 
 use editor::Editor;
-use gpui::{App, AppContext as _, Context, TaskExt as _, Window};
+use gpui::{App, AppContext as _, Context, TaskExt as _, Window, WindowId};
 use workspace::{AppState, MultiWorkspace, OpenOptions, Workspace};
 
 /// Registers the VibeDev window-switching action handlers on every workspace.
@@ -19,9 +19,13 @@ pub fn init(cx: &mut App) {
             },
         );
         workspace.register_action(
-            |workspace, _: &zed_actions::vibedev::OpenIdeWindow, _window, cx| {
+            |workspace, _: &zed_actions::vibedev::OpenIdeWindow, window, cx| {
                 let app_state = workspace.app_state().clone();
-                open_ide_window(app_state, cx);
+                // The window dispatching this action is already on the stack;
+                // read_with() on it panics ("attempted to read a window that is
+                // already on the stack"). Pass its id so open_ide_window skips it.
+                let current = window.window_handle().window_id();
+                open_ide_window(app_state, current, cx);
             },
         );
     })
@@ -37,11 +41,14 @@ pub fn init(cx: &mut App) {
 /// default `workspace::open_new` path produces exactly that (only
 /// `configure_agent_mode` flips the flag to `true`), so a freshly opened window
 /// is guaranteed to be a non-agent IDE window.
-pub fn open_ide_window(app_state: Arc<AppState>, cx: &mut App) {
+pub fn open_ide_window(app_state: Arc<AppState>, skip_window: WindowId, cx: &mut App) {
     // Look for an already-open IDE (non-agent) window and just activate it.
+    // Skip `skip_window` (the window that dispatched us): it is on the stack, so
+    // read_with() on it would panic.
     let ide_window = cx
         .windows()
         .into_iter()
+        .filter(|window| window.window_id() != skip_window)
         .filter_map(|window| window.downcast::<MultiWorkspace>())
         .find(|window| {
             window
