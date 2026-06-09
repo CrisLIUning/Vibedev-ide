@@ -3496,10 +3496,16 @@ impl ThreadView {
 
     /// Render the live subagent fan-out tree.
     ///
-    /// `SubagentProgress` entries arrive as a contiguous run on the thread.
-    /// Only the first entry of a run renders; it collects the whole run and
-    /// draws the aggregated tree via [`SubagentFanoutModel`]. Subsequent
-    /// entries in the same run render nothing to avoid duplicate cards.
+    /// Subagents spawned in parallel surface their `SubagentProgress` entries
+    /// interleaved with the main agent's own assistant/thinking/tool output, so
+    /// a single parallel spawn does **not** land as a contiguous run. To keep
+    /// one card per spawn, we group by *user turn*: the boundary is the previous
+    /// [`AgentThreadEntry::UserMessage`] (or the start of the thread). Only the
+    /// first `SubagentProgress` of a turn renders; it collects every
+    /// `SubagentProgress` in that turn — skipping over any interleaved
+    /// assistant/tool entries, stopping at the next `UserMessage` — and draws
+    /// the aggregated tree via [`SubagentFanoutModel`]. Later progress entries
+    /// in the same turn render nothing to avoid duplicate cards.
     fn render_subagent_fanout(
         &self,
         entry_ix: usize,
@@ -3508,23 +3514,39 @@ impl ThreadView {
     ) -> AnyElement {
         let entries = self.thread.read(cx).entries();
 
-        // If the previous entry is also subagent progress, this entry is in the
-        // middle of a run; the run's first entry renders the whole tree.
-        if entry_ix > 0
-            && matches!(
-                entries.get(entry_ix - 1),
-                Some(AgentThreadEntry::SubagentProgress(_))
-            )
-        {
+        // Walk back to the start of this user turn: the index just after the
+        // previous `UserMessage`, or 0 if there is none before `entry_ix`.
+        let turn_start = entries
+            .get(..entry_ix)
+            .unwrap_or(&[])
+            .iter()
+            .rposition(|entry| matches!(entry, AgentThreadEntry::UserMessage(_)))
+            .map(|ix| ix + 1)
+            .unwrap_or(0);
+
+        // If an earlier `SubagentProgress` already exists in this turn, that one
+        // rendered the whole tree; this entry is a later arrival and renders
+        // nothing.
+        let already_rendered_this_turn = entries
+            .get(turn_start..entry_ix)
+            .unwrap_or(&[])
+            .iter()
+            .any(|entry| matches!(entry, AgentThreadEntry::SubagentProgress(_)));
+        if already_rendered_this_turn {
             return Empty.into_any_element();
         }
 
-        // Collect the contiguous run of progress entries starting here.
+        // Collect every progress entry in this turn, skipping interleaved
+        // assistant/thinking/tool entries and stopping at the next user turn.
+        // `from_entries` dedups by `subagent_id`, so the same subagent's
+        // cumulative updates collapse to one node while the parallel siblings
+        // become distinct rows.
         let collected: Vec<SubagentProgress> = entries
-            .get(entry_ix..)
+            .get(turn_start..)
             .unwrap_or(&[])
             .iter()
-            .map_while(|entry| match entry {
+            .take_while(|entry| !matches!(entry, AgentThreadEntry::UserMessage(_)))
+            .filter_map(|entry| match entry {
                 AgentThreadEntry::SubagentProgress(progress) => Some(progress.clone()),
                 _ => None,
             })
