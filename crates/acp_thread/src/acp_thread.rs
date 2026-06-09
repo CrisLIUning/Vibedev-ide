@@ -2072,7 +2072,7 @@ impl AcpThread {
         cx.emit(AcpThreadEvent::NewEntry);
     }
 
-    fn push_subagent_progress(&mut self, progress: SubagentProgress, cx: &mut Context<Self>) {
+    fn push_subagent_progress(&mut self, mut progress: SubagentProgress, cx: &mut Context<Self>) {
         if let Some(index) = self.entries.iter().rposition(|entry| {
             matches!(
                 entry,
@@ -2080,6 +2080,52 @@ impl AcpThread {
                     if existing.subagent_id == progress.subagent_id
             )
         }) {
+            // Each progress message carries only the *latest* subagent turn in
+            // `step.stream`; accumulate it onto the existing entry so the
+            // Execution detail panel shows the subagent's full flow rather than
+            // just the last step. A terminal status flip (done/failed) arrives
+            // with no `step`, so we preserve the trace accumulated so far and
+            // only let the new status/title take effect.
+            let existing_stream = match &self.entries[index] {
+                AgentThreadEntry::SubagentProgress(existing) => {
+                    existing.step.as_ref().and_then(|step| step.stream.clone())
+                }
+                _ => None,
+            };
+            match &mut progress.step {
+                Some(step) => {
+                    step.stream = match (existing_stream, step.stream.take()) {
+                        (Some(old), Some(new)) if !new.is_empty() => {
+                            let mut combined = format!("{old}\n{new}");
+                            // Cap the accumulated trace so a long-running
+                            // subagent can't grow it without bound; keep the
+                            // most recent tail.
+                            const MAX_TRACE: usize = 16_000;
+                            if combined.len() > MAX_TRACE {
+                                let start = combined.len() - MAX_TRACE;
+                                let start = (start..=combined.len())
+                                    .find(|i| combined.is_char_boundary(*i))
+                                    .unwrap_or(combined.len());
+                                combined = combined.split_off(start);
+                            }
+                            Some(combined)
+                        }
+                        (Some(old), _) => Some(old),
+                        (None, new) => new,
+                    };
+                }
+                None => {
+                    // Status-only (terminal) update: keep the accumulated trace.
+                    if let Some(stream) = existing_stream {
+                        progress.step = Some(SubagentStep {
+                            label: "streaming".into(),
+                            sub: None,
+                            status: "running".into(),
+                            stream: Some(stream),
+                        });
+                    }
+                }
+            }
             self.entries[index] = AgentThreadEntry::SubagentProgress(progress);
             cx.emit(AcpThreadEvent::EntryUpdated(index));
         } else {
