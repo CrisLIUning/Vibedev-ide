@@ -22991,6 +22991,7 @@ dependencies = [
  "paths",
  "picker",
  "pkg-config",
+ "platform_title_bar",
  "pretty_assertions",
  "profiling",
  "project",

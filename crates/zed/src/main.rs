@@ -1561,7 +1561,7 @@ pub(crate) async fn restore_or_create_workspace(
         workspace::DefaultStartupSurface::AgentApp
     ) {
         cx.update(|cx| {
-            crate::zed::vibedev_agent_window::open_agent_app_window(app_state.clone(), cx);
+            crate::zed::vibedev_agent_window::open_agent_app_window(app_state.clone(), None, cx);
         });
         return Ok(());
     }

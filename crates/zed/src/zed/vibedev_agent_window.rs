@@ -6,16 +6,27 @@
 use std::sync::Arc;
 
 use editor::Editor;
-use gpui::{App, AppContext as _, Context, TaskExt as _, Window, WindowId};
+use gpui::{App, AppContext as _, Context, Focusable as _, Render, TaskExt as _, Window, WindowId};
+use ui::prelude::*;
 use workspace::{AppState, MultiWorkspace, OpenOptions, Workspace};
+
+use super::vibedev_agent_home::VibedevAgentHome;
 
 /// Registers the VibeDev window-switching action handlers on every workspace.
 pub fn init(cx: &mut App) {
     cx.observe_new(|workspace: &mut Workspace, _window, _cx| {
         workspace.register_action(
-            |workspace, _: &zed_actions::vibedev::OpenAgentAppWindow, _window, cx| {
+            |workspace, _: &zed_actions::vibedev::OpenAgentAppWindow, window, cx| {
+                // Already inside an AgentApp window: nothing to open or focus.
+                if workspace.agent_mode {
+                    return;
+                }
                 let app_state = workspace.app_state().clone();
-                open_agent_app_window(app_state, cx);
+                // The dispatching window is on the stack; pass its id so the
+                // existing-window scan skips it (read_with on it would panic) —
+                // same guard as `OpenIdeWindow` below.
+                let current = window.window_handle().window_id();
+                open_agent_app_window(app_state, Some(current), cx);
             },
         );
         workspace.register_action(
@@ -25,11 +36,31 @@ pub fn init(cx: &mut App) {
                 // read_with() on it panics ("attempted to read a window that is
                 // already on the stack"). Pass its id so open_ide_window skips it.
                 let current = window.window_handle().window_id();
-                open_ide_window(app_state, current, cx);
+                open_ide_window(app_state, Some(current), cx);
             },
         );
     })
     .detach();
+
+    // Global fallbacks. The workspace-registered handlers above resolve along
+    // the FOCUS path; on the projectless AgentApp landing page nothing useful
+    // is focused (the workspace's focus delegate is the center pane, which the
+    // agent layout does not render), so dispatches from the titlebar buttons
+    // never reach them. gpui runs global bubble listeners only when no tree
+    // handler consumed the action, so these cannot double-fire. Deferred so
+    // the dispatching window is off the update stack before we read windows.
+    cx.on_action(|_: &zed_actions::vibedev::OpenIdeWindow, cx| {
+        cx.defer(|cx| {
+            let app_state = AppState::global(cx);
+            open_ide_window(app_state, None, cx);
+        });
+    });
+    cx.on_action(|_: &zed_actions::vibedev::OpenAgentAppWindow, cx| {
+        cx.defer(|cx| {
+            let app_state = AppState::global(cx);
+            open_agent_app_window(app_state, None, cx);
+        });
+    });
 }
 
 /// Focuses the existing VibeDev IDE window (a non-agent editor window), opening a
@@ -41,14 +72,14 @@ pub fn init(cx: &mut App) {
 /// default `workspace::open_new` path produces exactly that (only
 /// `configure_agent_mode` flips the flag to `true`), so a freshly opened window
 /// is guaranteed to be a non-agent IDE window.
-pub fn open_ide_window(app_state: Arc<AppState>, skip_window: WindowId, cx: &mut App) {
+pub fn open_ide_window(app_state: Arc<AppState>, skip_window: Option<WindowId>, cx: &mut App) {
     // Look for an already-open IDE (non-agent) window and just activate it.
     // Skip `skip_window` (the window that dispatched us): it is on the stack, so
-    // read_with() on it would panic.
+    // read_with() on it would panic. `None` from deferred (off-stack) callers.
     let ide_window = cx
         .windows()
         .into_iter()
-        .filter(|window| window.window_id() != skip_window)
+        .filter(|window| Some(window.window_id()) != skip_window)
         .filter_map(|window| window.downcast::<MultiWorkspace>())
         .find(|window| {
             window
@@ -82,10 +113,40 @@ pub fn open_ide_window(app_state: Arc<AppState>, skip_window: WindowId, cx: &mut
     .detach_and_log_err(cx);
 }
 
-/// Opens a new OS window as the VibeDev AgentApp. The `init` closure runs against
-/// the freshly created workspace before its first render, so we can flip it into
-/// agent mode and install the conversation + panel without any editor flicker.
-pub fn open_agent_app_window(app_state: Arc<AppState>, cx: &mut App) {
+/// Focuses the existing VibeDev AgentApp window, opening a fresh one only if
+/// none exists — the mirror of `open_ide_window`, so repeatedly clicking the
+/// IDE titlebar button never stacks up duplicate AgentApp windows.
+///
+/// `skip_window` is the dispatching window (already on the stack — `read_with`
+/// on it would panic); `None` at launch, when no window exists yet. For a new
+/// window, the `init` closure runs against the freshly created workspace
+/// before its first render, so we can flip it into agent mode and install the
+/// conversation + panel without any editor flicker.
+pub fn open_agent_app_window(
+    app_state: Arc<AppState>,
+    skip_window: Option<WindowId>,
+    cx: &mut App,
+) {
+    let agent_window = cx
+        .windows()
+        .into_iter()
+        .filter(|window| Some(window.window_id()) != skip_window)
+        .filter_map(|window| window.downcast::<MultiWorkspace>())
+        .find(|window| {
+            window
+                .read_with(cx, |multi_workspace, _cx| multi_workspace.is_agent_app())
+                .unwrap_or(false)
+        });
+
+    if let Some(agent_window) = agent_window {
+        agent_window
+            .update(cx, |_multi_workspace, window, _cx| {
+                window.activate_window();
+            })
+            .ok();
+        return;
+    }
+
     workspace::open_new(
         OpenOptions {
             open_mode: workspace::OpenMode::NewWindow,
@@ -166,6 +227,43 @@ pub(crate) fn apply_agent_surface(
     // Re-render into the agent layout now (drops the editor/docks immediately)
     // rather than waiting for the async panel injection below.
     cx.notify();
+
+    // Platform min/max/close for the custom agent titlebar. The agent layout
+    // replaces the normal `titlebar_item` (and with it `PlatformTitleBar`), so
+    // on Windows/Linux the window controls must be re-injected or the window
+    // cannot be dragged or closed. Built here — not in `workspace` — because
+    // the platform implementations live in `platform_title_bar`, which depends
+    // on the `workspace` crate (importing it from `workspace` would be a
+    // dependency cycle).
+    let window_controls = cx.new(|_cx| AgentTitlebarWindowControls);
+    workspace.set_agent_titlebar_window_controls(Some(window_controls.into()), cx);
+
+    // A projectless workspace (fresh AgentApp launch / explicit AgentApp open)
+    // cannot host a conversation: the `AgentPanel`, the threads sidebar, and
+    // the right dock's file modules all need a project, so installing them here
+    // produced a dead window of stacked "open a project" empty states. Show the
+    // landing/home view instead and stop. Opening any project from it (or the
+    // sidebar) goes through `MultiWorkspace::open_project`, which REPLACES this
+    // empty workspace with the project's workspace — that one re-enters here
+    // with a project and takes the normal panel + right-dock path below.
+    if workspace
+        .project()
+        .read(cx)
+        .visible_worktrees(cx)
+        .next()
+        .is_none()
+    {
+        let fs = workspace.app_state().fs.clone();
+        let home = cx.new(|cx| VibedevAgentHome::new(fs, cx));
+        // Focus the landing page. Action dispatch resolves along the FOCUS
+        // path, and every `Workspace::register_action` handler hangs off the
+        // MultiWorkspace-level root node — with nothing focused, titlebar
+        // actions like "Open IDE" never reached it from this page.
+        window.focus(&home.focus_handle(cx), cx);
+        workspace.set_agent_center_view(Some(home.into()), cx);
+        return;
+    }
+
     // (Open Project is intercepted at the MultiWorkspace level — see
     // `MultiWorkspace::render` — so it opens in this AgentApp window rather than
     // routing through the global handler to the first editor window. A
@@ -230,4 +328,35 @@ pub(crate) fn apply_agent_surface(
     // workspace takes no extra lease; the pane is stored weakly.
     workspace.set_agent_changes_pane(Some(right_dock.read(cx).changes_pane().downgrade()), cx);
     workspace.set_agent_right_view(Some(right_dock.into()), cx);
+}
+
+/// The platform window controls (minimize / maximize / close) injected into the
+/// AgentApp titlebar via `Workspace::set_agent_titlebar_window_controls`.
+///
+/// Windows: pure `WindowControlArea` hit-test caption buttons — the OS handles
+/// clicks, hover snap layouts, and double-click natively, so no click handlers
+/// are needed. Sized to the agent titlebar's 38px bar (the IDE titlebar's
+/// controls use `platform_title_bar_height`, which is shorter). Linux renders
+/// the client-side-decoration buttons only when the compositor doesn't draw
+/// server-side decorations; macOS returns nothing (native traffic lights float
+/// over the transparent titlebar).
+struct AgentTitlebarWindowControls;
+
+impl Render for AgentTitlebarWindowControls {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        match PlatformStyle::platform() {
+            PlatformStyle::Windows => div().h_full().child(
+                platform_title_bar::platforms::platform_windows::WindowsWindowControls::new(px(
+                    38.,
+                )),
+            ),
+            _ => div().h_full().children(
+                platform_title_bar::render_right_window_controls(
+                    cx.button_layout(),
+                    Box::new(workspace::CloseWindow),
+                    window,
+                ),
+            ),
+        }
+    }
 }

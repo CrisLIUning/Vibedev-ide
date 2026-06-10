@@ -1485,6 +1485,13 @@ impl Sidebar {
         } else {
             open_groups
         };
+        // A projectless AgentApp window (the fresh-launch landing page) must
+        // still show the cross-project thread history merged above. Without
+        // this, `has_open_projects` (which only sees OPEN workspaces) routes
+        // the sidebar into the "open a project" empty state, and the
+        // historical groups never render — even on a machine full of past
+        // conversations.
+        let has_open_projects = has_open_projects || (mw.is_agent_app() && !groups.is_empty());
         let mut live_notified_terminal_ids: HashSet<TerminalId> = HashSet::new();
         for workspace in &workspaces {
             if let Some(agent_panel) = workspace.read(cx).panel::<AgentPanel>(cx) {

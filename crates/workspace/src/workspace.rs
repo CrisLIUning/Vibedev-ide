@@ -64,8 +64,9 @@ use gpui::{
     Context, CursorStyle, Decorations, DragMoveEvent, Entity, EntityId, EventEmitter, FocusHandle,
     Focusable, Global, HitboxBehavior, Hsla, KeyContext, Keystroke, ManagedView, MouseButton,
     PathPromptOptions, Point, PromptLevel, Render, ResizeEdge, Size, Stateful, Subscription,
-    SystemWindowTabController, Task, TaskExt, Tiling, WeakEntity, WindowBounds, WindowHandle,
-    WindowId, WindowOptions, actions, canvas, point, relative, size, transparent_black,
+    SystemWindowTabController, Task, TaskExt, Tiling, WeakEntity, WindowBounds, WindowControlArea,
+    WindowHandle, WindowId, WindowOptions, actions, canvas, point, relative, size,
+    transparent_black,
 };
 pub use history_manager::*;
 pub use item::{
@@ -1401,6 +1402,20 @@ pub struct Workspace {
     /// `None` or upgrade-fails, agent diffs fall back to the center pane. Set by
     /// `vibedev_agent_window` once the dock is built. See `agent_changes_pane`.
     agent_changes_pane: Option<WeakEntity<Pane>>,
+    /// Platform window controls (minimize / maximize / close) rendered at the
+    /// right edge of the AgentApp titlebar. On Windows (and Linux client-side
+    /// decorations) the custom agent titlebar must draw these itself — unlike
+    /// macOS, where the native traffic lights float over the transparent
+    /// titlebar — or the window cannot be dragged, closed, or minimized.
+    /// Injected by the `zed` crate (same `titlebar_item` pattern) because the
+    /// platform implementations live in `platform_title_bar`, which depends on
+    /// this crate and so cannot be imported from here.
+    agent_titlebar_window_controls: Option<AnyView>,
+    /// Drag-to-move arming flag for the AgentApp titlebar, mirroring
+    /// `PlatformTitleBar::should_move`: mouse-down arms, the next mouse-move
+    /// starts the OS window move (Linux/X11 path; Windows dragging is handled
+    /// natively via the `WindowControlArea::Drag` hit-test region).
+    agent_titlebar_should_move: bool,
     notifications: Notifications,
     suppressed_notifications: HashSet<NotificationId>,
     project: Entity<Project>,
@@ -1850,6 +1865,8 @@ impl Workspace {
             agent_right_view: None,
             agent_right_view_host: None,
             agent_changes_pane: None,
+            agent_titlebar_window_controls: None,
+            agent_titlebar_should_move: false,
             notifications: Notifications::default(),
             suppressed_notifications: HashSet::default(),
             left_dock,
@@ -2996,6 +3013,18 @@ impl Workspace {
     /// level). See `agent_center_view`.
     pub fn set_agent_center_view(&mut self, view: Option<AnyView>, cx: &mut Context<Self>) {
         self.agent_center_view = view;
+        cx.notify();
+    }
+
+    /// Installs the platform window controls (min / max / close) for the
+    /// AgentApp titlebar. See the `agent_titlebar_window_controls` field for
+    /// why these are injected rather than rendered directly.
+    pub fn set_agent_titlebar_window_controls(
+        &mut self,
+        controls: Option<AnyView>,
+        cx: &mut Context<Self>,
+    ) {
+        self.agent_titlebar_window_controls = controls;
         cx.notify();
     }
 
@@ -7906,9 +7935,22 @@ impl Workspace {
     }
 
     /// Custom top-of-window chrome for VibeDev AgentApp windows. Replaces the
-    /// editor project titlebar with a minimal branded header and leaves room for
-    /// the macOS traffic lights, which float over transparent titlebar content.
-    fn render_agent_titlebar(&self, cx: &mut Context<Self>) -> impl IntoElement {
+    /// editor project titlebar with a minimal branded header.
+    ///
+    /// Because this REPLACES the platform titlebar (`titlebar_item` /
+    /// `PlatformTitleBar`), it must supply the platform window behaviors itself,
+    /// mirroring `PlatformTitleBar::render`: a `WindowControlArea::Drag`
+    /// hit-test region (Windows: native dragging, double-click maximize, snap
+    /// layouts), explicit drag-to-move mouse handlers (Linux), double-click
+    /// handlers (macOS zoom / Linux zoom), and the injected min/max/close
+    /// controls (`agent_titlebar_window_controls`; macOS instead overlays its
+    /// native traffic lights, so it only needs left padding). Shipping without
+    /// these made the Windows AgentApp window undraggable and unclosable.
+    fn render_agent_titlebar(
+        &self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> impl IntoElement {
         // Hoist the needed colors as owned `Hsla` (Copy) so the immutable theme
         // borrow ends before `cx.listener` takes a mutable borrow below.
         let border = cx.theme().colors().border;
@@ -7921,18 +7963,79 @@ impl Workspace {
             WorkspaceSettings::get_global(cx).default_startup_surface,
             settings::DefaultStartupSurface::AgentApp
         );
+        let platform_style = PlatformStyle::platform();
+        // Fullscreen windows have no caption buttons (matching PlatformTitleBar,
+        // which skips its window controls there).
+        let window_controls = self
+            .agent_titlebar_window_controls
+            .clone()
+            .filter(|_| !window.is_fullscreen());
         h_flex()
+            .id("vibedev-agent-titlebar")
+            .window_control_area(WindowControlArea::Drag)
             .h(px(38.))
             .w_full()
-            // Reserve space on the left for the macOS traffic lights, which are
-            // positioned at (9, 9) over the transparent titlebar (see zed.rs).
-            .pl(px(80.))
-            .pr_2()
+            .map(|this| {
+                if window.is_fullscreen() {
+                    this.pl_2()
+                } else if platform_style == PlatformStyle::Mac {
+                    // Reserve space on the left for the macOS traffic lights,
+                    // which are positioned at (9, 9) over the transparent
+                    // titlebar (see zed.rs). Mac-only: on Windows/Linux this was
+                    // just a dead 80px gap.
+                    this.pl(px(80.))
+                } else {
+                    this.pl_2()
+                }
+            })
+            // The caption buttons must sit flush against the window edge; only
+            // pad the right side when none are rendered (macOS / fullscreen).
+            .when(window_controls.is_none(), |this| this.pr_2())
             .gap_2()
             .flex_none()
             .border_b_1()
             .border_color(border)
             .bg(title_bar_bg)
+            // Drag-to-move, mirroring `PlatformTitleBar`: arm on mouse-down,
+            // start the OS move on the next mouse-move (Linux needs the explicit
+            // `start_window_move`; Windows drags natively via the Drag hit-test
+            // region above). The listeners only flip a bool on this workspace —
+            // no second entity lease is taken.
+            .on_mouse_down_out(cx.listener(|workspace, _event, _window, _cx| {
+                workspace.agent_titlebar_should_move = false;
+            }))
+            .on_mouse_up(
+                MouseButton::Left,
+                cx.listener(|workspace, _event, _window, _cx| {
+                    workspace.agent_titlebar_should_move = false;
+                }),
+            )
+            .on_mouse_down(
+                MouseButton::Left,
+                cx.listener(|workspace, _event, _window, _cx| {
+                    workspace.agent_titlebar_should_move = true;
+                }),
+            )
+            .on_mouse_move(cx.listener(|workspace, _event, window, _cx| {
+                if workspace.agent_titlebar_should_move {
+                    workspace.agent_titlebar_should_move = false;
+                    window.start_window_move();
+                }
+            }))
+            .when(platform_style == PlatformStyle::Mac, |this| {
+                this.on_click(|event, window, _cx| {
+                    if event.click_count() == 2 {
+                        window.titlebar_double_click();
+                    }
+                })
+            })
+            .when(platform_style == PlatformStyle::Linux, |this| {
+                this.on_click(|event, window, _cx| {
+                    if event.click_count() == 2 {
+                        window.zoom_window();
+                    }
+                })
+            })
             // Sidebar toggle lives in the titlebar (not inside the sidebar) so the
             // native project/threads sidebar can always be reopened after it is
             // closed. Dispatch directly against the current window's
@@ -8036,6 +8139,9 @@ impl Workspace {
                         });
                     })),
             )
+            // Platform min/max/close, flush at the right edge (Windows / Linux
+            // client-side decorations; `None` on macOS and in fullscreen).
+            .children(window_controls)
     }
 
     /// Renders the AgentApp window layout instead of the standard editor layout.
@@ -8138,7 +8244,7 @@ impl Workspace {
             .text_color(colors.text)
             .overflow_hidden()
             .bg(colors.background)
-            .child(self.render_agent_titlebar(cx))
+            .child(self.render_agent_titlebar(window, cx))
             .child(
                 div()
                     .id("agent-workspace")

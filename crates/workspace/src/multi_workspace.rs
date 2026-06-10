@@ -2242,6 +2242,39 @@ impl Render for MultiWorkspace {
                             },
                         ))
                     })
+                    // In an AgentApp window, intercept `Open` so the picked
+                    // project opens IN this window (`open_project` replaces a
+                    // projectless workspace) instead of falling through to the
+                    // app-global handler, which opens a NEW editor window.
+                    // Gated to AgentApp windows: editor IDE windows keep their
+                    // existing workspace-level `Open` handling untouched.
+                    .when(self.is_agent_app(), |el| {
+                        el.on_action(cx.listener(
+                            |this: &mut Self, action: &crate::Open, window, cx| {
+                                if action.create_new_window {
+                                    cx.propagate();
+                                    return;
+                                }
+                                let workspace = this.workspace().clone();
+                                let app_state = workspace.read(cx).app_state().clone();
+                                workspace.update(cx, |workspace, cx| {
+                                    crate::prompt_for_open_path_and_open(
+                                        workspace,
+                                        app_state,
+                                        gpui::PathPromptOptions {
+                                            files: true,
+                                            directories: true,
+                                            multiple: true,
+                                            prompt: None,
+                                        },
+                                        false,
+                                        window,
+                                        cx,
+                                    );
+                                });
+                            },
+                        ))
+                    })
                 })
                 .when(
                     self.sidebar_open() && self.multi_workspace_enabled(cx),

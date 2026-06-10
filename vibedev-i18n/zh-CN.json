@@ -75153,5 +75153,16 @@
         "zed": "Zed",
         "grill-with-docs": "文档研讨",
         "video-edit": "视频编辑"
+    },
+    "zed/crates/zed/src/zed/vibedev_agent_home.rs": {
+        "Open a project to start a conversation": "打开一个项目，开始与智能体对话",
+        "Open Project": "打开项目",
+        "Clone Repository": "克隆仓库",
+        "Recent Projects": "最近项目",
+        "Tokens": "Token",
+        "Requests": "请求",
+        "Cost": "费用",
+        "Latency": "延迟",
+        "Project": "项目"
     }
 }
